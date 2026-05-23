@@ -1,5 +1,6 @@
 package com.supercalc;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.widget.EditText;
@@ -54,7 +55,7 @@ public class CalcActivity extends AppCompatActivity {
         btnDeriv2.setOnClickListener(v -> onDerivative2());
         btnInt   .setOnClickListener(v -> onIntegrate());
         btnSolve .setOnClickListener(v -> onSolve());
-        btnPlot  .setOnClickListener(v -> onPlot());
+        btnPlot  .setOnClickListener(v -> openPlot());
         btnClear .setOnClickListener(v -> resultView.setText(""));
 
         // Preset chips — set expression text and auto-evaluate
@@ -129,66 +130,15 @@ public class CalcActivity extends AppCompatActivity {
         }
     }
 
-    private void onPlot() {
-        String e = getExpr(); if (e.isEmpty()) { toast("Enter an expression"); return; }
-        double xMin = getA();
-        double xMax = getB();
-        if (xMin >= xMax) {
-            toast("Invalid range: a must be less than b");
-            return;
+    private void openPlot() {
+        Intent intent = new Intent(this, PlotActivity.class);
+        String expr = getExpr();
+        if (!expr.isEmpty()) {
+            intent.putExtra("initial_expr", expr);
+            intent.putExtra("x_min", getA());
+            intent.putExtra("x_max", getB());
         }
-        
-        int numPoints = 200;
-        double[] xs = new double[numPoints];
-        for (int i = 0; i < numPoints; i++) {
-            xs[i] = xMin + (xMax - xMin) * i / (numPoints - 1);
-        }
-        
-        double[] ys = CalcEngine.evaluateArray(e, xs);
-        if (ys == null) {
-            toast("Error: " + CalcEngine.getLastError());
-            return;
-        }
-        
-        List<Entry> entries = new ArrayList<>();
-        for (int i = 0; i < numPoints; i++) {
-            if (!Double.isNaN(ys[i]) && !Double.isInfinite(ys[i])) {
-                entries.add(new Entry((float) xs[i], (float) ys[i]));
-            }
-        }
-        
-        if (entries.isEmpty()) {
-            toast("No valid points to plot");
-            return;
-        }
-        
-        LineDataSet dataSet = new LineDataSet(entries, e);
-        dataSet.setColor(0xFF1f77b4);
-        dataSet.setLineWidth(2f);
-        dataSet.setDrawCircles(false);
-        dataSet.setDrawValues(false);
-        
-        LineData lineData = new LineData(dataSet);
-        lineChart.setData(lineData);
-        
-        XAxis xAxis = lineChart.getXAxis();
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setDrawGridLines(true);
-        xAxis.setGridColor(0xFF45475a);
-        
-        YAxis yAxisLeft = lineChart.getAxisLeft();
-        yAxisLeft.setDrawGridLines(true);
-        yAxisLeft.setGridColor(0xFF45475a);
-        
-        YAxis yAxisRight = lineChart.getAxisRight();
-        yAxisRight.setEnabled(false);
-        
-        lineChart.getDescription().setEnabled(false);
-        lineChart.getLegend().setEnabled(true);
-        lineChart.invalidate();
-        
-        graphCard.setVisibility(android.view.View.VISIBLE);
-        appendResult("Plot", numPoints);
+        startActivity(intent);
     }
 
     private static String fmt(double v) {

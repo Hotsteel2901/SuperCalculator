@@ -14,5 +14,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="com.supercalc.PlotActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize"
+            android:parentActivityName="com.supercalc.CalcActivity" />
     </application>
 </manifest>
