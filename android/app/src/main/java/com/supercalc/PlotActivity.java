@@ -10,6 +10,7 @@ import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.components.Legend;
@@ -160,7 +161,7 @@ public class PlotActivity extends AppCompatActivity {
             return;
         }
         
-        List<LineDataSet> dataSets = new ArrayList<>();
+        List<ILineDataSet> dataSets = new ArrayList<>();
         for (int i = 0; i < allEntries.size(); i++) {
             if (allEntries.get(i).isEmpty()) continue;
             
