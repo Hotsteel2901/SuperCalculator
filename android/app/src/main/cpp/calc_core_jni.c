@@ -3,6 +3,7 @@
  * Links against calc_core.c and exposes functions to Java via JNI.
  */
 #include <jni.h>
+#include <stdlib.h>
 
 #include <math.h>
 /* Forward declarations — implemented in calc_core.c (linked in same .so) */
