@@ -18,18 +18,33 @@ from typing import List, Optional
 def _find_lib() -> str:
     """Locate the compiled shared library next to this file."""
     base = os.path.dirname(os.path.abspath(__file__))
+
+    def _try_find(names):
+        for n in names:
+            p = os.path.join(base, n)
+            if os.path.exists(p):
+                return p
+        return None
+
     if sys.platform == "win32":
-        name = "calc_core.dll"
+        names = ["calc_core.dll"]
     elif sys.platform == "darwin":
-        name = "calc_core.dylib"
+        names = ["calc_core.dylib"]
     else:
-        name = "calc_core.so"
-    path = os.path.join(base, name)
-    if not os.path.exists(path):
+        import platform
+        arch = platform.machine()
+        if arch in ("x86_64", "AMD64"):
+            names = ["calc_core_x86_64.so", "calc_core.so"]
+        elif arch in ("aarch64", "arm64"):
+            names = ["calc_core_aarch64.so", "calc_core.so"]
+        else:
+            names = ["calc_core.so"]
+
+    path = _try_find(names)
+    if path is None:
         raise FileNotFoundError(
-            f"C library not found at: {path}\n"
-            f"Compile it first:\n"
-            f"  gcc -shared -O2 -o {name} calc_core.c -lm"
+            f"C library not found. Searched for: {', '.join(names)}\n"
+            f"Compile it first: gcc -shared -O2 -fPIC -o calc_core.so calc_core.c -lm"
         )
     return path
 
