@@ -3,7 +3,10 @@
 > 超级函数绘图计算器 — 基于桥接模式(Bridge Pattern)，融合 C 与 Python 优势的高性能函数计算与可视化工具
 
 [English](README.md) | **中文**
+
 > **注意：** 本项目完全由 AI (Claude Code) 生成，请自行评估使用风险。
+
+同时包含一个基于 Material Design 3 的 **Android APK** (aarch64)。
 
 ## 架构
 
@@ -20,9 +23,10 @@
 +---------------------------------+
 ```
 
-采用**桥接模式(Bridge Pattern)**设计，将 GUI 与计算核心解耦：
-- **C 层**负责所有数值计算 —— 表达式解析、微积分、方程求解
+采用**桥接模式(Bridge Pattern)**设计：
+- **C 层**负责所有数值计算 — 表达式解析、微积分、方程求解
 - **Python 层**通过 `ctypes` 调用 C 核心，提供 Tkinter + Matplotlib 图形界面
+- 桥接层启动时自动检测平台和 CPU 架构，选择正确的预编译二进制文件
 
 ## 功能特性
 
@@ -34,19 +38,33 @@
 - **预设函数** — 内置 15 个常用函数，一键选择
 - **自定义视图** — X/Y 坐标范围、采样步长、网格开关均可调节
 - **交互式图表** — Matplotlib 工具栏支持缩放、平移、导出 PNG
+- **Android 应用** — 独立 APK，Material Design 3 界面 + JNI 桥接
+
+## 预编译二进制文件
+
+预编译文件可在 [Releases](https://github.com/Hotsteel2901/SuperCalculator/releases) 中下载。
+
+| 平台 | 架构 | 文件 | 预编译 |
+|------|------|------|:---:|
+| Windows | x64 | `calc_core.dll` | 是 |
+| Linux | x86_64 | `calc_core_x86_64.so` | 是 |
+| Linux | ARM64 | `calc_core_aarch64.so` | 是 |
+| macOS | x86_64 / ARM64 | `calc_core.dylib` | 需自行编译 |
+| Android | ARM64 | `SuperCalculator-*.apk` | 是 (工作流) |
+
+## 快速开始
+
+```bash
+pip install numpy matplotlib
+python super_calc_bridged.py
+```
 
 ## 环境要求
 
 - **Python 3.9+** 并安装以下包：`numpy`、`matplotlib`
-- **C 编译器** (Windows 推荐 MinGW-w64，Linux/macOS 使用 GCC)
+- **C 编译器**（如需从源码重新编译）：Windows 推荐 MinGW-w64，Linux 使用 GCC
 
-安装 Python 依赖：
-
-```bash
-pip install numpy matplotlib
-```
-
-## 编译 C 核心
+## 从源码编译
 
 ### Windows (MinGW-w64 / MSYS2)
 
@@ -54,7 +72,7 @@ pip install numpy matplotlib
 gcc -shared -O2 -o calc_core.dll calc_core.c -lm
 ```
 
-### Windows (MSVC - 开发者命令提示符)
+### Windows (MSVC)
 
 ```bash
 cl /LD /O2 calc_core.c /Fe:calc_core.dll
@@ -72,20 +90,7 @@ gcc -shared -O2 -fPIC -o calc_core.so calc_core.c -lm
 gcc -shared -O2 -fPIC -o calc_core.dylib calc_core.c -lm
 ```
 
-### 从 Linux 交叉编译到 Windows
-
-```bash
-x86_64-w64-mingw32-gcc -shared -O2 -o calc_core.dll calc_core.c -lm
-```
-
-## 使用方法
-
-```bash
-cd SuperCalculator
-python super_calc_bridged.py
-```
-
-### 表达式语法
+## 表达式语法
 
 | 类别       | 运算符 / 函数                    | 示例                |
 |-----------|----------------------------------|---------------------|
@@ -99,12 +104,23 @@ python super_calc_bridged.py
 
 ```
 SuperCalculator/
-  calc_core.c            C 核心引擎 (表达式解析、微积分、方程求解)
-  calc_bridge.py         Python ctypes 桥接层
-  super_calc_bridged.py  GUI 主程序
-  README.md              英文说明文档
-  README_CN.md           中文说明文档 (本文件)
+  calc_core.c              C 核心引擎 (表达式解析、微积分、方程求解)
+  calc_bridge.py           Python ctypes 桥接层 (多架构自动检测)
+  super_calc_bridged.py    GUI 主程序
+  android/                 Android 项目 (Gradle + JNI + M3 UI)
+  .github/workflows/       CI: 多平台构建 + Android APK
+  README.md               英文说明文档
+  README_CN.md            中文说明文档 (本文件)
 ```
+
+## CI / CD
+
+两个 GitHub Actions 工作流均需手动触发：
+
+| 工作流 | 功能 | 推送 Release |
+|--------|------|:---:|
+| `Build All Platforms` | 构建 Win x64, Linux x86_64, Linux ARM64 | 可选 |
+| `Build Android APK` | 构建 Android aarch64 APK | 否 |
 
 ## API 参考
 
@@ -124,13 +140,10 @@ CalcEngine.derivative("x^3", 2.0)       # -> ~12.0 (f'(x)=3x^2)
 CalcEngine.derivative2("x^3", 2.0)      # -> ~12.0 (f''(x)=6x)
 
 # 定积分
-CalcEngine.integrate_adaptive("x^2", 0, 1)  # -> ~0.333 (∫x^2dx = 1/3)
+CalcEngine.integrate_adaptive("x^2", 0, 1)  # -> ~0.333
 
-# 方程求根 (Newton-Raphson)
+# 方程求根
 CalcEngine.solve("x^2 - 4", guess=1, xmin=0, xmax=3)  # -> 2.0
-
-# 方程求根 (二分法)
-CalcEngine.solve_bisection("x^2 - 4", 0, 3)          # -> 2.0
 ```
 
 ## 数值方法
@@ -146,6 +159,6 @@ CalcEngine.solve_bisection("x^2 - 4", 0, 3)          # -> 2.0
 
 本项目采用**桥接模式(Bridge Pattern)**的核心思想：将抽象(GUI)与实现(计算引擎)分离，使两者可以独立变化。
 
-- 如果需要更换 GUI 框架（如 PyQt、Web），只需修改 `super_calc_bridged.py`，无需改动 C 核心
-- 如果需要增强计算能力（如偏微分、常微分方程），只需修改 `calc_core.c`，无需改动 GUI
+- 更换 GUI 框架只需修改 `super_calc_bridged.py`，无需改动 C 核心
+- 增强计算能力只需修改 `calc_core.c`，无需改动 GUI
 - `calc_bridge.py` 作为桥接层，负责类型转换、错误处理和 API 封装

@@ -1,9 +1,13 @@
 # Super Function Graphing Calculator
 
 [中文](README_CN.md) | **English**
+
 > **Note:** This project was generated entirely by AI (Claude Code). Use at your own discretion.
+
 A high-performance function graphing calculator using the **Bridge Pattern**:
 C for computation, Python for the GUI, and `ctypes` as the bridge.
+
+Also includes an **Android APK** build (aarch64) with a Material Design 3 UI.
 
 ## Architecture
 
@@ -20,37 +24,53 @@ C for computation, Python for the GUI, and `ctypes` as the bridge.
 +---------------------------------+
 ```
 
+The bridge layer auto-detects platform and CPU architecture at load time, selecting the correct binary from the available pre-compiled options.
+
 ## Features
 
-- **Function Plotting** - plot arbitrary mathematical expressions with `x`
-- **Multi-Curve Overlay** - plot multiple functions simultaneously with different colors
-- **Numerical Derivatives** - first and second derivative via central difference
-- **Numerical Integration** - adaptive Simpson's rule for definite integrals
-- **Equation Solving** - Newton-Raphson (with bisection fallback) and pure bisection
-- **Preset Functions** - quick-select from 15 common functions
-- **Customizable View** - adjustable X/Y ranges, step size, grid toggle
-- **Interactive Plot** - Matplotlib toolbar for zoom, pan, and export
+- **Function Plotting** — plot arbitrary mathematical expressions with `x`
+- **Multi-Curve Overlay** — plot multiple functions simultaneously with different colors
+- **Numerical Derivatives** — first and second derivative via central difference
+- **Numerical Integration** — adaptive Simpson's rule for definite integrals
+- **Equation Solving** — Newton-Raphson (with bisection fallback) and pure bisection
+- **Preset Functions** — quick-select from 15 common functions
+- **Customizable View** — adjustable X/Y ranges, step size, grid toggle
+- **Interactive Plot** — Matplotlib toolbar for zoom, pan, and export
+- **Android App** — standalone APK with Material Design 3 UI and JNI bridge
+
+## Pre-compiled Binaries
+
+Pre-compiled binaries are available in the [Releases](https://github.com/Hotsteel2901/SuperCalculator/releases).
+
+| Platform | Architecture | Binary | Pre-compiled |
+|----------|-------------|--------|:---:|
+| Windows | x64 | `calc_core.dll` | Yes |
+| Linux | x86_64 | `calc_core_x86_64.so` | Yes |
+| Linux | ARM64 | `calc_core_aarch64.so` | Yes |
+| macOS | x86_64 / ARM64 | `calc_core.dylib` | Rebuild from source |
+| Android | ARM64 | `SuperCalculator-*.apk` | Yes (via workflow) |
+
+## Quick Start
+
+```bash
+pip install numpy matplotlib
+python super_calc_bridged.py
+```
 
 ## Prerequisites
 
 - **Python 3.9+** with packages: `numpy`, `matplotlib`
-- **C compiler** (GCC/MinGW on Windows, GCC on Linux, or MSVC on Windows)
+- **C compiler** for rebuilding from source (GCC/MinGW on Windows, GCC on Linux)
 
-Install Python dependencies:
+## Building from Source
 
-```bash
-pip install numpy matplotlib
-```
-
-## Building the C Core
-
-### Windows (MinGW / MSYS2)
+### Windows (MinGW-w64 / MSYS2)
 
 ```bash
 gcc -shared -O2 -o calc_core.dll calc_core.c -lm
 ```
 
-### Windows (MSVC / Developer Command Prompt)
+### Windows (MSVC)
 
 ```bash
 cl /LD /O2 calc_core.c /Fe:calc_core.dll
@@ -68,14 +88,7 @@ gcc -shared -O2 -fPIC -o calc_core.so calc_core.c -lm
 gcc -shared -O2 -fPIC -o calc_core.dylib calc_core.c -lm
 ```
 
-## Usage
-
-```bash
-cd SuperCalculator
-python super_calc_bridged.py
-```
-
-### Expression Syntax
+## Expression Syntax
 
 | Category     | Operators / Functions              | Example            |
 |-------------|------------------------------------|--------------------|
@@ -89,13 +102,25 @@ python super_calc_bridged.py
 
 ```
 SuperCalculator/
-  calc_core.c            C core engine (expression parser, calculus, solver)
-  calc_bridge.py         Python ctypes bridge layer
-  super_calc_bridged.py  GUI main program
-  README.md              This file
+  calc_core.c              C core engine (expression parser, calculus, solver)
+  calc_bridge.py           Python ctypes bridge layer (multi-arch detection)
+  super_calc_bridged.py    GUI main program
+  android/                 Android project (Gradle + JNI + M3 UI)
+  .github/workflows/       CI: multi-platform build + Android APK
+  README.md                This file
+  README_CN.md             Chinese documentation
 ```
 
-## API Reference (calc_bridge.py)
+## CI / CD
+
+Two GitHub Actions workflows are available (manual trigger):
+
+| Workflow | Purpose | Release Push |
+|----------|---------|:---:|
+| `Build All Platforms` | Win x64, Linux x86_64, Linux ARM64 | Optional |
+| `Build Android APK` | Android aarch64 APK | No |
+
+## API Reference
 
 ```python
 from calc_bridge import CalcEngine
@@ -113,7 +138,7 @@ CalcEngine.derivative("x^3", 2.0)       # -> ~12.0 (f'(x)=3x^2)
 CalcEngine.derivative2("x^3", 2.0)      # -> ~12.0 (f''(x)=6x)
 
 # Definite integral
-CalcEngine.integrate_adaptive("x^2", 0, 1)  # -> ~0.333 (integral of x^2 = 1/3)
+CalcEngine.integrate_adaptive("x^2", 0, 1)  # -> ~0.333
 
 # Find root
 CalcEngine.solve("x^2 - 4", guess=1, xmin=0, xmax=3)  # -> 2.0
@@ -126,4 +151,4 @@ CalcEngine.solve("x^2 - 4", guess=1, xmin=0, xmax=3)  # -> 2.0
 | Derivative          | Central difference: (f(x+h)-f(x-h)) / 2h       | O(h^2)    |
 | 2nd Derivative      | Central difference: (f(x+h)-2f(x)+f(x-h)) / h^2 | O(h^2)  |
 | Integration         | Adaptive composite Simpson's rule              | O(h^4)    |
-| Root Finding        | Newton-Raphson with bisection fallback         | -         |
+| Root Finding        | Newton-Raphson with bisection fallback         | —         |
