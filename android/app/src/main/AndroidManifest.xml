@@ -3,7 +3,7 @@
     <application
         android:allowBackup="true"
         android:label="@string/app_name"
-        android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
+        android:theme="@style/Theme.SuperCalc">
         <activity
             android:name="com.supercalc.CalcActivity"
             android:exported="true"

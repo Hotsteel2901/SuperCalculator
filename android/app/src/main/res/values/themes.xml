@@ -25,7 +25,7 @@
 
     <!-- Card style — subtle glass surface -->
     <style name="Widget.SuperCalc.Card" parent="Widget.Material3.CardView.Elevated">
-        <item name="cardBackgroundColor">@color/sc_void_elevated</item>
+        <item name="cardBackgroundColor">@color/void_elevated</item>
         <item name="strokeColor">@color/m3_outline_variant</item>
         <item name="strokeWidth">1dp</item>
         <item name="cardCornerRadius">16dp</item>
