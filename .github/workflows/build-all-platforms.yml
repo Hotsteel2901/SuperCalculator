@@ -1,0 +1,163 @@
+name: Build All Platforms
+
+on:
+  workflow_dispatch:
+    inputs:
+      push-release:
+        description: 'Create a GitHub Release with the built binaries?'
+        type: boolean
+        default: false
+      release-tag:
+        description: 'Release tag, e.g. AlphaV2 (required if creating release)'
+        type: string
+        default: ''
+
+jobs:
+  # =========================================================================
+  #  Windows x86_64
+  # =========================================================================
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile calc_core.dll (Windows x86_64)
+        shell: bash
+        run: |
+          gcc -shared -O2 -o calc_core.dll calc_core.c -lm
+          file calc_core.dll
+          ls -lh calc_core.dll
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: calc_core-windows-x86_64
+          path: calc_core.dll
+          retention-days: 7
+
+  # =========================================================================
+  #  macOS x86_64 + ARM64
+  # =========================================================================
+  build-macos:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - runner: macos-13
+            arch: x86_64
+            artifact: calc_core-macos-x86_64
+          - runner: macos-latest
+            arch: arm64
+            artifact: calc_core-macos-arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile calc_core.dylib (macOS ${{ matrix.arch }})
+        run: |
+          gcc -shared -O2 -fPIC -o calc_core.dylib calc_core.c -lm
+          file calc_core.dylib
+          ls -lh calc_core.dylib
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: calc_core.dylib
+          retention-days: 7
+
+  # =========================================================================
+  #  Linux x86_64 + aarch64 cross-compile
+  # =========================================================================
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install aarch64 cross-compiler
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-aarch64-linux-gnu
+
+      - name: Compile calc_core_x86_64.so (Linux x86_64)
+        run: |
+          gcc -shared -O2 -fPIC -o calc_core_x86_64.so calc_core.c -lm
+          file calc_core_x86_64.so
+          ls -lh calc_core_x86_64.so
+
+      - name: Compile calc_core_aarch64.so (Linux ARM64)
+        run: |
+          aarch64-linux-gnu-gcc -shared -O2 -fPIC -o calc_core_aarch64.so calc_core.c -lm
+          file calc_core_aarch64.so
+          ls -lh calc_core_aarch64.so
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: calc_core-linux-x86_64
+          path: calc_core_x86_64.so
+          retention-days: 7
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: calc_core-linux-aarch64
+          path: calc_core_aarch64.so
+          retention-days: 7
+
+  # =========================================================================
+  #  Optional: bundle & publish as GitHub Release (uses built-in gh CLI only)
+  # =========================================================================
+  release:
+    needs: [build-windows, build-macos, build-linux]
+    if: ${{ inputs.push-release && inputs.release-tag != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Bundle all binaries + source into ZIP
+        run: |
+          mkdir -p release
+          cp dist/calc_core-windows-x86_64/calc_core.dll          release/calc_core.dll
+          cp dist/calc_core-macos-x86_64/calc_core.dylib          release/calc_core_x86_64.dylib
+          cp dist/calc_core-macos-arm64/calc_core.dylib           release/calc_core_arm64.dylib
+          cp dist/calc_core-linux-x86_64/calc_core_x86_64.so      release/calc_core_x86_64.so
+          cp dist/calc_core-linux-aarch64/calc_core_aarch64.so    release/calc_core_aarch64.so
+          cp calc_core.c calc_bridge.py super_calc_bridged.py README.md README_CN.md .gitignore release/
+          cd release
+          zip -r ../SuperCalculator-${{ inputs.release-tag }}.zip .
+          cd ..
+          ls -lh SuperCalculator-${{ inputs.release-tag }}.zip
+
+      - name: Create GitHub Release via gh CLI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ inputs.release-tag }}" \
+            SuperCalculator-${{ inputs.release-tag }}.zip \
+            --title "Super Calculator ${{ inputs.release-tag }}" \
+            --prerelease \
+            --notes "
+          ## Super Function Graphing Calculator — ${{ inputs.release-tag }}
+          
+          > Disclaimer: This project was generated entirely by AI (Claude Code).
+          > Use at your own discretion.
+          
+          ### Included Binaries
+          | Platform | Architecture | File |
+          |----------|-------------|------|
+          | Windows | x64 | calc_core.dll |
+          | macOS | x86_64 | calc_core_x86_64.dylib |
+          | macOS | ARM64 | calc_core_arm64.dylib |
+          | Linux | x86_64 | calc_core_x86_64.so |
+          | Linux | ARM64 | calc_core_aarch64.so |
+          
+          ### Quick Start
+          pip install numpy matplotlib
+          python super_calc_bridged.py
+          
+          The bridge layer auto-detects your platform and architecture.
+          
+          *Built by GitHub Actions. Generated by Claude Code via [HAPI](https://hapi.run)*
+          "

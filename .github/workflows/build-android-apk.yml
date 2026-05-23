@@ -1,0 +1,71 @@
+# ---------------------------------------------------------------------------
+# WARNING: This workflow downloads ~800MB of Android SDK/NDK components.
+# Each run consumes approximately 8-12 GitHub Actions minutes on the free tier.
+# Run sparingly. Artifacts expire after 7 days.
+# ---------------------------------------------------------------------------
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Download Android SDK (NDK + build-tools only)
+        run: |
+          SDK_ROOT=$HOME/android-sdk
+          mkdir -p $SDK_ROOT
+          cd $SDK_ROOT
+          # Download command-line tools only
+          curl -sSfLO https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          unzip -q commandlinetools-linux-*.zip
+          rm commandlinetools-linux-*.zip
+          # Accept licenses
+          yes | cmdline-tools/bin/sdkmanager --sdk_root=$SDK_ROOT --licenses > /dev/null 2>&1 || true
+          # Install only what we need: NDK (arm64), platform, build-tools
+          cmdline-tools/bin/sdkmanager --sdk_root=$SDK_ROOT \
+            "ndk;27.0.12077973" "platforms;android-34" "build-tools;34.0.0" > /dev/null 2>&1
+          echo "SDK_ROOT=$SDK_ROOT" >> $GITHUB_ENV
+          echo "NDK_ROOT=$SDK_ROOT/ndk/27.0.12077973" >> $GITHUB_ENV
+          ls -lh $SDK_ROOT/ndk/27.0.12077973/toolchains/llvm/prebuilt/linux-x86_64/bin/ | head -5
+
+      - name: Copy C source into Android project
+        run: cp calc_core.c android/app/src/main/cpp/calc_core.c
+
+      - name: Generate Gradle wrapper
+        working-directory: android
+        run: |
+          # Use system gradle to generate the wrapper, then build with wrapper
+          sudo apt-get install -y -qq gradle > /dev/null 2>&1
+          gradle wrapper --gradle-version 8.4
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Sign APK with debug key
+        run: |
+          APK_UNSIGNED="android/app/build/outputs/apk/release/app-release-unsigned.apk"
+          APK_SIGNED="SuperCalculator-android-aarch64.apk"
+          # Generate a one-time debug keystore
+          keytool -genkey -v -keystore debug.keystore -storepass android \
+            -alias androiddebugkey -keypass android \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Debug,O=SuperCalc,C=US" > /dev/null 2>&1
+          $SDK_ROOT/build-tools/34.0.0/apksigner sign \
+            --ks debug.keystore --ks-pass pass:android \
+            --out $APK_SIGNED $APK_UNSIGNED
+          echo "=== APK ==="
+          ls -lh $APK_SIGNED
+          file $APK_SIGNED
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SuperCalculator-android-aarch64
+          path: SuperCalculator-android-aarch64.apk
+          retention-days: 7

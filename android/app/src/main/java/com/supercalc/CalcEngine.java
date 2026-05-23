@@ -1,0 +1,28 @@
+package com.supercalc;
+
+/**
+ * JNI bridge to the C core (libcalc_core.so).
+ * All methods are static — no instance needed.
+ */
+public class CalcEngine {
+    static { System.loadLibrary("calc_core"); }
+
+    /** Evaluate f(x) at a point. Returns NaN on error. */
+    public static native double evaluate(String expr, double x);
+
+    /** First derivative f'(x) at x with step h. */
+    public static native double derivative(String expr, double x, double h);
+
+    /** Second derivative f''(x) at x with step h. */
+    public static native double derivative2(String expr, double x, double h);
+
+    /** Definite integral over [a,b] (adaptive). */
+    public static native double integrate(String expr, double a, double b);
+
+    /** Find root f(x)=0 using Newton-Raphson + bisection. */
+    public static native double solve(String expr, double guess,
+                                      double xmin, double xmax);
+
+    /** Last error message from the C core. */
+    public static native String getLastError();
+}
