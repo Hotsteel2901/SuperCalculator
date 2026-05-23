@@ -4,6 +4,7 @@
  */
 #include <jni.h>
 
+#include <math.h>
 /* Forward declarations — implemented in calc_core.c (linked in same .so) */
 double evaluate(const char* expr, double x);
 double derivative(const char* expr, double x, double h);

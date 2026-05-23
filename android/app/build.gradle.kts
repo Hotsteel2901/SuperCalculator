@@ -4,6 +4,7 @@ plugins {
 android {
     namespace = "com.supercalc"
     compileSdk = 34
+        ndkVersion = "27.0.12077973"
     defaultConfig {
         applicationId = "com.supercalc"
         minSdk = 26
