@@ -1,0 +1,24 @@
+# C build artifacts
+*.o
+*.obj
+*.dll
+*.so
+*.dylib
+*.exe
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
