@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Void background scale -->
+    <color name="void">#FF0A0B10</color>
+    <color name="void_surface">#FF12131C</color>
+    <color name="void_elevated">#FF1A1B28</color>
+    <color name="void_overlay">#E61E1F2E</color>
+
+    <!-- Spectral accent colors — one per operation type -->
+    <color name="spectral_evaluate">#FF00E676</color>
+    <color name="spectral_derivative">#FF00BCD4</color>
+    <color name="spectral_derivative2">#FF448AFF</color>
+    <color name="spectral_integrate">#FFFFC107</color>
+    <color name="spectral_solve">#FFE040FB</color>
+
+    <!-- M3 mapped tones -->
+    <color name="m3_primary">#FF6EC6FF</color>
+    <color name="m3_on_primary">#FF003548</color>
+    <color name="m3_primary_container">#FF004D69</color>
+    <color name="m3_on_primary_container">#FFC3E8FF</color>
+    <color name="m3_surface">#FF12131C</color>
+    <color name="m3_on_surface">#FFE2E2E9</color>
+    <color name="m3_surface_variant">#FF43474E</color>
+    <color name="m3_on_surface_variant">#FFC3C6CF</color>
+    <color name="m3_outline">#FF8D9199</color>
+    <color name="m3_outline_variant">#FF43474E</color>
+
+    <!-- Result surface -->
+    <color name="result_bg">#FF181922</color>
+    <color name="result_text">#FFD4D4DC</color>
+
+    <!-- Chip / pill colors -->
+    <color name="chip_bg">#25222731</color>
+    <color name="chip_text">#FFB0B8C8</color>
+</resources>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base M3 dark theme — "Spectral Calculator" -->
+    <style name="Theme.SuperCalc" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- Primary from the cyan-blue spectral range -->
+        <item name="colorPrimary">@color/m3_primary</item>
+        <item name="colorOnPrimary">@color/m3_on_primary</item>
+        <item name="colorPrimaryContainer">@color/m3_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/m3_on_primary_container</item>
+        <item name="colorSurface">@color/m3_surface</item>
+        <item name="colorOnSurface">@color/m3_on_surface</item>
+        <item name="colorSurfaceVariant">@color/m3_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/m3_on_surface_variant</item>
+        <item name="colorOutline">@color/m3_outline</item>
+        <item name="colorOutlineVariant">@color/m3_outline_variant</item>
+
+        <!-- Typography -->
+        <item name="fontFamily">@font/outfit_regular</item>
+
+        <!-- Status bar -->
+        <item name="android:statusBarColor">@color/void</item>
+        <item name="android:navigationBarColor">@color/void</item>
+        <item name="android:windowBackground">@color/void</item>
+    </style>
+
+    <!-- Card style — subtle glass surface -->
+    <style name="Widget.SuperCalc.Card" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardBackgroundColor">@color/void_elevated</item>
+        <item name="strokeColor">@color/m3_outline_variant</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="cardCornerRadius">16dp</item>
+        <item name="cardElevation">4dp</item>
+    </style>
+
+    <!-- Outlined text field — expression input -->
+    <style name="Widget.SuperCalc.TextInput" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/spectral_evaluate</item>
+        <item name="boxStrokeWidth">1dp</item>
+        <item name="boxStrokeWidthFocused">2dp</item>
+        <item name="boxCornerRadiusTopStart">14dp</item>
+        <item name="boxCornerRadiusTopEnd">14dp</item>
+        <item name="boxCornerRadiusBottomStart">14dp</item>
+        <item name="boxCornerRadiusBottomEnd">14dp</item>
+    </style>
+</resources>

@@ -2,11 +2,12 @@ package com.supercalc;
 
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.Chip;
 
 public class CalcActivity extends AppCompatActivity {
 
@@ -26,12 +27,13 @@ public class CalcActivity extends AppCompatActivity {
         resultView = findViewById(R.id.result_view);
         resultView.setMovementMethod(new ScrollingMovementMethod());
 
-        Button btnEval  = findViewById(R.id.btn_evaluate);
-        Button btnDeriv = findViewById(R.id.btn_derivative);
-        Button btnDeriv2= findViewById(R.id.btn_derivative2);
-        Button btnInt   = findViewById(R.id.btn_integrate);
-        Button btnSolve = findViewById(R.id.btn_solve);
-        Button btnClear = findViewById(R.id.btn_clear);
+        // Operation buttons — MaterialButton extends Button, so findViewById works
+        MaterialButton btnEval   = findViewById(R.id.btn_evaluate);
+        MaterialButton btnDeriv  = findViewById(R.id.btn_derivative);
+        MaterialButton btnDeriv2 = findViewById(R.id.btn_derivative2);
+        MaterialButton btnInt    = findViewById(R.id.btn_integrate);
+        MaterialButton btnSolve  = findViewById(R.id.btn_solve);
+        MaterialButton btnClear  = findViewById(R.id.btn_clear);
 
         btnEval  .setOnClickListener(v -> onEvaluate());
         btnDeriv .setOnClickListener(v -> onDerivative());
@@ -40,11 +42,16 @@ public class CalcActivity extends AppCompatActivity {
         btnSolve .setOnClickListener(v -> onSolve());
         btnClear .setOnClickListener(v -> resultView.setText(""));
 
-        // presets
-        findViewById(R.id.btn_sin)  .setOnClickListener(v -> exprInput.setText("sin(x)"));
-        findViewById(R.id.btn_cos)  .setOnClickListener(v -> exprInput.setText("cos(x)"));
-        findViewById(R.id.btn_x2)   .setOnClickListener(v -> exprInput.setText("x^2"));
-        findViewById(R.id.btn_exp)  .setOnClickListener(v -> exprInput.setText("exp(-x)"));
+        // Preset chips — set expression text and auto-evaluate
+        Chip chipSin = findViewById(R.id.chip_sin);
+        Chip chipCos = findViewById(R.id.chip_cos);
+        Chip chipX2  = findViewById(R.id.chip_x2);
+        Chip chipExp = findViewById(R.id.chip_exp);
+
+        chipSin.setOnClickListener(v -> { exprInput.setText("sin(x)"); onEvaluate(); });
+        chipCos.setOnClickListener(v -> { exprInput.setText("cos(x)"); onEvaluate(); });
+        chipX2 .setOnClickListener(v -> { exprInput.setText("x^2");     onEvaluate(); });
+        chipExp.setOnClickListener(v -> { exprInput.setText("exp(-x)"); onEvaluate(); });
     }
 
     private String getExpr()  { return exprInput.getText().toString().trim(); }
@@ -72,39 +79,39 @@ public class CalcActivity extends AppCompatActivity {
 
     private void onEvaluate() {
         String e = getExpr(); if (e.isEmpty()) { toast("Enter an expression"); return; }
-        double x = getX();
-        appendResult("f(" + x + ")", CalcEngine.evaluate(e, x));
+        appendResult("f(" + fmt(getX()) + ")", CalcEngine.evaluate(e, getX()));
     }
 
     private void onDerivative() {
         String e = getExpr(); if (e.isEmpty()) { toast("Enter an expression"); return; }
-        double x = getX();
-        appendResult("f'(" + x + ")", CalcEngine.derivative(e, x, 1e-6));
+        appendResult("f'(" + fmt(getX()) + ")", CalcEngine.derivative(e, getX(), 1e-6));
     }
 
     private void onDerivative2() {
         String e = getExpr(); if (e.isEmpty()) { toast("Enter an expression"); return; }
-        double x = getX();
-        appendResult("f''(" + x + ")", CalcEngine.derivative2(e, x, 1e-6));
+        appendResult("f''(" + fmt(getX()) + ")", CalcEngine.derivative2(e, getX(), 1e-6));
     }
 
     private void onIntegrate() {
         String e = getExpr(); if (e.isEmpty()) { toast("Enter an expression"); return; }
-        double a = getA(), b = getB();
-        appendResult("I[" + a + "," + b + "]", CalcEngine.integrate(e, a, b));
+        appendResult("I[" + fmt(getA()) + "," + fmt(getB()) + "]",
+                     CalcEngine.integrate(e, getA(), getB()));
     }
 
     private void onSolve() {
         String e = getExpr(); if (e.isEmpty()) { toast("Enter an expression"); return; }
-        double g = getGuess(), lo = getA(), hi = getB();
-        double root = CalcEngine.solve(e, g, lo, hi);
+        double root = CalcEngine.solve(e, getGuess(), getA(), getB());
         if (Double.isNaN(root)) {
             appendResult("Root", Double.NaN);
         } else {
             appendResult("Root", root);
-            double fv = CalcEngine.evaluate(e, root);
-            appendResult("  f(root)", fv);
+            appendResult("  f(root)", CalcEngine.evaluate(e, root));
         }
+    }
+
+    private static String fmt(double v) {
+        if (v == (long) v) return String.format("%d", (long) v);
+        return String.format("%.6g", v);
     }
 
     private void toast(String msg) {

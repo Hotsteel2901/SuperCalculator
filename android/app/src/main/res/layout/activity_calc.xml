@@ -1,108 +1,128 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="12dp">
-
-    <LinearLayout
+    android:background="@color/void"
+    android:fitsSystemWindows="true">
+    <View android:layout_width="match_parent" android:layout_height="4dp" android:background="@drawable/spectral_line" />
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center_horizontal">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Super Function Calculator"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Expression f(x):"
-            android:textSize="14sp" />
-
-        <EditText
-            android:id="@+id/expr_input"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="e.g. x^2 + sin(x)"
-            android:inputType="text"
-            android:singleLine="true"
-            android:layout_marginBottom="4dp" />
-
+        android:layout_height="match_parent"
+        android:paddingStart="16dp" android:paddingEnd="16dp"
+        android:paddingTop="24dp" android:paddingBottom="32dp"
+        android:clipToPadding="false">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
-            <Button android:id="@+id/btn_sin" android:text="sin" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:textSize="11sp" />
-            <Button android:id="@+id/btn_cos" android:text="cos" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:textSize="11sp" />
-            <Button android:id="@+id/btn_x2"  android:text="x^2" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:textSize="11sp" />
-            <Button android:id="@+id/btn_exp" android:text="exp(-x)" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:textSize="11sp" />
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+            <Space android:layout_width="0dp" android:layout_height="24dp" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SuperCalc" android:textSize="32sp" android:textColor="@color/m3_on_surface" android:fontFamily="@font/outfit_regular" android:letterSpacing="-0.02" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Spectral Calculator" android:textSize="13sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.08" android:layout_marginBottom="24dp" />
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.SuperCalc.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <TextView android:text="Expression f(x)" android:textSize="12sp" android:textColor="@color/spectral_evaluate" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.SuperCalc.TextInput" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="e.g. x^2 + sin(x)" app:hintTextColor="@color/m3_outline">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/expr_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/m3_on_surface" android:textSize="18sp" android:fontFamily="@font/jetbrains_mono" android:singleLine="true" android:inputType="text" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.SuperCalc.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <TextView android:text="Quick Select" android:textSize="12sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content" android:scrollbars="none">
+                        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
+                            <com.google.android.material.chip.Chip android:id="@+id/chip_sin" style="@style/Widget.Material3.Chip.Suggestion" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="sin(x)" android:fontFamily="@font/jetbrains_mono" android:textSize="11sp" android:checkable="false" android:layout_marginEnd="6dp" />
+                            <com.google.android.material.chip.Chip android:id="@+id/chip_cos" style="@style/Widget.Material3.Chip.Suggestion" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="cos(x)" android:fontFamily="@font/jetbrains_mono" android:textSize="11sp" android:checkable="false" android:layout_marginEnd="6dp" />
+                            <com.google.android.material.chip.Chip android:id="@+id/chip_x2" style="@style/Widget.Material3.Chip.Suggestion" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="x^2" android:fontFamily="@font/jetbrains_mono" android:textSize="11sp" android:checkable="false" android:layout_marginEnd="6dp" />
+                            <com.google.android.material.chip.Chip android:id="@+id/chip_exp" style="@style/Widget.Material3.Chip.Suggestion" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="exp(-x)" android:fontFamily="@font/jetbrains_mono" android:textSize="11sp" android:checkable="false" android:layout_marginEnd="6dp" />
+                        </LinearLayout>
+                    </HorizontalScrollView>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.SuperCalc.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <TextView android:text="Parameters" android:textSize="12sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                        <com.google.android.material.textfield.TextInputLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="x" style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" app:hintTextColor="@color/m3_outline" android:layout_marginEnd="4dp">
+                            <com.google.android.material.textfield.TextInputEditText android:id="@+id/x_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="0" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:singleLine="true" android:inputType="numberDecimal|numberSigned" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                        <com.google.android.material.textfield.TextInputLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="a" style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" app:hintTextColor="@color/m3_outline" android:layout_marginEnd="4dp">
+                            <com.google.android.material.textfield.TextInputEditText android:id="@+id/a_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="0" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:singleLine="true" android:inputType="numberDecimal|numberSigned" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                        <com.google.android.material.textfield.TextInputLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="b" style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" app:hintTextColor="@color/m3_outline" android:layout_marginEnd="4dp">
+                            <com.google.android.material.textfield.TextInputEditText android:id="@+id/b_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="1" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:singleLine="true" android:inputType="numberDecimal|numberSigned" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                        <com.google.android.material.textfield.TextInputLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="guess" style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" app:hintTextColor="@color/m3_outline" android:layout_marginEnd="4dp">
+                            <com.google.android.material.textfield.TextInputEditText android:id="@+id/guess_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="0" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:singleLine="true" android:inputType="numberDecimal|numberSigned" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.SuperCalc.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <TextView android:text="Operations" android:textSize="12sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_evaluate" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="f(x)" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp" app:strokeColor="@color/spectral_evaluate" app:strokeWidth="1dp" />
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_derivative" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="f'(x)" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp" app:strokeColor="@color/spectral_derivative" app:strokeWidth="1dp" />
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_derivative2" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="f''(x)" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp" app:strokeColor="@color/spectral_derivative2" app:strokeWidth="1dp" />
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_integrate" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="Integrate" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp" app:strokeColor="@color/spectral_integrate" app:strokeWidth="1dp" />
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_solve" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="Solve=0" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp" app:strokeColor="@color/spectral_solve" app:strokeWidth="1dp" />
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_clear" style="@style/Widget.Material3.Button.TextButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="Clear" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp"  />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.SuperCalc.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <TextView android:text="Results" android:textSize="12sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <TextView android:id="@+id/result_view" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="200dp" android:background="@color/result_bg" android:padding="14dp" android:textSize="13sp" android:textColor="@color/result_text" android:fontFamily="@font/jetbrains_mono" android:lineSpacingExtra="4dp" android:scrollbars="vertical" android:text="Ready. Enter expression and press an operation." />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SuperCalc AlphaV1  |  AI-Generated" android:textSize="11sp" android:textColor="@color/m3_outline_variant" android:fontFamily="@font/outfit_regular" android:layout_marginTop="12dp" />
         </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="4dp">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="x =" android:textSize="14sp" android:layout_gravity="center_vertical" />
-            <EditText android:id="@+id/x_input" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="0" android:inputType="numberDecimal|numberSigned" android:singleLine="true" android:layout_marginStart="8dp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="4dp">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="a =" android:textSize="14sp" android:layout_gravity="center_vertical" />
-            <EditText android:id="@+id/a_input" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="0" android:inputType="numberDecimal|numberSigned" android:singleLine="true" android:layout_marginStart="4dp" />
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="b =" android:textSize="14sp" android:layout_gravity="center_vertical" android:layout_marginStart="8dp" />
-            <EditText android:id="@+id/b_input" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="1" android:inputType="numberDecimal|numberSigned" android:singleLine="true" android:layout_marginStart="4dp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="guess =" android:textSize="14sp" android:layout_gravity="center_vertical" />
-            <EditText android:id="@+id/guess_input" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="0" android:inputType="numberDecimal|numberSigned" android:singleLine="true" android:layout_marginStart="8dp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="4dp">
-            <Button android:id="@+id/btn_evaluate"    android:text="f(x)"  android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" />
-            <Button android:id="@+id/btn_derivative"  android:text="f'(x)" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" />
-            <Button android:id="@+id/btn_derivative2" android:text="f''(x)" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
-            <Button android:id="@+id/btn_integrate" android:text="Integrate" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" />
-            <Button android:id="@+id/btn_solve"     android:text="Solve=0"  android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" />
-            <Button android:id="@+id/btn_clear"     android:text="Clear"     android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" />
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/result_view"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:background="#f5f5f5"
-            android:padding="8dp"
-            android:textSize="13sp"
-            android:typeface="monospace"
-            android:scrollbars="vertical"
-            android:text="Results will appear here...\n" />
-
-    </LinearLayout>
-</ScrollView>
+    </androidx.core.widget.NestedScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
