@@ -34,34 +34,6 @@ jobs:
           path: calc_core.dll
           retention-days: 7
 
-  # =========================================================================
-  #  macOS x86_64 + ARM64
-  # =========================================================================
-  build-macos:
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      matrix:
-        include:
-          - runner: macos-13
-            arch: x86_64
-            artifact: calc_core-macos-x86_64
-          - runner: macos-latest
-            arch: arm64
-            artifact: calc_core-macos-arm64
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Compile calc_core.dylib (macOS ${{ matrix.arch }})
-        run: |
-          gcc -shared -O2 -fPIC -o calc_core.dylib calc_core.c -lm
-          file calc_core.dylib
-          ls -lh calc_core.dylib
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.artifact }}
-          path: calc_core.dylib
-          retention-days: 7
 
   # =========================================================================
   #  Linux x86_64 + aarch64 cross-compile
@@ -104,7 +76,7 @@ jobs:
   #  Optional: bundle & publish as GitHub Release (uses built-in gh CLI only)
   # =========================================================================
   release:
-    needs: [build-windows, build-macos, build-linux]
+    needs: [build-windows, build-linux]
     if: ${{ inputs.push-release && inputs.release-tag != '' }}
     runs-on: ubuntu-latest
     permissions:
@@ -120,8 +92,6 @@ jobs:
         run: |
           mkdir -p release
           cp dist/calc_core-windows-x86_64/calc_core.dll          release/calc_core.dll
-          cp dist/calc_core-macos-x86_64/calc_core.dylib          release/calc_core_x86_64.dylib
-          cp dist/calc_core-macos-arm64/calc_core.dylib           release/calc_core_arm64.dylib
           cp dist/calc_core-linux-x86_64/calc_core_x86_64.so      release/calc_core_x86_64.so
           cp dist/calc_core-linux-aarch64/calc_core_aarch64.so    release/calc_core_aarch64.so
           cp calc_core.c calc_bridge.py super_calc_bridged.py README.md README_CN.md .gitignore release/
@@ -148,8 +118,6 @@ jobs:
           | Platform | Architecture | File |
           |----------|-------------|------|
           | Windows | x64 | calc_core.dll |
-          | macOS | x86_64 | calc_core_x86_64.dylib |
-          | macOS | ARM64 | calc_core_arm64.dylib |
           | Linux | x86_64 | calc_core_x86_64.so |
           | Linux | ARM64 | calc_core_aarch64.so |
           
