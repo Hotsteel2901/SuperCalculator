@@ -3,6 +3,7 @@
 > 超级函数绘图计算器 — 基于桥接模式(Bridge Pattern)，融合 C 与 Python 优势的高性能函数计算与可视化工具
 
 [English](README.md) | **中文**
+> **注意：** 本项目完全由 AI (Claude Code) 生成，请自行评估使用风险。
 
 ## 架构
 

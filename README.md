@@ -1,6 +1,7 @@
 # Super Function Graphing Calculator
 
 [中文](README_CN.md) | **English**
+> **Note:** This project was generated entirely by AI (Claude Code). Use at your own discretion.
 A high-performance function graphing calculator using the **Bridge Pattern**:
 C for computation, Python for the GUI, and `ctypes` as the bridge.
 
