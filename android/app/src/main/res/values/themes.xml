@@ -18,14 +18,14 @@
         <item name="fontFamily">@font/outfit_regular</item>
 
         <!-- Status bar -->
-        <item name="android:statusBarColor">@color/void</item>
-        <item name="android:navigationBarColor">@color/void</item>
-        <item name="android:windowBackground">@color/void</item>
+        <item name="android:statusBarColor">@color/sc_void</item>
+        <item name="android:navigationBarColor">@color/sc_void</item>
+        <item name="android:windowBackground">@color/sc_void</item>
     </style>
 
     <!-- Card style — subtle glass surface -->
     <style name="Widget.SuperCalc.Card" parent="Widget.Material3.CardView.Elevated">
-        <item name="cardBackgroundColor">@color/void_elevated</item>
+        <item name="cardBackgroundColor">@color/sc_void_elevated</item>
         <item name="strokeColor">@color/m3_outline_variant</item>
         <item name="strokeWidth">1dp</item>
         <item name="cardCornerRadius">16dp</item>

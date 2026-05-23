@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Void background scale -->
-    <color name="void">#FF0A0B10</color>
+    <color name="sc_void">#FF0A0B10</color>
     <color name="void_surface">#FF12131C</color>
     <color name="void_elevated">#FF1A1B28</color>
     <color name="void_overlay">#E61E1F2E</color>
