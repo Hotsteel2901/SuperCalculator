@@ -23,6 +23,9 @@ public class CalcEngine {
     public static native double solve(String expr, double guess,
                                       double xmin, double xmax);
 
+    /** Evaluate f(x) for multiple x values. */
+    public static native double[] evaluateArray(String expr, double[] xs);
+
     /** Last error message from the C core. */
     public static native String getLastError();
 }

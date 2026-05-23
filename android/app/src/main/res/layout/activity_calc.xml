@@ -104,6 +104,9 @@
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
                         <com.google.android.material.button.MaterialButton android:id="@+id/btn_integrate" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="Integrate" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp" app:strokeColor="@color/spectral_integrate" app:strokeWidth="1dp" />
                         <com.google.android.material.button.MaterialButton android:id="@+id/btn_solve" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="Solve=0" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp" app:strokeColor="@color/spectral_solve" app:strokeWidth="1dp" />
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_plot" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="Plot" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp" app:strokeColor="@color/spectral_evaluate" app:strokeWidth="1dp" />
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
                         <com.google.android.material.button.MaterialButton android:id="@+id/btn_clear" style="@style/Widget.Material3.Button.TextButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="Clear" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp"  />
                     </LinearLayout>
                 </LinearLayout>
@@ -120,6 +123,25 @@
                     android:padding="16dp">
                     <TextView android:text="Results" android:textSize="12sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
                     <TextView android:id="@+id/result_view" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="200dp" android:background="@color/result_bg" android:padding="14dp" android:textSize="13sp" android:textColor="@color/result_text" android:fontFamily="@font/jetbrains_mono" android:lineSpacingExtra="4dp" android:scrollbars="vertical" android:text="Ready. Enter expression and press an operation." />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.SuperCalc.Card"
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                android:layout_marginBottom="12dp"
+                android:visibility="gone"
+                android:id="@+id/graph_card">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <TextView android:text="Function Graph" android:textSize="12sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <com.github.mikephil.charting.charts.LineChart
+                        android:id="@+id/line_chart"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SuperCalc AlphaV1  |  AI-Generated" android:textSize="11sp" android:textColor="@color/m3_outline_variant" android:fontFamily="@font/outfit_regular" android:layout_marginTop="12dp" />

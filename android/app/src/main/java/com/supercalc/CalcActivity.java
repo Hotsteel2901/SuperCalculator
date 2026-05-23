@@ -8,11 +8,22 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
+import com.google.android.material.card.MaterialCardView;
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CalcActivity extends AppCompatActivity {
 
     private EditText exprInput, xInput, aInput, bInput, guessInput;
     private TextView resultView;
+    private LineChart lineChart;
+    private MaterialCardView graphCard;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +37,8 @@ public class CalcActivity extends AppCompatActivity {
         guessInput = findViewById(R.id.guess_input);
         resultView = findViewById(R.id.result_view);
         resultView.setMovementMethod(new ScrollingMovementMethod());
+        lineChart  = findViewById(R.id.line_chart);
+        graphCard  = findViewById(R.id.graph_card);
 
         // Operation buttons — MaterialButton extends Button, so findViewById works
         MaterialButton btnEval   = findViewById(R.id.btn_evaluate);
@@ -33,6 +46,7 @@ public class CalcActivity extends AppCompatActivity {
         MaterialButton btnDeriv2 = findViewById(R.id.btn_derivative2);
         MaterialButton btnInt    = findViewById(R.id.btn_integrate);
         MaterialButton btnSolve  = findViewById(R.id.btn_solve);
+        MaterialButton btnPlot   = findViewById(R.id.btn_plot);
         MaterialButton btnClear  = findViewById(R.id.btn_clear);
 
         btnEval  .setOnClickListener(v -> onEvaluate());
@@ -40,6 +54,7 @@ public class CalcActivity extends AppCompatActivity {
         btnDeriv2.setOnClickListener(v -> onDerivative2());
         btnInt   .setOnClickListener(v -> onIntegrate());
         btnSolve .setOnClickListener(v -> onSolve());
+        btnPlot  .setOnClickListener(v -> onPlot());
         btnClear .setOnClickListener(v -> resultView.setText(""));
 
         // Preset chips — set expression text and auto-evaluate
@@ -77,6 +92,11 @@ public class CalcActivity extends AppCompatActivity {
         resultView.append(line + "\n");
     }
 
+    private void appendResult(String label, int value) {
+        String line = label + " = " + value + " points plotted";
+        resultView.append(line + "\n");
+    }
+
     private void onEvaluate() {
         String e = getExpr(); if (e.isEmpty()) { toast("Enter an expression"); return; }
         appendResult("f(" + fmt(getX()) + ")", CalcEngine.evaluate(e, getX()));
@@ -107,6 +127,68 @@ public class CalcActivity extends AppCompatActivity {
             appendResult("Root", root);
             appendResult("  f(root)", CalcEngine.evaluate(e, root));
         }
+    }
+
+    private void onPlot() {
+        String e = getExpr(); if (e.isEmpty()) { toast("Enter an expression"); return; }
+        double xMin = getA();
+        double xMax = getB();
+        if (xMin >= xMax) {
+            toast("Invalid range: a must be less than b");
+            return;
+        }
+        
+        int numPoints = 200;
+        double[] xs = new double[numPoints];
+        for (int i = 0; i < numPoints; i++) {
+            xs[i] = xMin + (xMax - xMin) * i / (numPoints - 1);
+        }
+        
+        double[] ys = CalcEngine.evaluateArray(e, xs);
+        if (ys == null) {
+            toast("Error: " + CalcEngine.getLastError());
+            return;
+        }
+        
+        List<Entry> entries = new ArrayList<>();
+        for (int i = 0; i < numPoints; i++) {
+            if (!Double.isNaN(ys[i]) && !Double.isInfinite(ys[i])) {
+                entries.add(new Entry((float) xs[i], (float) ys[i]));
+            }
+        }
+        
+        if (entries.isEmpty()) {
+            toast("No valid points to plot");
+            return;
+        }
+        
+        LineDataSet dataSet = new LineDataSet(entries, e);
+        dataSet.setColor(0xFF1f77b4);
+        dataSet.setLineWidth(2f);
+        dataSet.setDrawCircles(false);
+        dataSet.setDrawValues(false);
+        
+        LineData lineData = new LineData(dataSet);
+        lineChart.setData(lineData);
+        
+        XAxis xAxis = lineChart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setDrawGridLines(true);
+        xAxis.setGridColor(0xFF45475a);
+        
+        YAxis yAxisLeft = lineChart.getAxisLeft();
+        yAxisLeft.setDrawGridLines(true);
+        yAxisLeft.setGridColor(0xFF45475a);
+        
+        YAxis yAxisRight = lineChart.getAxisRight();
+        yAxisRight.setEnabled(false);
+        
+        lineChart.getDescription().setEnabled(false);
+        lineChart.getLegend().setEnabled(true);
+        lineChart.invalidate();
+        
+        graphCard.setVisibility(android.view.View.VISIBLE);
+        appendResult("Plot", numPoints);
     }
 
     private static String fmt(double v) {

@@ -12,6 +12,7 @@ double derivative2(const char* expr, double x, double h);
 double integrate_adaptive(const char* expr, double a, double b, double tol);
 double solve_equation(const char* expr, double guess, double xmin, double xmax,
                       double tol, int max_iter);
+void evaluate_array(const char* expr, const double* xs, double* out, int n);
 const char* get_last_error(void);
 
 /* Helper: extract UTF-8 string from jstring, call fn, release, return */
@@ -74,4 +75,38 @@ Java_com_supercalc_CalcEngine_solve(JNIEnv* env, jclass clazz,
 JNIEXPORT jstring JNICALL
 Java_com_supercalc_CalcEngine_getLastError(JNIEnv* env, jclass clazz) {
     return (*env)->NewStringUTF(env, get_last_error());
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_supercalc_CalcEngine_evaluateArray(JNIEnv* env, jclass clazz,
+                                             jstring expr, jdoubleArray xs) {
+    const char* str = (*env)->GetStringUTFChars(env, expr, NULL);
+    if (!str) return NULL;
+    
+    jsize n = (*env)->GetArrayLength(env, xs);
+    jdouble* x_vals = (*env)->GetDoubleArrayElements(env, xs, NULL);
+    if (!x_vals) {
+        (*env)->ReleaseStringUTFChars(env, expr, str);
+        return NULL;
+    }
+    
+    double* results = malloc(n * sizeof(double));
+    if (!results) {
+        (*env)->ReleaseDoubleArrayElements(env, xs, x_vals, JNI_ABORT);
+        (*env)->ReleaseStringUTFChars(env, expr, str);
+        return NULL;
+    }
+    
+    evaluate_array(str, x_vals, results, n);
+    
+    jdoubleArray result_array = (*env)->NewDoubleArray(env, n);
+    if (result_array) {
+        (*env)->SetDoubleArrayRegion(env, result_array, 0, n, results);
+    }
+    
+    (*env)->ReleaseDoubleArrayElements(env, xs, x_vals, JNI_ABORT);
+    (*env)->ReleaseStringUTFChars(env, expr, str);
+    free(results);
+    
+    return result_array;
 }
