@@ -1,0 +1,26 @@
+name: Build Linux .so
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'AlphaV1-*'
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile calc_core.so
+        run: |
+          gcc -shared -O2 -fPIC -o calc_core.so calc_core.c -lm
+          file calc_core.so
+          ls -lh calc_core.so
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: calc_core-linux-x86_64
+          path: calc_core.so
+          retention-days: 7
