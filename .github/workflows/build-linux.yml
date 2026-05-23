@@ -9,18 +9,35 @@ on:
 jobs:
   build-linux:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            cc: gcc
+            artifact: calc_core-linux-x86_64
+            output: calc_core.so
+          - arch: aarch64
+            cc: aarch64-linux-gnu-gcc
+            artifact: calc_core-linux-arm64
+            output: calc_core.so
     steps:
       - uses: actions/checkout@v4
 
-      - name: Compile calc_core.so
+      - name: Install cross-compiler (ARM64)
+        if: matrix.arch == 'aarch64'
         run: |
-          gcc -shared -O2 -fPIC -o calc_core.so calc_core.c -lm
-          file calc_core.so
-          ls -lh calc_core.so
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-aarch64-linux-gnu
 
-      - name: Upload artifact
+      - name: Compile calc_core.so (${{ matrix.arch }})
+        run: |
+          ${{ matrix.cc }} -shared -O2 -fPIC -o ${{ matrix.output }} calc_core.c -lm
+          file ${{ matrix.output }}
+          ls -lh ${{ matrix.output }}
+
+      - name: Upload artifact (${{ matrix.arch }})
         uses: actions/upload-artifact@v4
         with:
-          name: calc_core-linux-x86_64
-          path: calc_core.so
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.output }}
           retention-days: 7
