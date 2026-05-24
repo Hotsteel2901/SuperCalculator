@@ -6,87 +6,60 @@
     <title>SuperCalculator - 超级函数绘图计算器</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
     <style>
         :root {
-            --md-sys-color-primary: #0A61F5;
-            --md-sys-color-on-primary: #FFFFFF;
-            --md-sys-color-primary-container: #D5E3FF;
-            --md-sys-color-on-primary-container: #001C44;
-            --md-sys-color-secondary: #5C5D72;
-            --md-sys-color-on-secondary: #FFFFFF;
-            --md-sys-color-secondary-container: #E1E1F9;
-            --md-sys-color-on-secondary-container: #191A2C;
-            --md-sys-color-tertiary: #7B4B9E;
-            --md-sys-color-on-tertiary: #FFFFFF;
-            --md-sys-color-tertiary-container: #F2D9FF;
-            --md-sys-color-on-tertiary-container: #2E004A;
-            --md-sys-color-error: #BA1A1A;
-            --md-sys-color-on-error: #FFFFFF;
-            --md-sys-color-background: #FDFBFF;
-            --md-sys-color-on-background: #1A1B1E;
-            --md-sys-color-surface: #FDFBFF;
-            --md-sys-color-on-surface: #1A1B1E;
-            --md-sys-color-surface-container: #F0F0F5;
-            --md-sys-color-outline: #75767D;
-            --md-sys-color-outline-variant: #C5C6CE;
-            --md-sys-elevation-1: 0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24);
-            --md-sys-elevation-2: 0px 3px 6px rgba(0,0,0,0.15), 0px 2px 4px rgba(0,0,0,0.12);
-            --md-sys-elevation-3: 0px 10px 20px rgba(0,0,0,0.15), 0px 3px 6px rgba(0,0,0,0.10);
-            --md-sys-shape-corner-small: 8px;
-            --md-sys-shape-corner-medium: 12px;
-            --md-sys-shape-corner-large: 16px;
-            --md-sys-shape-corner-xl: 28px;
-            --md-sys-motion-duration: 0.3s;
-            --md-sys-motion-easing: cubic-bezier(0.2, 0, 0, 1);
+            --primary-hue: 210;
+            --secondary-hue: 280;
+            --accent-hue: 190;
+            
+            --bg-gradient-start: #0a0a0f;
+            --bg-gradient-mid: #1a1a2e;
+            --bg-gradient-end: #0f0f1a;
+            
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-highlight: rgba(255, 255, 255, 0.15);
+            --glass-shadow: rgba(0, 0, 0, 0.3);
+            
+            --primary-glow: rgba(100, 150, 255, 0.4);
+            --secondary-glow: rgba(180, 100, 255, 0.3);
+            --accent-glow: rgba(50, 200, 255, 0.35);
+            
+            --text-primary: rgba(255, 255, 255, 0.95);
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-tertiary: rgba(255, 255, 255, 0.5);
+            
+            --blur-strength: 20px;
+            --blur-strong: 40px;
+            
+            --elevation-1: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --elevation-2: 0 12px 48px rgba(0, 0, 0, 0.5);
+            --elevation-3: 0 20px 80px rgba(0, 0, 0, 0.6);
+            
+            --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
 
-        [data-theme="dark"] {
-            --md-sys-color-primary: #A8C7FA;
-            --md-sys-color-on-primary: #003285;
-            --md-sys-color-primary-container: #0048BD;
-            --md-sys-color-on-primary-container: #D5E3FF;
-            --md-sys-color-secondary: #C5C5DD;
-            --md-sys-color-on-secondary: #2E2F42;
-            --md-sys-color-secondary-container: #444559;
-            --md-sys-color-on-secondary-container: #E1E1F9;
-            --md-sys-color-tertiary: #D6A8FF;
-            --md-sys-color-on-tertiary: #4A0072;
-            --md-sys-color-tertiary-container: #623285;
-            --md-sys-color-on-tertiary-container: #F2D9FF;
-            --md-sys-color-background: #1A1B1E;
-            --md-sys-color-on-background: #E3E2E6;
-            --md-sys-color-surface: #1A1B1E;
-            --md-sys-color-on-surface: #E3E2E6;
-            --md-sys-color-surface-container: #25262C;
-            --md-sys-color-outline: #8F9097;
-            --md-sys-color-outline-variant: #44454C;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root:not([data-theme="light"]) {
-                --md-sys-color-primary: #A8C7FA;
-                --md-sys-color-on-primary: #003285;
-                --md-sys-color-primary-container: #0048BD;
-                --md-sys-color-on-primary-container: #D5E3FF;
-                --md-sys-color-secondary: #C5C5DD;
-                --md-sys-color-on-secondary: #2E2F42;
-                --md-sys-color-secondary-container: #444559;
-                --md-sys-color-on-secondary-container: #E1E1F9;
-                --md-sys-color-tertiary: #D6A8FF;
-                --md-sys-color-on-tertiary: #4A0072;
-                --md-sys-color-tertiary-container: #623285;
-                --md-sys-color-on-tertiary-container: #F2D9FF;
-                --md-sys-color-background: #1A1B1E;
-                --md-sys-color-on-background: #E3E2E6;
-                --md-sys-color-surface: #1A1B1E;
-                --md-sys-color-on-surface: #E3E2E6;
-                --md-sys-color-surface-container: #25262C;
-                --md-sys-color-outline: #8F9097;
-                --md-sys-color-outline-variant: #44454C;
-            }
+        [data-theme="light"] {
+            --bg-gradient-start: #f0f4ff;
+            --bg-gradient-mid: #e8efff;
+            --bg-gradient-end: #f5f8ff;
+            
+            --glass-bg: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --glass-highlight: rgba(255, 255, 255, 0.6);
+            --glass-shadow: rgba(100, 120, 180, 0.15);
+            
+            --primary-glow: rgba(100, 150, 255, 0.3);
+            --secondary-glow: rgba(180, 100, 255, 0.25);
+            --accent-glow: rgba(50, 200, 255, 0.25);
+            
+            --text-primary: rgba(10, 10, 30, 0.95);
+            --text-secondary: rgba(10, 10, 30, 0.7);
+            --text-tertiary: rgba(10, 10, 30, 0.5);
         }
 
         * {
@@ -95,12 +68,92 @@
             box-sizing: border-box;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
-            font-family: 'Roboto', sans-serif;
-            background-color: var(--md-sys-color-background);
-            color: var(--md-sys-color-on-background);
-            line-height: 1.6;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-mid) 50%, var(--bg-gradient-end) 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: var(--text-primary);
             overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse at 20% 20%, var(--primary-glow) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, var(--secondary-glow) 0%, transparent 50%),
+                radial-gradient(ellipse at 40% 60%, var(--accent-glow) 0%, transparent 40%);
+            pointer-events: none;
+            z-index: 0;
+            animation: ambientPulse 15s ease-in-out infinite;
+        }
+
+        @keyframes ambientPulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-strength));
+            -webkit-backdrop-filter: blur(var(--blur-strength));
+            border: 1px solid var(--glass-border);
+            border-top: 1px solid var(--glass-highlight);
+            border-left: 1px solid var(--glass-highlight);
+            box-shadow: var(--elevation-1);
+        }
+
+        .glass-strong {
+            backdrop-filter: blur(var(--blur-strong));
+            -webkit-backdrop-filter: blur(var(--blur-strong));
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            33% { transform: translateY(-10px) rotate(1deg); }
+            66% { transform: translateY(-5px) rotate(-1deg); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px var(--primary-glow), 0 0 40px var(--primary-glow); }
+            50% { box-shadow: 0 0 40px var(--primary-glow), 0 0 80px var(--primary-glow); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
         }
 
         @keyframes fadeIn {
@@ -108,83 +161,19 @@
             to { opacity: 1; }
         }
 
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        @keyframes gradientFlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
 
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
-        @keyframes scaleIn {
-            from {
-                opacity: 0;
-                transform: scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        @keyframes shimmer {
-            0% { background-position: -1000px 0; }
-            100% { background-position: 1000px 0; }
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .animate-fade-in {
-            animation: fadeIn 0.6s var(--md-sys-motion-easing);
-        }
-
-        .animate-slide-up {
-            animation: slideUp 0.6s var(--md-sys-motion-easing);
-        }
-
-        .animate-slide-down {
-            animation: slideDown 0.6s var(--md-sys-motion-easing);
-        }
-
-        .animate-scale-in {
-            animation: scaleIn 0.6s var(--md-sys-motion-easing);
-        }
-
-        .animate-float {
-            animation: float 3s ease-in-out infinite;
-        }
-
-        .reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.6s var(--md-sys-motion-easing);
-        }
-
-        .reveal.active {
-            opacity: 1;
-            transform: translateY(0);
+        @keyframes ripple {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(4); opacity: 0; }
         }
 
         .app-bar {
@@ -192,85 +181,130 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 64px;
-            background-color: var(--md-sys-color-surface);
+            height: 72px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 16px;
-            box-shadow: var(--md-sys-elevation-1);
+            padding: 0 24px;
             z-index: 1000;
+            transition: all 0.4s var(--transition-smooth);
+        }
+
+        .app-bar.scrolled {
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(var(--blur-strong));
+            -webkit-backdrop-filter: blur(var(--blur-strong));
+            border-bottom: 1px solid var(--glass-border);
         }
 
         .app-bar__title {
-            font-size: 22px;
-            font-weight: 500;
-            color: var(--md-sys-color-on-surface);
+            font-size: 24px;
+            font-weight: 600;
             display: flex;
             align-items: center;
             gap: 12px;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .app-bar__actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .icon-button {
+        .app-bar__logo {
             width: 40px;
             height: 40px;
-            border-radius: 50%;
-            border: none;
-            background: transparent;
-            color: var(--md-sys-color-on-surface);
-            cursor: pointer;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary-glow), var(--accent-glow));
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all var(--md-sys-motion-duration) var(--md-sys-motion-easing);
             position: relative;
             overflow: hidden;
         }
 
+        .app-bar__logo::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+            background-size: 200% 200%;
+            animation: shimmer 3s infinite;
+        }
+
+        .app-bar__logo .material-icons {
+            color: white;
+            font-size: 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .app-bar__actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .icon-button {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-strength));
+            -webkit-backdrop-filter: blur(var(--blur-strength));
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .icon-button::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--primary-glow), var(--accent-glow));
+            opacity: 0;
+            transition: opacity 0.3s var(--transition-smooth);
+        }
+
+        .icon-button:hover::before {
+            opacity: 0.3;
+        }
+
         .icon-button:hover {
-            background-color: var(--md-sys-color-surface-container);
-            transform: scale(1.1);
+            transform: translateY(-2px);
+            border-color: var(--glass-highlight);
+            box-shadow: 0 8px 24px var(--primary-glow);
         }
 
         .icon-button:active {
             transform: scale(0.95);
         }
 
-        .icon-button::after {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background: radial-gradient(circle, var(--md-sys-color-on-surface) 0%, transparent 70%);
-            transform: scale(0);
-            opacity: 0;
-            transition: transform 0.3s var(--md-sys-motion-easing), opacity 0.3s var(--md-sys-motion-easing);
+        .icon-button .material-icons {
+            position: relative;
+            z-index: 1;
+            transition: transform 0.3s var(--transition-smooth);
         }
 
-        .icon-button:active::after {
-            transform: scale(2);
-            opacity: 0.1;
+        .icon-button:hover .material-icons {
+            transform: scale(1.1);
         }
 
         .nav-drawer {
             position: fixed;
-            top: 64px;
+            top: 72px;
             left: 0;
-            width: 320px;
-            height: calc(100vh - 64px);
-            background-color: var(--md-sys-color-surface);
-            padding: 16px;
+            width: 340px;
+            height: calc(100vh - 72px);
+            padding: 24px 16px;
             overflow-y: auto;
             transform: translateX(-100%);
-            transition: transform var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+            transition: transform 0.5s var(--transition-smooth);
             z-index: 999;
-            box-shadow: var(--md-sys-elevation-3);
         }
 
         .nav-drawer--open {
@@ -280,14 +314,15 @@
         .nav-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            border-radius: var(--md-sys-shape-corner-medium);
-            color: var(--md-sys-color-on-surface);
+            gap: 16px;
+            padding: 14px 18px;
+            border-radius: 16px;
+            color: var(--text-primary);
             text-decoration: none;
-            transition: all var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+            transition: all 0.3s var(--transition-smooth);
             position: relative;
             overflow: hidden;
+            margin-bottom: 8px;
         }
 
         .nav-item::before {
@@ -296,44 +331,59 @@
             left: 0;
             top: 0;
             bottom: 0;
-            width: 3px;
-            background-color: var(--md-sys-color-primary);
+            width: 4px;
+            background: linear-gradient(180deg, var(--primary-glow), var(--accent-glow));
             transform: scaleY(0);
-            transition: transform var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+            transition: transform 0.3s var(--transition-smooth);
         }
 
-        .nav-item:hover {
-            background-color: var(--md-sys-color-surface-container);
-            transform: translateX(4px);
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--primary-glow), var(--secondary-glow));
+            opacity: 0;
+            transition: opacity 0.3s var(--transition-smooth);
         }
 
         .nav-item:hover::before {
             transform: scaleY(1);
         }
 
+        .nav-item:hover::after {
+            opacity: 0.15;
+        }
+
+        .nav-item:hover {
+            transform: translateX(8px);
+            border-color: var(--glass-highlight);
+        }
+
         .nav-item .material-icons {
-            transition: transform var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+            position: relative;
+            z-index: 1;
+            transition: all 0.3s var(--transition-smooth);
         }
 
         .nav-item:hover .material-icons {
-            transform: scale(1.2);
-            color: var(--md-sys-color-primary);
+            transform: scale(1.2) rotate(5deg);
+            color: var(--accent-glow);
+        }
+
+        .nav-item span {
+            position: relative;
+            z-index: 1;
+            font-weight: 500;
         }
 
         .hero {
-            margin-top: 64px;
-            padding: 80px 16px;
-            background: linear-gradient(135deg, var(--md-sys-color-primary-container) 0%, var(--md-sys-color-tertiary-container) 100%);
-            background-size: 200% 200%;
-            animation: gradientShift 8s ease infinite;
-            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 120px 24px 80px;
             position: relative;
             overflow: hidden;
-        }
-
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
         }
 
         .hero::before {
@@ -343,51 +393,106 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: rotate 20s linear infinite;
+            background: radial-gradient(circle at 30% 30%, var(--primary-glow) 0%, transparent 40%),
+                        radial-gradient(circle at 70% 70%, var(--secondary-glow) 0%, transparent 40%);
+            animation: rotate 60s linear infinite;
+            pointer-events: none;
         }
 
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        .hero__content {
+            text-align: center;
+            max-width: 900px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero__badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            border-radius: 100px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-strength));
+            -webkit-backdrop-filter: blur(var(--blur-strength));
+            border: 1px solid var(--glass-border);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            animation: slideIn 0.8s var(--transition-bounce);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero__badge::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, var(--primary-glow), var(--accent-glow));
+            opacity: 0.1;
+        }
+
+        .hero__badge .material-icons {
+            font-size: 18px;
+            color: var(--accent-glow);
         }
 
         .hero__title {
-            font-size: 56px;
-            font-weight: 400;
-            color: var(--md-sys-color-on-primary-container);
-            margin-bottom: 16px;
-            letter-spacing: -0.5px;
-            animation: slideDown 0.8s var(--md-sys-motion-easing);
+            font-size: clamp(42px, 8vw, 80px);
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 50%, var(--text-primary) 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: slideIn 0.8s var(--transition-bounce) 0.1s both, gradientFlow 5s ease-in-out infinite;
             position: relative;
+        }
+
+        .hero__title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--primary-glow), transparent);
+            border-radius: 2px;
         }
 
         .hero__subtitle {
-            font-size: 20px;
-            color: var(--md-sys-color-on-primary-container);
-            opacity: 0.8;
-            max-width: 600px;
-            margin: 0 auto 32px;
-            animation: fadeIn 1s var(--md-sys-motion-easing) 0.2s both;
-            position: relative;
+            font-size: clamp(18px, 3vw, 22px);
+            color: var(--text-secondary);
+            max-width: 650px;
+            margin: 0 auto 40px;
+            animation: slideIn 0.8s var(--transition-bounce) 0.2s both;
+            line-height: 1.8;
         }
 
-        .hero .button {
-            animation: scaleIn 0.6s var(--md-sys-motion-easing) 0.4s both;
+        .hero__actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: slideIn 0.8s var(--transition-bounce) 0.3s both;
         }
 
         .button {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 10px 24px;
-            border-radius: var(--md-sys-shape-corner-xl);
-            font-size: 14px;
-            font-weight: 500;
+            gap: 10px;
+            padding: 16px 32px;
+            border-radius: 18px;
+            font-size: 15px;
+            font-weight: 600;
             text-decoration: none;
             cursor: pointer;
             border: none;
-            transition: all var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+            transition: all 0.4s var(--transition-smooth);
             position: relative;
             overflow: hidden;
         }
@@ -396,86 +501,128 @@
             content: '';
             position: absolute;
             top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
-            background-size: 200% 200%;
-            transform: translateX(-100%);
-            transition: transform 0.6s var(--md-sys-motion-easing);
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s var(--transition-smooth);
         }
 
         .button:hover::before {
-            transform: translateX(100%);
+            left: 100%;
         }
 
-        .button--filled {
-            background-color: var(--md-sys-color-primary);
-            color: var(--md-sys-color-on-primary);
+        .button--primary {
+            background: linear-gradient(135deg, var(--primary-glow), var(--accent-glow));
+            color: white;
+            box-shadow: 0 8px 32px var(--primary-glow);
         }
 
-        .button--filled:hover {
-            box-shadow: var(--md-sys-elevation-2);
-            transform: translateY(-2px);
+        .button--primary:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 48px var(--primary-glow), 0 0 80px var(--primary-glow);
         }
 
-        .button--filled:active {
-            transform: translateY(0);
+        .button--glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-strength));
+            -webkit-backdrop-filter: blur(var(--blur-strength));
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
         }
 
-        .button--tonal {
-            background-color: var(--md-sys-color-secondary-container);
-            color: var(--md-sys-color-on-secondary-container);
-        }
-
-        .button--tonal:hover {
-            box-shadow: var(--md-sys-elevation-1);
-            transform: translateY(-1px);
+        .button--glass:hover {
+            background: var(--glass-highlight);
+            transform: translateY(-3px);
+            border-color: var(--glass-highlight);
+            box-shadow: 0 8px 32px var(--glass-shadow);
         }
 
         .button--outlined {
-            background-color: transparent;
-            border: 1px solid var(--md-sys-color-outline);
-            color: var(--md-sys-color-primary);
+            background: transparent;
+            border: 2px solid var(--glass-border);
+            color: var(--text-primary);
         }
 
         .button--outlined:hover {
-            background-color: var(--md-sys-color-primary-container);
-            transform: translateY(-1px);
+            border-color: var(--primary-glow);
+            background: var(--glass-bg);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 32px var(--primary-glow);
+        }
+
+        .button .material-icons {
+            transition: transform 0.3s var(--transition-smooth);
+        }
+
+        .button:hover .material-icons {
+            transform: translateX(4px);
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 0 16px;
+            padding: 0 24px;
+            position: relative;
+            z-index: 1;
         }
 
         .section {
-            padding: 64px 0;
+            padding: 120px 0;
+        }
+
+        .section__header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .section__label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 100px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--accent-glow);
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .section__title {
-            font-size: 32px;
-            font-weight: 400;
-            color: var(--md-sys-color-on-surface);
-            margin-bottom: 32px;
-            text-align: center;
+            font-size: clamp(32px, 5vw, 48px);
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section__subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
         }
 
         .card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
         }
 
         .card {
-            background-color: var(--md-sys-color-surface);
-            border-radius: var(--md-sys-shape-corner-large);
-            padding: 24px;
-            box-shadow: var(--md-sys-elevation-1);
-            transition: all var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+            border-radius: 24px;
+            padding: 32px;
+            transition: all 0.5s var(--transition-smooth);
             position: relative;
             overflow: hidden;
+            animation: scaleIn 0.6s var(--transition-bounce) both;
         }
 
         .card::before {
@@ -485,129 +632,167 @@
             left: 0;
             right: 0;
             height: 3px;
-            background: linear-gradient(90deg, var(--md-sys-color-primary), var(--md-sys-color-tertiary));
+            background: linear-gradient(90deg, var(--primary-glow), var(--secondary-glow), var(--accent-glow));
+            background-size: 200% 100%;
             transform: scaleX(0);
             transform-origin: left;
-            transition: transform var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+            transition: transform 0.5s var(--transition-smooth);
         }
 
-        .card:hover {
-            box-shadow: var(--md-sys-elevation-3);
-            transform: translateY(-4px);
+        .card::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(135deg, var(--primary-glow), var(--accent-glow), var(--secondary-glow));
+            opacity: 0;
+            filter: blur(20px);
+            transition: opacity 0.5s var(--transition-smooth);
+            z-index: -1;
         }
 
         .card:hover::before {
             transform: scaleX(1);
         }
 
+        .card:hover::after {
+            opacity: 0.3;
+        }
+
+        .card:hover {
+            transform: translateY(-12px) scale(1.02);
+            border-color: var(--glass-highlight);
+            box-shadow: var(--elevation-3), 0 0 60px var(--primary-glow);
+        }
+
         .card__icon {
-            width: 48px;
-            height: 48px;
-            border-radius: var(--md-sys-shape-corner-medium);
-            background-color: var(--md-sys-color-primary-container);
-            color: var(--md-sys-color-on-primary-container);
+            width: 64px;
+            height: 64px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--primary-glow), var(--accent-glow));
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 16px;
-            transition: all var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.5s var(--transition-bounce);
+        }
+
+        .card__icon::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+            background-size: 200% 200%;
+            animation: shimmer 3s infinite;
         }
 
         .card:hover .card__icon {
             transform: rotate(10deg) scale(1.1);
-            background: linear-gradient(135deg, var(--md-sys-color-primary-container), var(--md-sys-color-tertiary-container));
+            box-shadow: 0 12px 40px var(--primary-glow);
+        }
+
+        .card__icon .material-icons {
+            font-size: 32px;
+            color: white;
+            position: relative;
+            z-index: 1;
         }
 
         .card__title {
-            font-size: 20px;
-            font-weight: 500;
-            color: var(--md-sys-color-on-surface);
-            margin-bottom: 8px;
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
         }
 
         .card__content {
-            font-size: 14px;
-            color: var(--md-sys-color-on-surface);
-            opacity: 0.8;
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.7;
         }
 
-        .feature-list {
-            list-style: none;
+        .platform-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
         }
 
-        .feature-item {
+        .platform-card {
             display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 16px;
-            background-color: var(--md-sys-color-surface-container);
-            border-radius: var(--md-sys-shape-corner-medium);
-            transition: all var(--md-sys-motion-duration) var(--md-sys-motion-easing);
-        }
-
-        .feature-item:hover {
-            transform: translateX(4px);
-            background-color: var(--md-sys-color-primary-container);
-        }
-
-        .feature-item .material-icons {
-            color: var(--md-sys-color-tertiary);
-            flex-shrink: 0;
-            transition: all var(--md-sys-motion-duration) var(--md-sys-motion-easing);
-        }
-
-        .feature-item:hover .material-icons {
-            transform: scale(1.2) rotate(10deg);
-            color: var(--md-sys-color-on-primary-container);
-        }
-
-        .chip {
-            display: inline-flex;
+            flex-direction: column;
             align-items: center;
-            gap: 8px;
-            padding: 6px 16px;
-            border-radius: 8px;
+            padding: 32px 24px;
+            border-radius: 24px;
+            text-align: center;
+            transition: all 0.5s var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .platform-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--primary-glow), var(--secondary-glow));
+            opacity: 0;
+            filter: blur(30px);
+            transition: opacity 0.5s var(--transition-smooth);
+        }
+
+        .platform-card:hover::before {
+            opacity: 0.2;
+        }
+
+        .platform-card:hover {
+            transform: translateY(-8px) scale(1.03);
+            border-color: var(--glass-highlight);
+            box-shadow: 0 20px 60px var(--glass-shadow);
+        }
+
+        .platform-card__icon {
+            font-size: 56px;
+            background: linear-gradient(135deg, var(--primary-glow), var(--accent-glow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+            transition: all 0.5s var(--transition-bounce);
+            position: relative;
+            z-index: 1;
+        }
+
+        .platform-card:hover .platform-card__icon {
+            transform: scale(1.2) rotate(10deg);
+        }
+
+        .platform-card__name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .platform-card__arch {
             font-size: 14px;
-            background-color: var(--md-sys-color-surface-container);
-            color: var(--md-sys-color-on-surface);
-            border: 1px solid var(--md-sys-color-outline-variant);
-            transition: all var(--md-sys-motion-duration) var(--md-sys-motion-easing);
-        }
-
-        .chip:hover {
-            background-color: var(--md-sys-color-primary-container);
-            transform: scale(1.05);
-            border-color: var(--md-sys-color-primary);
-        }
-
-        .chip .material-icons {
-            transition: transform var(--md-sys-motion-duration) var(--md-sys-motion-easing);
-        }
-
-        .chip:hover .material-icons {
-            transform: scale(1.2);
-        }
-
-        .feature-item .material-icons {
-            color: var(--md-sys-color-tertiary);
-            flex-shrink: 0;
+            color: var(--text-tertiary);
+            position: relative;
+            z-index: 1;
         }
 
         .code-block {
-            background: linear-gradient(90deg, var(--md-sys-color-surface-container) 0%, var(--md-sys-color-surface-container) 50%, var(--md-sys-color-surface-container) 100%);
-            background-size: 200% 100%;
-            border-radius: var(--md-sys-shape-corner-medium);
-            padding: 24px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 18px;
+            padding: 28px;
             overflow-x: auto;
-            font-family: 'Roboto Mono', monospace;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
             font-size: 14px;
-            color: var(--md-sys-color-on-surface);
-            border-left: 3px solid var(--md-sys-color-primary);
-            transition: all var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+            color: var(--text-secondary);
+            border: 1px solid var(--glass-border);
             position: relative;
+            overflow: hidden;
         }
 
         .code-block::before {
@@ -616,82 +801,111 @@
             top: 0;
             left: 0;
             right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
-            background-size: 200% 100%;
-            animation: shimmer 3s infinite;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary-glow), transparent);
+        }
+
+        .code-block::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.03) 50%, transparent 70%);
+            background-size: 200% 200%;
+            animation: shimmer 4s infinite;
             pointer-events: none;
         }
 
         .code-block:hover {
-            border-left-color: var(--md-sys-color-tertiary);
-            box-shadow: var(--md-sys-elevation-1);
+            border-color: var(--glass-highlight);
+            box-shadow: 0 8px 32px var(--glass-shadow);
         }
 
-        .platform-grid {
+        .code-block code {
+            position: relative;
+            z-index: 1;
+        }
+
+        .feature-list {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 16px;
+            margin-top: 32px;
         }
 
-        .platform-card {
+        .feature-item {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 24px;
-            background-color: var(--md-sys-color-surface-container);
-            border-radius: var(--md-sys-shape-corner-large);
-            text-align: center;
-            transition: all var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+            align-items: flex-start;
+            gap: 16px;
+            padding: 20px;
+            border-radius: 18px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            transition: all 0.4s var(--transition-smooth);
         }
 
-        .platform-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--md-sys-elevation-2);
-            background-color: var(--md-sys-color-primary-container);
+        .feature-item:hover {
+            transform: translateX(8px);
+            background: var(--glass-highlight);
+            border-color: var(--glass-highlight);
+            box-shadow: 0 8px 32px var(--primary-glow);
         }
 
-        .platform-card__icon {
-            font-size: 48px;
-            color: var(--md-sys-color-primary);
-            margin-bottom: 12px;
-            transition: all var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+        .feature-item .material-icons {
+            font-size: 28px;
+            background: linear-gradient(135deg, var(--primary-glow), var(--accent-glow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            flex-shrink: 0;
+            margin-top: 2px;
         }
 
-        .platform-card:hover .platform-card__icon {
-            transform: scale(1.2) rotate(5deg);
-            color: var(--md-sys-color-on-primary-container);
+        .feature-item strong {
+            display: block;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            font-weight: 600;
         }
 
-        .platform-card__name {
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--md-sys-color-on-surface);
-            margin-bottom: 4px;
-        }
-
-        .platform-card__arch {
+        .feature-item p {
+            color: var(--text-secondary);
             font-size: 14px;
-            color: var(--md-sys-color-on-surface);
-            opacity: 0.7;
+            line-height: 1.6;
         }
 
         .chip {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 6px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            background-color: var(--md-sys-color-surface-container);
-            color: var(--md-sys-color-on-surface);
-            border: 1px solid var(--md-sys-color-outline-variant);
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 500;
+            background: var(--glass-bg);
+            color: var(--text-secondary);
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s var(--transition-smooth);
+        }
+
+        .chip:hover {
+            background: var(--glass-highlight);
+            border-color: var(--primary-glow);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--primary-glow);
+        }
+
+        .chip .material-icons {
+            font-size: 18px;
+            color: var(--accent-glow);
         }
 
         .footer {
-            background-color: var(--md-sys-color-surface-container);
-            padding: 48px 16px;
-            text-align: center;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-strong));
+            -webkit-backdrop-filter: blur(var(--blur-strong));
+            border-top: 1px solid var(--glass-border);
+            padding: 64px 24px;
             position: relative;
             overflow: hidden;
         }
@@ -702,42 +916,47 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--md-sys-color-primary), var(--md-sys-color-tertiary), var(--md-sys-color-primary));
-            background-size: 200% 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary-glow), var(--secondary-glow), var(--primary-glow), transparent);
             animation: shimmer 3s infinite;
+        }
+
+        .footer__content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 32px;
         }
 
         .footer__links {
             display: flex;
             justify-content: center;
-            gap: 24px;
-            margin-bottom: 24px;
-            animation: fadeIn 0.6s var(--md-sys-motion-easing);
+            gap: 32px;
+            flex-wrap: wrap;
         }
 
         .footer__link {
-            color: var(--md-sys-color-primary);
+            color: var(--text-secondary);
             text-decoration: none;
             font-size: 14px;
-            transition: all var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+            font-weight: 500;
+            transition: all 0.3s var(--transition-smooth);
             position: relative;
         }
 
         .footer__link::after {
             content: '';
             position: absolute;
-            bottom: -2px;
+            bottom: -4px;
             left: 0;
             width: 0;
-            height: 1px;
-            background-color: var(--md-sys-color-primary);
-            transition: width var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary-glow), var(--accent-glow));
+            transition: width 0.3s var(--transition-smooth);
         }
 
         .footer__link:hover {
-            text-decoration: none;
-            transform: translateY(-2px);
+            color: var(--text-primary);
         }
 
         .footer__link:hover::after {
@@ -746,60 +965,73 @@
 
         .footer__text {
             font-size: 14px;
-            color: var(--md-sys-color-on-surface);
-            opacity: 0.7;
-            animation: fadeIn 0.8s var(--md-sys-motion-easing);
+            color: var(--text-tertiary);
+            text-align: center;
+            line-height: 1.8;
         }
 
         .fab {
             position: fixed;
-            bottom: 24px;
-            right: 24px;
-            width: 56px;
-            height: 56px;
-            border-radius: var(--md-sys-shape-corner-large);
-            background-color: var(--md-sys-color-primary-container);
-            color: var(--md-sys-color-on-primary-container);
+            bottom: 28px;
+            right: 28px;
+            width: 64px;
+            height: 64px;
+            border-radius: 22px;
+            background: linear-gradient(135deg, var(--primary-glow), var(--accent-glow));
             border: none;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: var(--md-sys-elevation-2);
-            transition: all var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+            box-shadow: 0 12px 48px var(--primary-glow);
+            transition: all 0.4s var(--transition-bounce);
             z-index: 998;
         }
 
+        .fab::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 22px;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+            background-size: 200% 200%;
+            animation: shimmer 3s infinite;
+        }
+
         .fab:hover {
-            box-shadow: var(--md-sys-elevation-3);
-            transform: translateY(-4px) scale(1.05);
-            animation: pulse 1.5s ease-in-out;
+            transform: translateY(-6px) scale(1.1);
+            box-shadow: 0 20px 80px var(--primary-glow), 0 0 120px var(--primary-glow);
         }
 
         .fab:active {
             transform: scale(0.95);
         }
 
-        .fab span {
-            transition: transform 0.3s var(--md-sys-motion-easing);
+        .fab .material-icons {
+            color: white;
+            font-size: 28px;
+            position: relative;
+            z-index: 1;
+            transition: transform 0.3s var(--transition-smooth);
         }
 
-        .fab:hover span {
-            transform: translateY(-2px);
+        .fab:hover .material-icons {
+            transform: translateY(-3px);
         }
 
         .dialog-overlay {
             position: fixed;
             inset: 0;
-            background-color: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(var(--blur-strong));
+            -webkit-backdrop-filter: blur(var(--blur-strong));
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 2000;
             opacity: 0;
             visibility: hidden;
-            transition: all var(--md-sys-motion-duration) var(--md-sys-motion-easing);
-            backdrop-filter: blur(4px);
+            transition: all 0.4s var(--transition-smooth);
         }
 
         .dialog-overlay--open {
@@ -808,14 +1040,31 @@
         }
 
         .dialog {
-            background-color: var(--md-sys-color-surface);
-            border-radius: var(--md-sys-shape-corner-xl);
-            padding: 24px;
-            max-width: 400px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-strong));
+            -webkit-backdrop-filter: blur(var(--blur-strong));
+            border: 1px solid var(--glass-border);
+            border-radius: 28px;
+            padding: 40px;
+            max-width: 480px;
             width: 90%;
-            transform: scale(0.9) translateY(20px);
-            transition: transform var(--md-sys-motion-duration) var(--md-sys-motion-easing);
-            box-shadow: var(--md-sys-elevation-3);
+            transform: scale(0.9) translateY(30px);
+            transition: transform 0.5s var(--transition-bounce);
+            box-shadow: var(--elevation-3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dialog::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 30%, var(--primary-glow) 0%, transparent 50%);
+            animation: rotate 20s linear infinite;
+            opacity: 0.3;
         }
 
         .dialog-overlay--open .dialog {
@@ -823,33 +1072,41 @@
         }
 
         .dialog__title {
-            font-size: 24px;
-            font-weight: 400;
-            color: var(--md-sys-color-on-surface);
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
             margin-bottom: 16px;
+            position: relative;
+            z-index: 1;
         }
 
         .dialog__content {
-            font-size: 14px;
-            color: var(--md-sys-color-on-surface);
-            opacity: 0.8;
-            margin-bottom: 24px;
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            line-height: 1.8;
+            position: relative;
+            z-index: 1;
         }
 
         .dialog__actions {
             display: flex;
             justify-content: flex-end;
-            gap: 8px;
+            gap: 12px;
+            position: relative;
+            z-index: 1;
         }
 
         .scrim {
             position: fixed;
             inset: 0;
-            background-color: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
             z-index: 998;
             opacity: 0;
             visibility: hidden;
-            transition: all var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+            transition: all 0.4s var(--transition-smooth);
         }
 
         .scrim--open {
@@ -857,128 +1114,173 @@
             visibility: visible;
         }
 
+        .reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s var(--transition-smooth);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         @media (max-width: 768px) {
-            .hero__title {
-                font-size: 36px;
+            .app-bar {
+                padding: 0 16px;
             }
 
-            .hero__subtitle {
-                font-size: 16px;
+            .hero {
+                padding: 100px 16px 60px;
             }
 
             .section {
-                padding: 48px 0;
+                padding: 80px 0;
             }
 
-            .section__title {
-                font-size: 24px;
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero__actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .button {
+                width: 100%;
+                max-width: 280px;
+                justify-content: center;
+            }
+
+            .footer__links {
+                gap: 20px;
+                flex-direction: column;
+                align-items: center;
             }
         }
     </style>
 </head>
 <body>
-    <header class="app-bar">
+    <div class="noise-overlay"></div>
+
+    <header class="app-bar glass glass-strong" id="appBar">
         <div class="app-bar__title">
-            <button class="icon-button" id="menuButton" aria-label="Menu">
-                <span class="material-icons">menu</span>
-            </button>
-            <span class="material-icons" style="color: var(--md-sys-color-primary);">calculate</span>
+            <div class="app-bar__logo">
+                <span class="material-icons">calculate</span>
+            </div>
             SuperCalculator
         </div>
         <div class="app-bar__actions">
             <button class="icon-button" id="themeToggle" aria-label="Toggle theme">
-                <span class="material-icons">dark_mode</span>
+                <span class="material-icons">light_mode</span>
             </button>
             <a href="https://github.com/Hotsteel2901/SuperCalculator" class="icon-button" aria-label="GitHub">
                 <span class="material-icons">code</span>
             </a>
+            <button class="icon-button" id="menuButton" aria-label="Menu">
+                <span class="material-icons">menu</span>
+            </button>
         </div>
     </header>
 
-    <nav class="nav-drawer" id="navDrawer">
+    <nav class="nav-drawer glass glass-strong" id="navDrawer">
         <a href="#features" class="nav-item">
             <span class="material-icons">star</span>
-            功能特性
+            <span>功能特性</span>
         </a>
         <a href="#quick-start" class="nav-item">
             <span class="material-icons">rocket_launch</span>
-            快速开始
+            <span>快速开始</span>
         </a>
         <a href="#platforms" class="nav-item">
             <span class="material-icons">devices</span>
-            支持平台
+            <span>支持平台</span>
         </a>
         <a href="#api" class="nav-item">
             <span class="material-icons">api</span>
-            API 参考
+            <span>API 参考</span>
         </a>
         <a href="#architecture" class="nav-item">
             <span class="material-icons">architecture</span>
-            架构设计
+            <span>架构设计</span>
         </a>
     </nav>
 
     <div class="scrim" id="scrim"></div>
 
     <section class="hero">
-        <h1 class="hero__title">Super Function Graphing Calculator</h1>
-        <p class="hero__subtitle">基于桥接模式的高性能函数计算与可视化工具，融合 C 与 Python 优势</p>
-        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-            <a href="#quick-start" class="button button--filled">
-                <span class="material-icons">play_arrow</span>
-                快速开始
-            </a>
-            <a href="https://github.com/Hotsteel2901/SuperCalculator/releases" class="button button--tonal">
-                <span class="material-icons">download</span>
-                下载 Release
-            </a>
-            <a href="https://github.com/Hotsteel2901/SuperCalculator" class="button button--outlined">
-                <span class="material-icons">star</span>
-                GitHub
-            </a>
+        <div class="hero__content">
+            <div class="hero__badge">
+                <span class="material-icons">sparkles</span>
+                <span>新一代 Liquid Glass 设计</span>
+            </div>
+            <h1 class="hero__title">Super Function Graphing Calculator</h1>
+            <p class="hero__subtitle">基于桥接模式的高性能函数计算与可视化工具，融合 C 与 Python 优势，带来极致流畅的计算体验</p>
+            <div class="hero__actions">
+                <a href="#quick-start" class="button button--primary">
+                    <span class="material-icons">play_arrow</span>
+                    快速开始
+                </a>
+                <a href="https://github.com/Hotsteel2901/SuperCalculator/releases" class="button button--glass">
+                    <span class="material-icons">download</span>
+                    下载 Release
+                </a>
+                <a href="https://github.com/Hotsteel2901/SuperCalculator" class="button button--outlined">
+                    <span class="material-icons">star</span>
+                    GitHub
+                </a>
+            </div>
         </div>
     </section>
 
     <main class="container">
         <section class="section" id="features">
-            <h2 class="section__title">功能特性</h2>
+            <div class="section__header">
+                <div class="section__label">
+                    <span class="material-icons">auto_awesome</span>
+                    Features
+                </div>
+                <h2 class="section__title">功能特性</h2>
+                <p class="section__subtitle">强大的计算能力与优雅的可视化完美结合</p>
+            </div>
             <div class="card-grid">
-                <div class="card">
+                <div class="card glass reveal">
                     <div class="card__icon">
                         <span class="material-icons">show_chart</span>
                     </div>
                     <h3 class="card__title">函数绘图</h3>
                     <p class="card__content">支持输入任意含 x 的数学表达式并绘制高精度曲线，可自定义坐标范围和采样步长</p>
                 </div>
-                <div class="card">
+                <div class="card glass reveal">
                     <div class="card__icon">
                         <span class="material-icons">layers</span>
                     </div>
                     <h3 class="card__title">多曲线叠加</h3>
                     <p class="card__content">同时绘制多条函数曲线，自动分配不同颜色，方便对比分析</p>
                 </div>
-                <div class="card">
+                <div class="card glass reveal">
                     <div class="card__icon">
                         <span class="material-icons">trending_up</span>
                     </div>
                     <h3 class="card__title">数值微分</h3>
                     <p class="card__content">一阶导数 f'(x) 和二阶导数 f''(x) 计算，采用中心差分法，误差 O(h²)</p>
                 </div>
-                <div class="card">
+                <div class="card glass reveal">
                     <div class="card__icon">
                         <span class="material-icons">functions</span>
                     </div>
                     <h3 class="card__title">数值积分</h3>
                     <p class="card__content">定积分计算，采用自适应 Simpson 复合法则，误差 O(h⁴)</p>
                 </div>
-                <div class="card">
+                <div class="card glass reveal">
                     <div class="card__icon">
                         <span class="material-icons">check_circle</span>
                     </div>
                     <h3 class="card__title">方程求解</h3>
                     <p class="card__content">Newton-Raphson 法配合二分法回退，快速求解非线性方程</p>
                 </div>
-                <div class="card">
+                <div class="card glass reveal">
                     <div class="card__icon">
                         <span class="material-icons">android</span>
                     </div>
@@ -989,23 +1291,34 @@
         </section>
 
         <section class="section" id="quick-start">
-            <h2 class="section__title">快速开始</h2>
-            <div class="card">
-                <h3 style="font-size: 20px; margin-bottom: 16px;">安装依赖</h3>
-                <div class="code-block" style="margin-bottom: 24px;">pip install numpy matplotlib</div>
-                <h3 style="font-size: 20px; margin-bottom: 16px;">运行程序</h3>
-                <div class="code-block" style="margin-bottom: 24px;">python super_calc_bridged.py</div>
+            <div class="section__header">
+                <div class="section__label">
+                    <span class="material-icons">rocket_launch</span>
+                    Quick Start
+                </div>
+                <h2 class="section__title">快速开始</h2>
+                <p class="section__subtitle">只需几步即可开始使用</p>
+            </div>
+            <div class="card glass reveal" style="max-width: 800px; margin: 0 auto;">
+                <h3 style="font-size: 20px; margin-bottom: 16px; color: var(--text-primary);">安装依赖</h3>
+                <div class="code-block" style="margin-bottom: 24px;">
+                    <code>pip install numpy matplotlib</code>
+                </div>
+                <h3 style="font-size: 20px; margin-bottom: 16px; color: var(--text-primary);">运行程序</h3>
+                <div class="code-block" style="margin-bottom: 24px;">
+                    <code>python super_calc_bridged.py</code>
+                </div>
                 <div style="display: flex; gap: 12px; flex-wrap: wrap;">
                     <span class="chip">
-                        <span class="material-icons" style="font-size: 18px;">check</span>
+                        <span class="material-icons">check</span>
                         Python 3.9+
                     </span>
                     <span class="chip">
-                        <span class="material-icons" style="font-size: 18px;">check</span>
+                        <span class="material-icons">check</span>
                         numpy
                     </span>
                     <span class="chip">
-                        <span class="material-icons" style="font-size: 18px;">check</span>
+                        <span class="material-icons">check</span>
                         matplotlib
                     </span>
                 </div>
@@ -1013,24 +1326,31 @@
         </section>
 
         <section class="section" id="platforms">
-            <h2 class="section__title">支持平台</h2>
+            <div class="section__header">
+                <div class="section__label">
+                    <span class="material-icons">devices</span>
+                    Platforms
+                </div>
+                <h2 class="section__title">支持平台</h2>
+                <p class="section__subtitle">跨平台支持，随时随地使用</p>
+            </div>
             <div class="platform-grid">
-                <div class="platform-card">
+                <div class="platform-card glass reveal">
                     <span class="material-icons platform-card__icon">windows</span>
                     <div class="platform-card__name">Windows</div>
                     <div class="platform-card__arch">x64</div>
                 </div>
-                <div class="platform-card">
+                <div class="platform-card glass reveal">
                     <span class="material-icons platform-card__icon">computer</span>
                     <div class="platform-card__name">Linux</div>
                     <div class="platform-card__arch">x86_64 / ARM64</div>
                 </div>
-                <div class="platform-card">
+                <div class="platform-card glass reveal">
                     <span class="material-icons platform-card__icon">laptop_mac</span>
                     <div class="platform-card__name">macOS</div>
                     <div class="platform-card__arch">x86_64 / ARM64</div>
                 </div>
-                <div class="platform-card">
+                <div class="platform-card glass reveal">
                     <span class="material-icons platform-card__icon">smartphone</span>
                     <div class="platform-card__name">Android</div>
                     <div class="platform-card__arch">aarch64</div>
@@ -1039,67 +1359,97 @@
         </section>
 
         <section class="section" id="api">
-            <h2 class="section__title">API 参考</h2>
+            <div class="section__header">
+                <div class="section__label">
+                    <span class="material-icons">api</span>
+                    API Reference
+                </div>
+                <h2 class="section__title">API 参考</h2>
+                <p class="section__subtitle">简洁易用的 API 接口</p>
+            </div>
             <div class="card-grid">
-                <div class="card">
+                <div class="card glass reveal">
                     <h3 class="card__title">表达式求值</h3>
-                    <div class="code-block">CalcEngine.evaluate("x^2", 3.0)<br># -> 9.0</div>
+                    <div class="code-block">
+                        <code>CalcEngine.evaluate("x^2", 3.0)<br># -> 9.0</code>
+                    </div>
                 </div>
-                <div class="card">
+                <div class="card glass reveal">
                     <h3 class="card__title">批量求值</h3>
-                    <div class="code-block">CalcEngine.evaluate_array("sin(x)", [0, 0.5, 1.0])</div>
+                    <div class="code-block">
+                        <code>CalcEngine.evaluate_array("sin(x)", [0, 0.5, 1.0])</code>
+                    </div>
                 </div>
-                <div class="card">
+                <div class="card glass reveal">
                     <h3 class="card__title">一阶导数</h3>
-                    <div class="code-block">CalcEngine.derivative("x^3", 2.0)<br># -> ~12.0</div>
+                    <div class="code-block">
+                        <code>CalcEngine.derivative("x^3", 2.0)<br># -> ~12.0</code>
+                    </div>
                 </div>
-                <div class="card">
+                <div class="card glass reveal">
                     <h3 class="card__title">二阶导数</h3>
-                    <div class="code-block">CalcEngine.derivative2("x^3", 2.0)<br># -> ~12.0</div>
+                    <div class="code-block">
+                        <code>CalcEngine.derivative2("x^3", 2.0)<br># -> ~12.0</code>
+                    </div>
                 </div>
-                <div class="card">
+                <div class="card glass reveal">
                     <h3 class="card__title">定积分</h3>
-                    <div class="code-block">CalcEngine.integrate_adaptive("x^2", 0, 1)<br># -> ~0.333</div>
+                    <div class="code-block">
+                        <code>CalcEngine.integrate_adaptive("x^2", 0, 1)<br># -> ~0.333</code>
+                    </div>
                 </div>
-                <div class="card">
+                <div class="card glass reveal">
                     <h3 class="card__title">方程求根</h3>
-                    <div class="code-block">CalcEngine.solve("x^2 - 4", guess=1, xmin=0, xmax=3)<br># -> 2.0</div>
+                    <div class="code-block">
+                        <code>CalcEngine.solve("x^2 - 4", guess=1, xmin=0, xmax=3)<br># -> 2.0</code>
+                    </div>
                 </div>
             </div>
         </section>
 
         <section class="section" id="architecture">
-            <h2 class="section__title">架构设计</h2>
-            <div class="card">
-                <p style="margin-bottom: 24px; font-size: 16px;">本项目采用<strong>桥接模式 (Bridge Pattern)</strong>的核心思想：将抽象 (GUI) 与实现 (计算引擎) 分离，使两者可以独立变化。</p>
-                <div class="code-block" style="background-color: var(--md-sys-color-surface-container);">+---------------------------------+
+            <div class="section__header">
+                <div class="section__label">
+                    <span class="material-icons">architecture</span>
+                    Architecture
+                </div>
+                <h2 class="section__title">架构设计</h2>
+                <p class="section__subtitle">优雅的桥接模式设计</p>
+            </div>
+            <div class="card glass reveal" style="max-width: 900px; margin: 0 auto;">
+                <p style="margin-bottom: 24px; font-size: 16px; color: var(--text-secondary); line-height: 1.8;">
+                    本项目采用<strong>桥接模式 (Bridge Pattern)</strong>的核心思想：将抽象 (GUI) 与实现 (计算引擎) 分离，使两者可以独立变化。
+                </p>
+                <div class="code-block" style="margin-bottom: 24px;">
+                    <code>+---------------------------------+
 |  super_calc_bridged.py          |  Tkinter + Matplotlib GUI
 |  (抽象层)                       |
 +---------------------------------+
 |  calc_bridge.py                 |  ctypes 桥接层
 +---------------------------------+
 |  calc_core.dll / .so            |  C 动态库 (计算引擎)
-+---------------------------------+</div>
-                <div class="feature-list" style="margin-top: 24px;">
++---------------------------------+</code>
+                </div>
+                <div class="feature-list">
                     <div class="feature-item">
                         <span class="material-icons">shield</span>
                         <div>
                             <strong>C 层</strong>
-                            <p style="font-size: 14px; opacity: 0.8;">负责所有数值计算 — 表达式解析、微积分、方程求解</p>
+                            <p>负责所有数值计算 — 表达式解析、微积分、方程求解</p>
                         </div>
                     </div>
                     <div class="feature-item">
                         <span class="material-icons">link</span>
                         <div>
                             <strong>Python 层</strong>
-                            <p style="font-size: 14px; opacity: 0.8;">通过 ctypes 调用 C 核心，提供 Tkinter + Matplotlib 图形界面</p>
+                            <p>通过 ctypes 调用 C 核心，提供 Tkinter + Matplotlib 图形界面</p>
                         </div>
                     </div>
                     <div class="feature-item">
                         <span class="material-icons">auto_awesome</span>
                         <div>
                             <strong>桥接层</strong>
-                            <p style="font-size: 14px; opacity: 0.8;">启动时自动检测平台和 CPU 架构，选择正确的二进制文件</p>
+                            <p>启动时自动检测平台和 CPU 架构，选择正确的二进制文件</p>
                         </div>
                     </div>
                 </div>
@@ -1107,39 +1457,46 @@
         </section>
 
         <section class="section">
-            <h2 class="section__title">表达式语法</h2>
+            <div class="section__header">
+                <div class="section__label">
+                    <span class="material-icons">code</span>
+                    Syntax
+                </div>
+                <h2 class="section__title">表达式语法</h2>
+                <p class="section__subtitle">丰富的数学表达式支持</p>
+            </div>
             <div class="card-grid">
-                <div class="card">
+                <div class="card glass reveal">
                     <h3 class="card__title">算术运算</h3>
-                    <p class="card__content"><code>+ - * / ^</code> (乘方)</p>
-                    <p class="card__content" style="margin-top: 8px;">示例：<code>x^2 + 2*x - 1</code></p>
+                    <p class="card__content"><code style="color: var(--accent-glow);">+ - * / ^</code> (乘方)</p>
+                    <p class="card__content" style="margin-top: 12px; color: var(--text-secondary);">示例：<code style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px;">x^2 + 2*x - 1</code></p>
                 </div>
-                <div class="card">
+                <div class="card glass reveal">
                     <h3 class="card__title">三角函数</h3>
-                    <p class="card__content"><code>sin cos tan</code></p>
-                    <p class="card__content" style="margin-top: 8px;">示例：<code>sin(x) + cos(x)</code></p>
+                    <p class="card__content"><code style="color: var(--accent-glow);">sin cos tan</code></p>
+                    <p class="card__content" style="margin-top: 12px; color: var(--text-secondary);">示例：<code style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px;">sin(x) + cos(x)</code></p>
                 </div>
-                <div class="card">
+                <div class="card glass reveal">
                     <h3 class="card__title">对数/指数</h3>
-                    <p class="card__content"><code>ln log exp</code></p>
-                    <p class="card__content" style="margin-top: 8px;">示例：<code>ln(x)</code> <code>exp(-x)</code></p>
+                    <p class="card__content"><code style="color: var(--accent-glow);">ln log exp</code></p>
+                    <p class="card__content" style="margin-top: 12px; color: var(--text-secondary);">示例：<code style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px;">ln(x)</code> <code style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px;">exp(-x)</code></p>
                 </div>
-                <div class="card">
+                <div class="card glass reveal">
                     <h3 class="card__title">根号/绝对值</h3>
-                    <p class="card__content"><code>sqrt abs</code></p>
-                    <p class="card__content" style="margin-top: 8px;">示例：<code>sqrt(x)</code> <code>abs(x)</code></p>
+                    <p class="card__content"><code style="color: var(--accent-glow);">sqrt abs</code></p>
+                    <p class="card__content" style="margin-top: 12px; color: var(--text-secondary);">示例：<code style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px;">sqrt(x)</code> <code style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px;">abs(x)</code></p>
                 </div>
-                <div class="card">
+                <div class="card glass reveal">
                     <h3 class="card__title">数学常数</h3>
-                    <p class="card__content"><code>pi e</code></p>
-                    <p class="card__content" style="margin-top: 8px;">示例：<code>sin(pi*x)</code></p>
+                    <p class="card__content"><code style="color: var(--accent-glow);">pi e</code></p>
+                    <p class="card__content" style="margin-top: 12px; color: var(--text-secondary);">示例：<code style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px;">sin(pi*x)</code></p>
                 </div>
             </div>
         </section>
     </main>
 
     <footer class="footer">
-        <div class="container">
+        <div class="footer__content">
             <div class="footer__links">
                 <a href="https://github.com/Hotsteel2901/SuperCalculator" class="footer__link">GitHub</a>
                 <a href="https://github.com/Hotsteel2901/SuperCalculator/releases" class="footer__link">Releases</a>
@@ -1147,7 +1504,7 @@
                 <a href="README_CN.md" class="footer__link">中文文档</a>
                 <a href="README.md" class="footer__link">English Docs</a>
             </div>
-            <p class="footer__text">© 2026 SuperCalculator. Built with Material Design 3.</p>
+            <p class="footer__text">© 2026 SuperCalculator. Built with Liquid Glass Design.</p>
             <p class="footer__text" style="margin-top: 8px;">Note: This project was generated entirely by AI (Claude Code). Use at your own discretion.</p>
         </div>
     </footer>
@@ -1177,8 +1534,9 @@
         const scrollToTopBtn = document.getElementById('scrollToTop');
         const aboutDialog = document.getElementById('aboutDialog');
         const closeDialogBtn = document.getElementById('closeDialog');
+        const appBar = document.getElementById('appBar');
 
-        let isDarkMode = false;
+        let isDarkMode = true;
 
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme) {
@@ -1216,13 +1574,22 @@
             localStorage.setItem('theme', theme);
             updateThemeIcon();
             
-            themeToggle.querySelector('.material-icons').style.animation = 'pulse 0.4s ease-in-out';
+            const icon = themeToggle.querySelector('.material-icons');
+            icon.style.animation = 'none';
+            icon.offsetHeight;
+            icon.style.animation = 'glow 0.6s ease-in-out';
             setTimeout(() => {
-                themeToggle.querySelector('.material-icons').style.animation = '';
-            }, 400);
+                icon.style.animation = '';
+            }, 600);
         });
 
         window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                appBar.classList.add('scrolled');
+            } else {
+                appBar.classList.remove('scrolled');
+            }
+
             if (window.scrollY > 300) {
                 scrollToTopBtn.style.display = 'flex';
                 scrollToTopBtn.classList.add('animate-scale-in');
@@ -1240,7 +1607,7 @@
             aboutDialog.classList.remove('dialog-overlay--open');
         });
 
-        const revealElements = document.querySelectorAll('.card, .section__title, .platform-card, .feature-item');
+        const revealElements = document.querySelectorAll('.reveal');
         
         function revealOnScroll() {
             revealElements.forEach(element => {
@@ -1254,14 +1621,32 @@
         }
 
         revealElements.forEach((element, index) => {
-            element.style.transitionDelay = `${index * 0.05}s`;
+            element.style.transitionDelay = `${Math.min(index * 0.08, 0.4)}s`;
         });
 
         window.addEventListener('scroll', revealOnScroll);
         revealOnScroll();
 
         document.querySelectorAll('.hero .button').forEach((btn, index) => {
-            btn.style.animationDelay = `${0.4 + index * 0.1}s`;
+            btn.style.animationDelay = `${0.3 + index * 0.1}s`;
+        });
+
+        const cards = document.querySelectorAll('.card');
+        cards.forEach((card, index) => {
+            card.addEventListener('mouseenter', () => {
+                cards.forEach((c, i) => {
+                    if (i !== index) {
+                        c.style.opacity = '0.7';
+                        c.style.transform = 'scale(0.98)';
+                    }
+                });
+            });
+            card.addEventListener('mouseleave', () => {
+                cards.forEach(c => {
+                    c.style.opacity = '1';
+                    c.style.transform = '';
+                });
+            });
         });
     </script>
 </body>
