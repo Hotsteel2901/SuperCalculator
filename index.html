@@ -32,10 +32,10 @@
             --text-muted: rgba(255, 255, 255, 0.65);
             --text-subtle: rgba(255, 255, 255, 0.45);
             
-            --blur-light: 12px;
-            --blur-medium: 24px;
-            --blur-heavy: 48px;
-            --blur-extreme: 80px;
+            --blur-light: 8px;
+            --blur-medium: 16px;
+            --blur-heavy: 24px;
+            --blur-extreme: 32px;
             
             --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.5);
             --shadow-medium: 0 16px 64px rgba(0, 0, 0, 0.6);
@@ -97,9 +97,8 @@
             background-size: 120% 120%;
             pointer-events: none;
             z-index: 0;
-            animation: ambientFlow 20s var(--ease-liquid) infinite;
             filter: blur(60px);
-            opacity: 0.7;
+            opacity: 0.5;
         }
 
         body::after {
@@ -278,21 +277,19 @@
         .glass-panel::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             background: linear-gradient(
-                90deg,
+                135deg,
                 transparent,
-                rgba(255, 255, 255, 0.15),
+                rgba(255, 255, 255, 0.08),
                 transparent
             );
-            transition: left 0.8s var(--ease-liquid);
+            opacity: 0;
+            transition: opacity 0.6s var(--ease-liquid);
         }
 
         .glass-panel:hover::after {
-            left: 100%;
+            opacity: 1;
         }
 
         .glass-card {
@@ -593,9 +590,8 @@
             background: 
                 radial-gradient(circle at 30% 30%, var(--glow-primary) 0%, transparent 45%),
                 radial-gradient(circle at 70% 70%, var(--glow-secondary) 0%, transparent 45%);
-            animation: spin 80s linear infinite;
             pointer-events: none;
-            opacity: 0.4;
+            opacity: 0.3;
             filter: blur(80px);
         }
 
@@ -637,17 +633,14 @@
         .hero__badge::after {
             content: '';
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
+            inset: 0;
             background: linear-gradient(
                 45deg,
                 transparent 30%,
-                rgba(255, 255, 255, 0.3) 50%,
+                rgba(255, 255, 255, 0.15) 50%,
                 transparent 70%
             );
-            animation: lightSweep 2s var(--ease-smooth) infinite;
+            opacity: 0.3;
         }
 
         .hero__badge .material-icons {
@@ -911,11 +904,10 @@
             background: linear-gradient(
                 45deg,
                 transparent 30%,
-                rgba(255, 255, 255, 0.35) 50%,
+                rgba(255, 255, 255, 0.25) 50%,
                 transparent 70%
             );
-            background-size: 200% 200%;
-            animation: shimmer 3s var(--ease-smooth) infinite;
+            opacity: 0.5;
         }
 
         .card:hover .card__icon {
@@ -1046,11 +1038,9 @@
             background: linear-gradient(
                 45deg,
                 transparent 30%,
-                rgba(255, 255, 255, 0.04) 50%,
+                rgba(255, 255, 255, 0.03) 50%,
                 transparent 70%
             );
-            background-size: 200% 200%;
-            animation: shimmer 5s var(--ease-smooth) infinite;
             pointer-events: none;
         }
 
@@ -1166,7 +1156,6 @@
                 var(--glow-accent),
                 transparent
             );
-            animation: shimmer 4s var(--ease-smooth) infinite;
         }
 
         .footer__content {
@@ -1246,11 +1235,10 @@
             background: linear-gradient(
                 45deg,
                 transparent 30%,
-                rgba(255, 255, 255, 0.35) 50%,
+                rgba(255, 255, 255, 0.25) 50%,
                 transparent 70%
             );
-            background-size: 200% 200%;
-            animation: shimmer 3s var(--ease-smooth) infinite;
+            opacity: 0.5;
         }
 
         .fab:hover {
@@ -1314,13 +1302,9 @@
         .dialog::before {
             content: '';
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
+            inset: 0;
             background: radial-gradient(circle at 30% 30%, var(--glow-primary) 0%, transparent 50%);
-            animation: spin 25s linear infinite;
-            opacity: 0.35;
+            opacity: 0.2;
         }
 
         .dialog-overlay--open .dialog {
@@ -1389,7 +1373,7 @@
             filter: blur(80px);
             pointer-events: none;
             z-index: 0;
-            animation: float 10s var(--ease-liquid) infinite;
+            opacity: 0.4;
         }
 
         .glow-orb--1 {
@@ -1420,19 +1404,57 @@
 
         @media (max-width: 768px) {
             .app-bar {
-                padding: 0 20px;
+                padding: 0 16px;
+                height: 70px;
+            }
+
+            .app-bar__title {
+                font-size: 20px;
+            }
+
+            .app-bar__logo {
+                width: 40px;
+                height: 40px;
+            }
+
+            .app-bar__logo .material-icons {
+                font-size: 22px;
+            }
+
+            .app-bar__actions {
+                gap: 8px;
+            }
+
+            .icon-btn {
+                width: 42px;
+                height: 42px;
+            }
+
+            .icon-btn .material-icons {
+                font-size: 22px;
+            }
+
+            .nav-drawer {
+                top: 70px;
+                width: 280px;
+                padding: 20px 16px;
             }
 
             .hero {
-                padding: 120px 20px 80px;
+                padding: 100px 16px 60px;
             }
 
             .section {
-                padding: 100px 0;
+                padding: 80px 0;
+            }
+
+            .container {
+                padding: 0 16px;
             }
 
             .card-grid {
                 grid-template-columns: 1fr;
+                gap: 20px;
             }
 
             .hero__actions {
@@ -1442,14 +1464,26 @@
 
             .btn {
                 width: 100%;
-                max-width: 300px;
+                max-width: 280px;
                 justify-content: center;
+                padding: 16px 28px;
             }
 
             .footer__links {
-                gap: 24px;
+                gap: 20px;
                 flex-direction: column;
                 align-items: center;
+            }
+
+            .fab {
+                bottom: 20px;
+                right: 20px;
+                width: 60px;
+                height: 60px;
+            }
+
+            .fab .material-icons {
+                font-size: 28px;
             }
         }
     </style>
@@ -1832,6 +1866,8 @@
         const appBar = document.getElementById('appBar');
 
         let isDarkMode = true;
+        let lastScrollY = 0;
+        let ticking = false;
 
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme) {
@@ -1878,7 +1914,7 @@
             }, 600);
         });
 
-        window.addEventListener('scroll', () => {
+        function handleScroll() {
             if (window.scrollY > 50) {
                 appBar.classList.add('scrolled');
             } else {
@@ -1892,7 +1928,20 @@
                 scrollToTopBtn.style.display = 'none';
                 scrollToTopBtn.classList.remove('animate-scale-in');
             }
-        });
+
+            revealOnScroll();
+            ticking = false;
+        }
+
+        function requestScrollUpdate() {
+            if (!ticking) {
+                window.requestAnimationFrame(handleScroll);
+                ticking = true;
+            }
+        }
+
+        window.addEventListener('scroll', requestScrollUpdate, { passive: true });
+        handleScroll();
 
         scrollToTopBtn.addEventListener('click', () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1919,9 +1968,6 @@
             element.style.transitionDelay = `${Math.min(index * 0.1, 0.5)}s`;
         });
 
-        window.addEventListener('scroll', revealOnScroll);
-        revealOnScroll();
-
         document.querySelectorAll('.hero .btn').forEach((btn, index) => {
             btn.style.animationDelay = `${0.3 + index * 0.12}s`;
         });
@@ -1941,19 +1987,6 @@
                     c.style.opacity = '1';
                     c.style.transform = '';
                 });
-            });
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            const orbs = document.querySelectorAll('.glow-orb');
-            const mouseX = e.clientX / window.innerWidth;
-            const mouseY = e.clientY / window.innerHeight;
-            
-            orbs.forEach((orb, index) => {
-                const speed = (index + 1) * 20;
-                const offsetX = (mouseX - 0.5) * speed;
-                const offsetY = (mouseY - 0.5) * speed;
-                orb.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
             });
         });
     </script>
