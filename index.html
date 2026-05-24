@@ -1276,16 +1276,16 @@
     </button>
 
     <script>
-        const header = document.getElementById('header');
-        const themeToggle = document.getElementById('themeToggle');
-        const themeIcon = document.getElementById('themeIcon');
-        const menuToggle = document.getElementById('menuToggle');
-        const mobileNav = document.getElementById('mobileNav');
-        const scrollTopBtn = document.getElementById('scrollTop');
+        var header = document.getElementById('header');
+        var themeToggle = document.getElementById('themeToggle');
+        var themeIcon = document.getElementById('themeIcon');
+        var menuToggle = document.getElementById('menuToggle');
+        var mobileNav = document.getElementById('mobileNav');
+        var scrollTopBtn = document.getElementById('scrollTop');
 
-        let isDarkMode = true;
+        var isDarkMode = true;
 
-        const savedTheme = localStorage.getItem('theme');
+        var savedTheme = localStorage.getItem('theme');
         if (savedTheme) {
             isDarkMode = savedTheme === 'dark';
             document.documentElement.setAttribute('data-theme', savedTheme);
@@ -1298,31 +1298,36 @@
                 : '<path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>';
         }
 
-        themeToggle.addEventListener('click', () => {
+        themeToggle.addEventListener('click', function() {
             isDarkMode = !isDarkMode;
-            const theme = isDarkMode ? 'dark' : 'light';
+            var theme = isDarkMode ? 'dark' : 'light';
             document.documentElement.setAttribute('data-theme', theme);
             localStorage.setItem('theme', theme);
             updateThemeIcon();
         });
 
-        menuToggle.addEventListener('click', function() {
-            const isOpen = mobileNav.classList.toggle('open');
+        function toggleMenu() {
+            var isOpen = mobileNav.classList.contains('open');
             if (isOpen) {
-                menuToggle.innerHTML = '<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
-            } else {
+                mobileNav.classList.remove('open');
                 menuToggle.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>';
+            } else {
+                mobileNav.classList.add('open');
+                menuToggle.innerHTML = '<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
             }
-        });
+        }
 
-        document.querySelectorAll('.mobile-nav-link').forEach(function(link) {
-            link.addEventListener('click', function() {
+        menuToggle.addEventListener('click', toggleMenu);
+
+        var mobileLinks = document.querySelectorAll('.mobile-nav-link');
+        for (var i = 0; i < mobileLinks.length; i++) {
+            mobileLinks[i].addEventListener('click', function() {
                 mobileNav.classList.remove('open');
                 menuToggle.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>';
             });
-        });
+        }
 
-        window.addEventListener('scroll', () => {
+        window.addEventListener('scroll', function() {
             if (window.scrollY > 50) {
                 header.classList.add('scrolled');
             } else {
@@ -1334,24 +1339,25 @@
             } else {
                 scrollTopBtn.classList.remove('visible');
             }
-        }, { passive: true });
+        });
 
-        scrollTopBtn.addEventListener('click', () => {
+        scrollTopBtn.addEventListener('click', function() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
 
-        const revealElements = document.querySelectorAll('.reveal');
+        var revealElements = document.querySelectorAll('.reveal');
         
         function revealOnScroll() {
-            revealElements.forEach(element => {
-                const rect = element.getBoundingClientRect();
+            for (var i = 0; i < revealElements.length; i++) {
+                var element = revealElements[i];
+                var rect = element.getBoundingClientRect();
                 if (rect.top < window.innerHeight - 50) {
                     element.classList.add('visible');
                 }
-            });
+            }
         }
 
-        window.addEventListener('scroll', revealOnScroll, { passive: true });
+        window.addEventListener('scroll', revealOnScroll);
         revealOnScroll();
     </script>
 </body>
