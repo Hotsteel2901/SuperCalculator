@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuperCalculator - 超级函数绘图计算器</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+    <style>
+        :root {
+            --md-sys-color-primary: #0A61F5;
+            --md-sys-color-on-primary: #FFFFFF;
+            --md-sys-color-primary-container: #D5E3FF;
+            --md-sys-color-on-primary-container: #001C44;
+            --md-sys-color-secondary: #5C5D72;
+            --md-sys-color-on-secondary: #FFFFFF;
+            --md-sys-color-secondary-container: #E1E1F9;
+            --md-sys-color-on-secondary-container: #191A2C;
+            --md-sys-color-tertiary: #7B4B9E;
+            --md-sys-color-on-tertiary: #FFFFFF;
+            --md-sys-color-tertiary-container: #F2D9FF;
+            --md-sys-color-on-tertiary-container: #2E004A;
+            --md-sys-color-error: #BA1A1A;
+            --md-sys-color-on-error: #FFFFFF;
+            --md-sys-color-background: #FDFBFF;
+            --md-sys-color-on-background: #1A1B1E;
+            --md-sys-color-surface: #FDFBFF;
+            --md-sys-color-on-surface: #1A1B1E;
+            --md-sys-color-surface-container: #F0F0F5;
+            --md-sys-color-outline: #75767D;
+            --md-sys-color-outline-variant: #C5C6CE;
+            --md-sys-elevation-1: 0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24);
+            --md-sys-elevation-2: 0px 3px 6px rgba(0,0,0,0.15), 0px 2px 4px rgba(0,0,0,0.12);
+            --md-sys-elevation-3: 0px 10px 20px rgba(0,0,0,0.15), 0px 3px 6px rgba(0,0,0,0.10);
+            --md-sys-shape-corner-small: 8px;
+            --md-sys-shape-corner-medium: 12px;
+            --md-sys-shape-corner-large: 16px;
+            --md-sys-shape-corner-xl: 28px;
+            --md-sys-motion-duration: 0.3s;
+            --md-sys-motion-easing: cubic-bezier(0.2, 0, 0, 1);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --md-sys-color-primary: #A8C7FA;
+                --md-sys-color-on-primary: #003285;
+                --md-sys-color-primary-container: #0048BD;
+                --md-sys-color-on-primary-container: #D5E3FF;
+                --md-sys-color-secondary: #C5C5DD;
+                --md-sys-color-on-secondary: #2E2F42;
+                --md-sys-color-secondary-container: #444559;
+                --md-sys-color-on-secondary-container: #E1E1F9;
+                --md-sys-color-tertiary: #D6A8FF;
+                --md-sys-color-on-tertiary: #4A0072;
+                --md-sys-color-tertiary-container: #623285;
+                --md-sys-color-on-tertiary-container: #F2D9FF;
+                --md-sys-color-background: #1A1B1E;
+                --md-sys-color-on-background: #E3E2E6;
+                --md-sys-color-surface: #1A1B1E;
+                --md-sys-color-on-surface: #E3E2E6;
+                --md-sys-color-surface-container: #25262C;
+                --md-sys-color-outline: #8F9097;
+                --md-sys-color-outline-variant: #44454C;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--md-sys-color-background);
+            color: var(--md-sys-color-on-background);
+            line-height: 1.6;
+        }
+
+        .app-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background-color: var(--md-sys-color-surface);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            box-shadow: var(--md-sys-elevation-1);
+            z-index: 1000;
+        }
+
+        .app-bar__title {
+            font-size: 22px;
+            font-weight: 500;
+            color: var(--md-sys-color-on-surface);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .app-bar__actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: var(--md-sys-color-on-surface);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+        }
+
+        .icon-button:hover {
+            background-color: var(--md-sys-color-surface-container);
+        }
+
+        .nav-drawer {
+            position: fixed;
+            top: 64px;
+            left: 0;
+            width: 320px;
+            height: calc(100vh - 64px);
+            background-color: var(--md-sys-color-surface);
+            padding: 16px;
+            overflow-y: auto;
+            transform: translateX(-100%);
+            transition: transform var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+            z-index: 999;
+        }
+
+        .nav-drawer--open {
+            transform: translateX(0);
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: var(--md-sys-shape-corner-medium);
+            color: var(--md-sys-color-on-surface);
+            text-decoration: none;
+            transition: background-color var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+        }
+
+        .nav-item:hover {
+            background-color: var(--md-sys-color-surface-container);
+        }
+
+        .hero {
+            margin-top: 64px;
+            padding: 80px 16px;
+            background: linear-gradient(135deg, var(--md-sys-color-primary-container) 0%, var(--md-sys-color-tertiary-container) 100%);
+            text-align: center;
+        }
+
+        .hero__title {
+            font-size: 56px;
+            font-weight: 400;
+            color: var(--md-sys-color-on-primary-container);
+            margin-bottom: 16px;
+            letter-spacing: -0.5px;
+        }
+
+        .hero__subtitle {
+            font-size: 20px;
+            color: var(--md-sys-color-on-primary-container);
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 0 auto 32px;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            border-radius: var(--md-sys-shape-corner-xl);
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: all var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+        }
+
+        .button--filled {
+            background-color: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
+        }
+
+        .button--filled:hover {
+            box-shadow: var(--md-sys-elevation-2);
+            transform: translateY(-1px);
+        }
+
+        .button--tonal {
+            background-color: var(--md-sys-color-secondary-container);
+            color: var(--md-sys-color-on-secondary-container);
+        }
+
+        .button--tonal:hover {
+            box-shadow: var(--md-sys-elevation-1);
+        }
+
+        .button--outlined {
+            background-color: transparent;
+            border: 1px solid var(--md-sys-color-outline);
+            color: var(--md-sys-color-primary);
+        }
+
+        .button--outlined:hover {
+            background-color: var(--md-sys-color-primary-container);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+
+        .section {
+            padding: 64px 0;
+        }
+
+        .section__title {
+            font-size: 32px;
+            font-weight: 400;
+            color: var(--md-sys-color-on-surface);
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background-color: var(--md-sys-color-surface);
+            border-radius: var(--md-sys-shape-corner-large);
+            padding: 24px;
+            box-shadow: var(--md-sys-elevation-1);
+            transition: all var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+        }
+
+        .card:hover {
+            box-shadow: var(--md-sys-elevation-2);
+            transform: translateY(-2px);
+        }
+
+        .card__icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--md-sys-shape-corner-medium);
+            background-color: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .card__title {
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--md-sys-color-on-surface);
+            margin-bottom: 8px;
+        }
+
+        .card__content {
+            font-size: 14px;
+            color: var(--md-sys-color-on-surface);
+            opacity: 0.8;
+        }
+
+        .feature-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            background-color: var(--md-sys-color-surface-container);
+            border-radius: var(--md-sys-shape-corner-medium);
+        }
+
+        .feature-item .material-icons {
+            color: var(--md-sys-color-tertiary);
+            flex-shrink: 0;
+        }
+
+        .code-block {
+            background-color: var(--md-sys-color-surface-container);
+            border-radius: var(--md-sys-shape-corner-medium);
+            padding: 24px;
+            overflow-x: auto;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 14px;
+            color: var(--md-sys-color-on-surface);
+        }
+
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .platform-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px;
+            background-color: var(--md-sys-color-surface-container);
+            border-radius: var(--md-sys-shape-corner-large);
+            text-align: center;
+        }
+
+        .platform-card__icon {
+            font-size: 48px;
+            color: var(--md-sys-color-primary);
+            margin-bottom: 12px;
+        }
+
+        .platform-card__name {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--md-sys-color-on-surface);
+            margin-bottom: 4px;
+        }
+
+        .platform-card__arch {
+            font-size: 14px;
+            color: var(--md-sys-color-on-surface);
+            opacity: 0.7;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            background-color: var(--md-sys-color-surface-container);
+            color: var(--md-sys-color-on-surface);
+            border: 1px solid var(--md-sys-color-outline-variant);
+        }
+
+        .footer {
+            background-color: var(--md-sys-color-surface-container);
+            padding: 48px 16px;
+            text-align: center;
+        }
+
+        .footer__links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .footer__link {
+            color: var(--md-sys-color-primary);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .footer__link:hover {
+            text-decoration: underline;
+        }
+
+        .footer__text {
+            font-size: 14px;
+            color: var(--md-sys-color-on-surface);
+            opacity: 0.7;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: var(--md-sys-shape-corner-large);
+            background-color: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--md-sys-elevation-2);
+            transition: all var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+            z-index: 998;
+        }
+
+        .fab:hover {
+            box-shadow: var(--md-sys-elevation-3);
+            transform: translateY(-2px);
+        }
+
+        .dialog-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+        }
+
+        .dialog-overlay--open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .dialog {
+            background-color: var(--md-sys-color-surface);
+            border-radius: var(--md-sys-shape-corner-xl);
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            transform: scale(0.9);
+            transition: transform var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+        }
+
+        .dialog-overlay--open .dialog {
+            transform: scale(1);
+        }
+
+        .dialog__title {
+            font-size: 24px;
+            font-weight: 400;
+            color: var(--md-sys-color-on-surface);
+            margin-bottom: 16px;
+        }
+
+        .dialog__content {
+            font-size: 14px;
+            color: var(--md-sys-color-on-surface);
+            opacity: 0.8;
+            margin-bottom: 24px;
+        }
+
+        .dialog__actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .scrim {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.3);
+            z-index: 998;
+            opacity: 0;
+            visibility: hidden;
+            transition: all var(--md-sys-motion-duration) var(--md-sys-motion-easing);
+        }
+
+        .scrim--open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        @media (max-width: 768px) {
+            .hero__title {
+                font-size: 36px;
+            }
+
+            .hero__subtitle {
+                font-size: 16px;
+            }
+
+            .section {
+                padding: 48px 0;
+            }
+
+            .section__title {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="app-bar">
+        <div class="app-bar__title">
+            <button class="icon-button" id="menuButton" aria-label="Menu">
+                <span class="material-icons">menu</span>
+            </button>
+            <span class="material-icons" style="color: var(--md-sys-color-primary);">calculate</span>
+            SuperCalculator
+        </div>
+        <div class="app-bar__actions">
+            <button class="icon-button" id="themeToggle" aria-label="Toggle theme">
+                <span class="material-icons">dark_mode</span>
+            </button>
+            <a href="https://github.com/Hotsteel2901/SuperCalculator" class="icon-button" aria-label="GitHub">
+                <span class="material-icons">code</span>
+            </a>
+        </div>
+    </header>
+
+    <nav class="nav-drawer" id="navDrawer">
+        <a href="#features" class="nav-item">
+            <span class="material-icons">star</span>
+            功能特性
+        </a>
+        <a href="#quick-start" class="nav-item">
+            <span class="material-icons">rocket_launch</span>
+            快速开始
+        </a>
+        <a href="#platforms" class="nav-item">
+            <span class="material-icons">devices</span>
+            支持平台
+        </a>
+        <a href="#api" class="nav-item">
+            <span class="material-icons">api</span>
+            API 参考
+        </a>
+        <a href="#architecture" class="nav-item">
+            <span class="material-icons">architecture</span>
+            架构设计
+        </a>
+    </nav>
+
+    <div class="scrim" id="scrim"></div>
+
+    <section class="hero">
+        <h1 class="hero__title">Super Function Graphing Calculator</h1>
+        <p class="hero__subtitle">基于桥接模式的高性能函数计算与可视化工具，融合 C 与 Python 优势</p>
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+            <a href="#quick-start" class="button button--filled">
+                <span class="material-icons">play_arrow</span>
+                快速开始
+            </a>
+            <a href="https://github.com/Hotsteel2901/SuperCalculator/releases" class="button button--tonal">
+                <span class="material-icons">download</span>
+                下载 Release
+            </a>
+            <a href="https://github.com/Hotsteel2901/SuperCalculator" class="button button--outlined">
+                <span class="material-icons">star</span>
+                GitHub
+            </a>
+        </div>
+    </section>
+
+    <main class="container">
+        <section class="section" id="features">
+            <h2 class="section__title">功能特性</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card__icon">
+                        <span class="material-icons">show_chart</span>
+                    </div>
+                    <h3 class="card__title">函数绘图</h3>
+                    <p class="card__content">支持输入任意含 x 的数学表达式并绘制高精度曲线，可自定义坐标范围和采样步长</p>
+                </div>
+                <div class="card">
+                    <div class="card__icon">
+                        <span class="material-icons">layers</span>
+                    </div>
+                    <h3 class="card__title">多曲线叠加</h3>
+                    <p class="card__content">同时绘制多条函数曲线，自动分配不同颜色，方便对比分析</p>
+                </div>
+                <div class="card">
+                    <div class="card__icon">
+                        <span class="material-icons">trending_up</span>
+                    </div>
+                    <h3 class="card__title">数值微分</h3>
+                    <p class="card__content">一阶导数 f'(x) 和二阶导数 f''(x) 计算，采用中心差分法，误差 O(h²)</p>
+                </div>
+                <div class="card">
+                    <div class="card__icon">
+                        <span class="material-icons">functions</span>
+                    </div>
+                    <h3 class="card__title">数值积分</h3>
+                    <p class="card__content">定积分计算，采用自适应 Simpson 复合法则，误差 O(h⁴)</p>
+                </div>
+                <div class="card">
+                    <div class="card__icon">
+                        <span class="material-icons">check_circle</span>
+                    </div>
+                    <h3 class="card__title">方程求解</h3>
+                    <p class="card__content">Newton-Raphson 法配合二分法回退，快速求解非线性方程</p>
+                </div>
+                <div class="card">
+                    <div class="card__icon">
+                        <span class="material-icons">android</span>
+                    </div>
+                    <h3 class="card__title">Android 应用</h3>
+                    <p class="card__content">独立 APK，Material Design 3 界面，支持 ARM64 架构</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="quick-start">
+            <h2 class="section__title">快速开始</h2>
+            <div class="card">
+                <h3 style="font-size: 20px; margin-bottom: 16px;">安装依赖</h3>
+                <div class="code-block" style="margin-bottom: 24px;">pip install numpy matplotlib</div>
+                <h3 style="font-size: 20px; margin-bottom: 16px;">运行程序</h3>
+                <div class="code-block" style="margin-bottom: 24px;">python super_calc_bridged.py</div>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <span class="chip">
+                        <span class="material-icons" style="font-size: 18px;">check</span>
+                        Python 3.9+
+                    </span>
+                    <span class="chip">
+                        <span class="material-icons" style="font-size: 18px;">check</span>
+                        numpy
+                    </span>
+                    <span class="chip">
+                        <span class="material-icons" style="font-size: 18px;">check</span>
+                        matplotlib
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="platforms">
+            <h2 class="section__title">支持平台</h2>
+            <div class="platform-grid">
+                <div class="platform-card">
+                    <span class="material-icons platform-card__icon">windows</span>
+                    <div class="platform-card__name">Windows</div>
+                    <div class="platform-card__arch">x64</div>
+                </div>
+                <div class="platform-card">
+                    <span class="material-icons platform-card__icon">computer</span>
+                    <div class="platform-card__name">Linux</div>
+                    <div class="platform-card__arch">x86_64 / ARM64</div>
+                </div>
+                <div class="platform-card">
+                    <span class="material-icons platform-card__icon">laptop_mac</span>
+                    <div class="platform-card__name">macOS</div>
+                    <div class="platform-card__arch">x86_64 / ARM64</div>
+                </div>
+                <div class="platform-card">
+                    <span class="material-icons platform-card__icon">smartphone</span>
+                    <div class="platform-card__name">Android</div>
+                    <div class="platform-card__arch">aarch64</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="api">
+            <h2 class="section__title">API 参考</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h3 class="card__title">表达式求值</h3>
+                    <div class="code-block">CalcEngine.evaluate("x^2", 3.0)<br># -> 9.0</div>
+                </div>
+                <div class="card">
+                    <h3 class="card__title">批量求值</h3>
+                    <div class="code-block">CalcEngine.evaluate_array("sin(x)", [0, 0.5, 1.0])</div>
+                </div>
+                <div class="card">
+                    <h3 class="card__title">一阶导数</h3>
+                    <div class="code-block">CalcEngine.derivative("x^3", 2.0)<br># -> ~12.0</div>
+                </div>
+                <div class="card">
+                    <h3 class="card__title">二阶导数</h3>
+                    <div class="code-block">CalcEngine.derivative2("x^3", 2.0)<br># -> ~12.0</div>
+                </div>
+                <div class="card">
+                    <h3 class="card__title">定积分</h3>
+                    <div class="code-block">CalcEngine.integrate_adaptive("x^2", 0, 1)<br># -> ~0.333</div>
+                </div>
+                <div class="card">
+                    <h3 class="card__title">方程求根</h3>
+                    <div class="code-block">CalcEngine.solve("x^2 - 4", guess=1, xmin=0, xmax=3)<br># -> 2.0</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="architecture">
+            <h2 class="section__title">架构设计</h2>
+            <div class="card">
+                <p style="margin-bottom: 24px; font-size: 16px;">本项目采用<strong>桥接模式 (Bridge Pattern)</strong>的核心思想：将抽象 (GUI) 与实现 (计算引擎) 分离，使两者可以独立变化。</p>
+                <div class="code-block" style="background-color: var(--md-sys-color-surface-container);">+---------------------------------+
+|  super_calc_bridged.py          |  Tkinter + Matplotlib GUI
+|  (抽象层)                       |
++---------------------------------+
+|  calc_bridge.py                 |  ctypes 桥接层
++---------------------------------+
+|  calc_core.dll / .so            |  C 动态库 (计算引擎)
++---------------------------------+</div>
+                <div class="feature-list" style="margin-top: 24px;">
+                    <div class="feature-item">
+                        <span class="material-icons">shield</span>
+                        <div>
+                            <strong>C 层</strong>
+                            <p style="font-size: 14px; opacity: 0.8;">负责所有数值计算 — 表达式解析、微积分、方程求解</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <span class="material-icons">link</span>
+                        <div>
+                            <strong>Python 层</strong>
+                            <p style="font-size: 14px; opacity: 0.8;">通过 ctypes 调用 C 核心，提供 Tkinter + Matplotlib 图形界面</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <span class="material-icons">auto_awesome</span>
+                        <div>
+                            <strong>桥接层</strong>
+                            <p style="font-size: 14px; opacity: 0.8;">启动时自动检测平台和 CPU 架构，选择正确的二进制文件</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section__title">表达式语法</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h3 class="card__title">算术运算</h3>
+                    <p class="card__content"><code>+ - * / ^</code> (乘方)</p>
+                    <p class="card__content" style="margin-top: 8px;">示例：<code>x^2 + 2*x - 1</code></p>
+                </div>
+                <div class="card">
+                    <h3 class="card__title">三角函数</h3>
+                    <p class="card__content"><code>sin cos tan</code></p>
+                    <p class="card__content" style="margin-top: 8px;">示例：<code>sin(x) + cos(x)</code></p>
+                </div>
+                <div class="card">
+                    <h3 class="card__title">对数/指数</h3>
+                    <p class="card__content"><code>ln log exp</code></p>
+                    <p class="card__content" style="margin-top: 8px;">示例：<code>ln(x)</code> <code>exp(-x)</code></p>
+                </div>
+                <div class="card">
+                    <h3 class="card__title">根号/绝对值</h3>
+                    <p class="card__content"><code>sqrt abs</code></p>
+                    <p class="card__content" style="margin-top: 8px;">示例：<code>sqrt(x)</code> <code>abs(x)</code></p>
+                </div>
+                <div class="card">
+                    <h3 class="card__title">数学常数</h3>
+                    <p class="card__content"><code>pi e</code></p>
+                    <p class="card__content" style="margin-top: 8px;">示例：<code>sin(pi*x)</code></p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer__links">
+                <a href="https://github.com/Hotsteel2901/SuperCalculator" class="footer__link">GitHub</a>
+                <a href="https://github.com/Hotsteel2901/SuperCalculator/releases" class="footer__link">Releases</a>
+                <a href="https://github.com/Hotsteel2901/SuperCalculator/issues" class="footer__link">Issues</a>
+                <a href="README_CN.md" class="footer__link">中文文档</a>
+                <a href="README.md" class="footer__link">English Docs</a>
+            </div>
+            <p class="footer__text">© 2026 SuperCalculator. Built with Material Design 3.</p>
+            <p class="footer__text" style="margin-top: 8px;">Note: This project was generated entirely by AI (Claude Code). Use at your own discretion.</p>
+        </div>
+    </footer>
+
+    <button class="fab" id="scrollToTop" aria-label="Scroll to top" style="display: none;">
+        <span class="material-icons">keyboard_arrow_up</span>
+    </button>
+
+    <div class="dialog-overlay" id="aboutDialog">
+        <div class="dialog">
+            <h3 class="dialog__title">关于 SuperCalculator</h3>
+            <p class="dialog__content">
+                Super Function Graphing Calculator 是一个高性能函数绘图计算器，
+                采用桥接模式设计，融合 C 与 Python 优势。
+            </p>
+            <div class="dialog__actions">
+                <button class="button button--outlined" id="closeDialog">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const navDrawer = document.getElementById('navDrawer');
+        const scrim = document.getElementById('scrim');
+        const menuButton = document.getElementById('menuButton');
+        const themeToggle = document.getElementById('themeToggle');
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+        const aboutDialog = document.getElementById('aboutDialog');
+        const closeDialogBtn = document.getElementById('closeDialog');
+
+        let isDarkMode = false;
+
+        menuButton.addEventListener('click', () => {
+            navDrawer.classList.toggle('nav-drawer--open');
+            scrim.classList.toggle('scrim--open');
+        });
+
+        scrim.addEventListener('click', () => {
+            navDrawer.classList.remove('nav-drawer--open');
+            scrim.classList.remove('scrim--open');
+        });
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                navDrawer.classList.remove('nav-drawer--open');
+                scrim.classList.remove('scrim--open');
+            });
+        });
+
+        themeToggle.addEventListener('click', () => {
+            isDarkMode = !isDarkMode;
+            themeToggle.textContent = isDarkMode ? 'light_mode' : 'dark_mode';
+            document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+        });
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                scrollToTopBtn.style.display = 'flex';
+            } else {
+                scrollToTopBtn.style.display = 'none';
+            }
+        });
+
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        closeDialogBtn.addEventListener('click', () => {
+            aboutDialog.classList.remove('dialog-overlay--open');
+        });
+    </script>
+</body>
+</html>
