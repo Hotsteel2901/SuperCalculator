@@ -6,60 +6,64 @@
     <title>SuperCalculator - 超级函数绘图计算器</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
     <style>
         :root {
-            --primary-hue: 210;
-            --secondary-hue: 280;
-            --accent-hue: 190;
+            --primary-hue: 220;
+            --secondary-hue: 270;
+            --accent-hue: 180;
             
-            --bg-gradient-start: #0a0a0f;
-            --bg-gradient-mid: #1a1a2e;
-            --bg-gradient-end: #0f0f1a;
+            --bg-deep: #030308;
+            --bg-surface: #0a0a14;
+            --bg-elevated: #12121f;
             
-            --glass-bg: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --glass-highlight: rgba(255, 255, 255, 0.15);
-            --glass-shadow: rgba(0, 0, 0, 0.3);
+            --glass-surface: rgba(255, 255, 255, 0.02);
+            --glass-border-light: rgba(255, 255, 255, 0.06);
+            --glass-border-highlight: rgba(255, 255, 255, 0.12);
+            --glass-reflection: rgba(255, 255, 255, 0.08);
             
-            --primary-glow: rgba(100, 150, 255, 0.4);
-            --secondary-glow: rgba(180, 100, 255, 0.3);
-            --accent-glow: rgba(50, 200, 255, 0.35);
+            --glow-primary: hsla(var(--primary-hue), 85%, 65%, 0.5);
+            --glow-secondary: hsla(var(--secondary-hue), 80%, 70%, 0.4);
+            --glow-accent: hsla(var(--accent-hue), 90%, 60%, 0.45);
+            --glow-warm: hsla(35, 95%, 65%, 0.35);
             
-            --text-primary: rgba(255, 255, 255, 0.95);
-            --text-secondary: rgba(255, 255, 255, 0.7);
-            --text-tertiary: rgba(255, 255, 255, 0.5);
+            --text-on-glass: rgba(255, 255, 255, 0.92);
+            --text-muted: rgba(255, 255, 255, 0.65);
+            --text-subtle: rgba(255, 255, 255, 0.45);
             
-            --blur-strength: 20px;
-            --blur-strong: 40px;
+            --blur-light: 12px;
+            --blur-medium: 24px;
+            --blur-heavy: 48px;
+            --blur-extreme: 80px;
             
-            --elevation-1: 0 8px 32px rgba(0, 0, 0, 0.4);
-            --elevation-2: 0 12px 48px rgba(0, 0, 0, 0.5);
-            --elevation-3: 0 20px 80px rgba(0, 0, 0, 0.6);
+            --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.5);
+            --shadow-medium: 0 16px 64px rgba(0, 0, 0, 0.6);
+            --shadow-strong: 0 24px 96px rgba(0, 0, 0, 0.7);
+            --shadow-glow: 0 0 80px var(--glow-primary);
             
-            --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            --ease-liquid: cubic-bezier(0.23, 1, 0.32, 1);
+            --ease-bounce: cubic-bezier(0.68, -0.15, 0.32, 1.15);
+            --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         [data-theme="light"] {
-            --bg-gradient-start: #f0f4ff;
-            --bg-gradient-mid: #e8efff;
-            --bg-gradient-end: #f5f8ff;
+            --bg-deep: #f8faff;
+            --bg-surface: #ffffff;
+            --bg-elevated: #f0f4ff;
             
-            --glass-bg: rgba(255, 255, 255, 0.25);
-            --glass-border: rgba(255, 255, 255, 0.4);
-            --glass-highlight: rgba(255, 255, 255, 0.6);
-            --glass-shadow: rgba(100, 120, 180, 0.15);
+            --glass-surface: rgba(255, 255, 255, 0.35);
+            --glass-border-light: rgba(255, 255, 255, 0.55);
+            --glass-border-highlight: rgba(255, 255, 255, 0.75);
+            --glass-reflection: rgba(255, 255, 255, 0.5);
             
-            --primary-glow: rgba(100, 150, 255, 0.3);
-            --secondary-glow: rgba(180, 100, 255, 0.25);
-            --accent-glow: rgba(50, 200, 255, 0.25);
+            --glow-primary: hsla(var(--primary-hue), 85%, 60%, 0.35);
+            --glow-secondary: hsla(var(--secondary-hue), 80%, 65%, 0.3);
+            --glow-accent: hsla(var(--accent-hue), 90%, 55%, 0.3);
             
-            --text-primary: rgba(10, 10, 30, 0.95);
-            --text-secondary: rgba(10, 10, 30, 0.7);
-            --text-tertiary: rgba(10, 10, 30, 0.5);
+            --text-on-glass: rgba(5, 5, 15, 0.92);
+            --text-muted: rgba(5, 5, 15, 0.65);
+            --text-subtle: rgba(5, 5, 15, 0.45);
         }
 
         * {
@@ -74,86 +78,136 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-mid) 50%, var(--bg-gradient-end) 100%);
-            background-attachment: fixed;
+            background: var(--bg-deep);
             min-height: 100vh;
-            color: var(--text-primary);
+            color: var(--text-on-glass);
             overflow-x: hidden;
-            line-height: 1.6;
+            line-height: 1.65;
         }
 
         body::before {
             content: '';
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            inset: 0;
             background: 
-                radial-gradient(ellipse at 20% 20%, var(--primary-glow) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 80%, var(--secondary-glow) 0%, transparent 50%),
-                radial-gradient(ellipse at 40% 60%, var(--accent-glow) 0%, transparent 40%);
+                radial-gradient(ellipse at 15% 25%, var(--glow-primary) 0%, transparent 55%),
+                radial-gradient(ellipse at 85% 35%, var(--glow-secondary) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 75%, var(--glow-accent) 0%, transparent 60%),
+                radial-gradient(ellipse at 25% 85%, var(--glow-warm) 0%, transparent 50%);
+            background-size: 120% 120%;
             pointer-events: none;
             z-index: 0;
-            animation: ambientPulse 15s ease-in-out infinite;
+            animation: ambientFlow 20s var(--ease-liquid) infinite;
+            filter: blur(60px);
+            opacity: 0.7;
         }
 
-        @keyframes ambientPulse {
-            0%, 100% { opacity: 0.6; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.1); }
-        }
-
-        .noise-overlay {
+        body::after {
+            content: '';
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-            opacity: 0.03;
+            inset: 0;
+            background: 
+                repeating-linear-gradient(
+                    0deg,
+                    transparent 0px,
+                    transparent 2px,
+                    rgba(255, 255, 255, 0.003) 2px,
+                    rgba(255, 255, 255, 0.003) 4px
+                );
             pointer-events: none;
             z-index: 1;
+            opacity: 0.4;
         }
 
-        .glass {
-            background: var(--glass-bg);
-            backdrop-filter: blur(var(--blur-strength));
-            -webkit-backdrop-filter: blur(var(--blur-strength));
-            border: 1px solid var(--glass-border);
-            border-top: 1px solid var(--glass-highlight);
-            border-left: 1px solid var(--glass-highlight);
-            box-shadow: var(--elevation-1);
+        @keyframes ambientFlow {
+            0%, 100% { 
+                background-position: 0% 0%;
+                transform: scale(1);
+            }
+            25% { 
+                background-position: 10% 10%;
+                transform: scale(1.05);
+            }
+            50% { 
+                background-position: 20% 5%;
+                transform: scale(1.08);
+            }
+            75% { 
+                background-position: 10% 15%;
+                transform: scale(1.03);
+            }
         }
 
-        .glass-strong {
-            backdrop-filter: blur(var(--blur-strong));
-            -webkit-backdrop-filter: blur(var(--blur-strong));
+        @keyframes lightSweep {
+            0% {
+                transform: translateX(-100%) rotate(15deg);
+            }
+            100% {
+                transform: translateX(400%) rotate(15deg);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 0.6;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
         }
 
         @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            33% { transform: translateY(-10px) rotate(1deg); }
-            66% { transform: translateY(-5px) rotate(-1deg); }
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+            }
+            33% {
+                transform: translateY(-15px) rotate(2deg);
+            }
+            66% {
+                transform: translateY(-8px) rotate(-1deg);
+            }
         }
 
         @keyframes shimmer {
-            0% { background-position: -200% center; }
-            100% { background-position: 200% center; }
+            0% {
+                background-position: -300% center;
+            }
+            100% {
+                background-position: 300% center;
+            }
         }
 
         @keyframes glow {
-            0%, 100% { box-shadow: 0 0 20px var(--primary-glow), 0 0 40px var(--primary-glow); }
-            50% { box-shadow: 0 0 40px var(--primary-glow), 0 0 80px var(--primary-glow); }
+            0%, 100% {
+                box-shadow: 0 0 30px var(--glow-primary), 0 0 60px var(--glow-primary);
+            }
+            50% {
+                box-shadow: 0 0 50px var(--glow-primary), 0 0 100px var(--glow-primary), 0 0 150px var(--glow-accent);
+            }
         }
 
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(40px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(60px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @keyframes scaleIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
+            from {
+                opacity: 0;
+                transform: scale(0.85);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
         @keyframes fadeIn {
@@ -161,19 +215,146 @@
             to { opacity: 1; }
         }
 
-        @keyframes gradientFlow {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
+        @keyframes gradientShift {
+            0%, 100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
         }
 
-        @keyframes rotate {
+        @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
 
         @keyframes ripple {
-            0% { transform: scale(0); opacity: 1; }
-            100% { transform: scale(4); opacity: 0; }
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes borderRotate {
+            0%, 100% {
+                filter: hue-rotate(0deg);
+            }
+            50% {
+                filter: hue-rotate(30deg);
+            }
+        }
+
+        .glass-panel {
+            background: var(--glass-surface);
+            backdrop-filter: blur(var(--blur-heavy));
+            -webkit-backdrop-filter: blur(var(--blur-heavy));
+            border: 1px solid var(--glass-border-light);
+            border-top: 1px solid var(--glass-border-highlight);
+            border-left: 1px solid var(--glass-border-highlight);
+            box-shadow: var(--shadow-soft);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                135deg,
+                var(--glass-reflection) 0%,
+                transparent 50%,
+                var(--glass-reflection) 100%
+            );
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .glass-panel::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.15),
+                transparent
+            );
+            transition: left 0.8s var(--ease-liquid);
+        }
+
+        .glass-panel:hover::after {
+            left: 100%;
+        }
+
+        .glass-card {
+            background: var(--glass-surface);
+            backdrop-filter: blur(var(--blur-medium));
+            -webkit-backdrop-filter: blur(var(--blur-medium));
+            border: 1px solid var(--glass-border-light);
+            border-top: 1px solid var(--glass-border-highlight);
+            border-left: 1px solid var(--glass-border-highlight);
+            box-shadow: var(--shadow-soft);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                135deg,
+                var(--glow-primary) 0%,
+                transparent 50%,
+                var(--glow-accent) 100%
+            );
+            opacity: 0;
+            transition: opacity 0.6s var(--ease-liquid);
+            z-index: -1;
+        }
+
+        .glass-card::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(
+                135deg,
+                var(--glow-primary),
+                var(--glow-secondary),
+                var(--glow-accent)
+            );
+            opacity: 0;
+            filter: blur(30px);
+            transition: opacity 0.6s var(--ease-liquid);
+            z-index: -2;
+            border-radius: inherit;
+        }
+
+        .glass-card:hover::before {
+            opacity: 0.15;
+        }
+
+        .glass-card:hover::after {
+            opacity: 0.4;
+        }
+
+        .glass-card:hover {
+            border-color: var(--glass-border-highlight);
+            box-shadow: var(--shadow-medium), var(--shadow-glow);
+        }
+
+        .glass-strong {
+            backdrop-filter: blur(var(--blur-extreme));
+            -webkit-backdrop-filter: blur(var(--blur-extreme));
         }
 
         .app-bar {
@@ -181,129 +362,144 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 72px;
+            height: 80px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 24px;
+            padding: 0 32px;
             z-index: 1000;
-            transition: all 0.4s var(--transition-smooth);
+            transition: all 0.5s var(--ease-liquid);
         }
 
         .app-bar.scrolled {
-            background: rgba(10, 10, 15, 0.8);
-            backdrop-filter: blur(var(--blur-strong));
-            -webkit-backdrop-filter: blur(var(--blur-strong));
-            border-bottom: 1px solid var(--glass-border);
+            background: rgba(3, 3, 8, 0.85);
+            backdrop-filter: blur(var(--blur-extreme));
+            -webkit-backdrop-filter: blur(var(--blur-extreme));
+            border-bottom: 1px solid var(--glass-border-light);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
 
         .app-bar__title {
-            font-size: 24px;
-            font-weight: 600;
+            font-size: 26px;
+            font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 12px;
-            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+            gap: 14px;
+            background: linear-gradient(
+                135deg,
+                var(--text-on-glass) 0%,
+                var(--text-muted) 50%,
+                var(--text-on-glass) 100%
+            );
+            background-size: 200% auto;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            animation: gradientShift 5s var(--ease-smooth) infinite;
         }
 
         .app-bar__logo {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, var(--primary-glow), var(--accent-glow));
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--glow-primary), var(--glow-accent));
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
             overflow: hidden;
+            box-shadow: 0 8px 32px var(--glow-primary);
         }
 
         .app-bar__logo::before {
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+            background: linear-gradient(
+                45deg,
+                transparent 0%,
+                rgba(255, 255, 255, 0.4) 50%,
+                transparent 100%
+            );
             background-size: 200% 200%;
-            animation: shimmer 3s infinite;
+            animation: shimmer 3s var(--ease-smooth) infinite;
         }
 
         .app-bar__logo .material-icons {
             color: white;
-            font-size: 24px;
+            font-size: 26px;
             position: relative;
             z-index: 1;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
         }
 
         .app-bar__actions {
             display: flex;
-            gap: 12px;
+            gap: 14px;
             align-items: center;
         }
 
-        .icon-button {
-            width: 44px;
-            height: 44px;
-            border-radius: 14px;
-            border: 1px solid var(--glass-border);
-            background: var(--glass-bg);
-            backdrop-filter: blur(var(--blur-strength));
-            -webkit-backdrop-filter: blur(var(--blur-strength));
-            color: var(--text-primary);
+        .icon-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            border: 1px solid var(--glass-border-light);
+            background: var(--glass-surface);
+            backdrop-filter: blur(var(--blur-medium));
+            -webkit-backdrop-filter: blur(var(--blur-medium));
+            color: var(--text-on-glass);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s var(--transition-smooth);
+            transition: all 0.4s var(--ease-liquid);
             position: relative;
             overflow: hidden;
         }
 
-        .icon-button::before {
+        .icon-btn::before {
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, var(--primary-glow), var(--accent-glow));
+            background: linear-gradient(135deg, var(--glow-primary), var(--glow-accent));
             opacity: 0;
-            transition: opacity 0.3s var(--transition-smooth);
+            transition: opacity 0.4s var(--ease-liquid);
         }
 
-        .icon-button:hover::before {
-            opacity: 0.3;
+        .icon-btn:hover::before {
+            opacity: 0.25;
         }
 
-        .icon-button:hover {
-            transform: translateY(-2px);
-            border-color: var(--glass-highlight);
-            box-shadow: 0 8px 24px var(--primary-glow);
+        .icon-btn:hover {
+            transform: translateY(-3px);
+            border-color: var(--glass-border-highlight);
+            box-shadow: 0 12px 36px var(--glow-primary);
         }
 
-        .icon-button:active {
+        .icon-btn:active {
             transform: scale(0.95);
         }
 
-        .icon-button .material-icons {
+        .icon-btn .material-icons {
             position: relative;
             z-index: 1;
-            transition: transform 0.3s var(--transition-smooth);
+            transition: transform 0.4s var(--ease-liquid);
         }
 
-        .icon-button:hover .material-icons {
-            transform: scale(1.1);
+        .icon-btn:hover .material-icons {
+            transform: scale(1.15) rotate(5deg);
         }
 
         .nav-drawer {
             position: fixed;
-            top: 72px;
+            top: 80px;
             left: 0;
-            width: 340px;
-            height: calc(100vh - 72px);
-            padding: 24px 16px;
+            width: 360px;
+            height: calc(100vh - 80px);
+            padding: 32px 20px;
             overflow-y: auto;
             transform: translateX(-100%);
-            transition: transform 0.5s var(--transition-smooth);
+            transition: transform 0.6s var(--ease-liquid);
             z-index: 999;
         }
 
@@ -311,69 +507,70 @@
             transform: translateX(0);
         }
 
-        .nav-item {
+        .nav-link {
             display: flex;
             align-items: center;
-            gap: 16px;
-            padding: 14px 18px;
-            border-radius: 16px;
-            color: var(--text-primary);
+            gap: 18px;
+            padding: 16px 22px;
+            border-radius: 18px;
+            color: var(--text-on-glass);
             text-decoration: none;
-            transition: all 0.3s var(--transition-smooth);
+            transition: all 0.4s var(--ease-liquid);
             position: relative;
             overflow: hidden;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
-        .nav-item::before {
+        .nav-link::before {
             content: '';
             position: absolute;
             left: 0;
             top: 0;
             bottom: 0;
             width: 4px;
-            background: linear-gradient(180deg, var(--primary-glow), var(--accent-glow));
+            background: linear-gradient(180deg, var(--glow-primary), var(--glow-accent));
             transform: scaleY(0);
-            transition: transform 0.3s var(--transition-smooth);
+            transition: transform 0.4s var(--ease-liquid);
         }
 
-        .nav-item::after {
+        .nav-link::after {
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, var(--primary-glow), var(--secondary-glow));
+            background: linear-gradient(135deg, var(--glow-primary), var(--glow-secondary));
             opacity: 0;
-            transition: opacity 0.3s var(--transition-smooth);
+            transition: opacity 0.4s var(--ease-liquid);
         }
 
-        .nav-item:hover::before {
+        .nav-link:hover::before {
             transform: scaleY(1);
         }
 
-        .nav-item:hover::after {
-            opacity: 0.15;
+        .nav-link:hover::after {
+            opacity: 0.12;
         }
 
-        .nav-item:hover {
-            transform: translateX(8px);
-            border-color: var(--glass-highlight);
+        .nav-link:hover {
+            transform: translateX(10px);
+            border-color: var(--glass-border-highlight);
         }
 
-        .nav-item .material-icons {
+        .nav-link .material-icons {
             position: relative;
             z-index: 1;
-            transition: all 0.3s var(--transition-smooth);
+            transition: all 0.4s var(--ease-liquid);
         }
 
-        .nav-item:hover .material-icons {
-            transform: scale(1.2) rotate(5deg);
-            color: var(--accent-glow);
+        .nav-link:hover .material-icons {
+            transform: scale(1.25) rotate(8deg);
+            color: var(--glow-accent);
+            filter: drop-shadow(0 4px 12px var(--glow-primary));
         }
 
-        .nav-item span {
+        .nav-link span {
             position: relative;
             z-index: 1;
-            font-weight: 500;
+            font-weight: 600;
         }
 
         .hero {
@@ -381,7 +578,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 120px 24px 80px;
+            padding: 140px 24px 100px;
             position: relative;
             overflow: hidden;
         }
@@ -389,19 +586,22 @@
         .hero::before {
             content: '';
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle at 30% 30%, var(--primary-glow) 0%, transparent 40%),
-                        radial-gradient(circle at 70% 70%, var(--secondary-glow) 0%, transparent 40%);
-            animation: rotate 60s linear infinite;
+            top: -100%;
+            left: -100%;
+            width: 400%;
+            height: 400%;
+            background: 
+                radial-gradient(circle at 30% 30%, var(--glow-primary) 0%, transparent 45%),
+                radial-gradient(circle at 70% 70%, var(--glow-secondary) 0%, transparent 45%);
+            animation: spin 80s linear infinite;
             pointer-events: none;
+            opacity: 0.4;
+            filter: blur(80px);
         }
 
         .hero__content {
             text-align: center;
-            max-width: 900px;
+            max-width: 1000px;
             position: relative;
             z-index: 1;
         }
@@ -409,220 +609,261 @@
         .hero__badge {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 20px;
+            gap: 10px;
+            padding: 10px 24px;
             border-radius: 100px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(var(--blur-strength));
-            -webkit-backdrop-filter: blur(var(--blur-strength));
-            border: 1px solid var(--glass-border);
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            margin-bottom: 24px;
-            animation: slideIn 0.8s var(--transition-bounce);
+            background: var(--glass-surface);
+            backdrop-filter: blur(var(--blur-medium));
+            -webkit-backdrop-filter: blur(var(--blur-medium));
+            border: 1px solid var(--glass-border-light);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            animation: slideUp 1s var(--ease-bounce);
             position: relative;
             overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .hero__badge::before {
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(90deg, var(--primary-glow), var(--accent-glow));
-            opacity: 0.1;
+            background: linear-gradient(90deg, var(--glow-primary), var(--glow-accent));
+            opacity: 0.12;
+        }
+
+        .hero__badge::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 30%,
+                rgba(255, 255, 255, 0.3) 50%,
+                transparent 70%
+            );
+            animation: lightSweep 2s var(--ease-smooth) infinite;
         }
 
         .hero__badge .material-icons {
-            font-size: 18px;
-            color: var(--accent-glow);
+            font-size: 20px;
+            color: var(--glow-accent);
+            position: relative;
+            z-index: 1;
+            filter: drop-shadow(0 2px 8px var(--glow-primary));
+        }
+
+        .hero__badge span:last-child {
+            position: relative;
+            z-index: 1;
         }
 
         .hero__title {
-            font-size: clamp(42px, 8vw, 80px);
-            font-weight: 700;
-            line-height: 1.1;
-            margin-bottom: 24px;
-            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 50%, var(--text-primary) 100%);
-            background-size: 200% auto;
+            font-size: clamp(48px, 10vw, 96px);
+            font-weight: 800;
+            line-height: 1.05;
+            margin-bottom: 28px;
+            background: linear-gradient(
+                135deg,
+                var(--text-on-glass) 0%,
+                var(--text-muted) 40%,
+                var(--text-on-glass) 60%,
+                var(--text-muted) 100%
+            );
+            background-size: 300% auto;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            animation: slideIn 0.8s var(--transition-bounce) 0.1s both, gradientFlow 5s ease-in-out infinite;
+            animation: slideUp 1s var(--ease-bounce) 0.1s both, gradientShift 8s var(--ease-smooth) infinite;
             position: relative;
+            letter-spacing: -0.02em;
         }
 
         .hero__title::after {
             content: '';
             position: absolute;
-            bottom: -10px;
+            bottom: -14px;
             left: 50%;
             transform: translateX(-50%);
-            width: 100px;
-            height: 4px;
-            background: linear-gradient(90deg, transparent, var(--primary-glow), transparent);
-            border-radius: 2px;
+            width: 140px;
+            height: 5px;
+            background: linear-gradient(90deg, transparent, var(--glow-primary), var(--glow-accent), transparent);
+            border-radius: 3px;
+            box-shadow: 0 0 20px var(--glow-primary);
         }
 
         .hero__subtitle {
-            font-size: clamp(18px, 3vw, 22px);
-            color: var(--text-secondary);
-            max-width: 650px;
-            margin: 0 auto 40px;
-            animation: slideIn 0.8s var(--transition-bounce) 0.2s both;
+            font-size: clamp(20px, 4vw, 26px);
+            color: var(--text-muted);
+            max-width: 700px;
+            margin: 0 auto 50px;
+            animation: slideUp 1s var(--ease-bounce) 0.2s both;
             line-height: 1.8;
+            font-weight: 300;
         }
 
         .hero__actions {
             display: flex;
-            gap: 16px;
+            gap: 20px;
             justify-content: center;
             flex-wrap: wrap;
-            animation: slideIn 0.8s var(--transition-bounce) 0.3s both;
+            animation: slideUp 1s var(--ease-bounce) 0.3s both;
         }
 
-        .button {
+        .btn {
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            padding: 16px 32px;
-            border-radius: 18px;
-            font-size: 15px;
-            font-weight: 600;
+            gap: 12px;
+            padding: 18px 38px;
+            border-radius: 22px;
+            font-size: 16px;
+            font-weight: 700;
             text-decoration: none;
             cursor: pointer;
             border: none;
-            transition: all 0.4s var(--transition-smooth);
+            transition: all 0.5s var(--ease-liquid);
             position: relative;
             overflow: hidden;
         }
 
-        .button::before {
+        .btn::before {
             content: '';
             position: absolute;
             top: 0;
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s var(--transition-smooth);
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+            transition: left 0.6s var(--ease-liquid);
         }
 
-        .button:hover::before {
+        .btn:hover::before {
             left: 100%;
         }
 
-        .button--primary {
-            background: linear-gradient(135deg, var(--primary-glow), var(--accent-glow));
+        .btn--primary {
+            background: linear-gradient(135deg, var(--glow-primary), var(--glow-accent));
             color: white;
-            box-shadow: 0 8px 32px var(--primary-glow);
+            box-shadow: 0 12px 40px var(--glow-primary);
         }
 
-        .button--primary:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 48px var(--primary-glow), 0 0 80px var(--primary-glow);
+        .btn--primary:hover {
+            transform: translateY(-6px) scale(1.03);
+            box-shadow: 0 20px 60px var(--glow-primary), 0 0 100px var(--glow-accent);
         }
 
-        .button--glass {
-            background: var(--glass-bg);
-            backdrop-filter: blur(var(--blur-strength));
-            -webkit-backdrop-filter: blur(var(--blur-strength));
-            border: 1px solid var(--glass-border);
-            color: var(--text-primary);
+        .btn--glass {
+            background: var(--glass-surface);
+            backdrop-filter: blur(var(--blur-medium));
+            -webkit-backdrop-filter: blur(var(--blur-medium));
+            border: 1px solid var(--glass-border-light);
+            color: var(--text-on-glass);
         }
 
-        .button--glass:hover {
-            background: var(--glass-highlight);
-            transform: translateY(-3px);
-            border-color: var(--glass-highlight);
-            box-shadow: 0 8px 32px var(--glass-shadow);
+        .btn--glass:hover {
+            background: var(--glass-border-highlight);
+            transform: translateY(-5px);
+            border-color: var(--glass-border-highlight);
+            box-shadow: 0 12px 40px var(--shadow-glow);
         }
 
-        .button--outlined {
+        .btn--outlined {
             background: transparent;
-            border: 2px solid var(--glass-border);
-            color: var(--text-primary);
+            border: 2px solid var(--glass-border-light);
+            color: var(--text-on-glass);
         }
 
-        .button--outlined:hover {
-            border-color: var(--primary-glow);
-            background: var(--glass-bg);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 32px var(--primary-glow);
+        .btn--outlined:hover {
+            border-color: var(--glow-primary);
+            background: var(--glass-surface);
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px var(--glow-primary);
         }
 
-        .button .material-icons {
-            transition: transform 0.3s var(--transition-smooth);
+        .btn .material-icons {
+            transition: transform 0.4s var(--ease-liquid);
         }
 
-        .button:hover .material-icons {
-            transform: translateX(4px);
+        .btn:hover .material-icons {
+            transform: translateX(6px);
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1450px;
             margin: 0 auto;
-            padding: 0 24px;
+            padding: 0 32px;
             position: relative;
             z-index: 1;
         }
 
         .section {
-            padding: 120px 0;
+            padding: 140px 0;
         }
 
         .section__header {
             text-align: center;
-            margin-bottom: 64px;
+            margin-bottom: 80px;
         }
 
         .section__label {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 18px;
+            gap: 10px;
+            padding: 10px 22px;
             border-radius: 100px;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
+            background: var(--glass-surface);
+            border: 1px solid var(--glass-border-light);
             font-size: 13px;
-            font-weight: 500;
-            color: var(--accent-glow);
-            margin-bottom: 16px;
+            font-weight: 600;
+            color: var(--glow-accent);
+            margin-bottom: 20px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
         }
 
         .section__title {
-            font-size: clamp(32px, 5vw, 48px);
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 16px;
-            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+            font-size: clamp(36px, 6vw, 56px);
+            font-weight: 800;
+            color: var(--text-on-glass);
+            margin-bottom: 20px;
+            background: linear-gradient(
+                135deg,
+                var(--text-on-glass) 0%,
+                var(--text-muted) 100%
+            );
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            letter-spacing: -0.01em;
         }
 
         .section__subtitle {
-            font-size: 18px;
-            color: var(--text-secondary);
-            max-width: 600px;
+            font-size: 20px;
+            color: var(--text-muted);
+            max-width: 650px;
             margin: 0 auto;
+            line-height: 1.7;
         }
 
         .card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 24px;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 28px;
         }
 
         .card {
-            border-radius: 24px;
-            padding: 32px;
-            transition: all 0.5s var(--transition-smooth);
+            border-radius: 28px;
+            padding: 38px;
+            transition: all 0.6s var(--ease-liquid);
             position: relative;
             overflow: hidden;
-            animation: scaleIn 0.6s var(--transition-bounce) both;
+            animation: scaleIn 0.8s var(--ease-bounce) both;
         }
 
         .card::before {
@@ -631,101 +872,93 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--primary-glow), var(--secondary-glow), var(--accent-glow));
+            height: 4px;
+            background: linear-gradient(90deg, var(--glow-primary), var(--glow-secondary), var(--glow-accent));
             background-size: 200% 100%;
             transform: scaleX(0);
             transform-origin: left;
-            transition: transform 0.5s var(--transition-smooth);
-        }
-
-        .card::after {
-            content: '';
-            position: absolute;
-            inset: -2px;
-            background: linear-gradient(135deg, var(--primary-glow), var(--accent-glow), var(--secondary-glow));
-            opacity: 0;
-            filter: blur(20px);
-            transition: opacity 0.5s var(--transition-smooth);
-            z-index: -1;
+            transition: transform 0.6s var(--ease-liquid);
+            animation: borderRotate 4s var(--ease-smooth) infinite;
         }
 
         .card:hover::before {
             transform: scaleX(1);
         }
 
-        .card:hover::after {
-            opacity: 0.3;
-        }
-
         .card:hover {
-            transform: translateY(-12px) scale(1.02);
-            border-color: var(--glass-highlight);
-            box-shadow: var(--elevation-3), 0 0 60px var(--primary-glow);
+            transform: translateY(-16px) scale(1.02);
         }
 
         .card__icon {
-            width: 64px;
-            height: 64px;
-            border-radius: 20px;
-            background: linear-gradient(135deg, var(--primary-glow), var(--accent-glow));
+            width: 72px;
+            height: 72px;
+            border-radius: 24px;
+            background: linear-gradient(135deg, var(--glow-primary), var(--glow-accent));
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 24px;
+            margin-bottom: 28px;
             position: relative;
             overflow: hidden;
-            transition: all 0.5s var(--transition-bounce);
+            transition: all 0.6s var(--ease-bounce);
+            box-shadow: 0 12px 40px var(--glow-primary);
         }
 
         .card__icon::before {
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+            background: linear-gradient(
+                45deg,
+                transparent 30%,
+                rgba(255, 255, 255, 0.35) 50%,
+                transparent 70%
+            );
             background-size: 200% 200%;
-            animation: shimmer 3s infinite;
+            animation: shimmer 3s var(--ease-smooth) infinite;
         }
 
         .card:hover .card__icon {
-            transform: rotate(10deg) scale(1.1);
-            box-shadow: 0 12px 40px var(--primary-glow);
+            transform: rotate(12deg) scale(1.15);
+            box-shadow: 0 20px 60px var(--glow-primary), 0 0 80px var(--glow-accent);
         }
 
         .card__icon .material-icons {
-            font-size: 32px;
+            font-size: 36px;
             color: white;
             position: relative;
             z-index: 1;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
         }
 
         .card__title {
-            font-size: 22px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 12px;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-on-glass);
+            margin-bottom: 14px;
+            letter-spacing: -0.01em;
         }
 
         .card__content {
-            font-size: 15px;
-            color: var(--text-secondary);
-            line-height: 1.7;
+            font-size: 16px;
+            color: var(--text-muted);
+            line-height: 1.8;
         }
 
         .platform-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
         }
 
         .platform-card {
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 32px 24px;
-            border-radius: 24px;
+            padding: 38px 28px;
+            border-radius: 28px;
             text-align: center;
-            transition: all 0.5s var(--transition-smooth);
+            transition: all 0.6s var(--ease-liquid);
             position: relative;
             overflow: hidden;
         }
@@ -734,63 +967,64 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, var(--primary-glow), var(--secondary-glow));
+            background: linear-gradient(135deg, var(--glow-primary), var(--glow-secondary));
             opacity: 0;
-            filter: blur(30px);
-            transition: opacity 0.5s var(--transition-smooth);
+            filter: blur(40px);
+            transition: opacity 0.6s var(--ease-liquid);
         }
 
         .platform-card:hover::before {
-            opacity: 0.2;
+            opacity: 0.25;
         }
 
         .platform-card:hover {
-            transform: translateY(-8px) scale(1.03);
-            border-color: var(--glass-highlight);
-            box-shadow: 0 20px 60px var(--glass-shadow);
+            transform: translateY(-12px) scale(1.04);
+            border-color: var(--glass-border-highlight);
+            box-shadow: 0 24px 72px var(--shadow-glow);
         }
 
         .platform-card__icon {
-            font-size: 56px;
-            background: linear-gradient(135deg, var(--primary-glow), var(--accent-glow));
+            font-size: 64px;
+            background: linear-gradient(135deg, var(--glow-primary), var(--glow-accent));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 16px;
-            transition: all 0.5s var(--transition-bounce);
+            margin-bottom: 20px;
+            transition: all 0.6s var(--ease-bounce);
             position: relative;
             z-index: 1;
+            filter: drop-shadow(0 8px 24px var(--glow-primary));
         }
 
         .platform-card:hover .platform-card__icon {
-            transform: scale(1.2) rotate(10deg);
+            transform: scale(1.3) rotate(12deg);
         }
 
         .platform-card__name {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 6px;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-on-glass);
+            margin-bottom: 8px;
             position: relative;
             z-index: 1;
         }
 
         .platform-card__arch {
-            font-size: 14px;
-            color: var(--text-tertiary);
+            font-size: 15px;
+            color: var(--text-subtle);
             position: relative;
             z-index: 1;
         }
 
         .code-block {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 18px;
-            padding: 28px;
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 22px;
+            padding: 32px;
             overflow-x: auto;
             font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            font-size: 14px;
-            color: var(--text-secondary);
-            border: 1px solid var(--glass-border);
+            font-size: 15px;
+            color: var(--text-muted);
+            border: 1px solid var(--glass-border-light);
             position: relative;
             overflow: hidden;
         }
@@ -802,22 +1036,27 @@
             left: 0;
             right: 0;
             height: 1px;
-            background: linear-gradient(90deg, transparent, var(--primary-glow), transparent);
+            background: linear-gradient(90deg, transparent, var(--glow-primary), transparent);
         }
 
         .code-block::after {
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.03) 50%, transparent 70%);
+            background: linear-gradient(
+                45deg,
+                transparent 30%,
+                rgba(255, 255, 255, 0.04) 50%,
+                transparent 70%
+            );
             background-size: 200% 200%;
-            animation: shimmer 4s infinite;
+            animation: shimmer 5s var(--ease-smooth) infinite;
             pointer-events: none;
         }
 
         .code-block:hover {
-            border-color: var(--glass-highlight);
-            box-shadow: 0 8px 32px var(--glass-shadow);
+            border-color: var(--glass-border-highlight);
+            box-shadow: 0 12px 40px var(--shadow-glow);
         }
 
         .code-block code {
@@ -827,85 +1066,87 @@
 
         .feature-list {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 16px;
-            margin-top: 32px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
         }
 
         .feature-item {
             display: flex;
             align-items: flex-start;
-            gap: 16px;
-            padding: 20px;
-            border-radius: 18px;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            transition: all 0.4s var(--transition-smooth);
+            gap: 18px;
+            padding: 24px;
+            border-radius: 22px;
+            background: var(--glass-surface);
+            border: 1px solid var(--glass-border-light);
+            transition: all 0.5s var(--ease-liquid);
         }
 
         .feature-item:hover {
-            transform: translateX(8px);
-            background: var(--glass-highlight);
-            border-color: var(--glass-highlight);
-            box-shadow: 0 8px 32px var(--primary-glow);
+            transform: translateX(10px);
+            background: var(--glass-border-highlight);
+            border-color: var(--glass-border-highlight);
+            box-shadow: 0 12px 40px var(--glow-primary);
         }
 
         .feature-item .material-icons {
-            font-size: 28px;
-            background: linear-gradient(135deg, var(--primary-glow), var(--accent-glow));
+            font-size: 32px;
+            background: linear-gradient(135deg, var(--glow-primary), var(--glow-accent));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             flex-shrink: 0;
             margin-top: 2px;
+            filter: drop-shadow(0 4px 12px var(--glow-primary));
         }
 
         .feature-item strong {
             display: block;
-            color: var(--text-primary);
-            margin-bottom: 6px;
-            font-weight: 600;
+            color: var(--text-on-glass);
+            margin-bottom: 8px;
+            font-weight: 700;
+            font-size: 17px;
         }
 
         .feature-item p {
-            color: var(--text-secondary);
-            font-size: 14px;
-            line-height: 1.6;
+            color: var(--text-muted);
+            font-size: 15px;
+            line-height: 1.7;
         }
 
         .chip {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
+            gap: 10px;
+            padding: 10px 20px;
             border-radius: 100px;
-            font-size: 13px;
-            font-weight: 500;
-            background: var(--glass-bg);
-            color: var(--text-secondary);
-            border: 1px solid var(--glass-border);
-            transition: all 0.3s var(--transition-smooth);
+            font-size: 14px;
+            font-weight: 600;
+            background: var(--glass-surface);
+            color: var(--text-muted);
+            border: 1px solid var(--glass-border-light);
+            transition: all 0.4s var(--ease-liquid);
         }
 
         .chip:hover {
-            background: var(--glass-highlight);
-            border-color: var(--primary-glow);
-            color: var(--text-primary);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px var(--primary-glow);
+            background: var(--glass-border-highlight);
+            border-color: var(--glow-primary);
+            color: var(--text-on-glass);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px var(--glow-primary);
         }
 
         .chip .material-icons {
-            font-size: 18px;
-            color: var(--accent-glow);
+            font-size: 20px;
+            color: var(--glow-accent);
         }
 
         .footer {
-            background: var(--glass-bg);
-            backdrop-filter: blur(var(--blur-strong));
-            -webkit-backdrop-filter: blur(var(--blur-strong));
-            border-top: 1px solid var(--glass-border);
-            padding: 64px 24px;
+            background: var(--glass-surface);
+            backdrop-filter: blur(var(--blur-extreme));
+            -webkit-backdrop-filter: blur(var(--blur-extreme));
+            border-top: 1px solid var(--glass-border-light);
+            padding: 80px 24px;
             position: relative;
             overflow: hidden;
         }
@@ -917,46 +1158,55 @@
             left: 0;
             right: 0;
             height: 1px;
-            background: linear-gradient(90deg, transparent, var(--primary-glow), var(--secondary-glow), var(--primary-glow), transparent);
-            animation: shimmer 3s infinite;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                var(--glow-primary),
+                var(--glow-secondary),
+                var(--glow-accent),
+                transparent
+            );
+            animation: shimmer 4s var(--ease-smooth) infinite;
         }
 
         .footer__content {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 32px;
+            gap: 36px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         .footer__links {
             display: flex;
             justify-content: center;
-            gap: 32px;
+            gap: 36px;
             flex-wrap: wrap;
         }
 
         .footer__link {
-            color: var(--text-secondary);
+            color: var(--text-muted);
             text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s var(--transition-smooth);
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.4s var(--ease-liquid);
             position: relative;
         }
 
         .footer__link::after {
             content: '';
             position: absolute;
-            bottom: -4px;
+            bottom: -6px;
             left: 0;
             width: 0;
             height: 2px;
-            background: linear-gradient(90deg, var(--primary-glow), var(--accent-glow));
-            transition: width 0.3s var(--transition-smooth);
+            background: linear-gradient(90deg, var(--glow-primary), var(--glow-accent));
+            transition: width 0.4s var(--ease-liquid);
         }
 
         .footer__link:hover {
-            color: var(--text-primary);
+            color: var(--text-on-glass);
         }
 
         .footer__link:hover::after {
@@ -964,27 +1214,27 @@
         }
 
         .footer__text {
-            font-size: 14px;
-            color: var(--text-tertiary);
+            font-size: 15px;
+            color: var(--text-subtle);
             text-align: center;
             line-height: 1.8;
         }
 
         .fab {
             position: fixed;
-            bottom: 28px;
-            right: 28px;
-            width: 64px;
-            height: 64px;
-            border-radius: 22px;
-            background: linear-gradient(135deg, var(--primary-glow), var(--accent-glow));
+            bottom: 32px;
+            right: 32px;
+            width: 70px;
+            height: 70px;
+            border-radius: 24px;
+            background: linear-gradient(135deg, var(--glow-primary), var(--glow-accent));
             border: none;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 12px 48px var(--primary-glow);
-            transition: all 0.4s var(--transition-bounce);
+            box-shadow: 0 16px 56px var(--glow-primary);
+            transition: all 0.5s var(--ease-bounce);
             z-index: 998;
         }
 
@@ -992,15 +1242,20 @@
             content: '';
             position: absolute;
             inset: 0;
-            border-radius: 22px;
-            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+            border-radius: 24px;
+            background: linear-gradient(
+                45deg,
+                transparent 30%,
+                rgba(255, 255, 255, 0.35) 50%,
+                transparent 70%
+            );
             background-size: 200% 200%;
-            animation: shimmer 3s infinite;
+            animation: shimmer 3s var(--ease-smooth) infinite;
         }
 
         .fab:hover {
-            transform: translateY(-6px) scale(1.1);
-            box-shadow: 0 20px 80px var(--primary-glow), 0 0 120px var(--primary-glow);
+            transform: translateY(-8px) scale(1.12);
+            box-shadow: 0 24px 96px var(--glow-primary), 0 0 160px var(--glow-accent);
         }
 
         .fab:active {
@@ -1009,29 +1264,30 @@
 
         .fab .material-icons {
             color: white;
-            font-size: 28px;
+            font-size: 32px;
             position: relative;
             z-index: 1;
-            transition: transform 0.3s var(--transition-smooth);
+            transition: transform 0.4s var(--ease-liquid);
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
         }
 
         .fab:hover .material-icons {
-            transform: translateY(-3px);
+            transform: translateY(-4px);
         }
 
         .dialog-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(var(--blur-strong));
-            -webkit-backdrop-filter: blur(var(--blur-strong));
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(var(--blur-extreme));
+            -webkit-backdrop-filter: blur(var(--blur-extreme));
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 2000;
             opacity: 0;
             visibility: hidden;
-            transition: all 0.4s var(--transition-smooth);
+            transition: all 0.5s var(--ease-liquid);
         }
 
         .dialog-overlay--open {
@@ -1040,17 +1296,17 @@
         }
 
         .dialog {
-            background: var(--glass-bg);
-            backdrop-filter: blur(var(--blur-strong));
-            -webkit-backdrop-filter: blur(var(--blur-strong));
-            border: 1px solid var(--glass-border);
-            border-radius: 28px;
-            padding: 40px;
-            max-width: 480px;
+            background: var(--glass-surface);
+            backdrop-filter: blur(var(--blur-extreme));
+            -webkit-backdrop-filter: blur(var(--blur-extreme));
+            border: 1px solid var(--glass-border-light);
+            border-radius: 32px;
+            padding: 48px;
+            max-width: 520px;
             width: 90%;
-            transform: scale(0.9) translateY(30px);
-            transition: transform 0.5s var(--transition-bounce);
-            box-shadow: var(--elevation-3);
+            transform: scale(0.85) translateY(40px);
+            transition: transform 0.6s var(--ease-bounce);
+            box-shadow: var(--shadow-strong);
             position: relative;
             overflow: hidden;
         }
@@ -1062,9 +1318,9 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: radial-gradient(circle at 30% 30%, var(--primary-glow) 0%, transparent 50%);
-            animation: rotate 20s linear infinite;
-            opacity: 0.3;
+            background: radial-gradient(circle at 30% 30%, var(--glow-primary) 0%, transparent 50%);
+            animation: spin 25s linear infinite;
+            opacity: 0.35;
         }
 
         .dialog-overlay--open .dialog {
@@ -1072,19 +1328,20 @@
         }
 
         .dialog__title {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 16px;
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--text-on-glass);
+            margin-bottom: 20px;
             position: relative;
             z-index: 1;
+            letter-spacing: -0.01em;
         }
 
         .dialog__content {
-            font-size: 15px;
-            color: var(--text-secondary);
-            margin-bottom: 32px;
-            line-height: 1.8;
+            font-size: 16px;
+            color: var(--text-muted);
+            margin-bottom: 36px;
+            line-height: 1.9;
             position: relative;
             z-index: 1;
         }
@@ -1092,7 +1349,7 @@
         .dialog__actions {
             display: flex;
             justify-content: flex-end;
-            gap: 12px;
+            gap: 14px;
             position: relative;
             z-index: 1;
         }
@@ -1100,13 +1357,13 @@
         .scrim {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
             z-index: 998;
             opacity: 0;
             visibility: hidden;
-            transition: all 0.4s var(--transition-smooth);
+            transition: all 0.5s var(--ease-liquid);
         }
 
         .scrim--open {
@@ -1116,8 +1373,8 @@
 
         .reveal {
             opacity: 0;
-            transform: translateY(50px);
-            transition: all 0.8s var(--transition-smooth);
+            transform: translateY(60px);
+            transition: all 1s var(--ease-liquid);
         }
 
         .reveal.active {
@@ -1125,17 +1382,53 @@
             transform: translateY(0);
         }
 
+        .glow-orb {
+            position: fixed;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--glow-primary) 0%, transparent 70%);
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+            animation: float 10s var(--ease-liquid) infinite;
+        }
+
+        .glow-orb--1 {
+            width: 400px;
+            height: 400px;
+            top: 10%;
+            left: 5%;
+            animation-delay: 0s;
+        }
+
+        .glow-orb--2 {
+            width: 300px;
+            height: 300px;
+            top: 60%;
+            right: 10%;
+            animation-delay: -3s;
+            background: radial-gradient(circle, var(--glow-secondary) 0%, transparent 70%);
+        }
+
+        .glow-orb--3 {
+            width: 350px;
+            height: 350px;
+            bottom: 10%;
+            left: 20%;
+            animation-delay: -6s;
+            background: radial-gradient(circle, var(--glow-accent) 0%, transparent 70%);
+        }
+
         @media (max-width: 768px) {
             .app-bar {
-                padding: 0 16px;
+                padding: 0 20px;
             }
 
             .hero {
-                padding: 100px 16px 60px;
+                padding: 120px 20px 80px;
             }
 
             .section {
-                padding: 80px 0;
+                padding: 100px 0;
             }
 
             .card-grid {
@@ -1147,14 +1440,14 @@
                 align-items: center;
             }
 
-            .button {
+            .btn {
                 width: 100%;
-                max-width: 280px;
+                max-width: 300px;
                 justify-content: center;
             }
 
             .footer__links {
-                gap: 20px;
+                gap: 24px;
                 flex-direction: column;
                 align-items: center;
             }
@@ -1162,9 +1455,11 @@
     </style>
 </head>
 <body>
-    <div class="noise-overlay"></div>
+    <div class="glow-orb glow-orb--1"></div>
+    <div class="glow-orb glow-orb--2"></div>
+    <div class="glow-orb glow-orb--3"></div>
 
-    <header class="app-bar glass glass-strong" id="appBar">
+    <header class="app-bar glass-panel glass-strong" id="appBar">
         <div class="app-bar__title">
             <div class="app-bar__logo">
                 <span class="material-icons">calculate</span>
@@ -1172,36 +1467,36 @@
             SuperCalculator
         </div>
         <div class="app-bar__actions">
-            <button class="icon-button" id="themeToggle" aria-label="Toggle theme">
+            <button class="icon-btn" id="themeToggle" aria-label="Toggle theme">
                 <span class="material-icons">light_mode</span>
             </button>
-            <a href="https://github.com/Hotsteel2901/SuperCalculator" class="icon-button" aria-label="GitHub">
+            <a href="https://github.com/Hotsteel2901/SuperCalculator" class="icon-btn" aria-label="GitHub">
                 <span class="material-icons">code</span>
             </a>
-            <button class="icon-button" id="menuButton" aria-label="Menu">
+            <button class="icon-btn" id="menuButton" aria-label="Menu">
                 <span class="material-icons">menu</span>
             </button>
         </div>
     </header>
 
-    <nav class="nav-drawer glass glass-strong" id="navDrawer">
-        <a href="#features" class="nav-item">
+    <nav class="nav-drawer glass-panel glass-strong" id="navDrawer">
+        <a href="#features" class="nav-link">
             <span class="material-icons">star</span>
             <span>功能特性</span>
         </a>
-        <a href="#quick-start" class="nav-item">
+        <a href="#quick-start" class="nav-link">
             <span class="material-icons">rocket_launch</span>
             <span>快速开始</span>
         </a>
-        <a href="#platforms" class="nav-item">
+        <a href="#platforms" class="nav-link">
             <span class="material-icons">devices</span>
             <span>支持平台</span>
         </a>
-        <a href="#api" class="nav-item">
+        <a href="#api" class="nav-link">
             <span class="material-icons">api</span>
             <span>API 参考</span>
         </a>
-        <a href="#architecture" class="nav-item">
+        <a href="#architecture" class="nav-link">
             <span class="material-icons">architecture</span>
             <span>架构设计</span>
         </a>
@@ -1213,20 +1508,20 @@
         <div class="hero__content">
             <div class="hero__badge">
                 <span class="material-icons">sparkles</span>
-                <span>新一代 Liquid Glass 设计</span>
+                <span>Liquid Glass 设计</span>
             </div>
             <h1 class="hero__title">Super Function Graphing Calculator</h1>
             <p class="hero__subtitle">基于桥接模式的高性能函数计算与可视化工具，融合 C 与 Python 优势，带来极致流畅的计算体验</p>
             <div class="hero__actions">
-                <a href="#quick-start" class="button button--primary">
+                <a href="#quick-start" class="btn btn--primary">
                     <span class="material-icons">play_arrow</span>
                     快速开始
                 </a>
-                <a href="https://github.com/Hotsteel2901/SuperCalculator/releases" class="button button--glass">
+                <a href="https://github.com/Hotsteel2901/SuperCalculator/releases" class="btn btn--glass">
                     <span class="material-icons">download</span>
                     下载 Release
                 </a>
-                <a href="https://github.com/Hotsteel2901/SuperCalculator" class="button button--outlined">
+                <a href="https://github.com/Hotsteel2901/SuperCalculator" class="btn btn--outlined">
                     <span class="material-icons">star</span>
                     GitHub
                 </a>
@@ -1245,42 +1540,42 @@
                 <p class="section__subtitle">强大的计算能力与优雅的可视化完美结合</p>
             </div>
             <div class="card-grid">
-                <div class="card glass reveal">
+                <div class="card glass-card reveal">
                     <div class="card__icon">
                         <span class="material-icons">show_chart</span>
                     </div>
                     <h3 class="card__title">函数绘图</h3>
                     <p class="card__content">支持输入任意含 x 的数学表达式并绘制高精度曲线，可自定义坐标范围和采样步长</p>
                 </div>
-                <div class="card glass reveal">
+                <div class="card glass-card reveal">
                     <div class="card__icon">
                         <span class="material-icons">layers</span>
                     </div>
                     <h3 class="card__title">多曲线叠加</h3>
                     <p class="card__content">同时绘制多条函数曲线，自动分配不同颜色，方便对比分析</p>
                 </div>
-                <div class="card glass reveal">
+                <div class="card glass-card reveal">
                     <div class="card__icon">
                         <span class="material-icons">trending_up</span>
                     </div>
                     <h3 class="card__title">数值微分</h3>
                     <p class="card__content">一阶导数 f'(x) 和二阶导数 f''(x) 计算，采用中心差分法，误差 O(h²)</p>
                 </div>
-                <div class="card glass reveal">
+                <div class="card glass-card reveal">
                     <div class="card__icon">
                         <span class="material-icons">functions</span>
                     </div>
                     <h3 class="card__title">数值积分</h3>
                     <p class="card__content">定积分计算，采用自适应 Simpson 复合法则，误差 O(h⁴)</p>
                 </div>
-                <div class="card glass reveal">
+                <div class="card glass-card reveal">
                     <div class="card__icon">
                         <span class="material-icons">check_circle</span>
                     </div>
                     <h3 class="card__title">方程求解</h3>
                     <p class="card__content">Newton-Raphson 法配合二分法回退，快速求解非线性方程</p>
                 </div>
-                <div class="card glass reveal">
+                <div class="card glass-card reveal">
                     <div class="card__icon">
                         <span class="material-icons">android</span>
                     </div>
@@ -1299,16 +1594,16 @@
                 <h2 class="section__title">快速开始</h2>
                 <p class="section__subtitle">只需几步即可开始使用</p>
             </div>
-            <div class="card glass reveal" style="max-width: 800px; margin: 0 auto;">
-                <h3 style="font-size: 20px; margin-bottom: 16px; color: var(--text-primary);">安装依赖</h3>
-                <div class="code-block" style="margin-bottom: 24px;">
+            <div class="card glass-card reveal" style="max-width: 850px; margin: 0 auto;">
+                <h3 style="font-size: 22px; margin-bottom: 18px; color: var(--text-on-glass);">安装依赖</h3>
+                <div class="code-block" style="margin-bottom: 28px;">
                     <code>pip install numpy matplotlib</code>
                 </div>
-                <h3 style="font-size: 20px; margin-bottom: 16px; color: var(--text-primary);">运行程序</h3>
-                <div class="code-block" style="margin-bottom: 24px;">
+                <h3 style="font-size: 22px; margin-bottom: 18px; color: var(--text-on-glass);">运行程序</h3>
+                <div class="code-block" style="margin-bottom: 28px;">
                     <code>python super_calc_bridged.py</code>
                 </div>
-                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <div style="display: flex; gap: 14px; flex-wrap: wrap;">
                     <span class="chip">
                         <span class="material-icons">check</span>
                         Python 3.9+
@@ -1335,22 +1630,22 @@
                 <p class="section__subtitle">跨平台支持，随时随地使用</p>
             </div>
             <div class="platform-grid">
-                <div class="platform-card glass reveal">
+                <div class="platform-card glass-card reveal">
                     <span class="material-icons platform-card__icon">windows</span>
                     <div class="platform-card__name">Windows</div>
                     <div class="platform-card__arch">x64</div>
                 </div>
-                <div class="platform-card glass reveal">
+                <div class="platform-card glass-card reveal">
                     <span class="material-icons platform-card__icon">computer</span>
                     <div class="platform-card__name">Linux</div>
                     <div class="platform-card__arch">x86_64 / ARM64</div>
                 </div>
-                <div class="platform-card glass reveal">
+                <div class="platform-card glass-card reveal">
                     <span class="material-icons platform-card__icon">laptop_mac</span>
                     <div class="platform-card__name">macOS</div>
                     <div class="platform-card__arch">x86_64 / ARM64</div>
                 </div>
-                <div class="platform-card glass reveal">
+                <div class="platform-card glass-card reveal">
                     <span class="material-icons platform-card__icon">smartphone</span>
                     <div class="platform-card__name">Android</div>
                     <div class="platform-card__arch">aarch64</div>
@@ -1368,37 +1663,37 @@
                 <p class="section__subtitle">简洁易用的 API 接口</p>
             </div>
             <div class="card-grid">
-                <div class="card glass reveal">
+                <div class="card glass-card reveal">
                     <h3 class="card__title">表达式求值</h3>
                     <div class="code-block">
                         <code>CalcEngine.evaluate("x^2", 3.0)<br># -> 9.0</code>
                     </div>
                 </div>
-                <div class="card glass reveal">
+                <div class="card glass-card reveal">
                     <h3 class="card__title">批量求值</h3>
                     <div class="code-block">
                         <code>CalcEngine.evaluate_array("sin(x)", [0, 0.5, 1.0])</code>
                     </div>
                 </div>
-                <div class="card glass reveal">
+                <div class="card glass-card reveal">
                     <h3 class="card__title">一阶导数</h3>
                     <div class="code-block">
                         <code>CalcEngine.derivative("x^3", 2.0)<br># -> ~12.0</code>
                     </div>
                 </div>
-                <div class="card glass reveal">
+                <div class="card glass-card reveal">
                     <h3 class="card__title">二阶导数</h3>
                     <div class="code-block">
                         <code>CalcEngine.derivative2("x^3", 2.0)<br># -> ~12.0</code>
                     </div>
                 </div>
-                <div class="card glass reveal">
+                <div class="card glass-card reveal">
                     <h3 class="card__title">定积分</h3>
                     <div class="code-block">
                         <code>CalcEngine.integrate_adaptive("x^2", 0, 1)<br># -> ~0.333</code>
                     </div>
                 </div>
-                <div class="card glass reveal">
+                <div class="card glass-card reveal">
                     <h3 class="card__title">方程求根</h3>
                     <div class="code-block">
                         <code>CalcEngine.solve("x^2 - 4", guess=1, xmin=0, xmax=3)<br># -> 2.0</code>
@@ -1416,11 +1711,11 @@
                 <h2 class="section__title">架构设计</h2>
                 <p class="section__subtitle">优雅的桥接模式设计</p>
             </div>
-            <div class="card glass reveal" style="max-width: 900px; margin: 0 auto;">
-                <p style="margin-bottom: 24px; font-size: 16px; color: var(--text-secondary); line-height: 1.8;">
+            <div class="card glass-card reveal" style="max-width: 950px; margin: 0 auto;">
+                <p style="margin-bottom: 28px; font-size: 17px; color: var(--text-muted); line-height: 1.9;">
                     本项目采用<strong>桥接模式 (Bridge Pattern)</strong>的核心思想：将抽象 (GUI) 与实现 (计算引擎) 分离，使两者可以独立变化。
                 </p>
-                <div class="code-block" style="margin-bottom: 24px;">
+                <div class="code-block" style="margin-bottom: 28px;">
                     <code>+---------------------------------+
 |  super_calc_bridged.py          |  Tkinter + Matplotlib GUI
 |  (抽象层)                       |
@@ -1466,30 +1761,30 @@
                 <p class="section__subtitle">丰富的数学表达式支持</p>
             </div>
             <div class="card-grid">
-                <div class="card glass reveal">
+                <div class="card glass-card reveal">
                     <h3 class="card__title">算术运算</h3>
-                    <p class="card__content"><code style="color: var(--accent-glow);">+ - * / ^</code> (乘方)</p>
-                    <p class="card__content" style="margin-top: 12px; color: var(--text-secondary);">示例：<code style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px;">x^2 + 2*x - 1</code></p>
+                    <p class="card__content"><code style="color: var(--glow-accent);">+ - * / ^</code> (乘方)</p>
+                    <p class="card__content" style="margin-top: 14px; color: var(--text-muted);">示例：<code style="background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 8px;">x^2 + 2*x - 1</code></p>
                 </div>
-                <div class="card glass reveal">
+                <div class="card glass-card reveal">
                     <h3 class="card__title">三角函数</h3>
-                    <p class="card__content"><code style="color: var(--accent-glow);">sin cos tan</code></p>
-                    <p class="card__content" style="margin-top: 12px; color: var(--text-secondary);">示例：<code style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px;">sin(x) + cos(x)</code></p>
+                    <p class="card__content"><code style="color: var(--glow-accent);">sin cos tan</code></p>
+                    <p class="card__content" style="margin-top: 14px; color: var(--text-muted);">示例：<code style="background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 8px;">sin(x) + cos(x)</code></p>
                 </div>
-                <div class="card glass reveal">
+                <div class="card glass-card reveal">
                     <h3 class="card__title">对数/指数</h3>
-                    <p class="card__content"><code style="color: var(--accent-glow);">ln log exp</code></p>
-                    <p class="card__content" style="margin-top: 12px; color: var(--text-secondary);">示例：<code style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px;">ln(x)</code> <code style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px;">exp(-x)</code></p>
+                    <p class="card__content"><code style="color: var(--glow-accent);">ln log exp</code></p>
+                    <p class="card__content" style="margin-top: 14px; color: var(--text-muted);">示例：<code style="background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 8px;">ln(x)</code> <code style="background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 8px;">exp(-x)</code></p>
                 </div>
-                <div class="card glass reveal">
+                <div class="card glass-card reveal">
                     <h3 class="card__title">根号/绝对值</h3>
-                    <p class="card__content"><code style="color: var(--accent-glow);">sqrt abs</code></p>
-                    <p class="card__content" style="margin-top: 12px; color: var(--text-secondary);">示例：<code style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px;">sqrt(x)</code> <code style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px;">abs(x)</code></p>
+                    <p class="card__content"><code style="color: var(--glow-accent);">sqrt abs</code></p>
+                    <p class="card__content" style="margin-top: 14px; color: var(--text-muted);">示例：<code style="background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 8px;">sqrt(x)</code> <code style="background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 8px;">abs(x)</code></p>
                 </div>
-                <div class="card glass reveal">
+                <div class="card glass-card reveal">
                     <h3 class="card__title">数学常数</h3>
-                    <p class="card__content"><code style="color: var(--accent-glow);">pi e</code></p>
-                    <p class="card__content" style="margin-top: 12px; color: var(--text-secondary);">示例：<code style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px;">sin(pi*x)</code></p>
+                    <p class="card__content"><code style="color: var(--glow-accent);">pi e</code></p>
+                    <p class="card__content" style="margin-top: 14px; color: var(--text-muted);">示例：<code style="background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 8px;">sin(pi*x)</code></p>
                 </div>
             </div>
         </section>
@@ -1505,7 +1800,7 @@
                 <a href="README.md" class="footer__link">English Docs</a>
             </div>
             <p class="footer__text">© 2026 SuperCalculator. Built with Liquid Glass Design.</p>
-            <p class="footer__text" style="margin-top: 8px;">Note: This project was generated entirely by AI (Claude Code). Use at your own discretion.</p>
+            <p class="footer__text" style="margin-top: 10px;">Note: This project was generated entirely by AI (Claude Code). Use at your own discretion.</p>
         </div>
     </footer>
 
@@ -1521,7 +1816,7 @@
                 采用桥接模式设计，融合 C 与 Python 优势。
             </p>
             <div class="dialog__actions">
-                <button class="button button--outlined" id="closeDialog">关闭</button>
+                <button class="btn btn--outlined" id="closeDialog">关闭</button>
             </div>
         </div>
     </div>
@@ -1560,8 +1855,8 @@
             scrim.classList.remove('scrim--open');
         });
 
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', () => {
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
                 navDrawer.classList.remove('nav-drawer--open');
                 scrim.classList.remove('scrim--open');
             });
@@ -1577,7 +1872,7 @@
             const icon = themeToggle.querySelector('.material-icons');
             icon.style.animation = 'none';
             icon.offsetHeight;
-            icon.style.animation = 'glow 0.6s ease-in-out';
+            icon.style.animation = 'glow 0.6s var(--ease-smooth)';
             setTimeout(() => {
                 icon.style.animation = '';
             }, 600);
@@ -1621,14 +1916,14 @@
         }
 
         revealElements.forEach((element, index) => {
-            element.style.transitionDelay = `${Math.min(index * 0.08, 0.4)}s`;
+            element.style.transitionDelay = `${Math.min(index * 0.1, 0.5)}s`;
         });
 
         window.addEventListener('scroll', revealOnScroll);
         revealOnScroll();
 
-        document.querySelectorAll('.hero .button').forEach((btn, index) => {
-            btn.style.animationDelay = `${0.3 + index * 0.1}s`;
+        document.querySelectorAll('.hero .btn').forEach((btn, index) => {
+            btn.style.animationDelay = `${0.3 + index * 0.12}s`;
         });
 
         const cards = document.querySelectorAll('.card');
@@ -1636,8 +1931,8 @@
             card.addEventListener('mouseenter', () => {
                 cards.forEach((c, i) => {
                     if (i !== index) {
-                        c.style.opacity = '0.7';
-                        c.style.transform = 'scale(0.98)';
+                        c.style.opacity = '0.65';
+                        c.style.transform = 'scale(0.97)';
                     }
                 });
             });
@@ -1646,6 +1941,19 @@
                     c.style.opacity = '1';
                     c.style.transform = '';
                 });
+            });
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            const orbs = document.querySelectorAll('.glow-orb');
+            const mouseX = e.clientX / window.innerWidth;
+            const mouseY = e.clientY / window.innerHeight;
+            
+            orbs.forEach((orb, index) => {
+                const speed = (index + 1) * 20;
+                const offsetX = (mouseX - 0.5) * speed;
+                const offsetY = (mouseY - 0.5) * speed;
+                orb.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
             });
         });
     </script>
