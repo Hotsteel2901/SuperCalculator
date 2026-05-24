@@ -791,16 +791,22 @@
             border-bottom: 1px solid var(--glass-border);
             padding: 20px;
             z-index: 999;
-            transform: translateY(-100%);
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.4s ease;
         }
 
         .mobile-nav.open {
-            transform: translateY(0);
-            opacity: 1;
-            visibility: visible;
+            display: block;
+            animation: slideDown 0.3s ease forwards;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .mobile-nav-link {
@@ -1306,7 +1312,11 @@
             updateThemeIcon();
         });
 
-        function toggleMenu() {
+        function toggleMenu(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
             var isOpen = mobileNav.classList.contains('open');
             if (isOpen) {
                 mobileNav.classList.remove('open');
