@@ -1,8 +1,8 @@
 package com.supercalc;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.widget.NestedScrollView;
@@ -25,6 +25,7 @@ public class PlotActivity extends AppCompatActivity {
     private LineChart lineChart;
     private TextInputEditText xMinInput, xMaxInput, yMinInput, yMaxInput;
     private TextInputEditText exprInput;
+    private MaterialButton btnZoom;
     
     private ArrayList<ArrayList<Entry>> allEntries;
     private ArrayList<String> allExpressions;
@@ -56,6 +57,7 @@ public class PlotActivity extends AppCompatActivity {
         yMinInput = findViewById(R.id.y_min_input);
         yMaxInput = findViewById(R.id.y_max_input);
         exprInput = findViewById(R.id.plot_expr_input);
+        btnZoom = findViewById(R.id.btn_zoom);
         
         MaterialButton btnAddCurve = findViewById(R.id.btn_add_curve);
         MaterialButton btnPlot = findViewById(R.id.btn_plot_all);
@@ -70,6 +72,7 @@ public class PlotActivity extends AppCompatActivity {
         btnPlot.setOnClickListener(v -> onPlotAll());
         btnRemoveCurve.setOnClickListener(v -> onRemoveCurve());
         btnBack.setOnClickListener(v -> finish());
+        btnZoom.setOnClickListener(v -> openFullScreen());
         
         NestedScrollView scrollView = findViewById(R.id.scroll_view);
         scrollView.setNestedScrollingEnabled(false);
@@ -209,6 +212,54 @@ public class PlotActivity extends AppCompatActivity {
         
         lineChart.invalidate();
         toast("Plotted " + dataSets.size() + " curve(s)");
+    }
+    
+    private void openFullScreen() {
+        if (allEntries.isEmpty()) {
+            toast("Plot some curves first");
+            return;
+        }
+        
+        Intent intent = new Intent(this, FullScreenPlotActivity.class);
+        
+        String[] expressions = allExpressions.toArray(new String[0]);
+        String[] entriesData = new String[allEntries.size()];
+        
+        for (int i = 0; i < allEntries.size(); i++) {
+            StringBuilder sb = new StringBuilder();
+            for (Entry e : allEntries.get(i)) {
+                if (sb.length() > 0) sb.append(";");
+                sb.append(e.getX()).append(",").append(e.getY());
+            }
+            entriesData[i] = sb.toString();
+        }
+        
+        int[] colors = new int[curveColors.size()];
+        for (int i = 0; i < curveColors.size(); i++) {
+            colors[i] = curveColors.get(i);
+        }
+        
+        try {
+            float xMin = Float.parseFloat(xMinInput.getText().toString().trim());
+            float xMax = Float.parseFloat(xMaxInput.getText().toString().trim());
+            float yMin = Float.parseFloat(yMinInput.getText().toString().trim());
+            float yMax = Float.parseFloat(yMaxInput.getText().toString().trim());
+            
+            intent.putExtra("expressions", expressions);
+            intent.putExtra("entries_data", entriesData);
+            intent.putExtra("colors", colors);
+            intent.putExtra("x_min", xMin);
+            intent.putExtra("x_max", xMax);
+            intent.putExtra("y_min", yMin);
+            intent.putExtra("y_max", yMax);
+        } catch (NumberFormatException e) {
+            intent.putExtra("x_min", -10f);
+            intent.putExtra("x_max", 10f);
+            intent.putExtra("y_min", -10f);
+            intent.putExtra("y_max", 10f);
+        }
+        
+        startActivity(intent);
     }
     
     private void setupChart() {
