@@ -2,7 +2,7 @@ name: Scheduled OpenCode Task
 
 on:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "0 16 * * *"
 
 jobs:
   opencode:
