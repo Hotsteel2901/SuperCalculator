@@ -2,8 +2,10 @@ package com.supercalc;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.widget.NestedScrollView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.github.mikephil.charting.charts.LineChart;
@@ -68,6 +70,9 @@ public class PlotActivity extends AppCompatActivity {
         btnPlot.setOnClickListener(v -> onPlotAll());
         btnRemoveCurve.setOnClickListener(v -> onRemoveCurve());
         btnBack.setOnClickListener(v -> finish());
+        
+        NestedScrollView scrollView = findViewById(R.id.scroll_view);
+        scrollView.setNestedScrollingEnabled(false);
         
         lineChart.setTouchEnabled(true);
         lineChart.setPinchZoom(true);
