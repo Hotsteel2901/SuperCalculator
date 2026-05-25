@@ -1,0 +1,28 @@
+name: Scheduled OpenCode Task
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  opencode:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Run OpenCode
+        uses: anomalyco/opencode/github@latest
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+        with:
+          model: opencode-go/kimi-k2.6
+          prompt: |
+            你是一位严谨的程序员。全面查看仓库的代码以及目前的功能，适当为其添加一项新功能，注意处理各项依赖以及兼容性，添加完成后记得检查一次bug再提交，不要删除以前的功能。
