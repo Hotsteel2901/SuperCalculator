@@ -3,7 +3,8 @@ name: Scheduled OpenCode Fix Bugs
 on:
   schedule:
     - cron: "0 4 * * *"
-
+  workflow_dispatch:
+  
 jobs:
   opencode:
     runs-on: ubuntu-latest
