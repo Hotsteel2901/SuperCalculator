@@ -39,6 +39,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
 - **Numerical Integration** — adaptive Simpson's rule for definite integrals
 - **Equation Solving** — Newton-Raphson (with bisection fallback) and pure bisection
 - **Extremum Finder** — golden-section search for local minima and maxima on an interval
+- **Auto Root Scanner** — automatically scan an interval for all roots of f(x)=0, sign-change detection plus bisection refinement
 - **Preset Functions** — quick-select from 19 common functions (including 3D presets)
 - **Parameter System** — auto-detects extra parameters (e.g., `a`, `b`) and provides live input fields
 - **Coordinate Marking** — click on the plot to mark points, or enter an x value to auto-locate

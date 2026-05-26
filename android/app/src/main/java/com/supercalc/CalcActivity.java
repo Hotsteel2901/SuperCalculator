@@ -51,6 +51,7 @@ public class CalcActivity extends AppCompatActivity {
         MaterialButton btnFindMin = findViewById(R.id.btn_find_min);
         MaterialButton btnFindMax = findViewById(R.id.btn_find_max);
         MaterialButton btnClear  = findViewById(R.id.btn_clear);
+        MaterialButton btnScanRoots = findViewById(R.id.btn_scan_roots);
         MaterialButton btnPlot3D = findViewById(R.id.btn_plot_3d);
 
         btnEval  .setOnClickListener(v -> onEvaluate());
@@ -62,6 +63,7 @@ public class CalcActivity extends AppCompatActivity {
         btnFindMin.setOnClickListener(v -> onFindExtremum(true));
         btnFindMax.setOnClickListener(v -> onFindExtremum(false));
         btnClear .setOnClickListener(v -> resultView.setText(""));
+        btnScanRoots.setOnClickListener(v -> onScanRoots());
         btnPlot3D.setOnClickListener(v -> openPlot3D());
 
         // Preset chips — set expression text and auto-evaluate
@@ -168,6 +170,69 @@ public class CalcActivity extends AppCompatActivity {
             intent.putExtra("x_max", getB());
         }
         startActivity(intent);
+    }
+
+    private void onScanRoots() {
+        String e = getExpr();
+        if (e.isEmpty()) { toast("Enter an expression"); return; }
+        double a = getA();
+        double b = getB();
+        if (a >= b) { toast("a must be less than b"); return; }
+
+        int nSamples = 2000;
+        double tolZero = 1e-6;
+        double tolDup = 1e-4;
+        double[] xs = new double[nSamples];
+        double step = (b - a) / (nSamples - 1);
+        for (int i = 0; i < nSamples; i++) {
+            xs[i] = a + i * step;
+        }
+        double[] ys = CalcEngine.evaluateArray(e, xs);
+        if (ys == null) {
+            resultView.append("Scan Roots: Error: " + CalcEngine.getLastError() + "\n");
+            return;
+        }
+
+        java.util.ArrayList<Double> roots = new java.util.ArrayList<>();
+        for (int i = 0; i < nSamples; i++) {
+            if (!Double.isNaN(ys[i]) && !Double.isInfinite(ys[i]) && Math.abs(ys[i]) < tolZero) {
+                roots.add(xs[i]);
+            }
+        }
+        for (int i = 0; i < nSamples - 1; i++) {
+            if (Double.isNaN(ys[i]) || Double.isNaN(ys[i + 1])) continue;
+            if (ys[i] == 0.0 || ys[i + 1] == 0.0) continue;
+            if (ys[i] * ys[i + 1] < 0) {
+                double root = CalcEngine.solveBisection(e, xs[i], xs[i + 1]);
+                if (!Double.isNaN(root)) {
+                    roots.add(root);
+                }
+            }
+        }
+
+        java.util.Collections.sort(roots);
+        java.util.ArrayList<Double> uniqueRoots = new java.util.ArrayList<>();
+        for (Double r : roots) {
+            if (uniqueRoots.isEmpty() || Math.abs(r - uniqueRoots.get(uniqueRoots.size() - 1)) > tolDup) {
+                uniqueRoots.add(r);
+            }
+        }
+
+        if (uniqueRoots.isEmpty()) {
+            resultView.append("Scan Roots: No roots found in [" + fmt(a) + ", " + fmt(b) + "]\n");
+        } else {
+            resultView.append("Scan Roots: Found " + uniqueRoots.size() + " root(s) in [" + fmt(a) + ", " + fmt(b) + "]\n");
+            int limit = Math.min(uniqueRoots.size(), 20);
+            for (int i = 0; i < limit; i++) {
+                double r = uniqueRoots.get(i);
+                double verify = CalcEngine.evaluate(e, r);
+                String vStr = Double.isNaN(verify) ? "N/A" : String.format("%.2e", verify);
+                resultView.append("  x" + (i + 1) + " = " + fmt(r) + "  (f=" + vStr + ")\n");
+            }
+            if (uniqueRoots.size() > 20) {
+                resultView.append("  ... and " + (uniqueRoots.size() - 20) + " more\n");
+            }
+        }
     }
 
     private void openPlot3D() {
