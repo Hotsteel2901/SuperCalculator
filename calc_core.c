@@ -419,6 +419,8 @@ EXPORT double solve_bisection(const char* expr, double a, double b,
     double fa, fb, fc, c;
     if (parse_and_eval(expr, a, 0.0, &fa) != 0) return NAN;
     if (parse_and_eval(expr, b, 0.0, &fb) != 0) return NAN;
+    if (fabs(fa) < tol) return a;
+    if (fabs(fb) < tol) return b;
     if (signbit(fa) == signbit(fb)) { set_error("f(a) and f(b) must have opposite signs"); return NAN; }
     for (int i = 0; i < max_iter; i++) {
         c = (a+b)/2.0;

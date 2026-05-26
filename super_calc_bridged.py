@@ -13,9 +13,9 @@ Features:
   - Adjustable coordinate ranges, step size, and tolerances
   - Export plot as PNG
   - Factorial support (!)
-  - 3D function plotting for z=f(x,y)
+  - 3D function plotting for z=f(x,y) in a separate window
   - Parameter detection and dynamic input
-  - Input panel with quick buttons
+  - Input panel with quick buttons (all C-core supported operations)
   - Coordinate marking on click and by x input
 """
 
@@ -73,6 +73,11 @@ DEFAULT_COLORS = [
     "#bcbd22", "#17becf",
 ]
 
+CMAP_3D_OPTIONS = [
+    'viridis', 'plasma', 'inferno', 'magma', 'cividis',
+    'coolwarm', 'twilight', 'turbo',
+]
+
 PARAM_PATTERN = re.compile(r'\b([a-zA-Z]+)\b')
 KNOWN_FUNCTIONS = {'sin', 'cos', 'tan', 'log', 'ln', 'exp', 'sqrt', 'abs'}
 KNOWN_CONSTANTS = {'pi', 'e'}
@@ -128,8 +133,8 @@ class SuperCalcApp:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("Super Function Graphing Calculator")
-        self.root.geometry("1400x800")
-        self.root.minsize(1000, 600)
+        self.root.geometry("520x900")
+        self.root.minsize(450, 700)
         self.root.configure(bg="#1e1e2e")
 
         self.curves: List[CurveModel] = []
@@ -146,24 +151,36 @@ class SuperCalcApp:
         self.marked_points = []
         self.auto_mark_point = None
 
+        # Separate windows for 2D and 3D plots
+        self.window_2d = None
+        self.fig_2d = None
+        self.ax_2d = None
+        self.canvas_2d = None
+        self.toolbar_2d = None
+
+        self.window_3d = None
+        self.fig_3d = None
+        self.ax_3d = None
+        self.canvas_3d = None
+        self.toolbar_3d = None
+
+        self.root.protocol("WM_DELETE_WINDOW", self._on_main_close)
         self._build_ui()
         self._add_curve("sin(x)")
+
+    def _on_main_close(self):
+        """Clean up child plot windows before exiting."""
+        if self.window_2d is not None and self.window_2d.winfo_exists():
+            self.window_2d.destroy()
+        if self.window_3d is not None and self.window_3d.winfo_exists():
+            self.window_3d.destroy()
+        self.root.destroy()
 
     # ------------------------------------------------------------------
     #  UI Construction
     # ------------------------------------------------------------------
     def _build_ui(self):
-        paned = ttk.PanedWindow(self.root, orient=tk.HORIZONTAL)
-        paned.pack(fill=tk.BOTH, expand=True)
-
-        left = ttk.Frame(paned, width=400, style="Dark.TFrame")
-        paned.add(left, weight=0)
-
-        right = ttk.Frame(paned, style="Dark.TFrame")
-        paned.add(right, weight=1)
-
-        self._build_control_panel(left)
-        self._build_plot_panel(right)
+        self._build_control_panel(self.root)
 
     def _build_control_panel(self, parent):
         canvas = tk.Canvas(parent, bg="#1e1e2e", highlightthickness=0)
@@ -180,9 +197,19 @@ class SuperCalcApp:
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         def _on_mousewheel(event):
-            # Only scroll when mouse is over the control panel
+            # Windows / macOS
             canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+        def _on_mousewheel_linux(event):
+            # Linux (Button-4 = scroll up, Button-5 = scroll down)
+            if event.num == 4:
+                canvas.yview_scroll(-1, "units")
+            elif event.num == 5:
+                canvas.yview_scroll(1, "units")
+
         canvas.bind("<MouseWheel>", _on_mousewheel)
+        canvas.bind("<Button-4>", _on_mousewheel_linux)
+        canvas.bind("<Button-5>", _on_mousewheel_linux)
 
         # --- Expression Input ---
         frm_expr = ttk.LabelFrame(scroll_frame, text="Function Input",
@@ -195,7 +222,7 @@ class SuperCalcApp:
         input_row = ttk.Frame(frm_expr, style="Dark.TFrame")
         input_row.pack(fill=tk.X, padx=6, pady=2)
         
-        self.entry_expr = ttk.Entry(input_row, font=("Consolas", 12), width=25)
+        self.entry_expr = ttk.Entry(input_row, font=("Consolas", 12), width=28)
         self.entry_expr.pack(side=tk.LEFT, padx=(0, 4))
         self.entry_expr.insert(0, "sin(x)")
         self.entry_expr.bind("<Return>", lambda e: self._on_plot())
@@ -254,9 +281,12 @@ class SuperCalcApp:
 
         grid = ttk.Frame(frm_range, style="Dark.TFrame")
         grid.pack(fill=tk.X, padx=6, pady=4)
-        for col, (lbl, var_attr) in enumerate(
-            [("X min", "x_min"), ("X max", "x_max"),
-             ("Y min", "y_min"), ("Y max", "y_max")]):
+        range_fields = [
+            ("X min", "x_min"), ("X max", "x_max"),
+            ("Y min", "y_min"), ("Y max", "y_max"),
+            ("Z min", "z_min"), ("Z max", "z_max"),
+        ]
+        for col, (lbl, var_attr) in enumerate(range_fields):
             ttk.Label(grid, text=lbl, style="Dark.TLabel").grid(
                 row=0, column=col, padx=2, sticky=tk.W)
             v = tk.StringVar(value=str(getattr(self, var_attr)))
@@ -264,18 +294,20 @@ class SuperCalcApp:
             e.grid(row=1, column=col, padx=2)
             setattr(self, f"_var_{var_attr}", v)
 
-        ttk.Label(frm_range, text="Step:",
-                  style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 2), pady=(0, 4))
+        range_row2 = ttk.Frame(frm_range, style="Dark.TFrame")
+        range_row2.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Label(range_row2, text="Step:",
+                  style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 2))
         self._var_step = tk.StringVar(value=str(self.step_size))
-        ttk.Entry(frm_range, textvariable=self._var_step, width=6).pack(
-            side=tk.LEFT, pady=(0, 4))
-        ttk.Button(frm_range, text="Apply",
-                   command=self._on_apply_range).pack(side=tk.RIGHT, padx=6, pady=(0, 4))
+        ttk.Entry(range_row2, textvariable=self._var_step, width=6).pack(
+            side=tk.LEFT)
+        ttk.Button(range_row2, text="Apply",
+                   command=self._on_apply_range).pack(side=tk.RIGHT, padx=6)
 
         self._var_grid = tk.BooleanVar(value=True)
-        ttk.Checkbutton(frm_range, text="Grid",
+        ttk.Checkbutton(range_row2, text="Grid",
                         variable=self._var_grid).pack(
-            side=tk.LEFT, padx=(12, 0), pady=(0, 4))
+            side=tk.LEFT, padx=(12, 0))
 
         # --- Calculus ---
         frm_calc = ttk.LabelFrame(scroll_frame, text="Calculus Operations",
@@ -357,7 +389,7 @@ class SuperCalcApp:
                                   style="Dark.TLabelframe")
         frm_mark.pack(fill=tk.X, padx=8, pady=4)
         
-        ttk.Label(frm_mark, text="Click on plot to mark, or enter x:",
+        ttk.Label(frm_mark, text="Click on 2D plot to mark, or enter x:",
                   style="Dark.TLabel").pack(anchor=tk.W, padx=6, pady=(6, 0))
         
         mark_row = ttk.Frame(frm_mark, style="Dark.TFrame")
@@ -386,20 +418,67 @@ class SuperCalcApp:
         style.configure("Dark.TLabel", background="#1e1e2e",
                         foreground="#cdd6f4")
 
-    def _build_plot_panel(self, parent):
-        self.fig = Figure(figsize=(10, 8), dpi=100, facecolor="#1e1e2e")
-        self.ax = self.fig.add_subplot(111, projection='3d')
-        self._setup_axes()
+    # ------------------------------------------------------------------
+    #  2D / 3D Window Management
+    # ------------------------------------------------------------------
+    def _ensure_2d_window(self):
+        if self.window_2d is not None and self.window_2d.winfo_exists():
+            return
+        self.window_2d = tk.Toplevel(self.root)
+        self.window_2d.title("2D Function Plot")
+        self.window_2d.geometry("900x700")
+        self.window_2d.minsize(600, 400)
+        self.window_2d.configure(bg="#1e1e2e")
+        self.window_2d.protocol("WM_DELETE_WINDOW", self._on_2d_window_close)
 
-        self.canvas = FigureCanvasTkAgg(self.fig, master=parent)
-        self.canvas.draw()
+        self.fig_2d = Figure(figsize=(9, 7), dpi=100, facecolor="#1e1e2e")
+        self.ax_2d = self.fig_2d.add_subplot(111)
+        self._setup_axes(self.ax_2d, is_3d=False)
 
-        toolbar = NavigationToolbar2Tk(self.canvas, parent)
-        toolbar.update()
+        self.canvas_2d = FigureCanvasTkAgg(self.fig_2d, master=self.window_2d)
+        self.canvas_2d.draw()
+        self.toolbar_2d = NavigationToolbar2Tk(self.canvas_2d, self.window_2d)
+        self.toolbar_2d.update()
+        self.canvas_2d.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
+        self.canvas_2d.mpl_connect('button_press_event', self._on_canvas_click)
 
-        self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
-        
-        self.canvas.mpl_connect('button_press_event', self._on_canvas_click)
+    def _on_2d_window_close(self):
+        if self.window_2d is not None:
+            self.window_2d.destroy()
+        self.window_2d = None
+        self.fig_2d = None
+        self.ax_2d = None
+        self.canvas_2d = None
+        self.toolbar_2d = None
+
+    def _ensure_3d_window(self):
+        if self.window_3d is not None and self.window_3d.winfo_exists():
+            return
+        self.window_3d = tk.Toplevel(self.root)
+        self.window_3d.title("3D Function Plot")
+        self.window_3d.geometry("900x700")
+        self.window_3d.minsize(600, 400)
+        self.window_3d.configure(bg="#1e1e2e")
+        self.window_3d.protocol("WM_DELETE_WINDOW", self._on_3d_window_close)
+
+        self.fig_3d = Figure(figsize=(9, 7), dpi=100, facecolor="#1e1e2e")
+        self.ax_3d = self.fig_3d.add_subplot(111, projection='3d')
+        self._setup_axes(self.ax_3d, is_3d=True)
+
+        self.canvas_3d = FigureCanvasTkAgg(self.fig_3d, master=self.window_3d)
+        self.canvas_3d.draw()
+        self.toolbar_3d = NavigationToolbar2Tk(self.canvas_3d, self.window_3d)
+        self.toolbar_3d.update()
+        self.canvas_3d.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
+
+    def _on_3d_window_close(self):
+        if self.window_3d is not None:
+            self.window_3d.destroy()
+        self.window_3d = None
+        self.fig_3d = None
+        self.ax_3d = None
+        self.canvas_3d = None
+        self.toolbar_3d = None
 
     # ------------------------------------------------------------------
     #  Input Panel
@@ -412,22 +491,20 @@ class SuperCalcApp:
         panel.transient(self.root)
         panel.grab_set()
         
-        style = ttk.Style()
-        style.configure("Dark.TButton", background="#313244", foreground="#cdd6f4")
-        
         main_frame = ttk.Frame(panel, style="Dark.TFrame")
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
+        # Only include operators/functions/constants supported by the C core
         buttons_config = [
             ("Basic", [
                 ("x²", "x^2"), ("x³", "x^3"), ("xⁿ", "x^n"),
-                ("√", "sqrt("), ("³√", "x^(1/3)"), ("|x|", "abs("),
+                ("√", "sqrt("), ("|x|", "abs("),
             ]),
             ("Operators", [
-                ("÷", "/"), ("×", "*"), ("%", "%"), ("-", "-"), ("+", "+"),
+                ("÷", "/"), ("×", "*"), ("^", "^"), ("-", "-"), ("+", "+"),
             ]),
             ("Log/Exp", [
-                ("㏑", "ln("), ("㏒", "log("), ("lg", "log("), ("eˣ", "exp("), ("e", "e"),
+                ("ln", "ln("), ("log", "log("), ("eˣ", "exp("), ("e", "e"),
             ]),
             ("Trig", [
                 ("sin", "sin("), ("cos", "cos("), ("tan", "tan("),
@@ -435,10 +512,9 @@ class SuperCalcApp:
             ]),
             ("Special", [
                 ("!", "!"), ("(", "("), (")", ")"), (",", ","),
-                ("σ", "sigma"), ("μ", "mu"),
             ]),
             ("Constants", [
-                ("π", "pi"), ("e", "e"), ("φ", "1.6180339887"),
+                ("π", "pi"), ("e", "e"),
             ]),
         ]
         
@@ -457,9 +533,17 @@ class SuperCalcApp:
         ttk.Button(main_frame, text="Close", command=panel.destroy).pack(pady=10)
 
     def _insert_text(self, text):
+        """Insert text at cursor, replacing any selected text."""
         expr = self.entry_expr.get()
-        pos = self.entry_expr.index(tk.INSERT)
-        self.entry_expr.insert(pos, text)
+        try:
+            sel_start = self.entry_expr.index(tk.SEL_FIRST)
+            sel_end = self.entry_expr.index(tk.SEL_LAST)
+            self.entry_expr.delete(sel_start, sel_end)
+            self.entry_expr.insert(sel_start, text)
+        except tk.TclError:
+            # No selection
+            pos = self.entry_expr.index(tk.INSERT)
+            self.entry_expr.insert(pos, text)
         self.entry_expr.focus()
 
     # ------------------------------------------------------------------
@@ -467,7 +551,7 @@ class SuperCalcApp:
     # ------------------------------------------------------------------
     def _update_param_inputs(self):
         expr = self.entry_expr.get().strip()
-        params = CurveModel._detect_parameters(expr)
+        params = _detect_parameters_static(expr)
         
         for widget in self.frm_params.winfo_children():
             widget.destroy()
@@ -542,9 +626,18 @@ class SuperCalcApp:
     def _on_clear_all(self):
         self.curves.clear()
         self.listbox_curves.delete(0, tk.END)
-        self.ax.clear()
-        self._setup_axes()
-        self.canvas.draw()
+        self.marked_points.clear()
+        self.auto_mark_point = None
+        self._var_mark_x.set("")
+        if self.ax_2d is not None:
+            self.ax_2d.clear()
+            self._setup_axes(self.ax_2d, is_3d=False)
+            self.canvas_2d.draw()
+        if self.ax_3d is not None:
+            self.ax_3d.clear()
+            self._setup_axes(self.ax_3d, is_3d=True)
+            self.canvas_3d.draw()
+        self.status_var.set("Cleared all curves.")
 
     def _on_preset(self, name: str):
         expr = PRESET_FUNCTIONS.get(name, "")
@@ -569,6 +662,8 @@ class SuperCalcApp:
             x_max = float(self._var_x_max.get())
             y_min = float(self._var_y_min.get())
             y_max = float(self._var_y_max.get())
+            z_min = float(self._var_z_min.get())
+            z_max = float(self._var_z_max.get())
             step = float(self._var_step.get())
             
             if x_min >= x_max:
@@ -576,6 +671,9 @@ class SuperCalcApp:
                 return
             if y_min >= y_max:
                 messagebox.showerror("Error", "Y min must be less than Y max.")
+                return
+            if z_min >= z_max:
+                messagebox.showerror("Error", "Z min must be less than Z max.")
                 return
             if step <= 0:
                 messagebox.showerror("Error", "Step size must be positive.")
@@ -585,6 +683,8 @@ class SuperCalcApp:
             self.x_max = x_max
             self.y_min = y_min
             self.y_max = y_max
+            self.z_min = z_min
+            self.z_max = z_max
             self.step_size = step
             self.grid_on = self._var_grid.get()
             self._plot_all()
@@ -592,145 +692,159 @@ class SuperCalcApp:
             messagebox.showerror("Error", "Invalid range values.")
 
     def _plot_all(self):
-        if not self.curves:
-            return
-
         try:
             self.x_min = float(self._var_x_min.get())
             self.x_max = float(self._var_x_max.get())
             self.y_min = float(self._var_y_min.get())
             self.y_max = float(self._var_y_max.get())
+            self.z_min = float(self._var_z_min.get())
+            self.z_max = float(self._var_z_max.get())
             self.step_size = float(self._var_step.get())
             self.grid_on = self._var_grid.get()
         except ValueError:
             pass
 
-        has_3d = any(c.is_3d for c in self.curves)
+        if not self.curves:
+            # Clear both plot windows when no curves remain
+            if self.ax_2d is not None:
+                self.ax_2d.clear()
+                self._setup_axes(self.ax_2d, is_3d=False)
+                self.canvas_2d.draw()
+            if self.ax_3d is not None:
+                self.ax_3d.clear()
+                self._setup_axes(self.ax_3d, is_3d=True)
+                self.canvas_3d.draw()
+            self.status_var.set("No curves to plot.")
+            return
+
+        has_2d = any(not c.is_3d and c.visible for c in self.curves)
+        has_3d = any(c.is_3d and c.visible for c in self.curves)
         
-        if has_3d:
-            self._plot_3d()
-        else:
+        if has_2d:
+            self._ensure_2d_window()
             self._plot_2d()
+        elif self.window_2d is not None and self.window_2d.winfo_exists():
+            # Keep window open but clear it if no 2D curves
+            self.ax_2d.clear()
+            self._setup_axes(self.ax_2d, is_3d=False)
+            self.canvas_2d.draw()
+            
+        if has_3d:
+            self._ensure_3d_window()
+            self._plot_3d()
+        elif self.window_3d is not None and self.window_3d.winfo_exists():
+            # Keep window open but clear it if no 3D curves
+            self.ax_3d.clear()
+            self._setup_axes(self.ax_3d, is_3d=True)
+            self.canvas_3d.draw()
 
     def _plot_2d(self):
-        self.ax.clear()
-        self.ax = self.fig.add_subplot(111)
-        self._setup_axes()
+        if self.ax_2d is None:
+            return
+        self.ax_2d.clear()
+        self._setup_axes(self.ax_2d, is_3d=False)
 
         n_pts = max(MIN_PLOT_POINTS, min(MAX_PLOT_POINTS, int((self.x_max - self.x_min) / self.step_size)))
         xs_np = np.linspace(self.x_min, self.x_max, n_pts)
         xs_list = xs_np.tolist()
 
         for curve in self.curves:
-            if not curve.visible:
+            if not curve.visible or curve.is_3d:
                 continue
             expr = self._substitute_params(curve.expression)
             ys = CalcEngine.evaluate_array(expr, xs_list)
             ys_clean = np.array([y if y is not None else np.nan for y in ys])
-            self.ax.plot(xs_np, ys_clean, color=curve.color,
+            self.ax_2d.plot(xs_np, ys_clean, color=curve.color,
                          linewidth=curve.linewidth, linestyle=curve.linestyle,
                          label=curve.label, alpha=0.9)
 
         for point in self.marked_points:
-            self.ax.plot(point[0], point[1], 'ro', markersize=8)
-            self.ax.annotate(f"({point[0]:.3f}, {point[1]:.3f})",
+            self.ax_2d.plot(point[0], point[1], 'ro', markersize=8)
+            self.ax_2d.annotate(f"({point[0]:.3f}, {point[1]:.3f})",
                            xy=(point[0], point[1]), xytext=(10, 10),
                            textcoords='offset points', color='#f38ba8')
 
-        if self.auto_mark_point:
+        if self.auto_mark_point is not None:
             x = self.auto_mark_point
             expr = self._get_active_expression()
             if expr:
                 expr_sub = self._substitute_params(expr)
                 y = CalcEngine.evaluate(expr_sub, x)
                 if y is not None:
-                    self.ax.plot(x, y, 'go', markersize=10)
-                    self.ax.annotate(f"({x:.3f}, {y:.3f})",
+                    self.ax_2d.plot(x, y, 'go', markersize=10)
+                    self.ax_2d.annotate(f"({x:.3f}, {y:.3f})",
                                    xy=(x, y), xytext=(10, -15),
                                    textcoords='offset points', color='#a6e3a1')
 
-        if any(c.visible for c in self.curves):
-            self.ax.legend(loc="upper right", facecolor="#313244",
+        visible_2d = [c for c in self.curves if c.visible and not c.is_3d]
+        if visible_2d:
+            self.ax_2d.legend(loc="upper right", facecolor="#313244",
                            edgecolor="#585b70", labelcolor="#cdd6f4",
                            fontsize=9)
 
-        self.canvas.draw()
+        self.canvas_2d.draw()
         self.status_var.set(
-            f"Plotted {len(self.curves)} curve(s) on [{self.x_min}, {self.x_max}]")
+            f"Plotted {len(visible_2d)} 2D curve(s) on [{self.x_min}, {self.x_max}]")
 
     def _plot_3d(self):
-        self.ax.clear()
-        self.ax = self.fig.add_subplot(111, projection='3d')
-        self._setup_axes()
+        if self.ax_3d is None:
+            return
+        self.ax_3d.clear()
+        self._setup_axes(self.ax_3d, is_3d=True)
 
         n_pts = max(MIN_PLOT_POINTS, min(MAX_3D_POINTS, int((self.x_max - self.x_min) / self.step_size)))
         x_vals = np.linspace(self.x_min, self.x_max, n_pts)
         y_vals = np.linspace(self.y_min, self.y_max, n_pts)
         X, Y = np.meshgrid(x_vals, y_vals)
 
+        cmap_idx = 0
         for curve in self.curves:
-            if not curve.visible:
-                continue
-            if not curve.is_3d:
+            if not curve.visible or not curve.is_3d:
                 continue
             expr = self._substitute_params(curve.expression)
-            Z = np.zeros_like(X)
 
-            # Use native evaluate_xy when available (C core now supports y variable)
-            xs_flat = X.flatten().tolist()
-            ys_flat = Y.flatten().tolist()
-            Z_values = []
-            for i in range(len(xs_flat)):
-                val = CalcEngine.evaluate_xy(expr, xs_flat[i], ys_flat[i])
-                Z_values.append(val if val is not None else np.nan)
+            def eval_xy(xv, yv):
+                val = CalcEngine.evaluate_xy(expr, xv, yv)
+                return val if val is not None else np.nan
 
-            Z = np.array(Z_values).reshape(X.shape)
+            vfunc = np.vectorize(eval_xy)
+            Z = vfunc(X, Y)
 
-            self.ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.8,
-                                label=curve.label)
+            cmap = CMAP_3D_OPTIONS[cmap_idx % len(CMAP_3D_OPTIONS)]
+            cmap_idx += 1
+            self.ax_3d.plot_surface(X, Y, Z, cmap=cmap, alpha=0.8)
 
-        self.ax.set_xlabel('X')
-        self.ax.set_ylabel('Y')
-        self.ax.set_zlabel('Z')
-        if hasattr(self.ax, 'set_zlim'):
-            self.ax.set_zlim(self.z_min, self.z_max)
-
-        self.canvas.draw()
+        self.canvas_3d.draw()
         self.status_var.set(f"Plotted 3D surface(s)")
 
-    def _setup_axes(self):
-        is_3d = hasattr(self.ax, 'zaxis')
+    def _setup_axes(self, ax, is_3d=False):
         try:
-            if hasattr(self.ax, 'set_xlim'):
-                self.ax.set_xlim(self.x_min, self.x_max)
-            if hasattr(self.ax, 'set_ylim'):
-                self.ax.set_ylim(self.y_min, self.y_max)
-            if is_3d and hasattr(self.ax, 'set_zlim'):
-                self.ax.set_zlim(self.z_min, self.z_max)
+            ax.set_xlim(self.x_min, self.x_max)
+            ax.set_ylim(self.y_min, self.y_max)
+            if is_3d and hasattr(ax, 'set_zlim'):
+                ax.set_zlim(self.z_min, self.z_max)
         except (ValueError, AttributeError):
             pass
-        if hasattr(self.ax, 'grid'):
-            self.ax.grid(self.grid_on, color="#45475a", alpha=0.5, linestyle="--")
-        if not is_3d and hasattr(self.ax, 'axhline'):
-            self.ax.axhline(y=0, color="#585b70", linewidth=0.8)
-            self.ax.axvline(x=0, color="#585b70", linewidth=0.8)
+        if hasattr(ax, 'grid'):
+            ax.grid(self.grid_on, color="#45475a", alpha=0.5, linestyle="--")
+        if not is_3d and hasattr(ax, 'axhline'):
+            ax.axhline(y=0, color="#585b70", linewidth=0.8)
+            ax.axvline(x=0, color="#585b70", linewidth=0.8)
         if is_3d:
-            self.ax.set_xlabel("X")
-            self.ax.set_ylabel("Y")
-            self.ax.set_zlabel("Z")
+            ax.set_xlabel("X")
+            ax.set_ylabel("Y")
+            ax.set_zlabel("Z")
         else:
-            self.ax.set_xlabel("x")
-            self.ax.set_ylabel("f(x)")
-        self.ax.tick_params(colors="#cdd6f4")
-        self.ax.set_facecolor("#181825")
+            ax.set_xlabel("x")
+            ax.set_ylabel("f(x)")
+        ax.tick_params(colors="#cdd6f4")
+        ax.set_facecolor("#181825")
 
     # ------------------------------------------------------------------
     #  Coordinate marking
     # ------------------------------------------------------------------
     def _on_canvas_click(self, event):
-        if event.inaxes != self.ax:
-            return
-        if hasattr(self.ax, 'zaxis'):
+        if self.ax_2d is None or event.inaxes != self.ax_2d:
             return
         x, y = event.xdata, event.ydata
         if x is not None and y is not None:
