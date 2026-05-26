@@ -32,4 +32,21 @@
     <!-- Chip / pill colors -->
     <color name="chip_bg">#25222731</color>
     <color name="chip_text">#FFB0B8C8</color>
+    
+    <!-- Chart curve colors (matching Python GUI) -->
+    <color name="chart_color_1">#FF1f77b4</color>
+    <color name="chart_color_2">#FFff7f0e</color>
+    <color name="chart_color_3">#FF2ca02c</color>
+    <color name="chart_color_4">#FFd62728</color>
+    <color name="chart_color_5">#FF9467bd</color>
+    <color name="chart_color_6">#FF8c564b</color>
+    <color name="chart_color_7">#FFe377c2</color>
+    <color name="chart_color_8">#FF7f7f7f</color>
+    <color name="chart_color_9">#FFbcbd22</color>
+    <color name="chart_color_10">#FF17becf</color>
+    
+    <!-- Chart UI colors -->
+    <color name="chart_grid">#FF45475a</color>
+    <color name="chart_text">#FFcdd6f4</color>
+    <color name="chart_bg">#FF181825</color>
 </resources>

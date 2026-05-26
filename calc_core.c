@@ -39,8 +39,14 @@
 static char g_error[256] = {0};
 
 static void set_error(const char* msg) {
-    strncpy(g_error, msg, 255);
-    g_error[255] = '\0';
+    if (!msg) return;
+    size_t len = strlen(msg);
+    if (len > 255) {
+        strncpy(g_error, msg, 255);
+        g_error[255] = '\0';
+    } else {
+        strcpy(g_error, msg);
+    }
 }
 
 EXPORT const char* get_last_error(void) { return g_error; }
@@ -250,10 +256,18 @@ static double apply_func(FuncId f, double v) {
 
 static int eval_rpn(RPN* rpn, int nrpn, double x, double* result) {
     double stack[256]; int sp = 0;
+    const int MAX_STACK = 256;
+    
     for (int i = 0; i < nrpn; i++) {
         RPN t = rpn[i];
-        if (t.tag == 0) { stack[sp++] = t.num; }
-        else if (t.tag == 1) { stack[sp++] = x; }
+        if (t.tag == 0) { 
+            if (sp >= MAX_STACK) { set_error("Stack overflow (expression too complex)"); return -1; }
+            stack[sp++] = t.num; 
+        }
+        else if (t.tag == 1) { 
+            if (sp >= MAX_STACK) { set_error("Stack overflow (expression too complex)"); return -1; }
+            stack[sp++] = x; 
+        }
         else if (t.tag == 2) {
             if (t.op == '~') { 
                 if (sp < 1) { set_error("Invalid expression"); return -1; }
@@ -388,12 +402,12 @@ EXPORT double solve_bisection(const char* expr, double a, double b,
     double fa, fb, fc, c;
     if (parse_and_eval(expr, a, &fa) != 0) return NAN;
     if (parse_and_eval(expr, b, &fb) != 0) return NAN;
-    if (fa*fb > 0) { set_error("f(a) and f(b) must have opposite signs"); return NAN; }
+    if (signbit(fa) == signbit(fb)) { set_error("f(a) and f(b) must have opposite signs"); return NAN; }
     for (int i = 0; i < max_iter; i++) {
         c = (a+b)/2.0;
         if (parse_and_eval(expr, c, &fc) != 0) return NAN;
         if (fabs(fc) < tol || (b-a)/2.0 < tol) return c;
-        if (fa*fc <= 0) { b = c; fb = fc; }
+        if (signbit(fa) != signbit(fc)) { b = c; fb = fc; }
         else { a = c; fa = fc; }
     }
     set_error("Bisection did not converge");
@@ -419,8 +433,10 @@ EXPORT double integrate_adaptive(const char* expr, double a, double b, double to
  *  Extremum finding (golden-section search)
  * -------------------------------------------------------------------------- */
 
+#define GOLDEN_RATIO_RES ((3.0 - sqrt(5.0)) / 2.0)
+
 static double golden_section_min(const char* expr, double a, double b, double tol, int max_iter) {
-    const double resphi = 0.3819660113; /* (3 - sqrt(5)) / 2 */
+    const double resphi = GOLDEN_RATIO_RES;
     double c = a + resphi * (b - a);
     double d = b - resphi * (b - a);
     double fc, fd;
@@ -449,8 +465,7 @@ EXPORT double find_minimum(const char* expr, double a, double b, double tol, int
 
 EXPORT double find_maximum(const char* expr, double a, double b, double tol, int max_iter) {
     if (a >= b) { set_error("Invalid interval: a must be < b"); return NAN; }
-    /* Transform to minimization of -f(x) by evaluating negated values */
-    const double resphi = 0.3819660113;
+    const double resphi = GOLDEN_RATIO_RES;
     double c = a + resphi * (b - a);
     double d = b - resphi * (b - a);
     double fc, fd;

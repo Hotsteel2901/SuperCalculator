@@ -167,8 +167,11 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private static String fmt(double v) {
-        if (v == (long) v) return String.format("%d", (long) v);
-        return String.format("%.6g", v);
+        if (Double.isNaN(v) || Double.isInfinite(v)) return String.valueOf(v);
+        if (Math.abs(v) < 1e15 && v == (long) v && Math.abs(v) <= Long.MAX_VALUE) {
+            return String.format("%d", (long) v);
+        }
+        return String.format("%.10g", v);
     }
 
     private void toast(String msg) {

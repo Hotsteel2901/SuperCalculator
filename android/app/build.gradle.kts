@@ -14,13 +14,18 @@ android {
         versionCode = 1
         versionName = "AlphaV1"
         ndk {
-            abiFilters += listOf("arm64-v8a")
+            // Support multiple ABIs for broader device compatibility
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
         }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 
@@ -42,5 +47,6 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
+    // Use actively maintained fork of MPAndroidChart
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 }
