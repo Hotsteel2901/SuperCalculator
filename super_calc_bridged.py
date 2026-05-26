@@ -150,6 +150,7 @@ class SuperCalcApp:
         self.param_values = {}
         self.marked_points = []
         self.auto_mark_point = None
+        self.root_markers = []
 
         # Separate windows for 2D and 3D plots
         self.window_2d = None
@@ -383,6 +384,18 @@ class SuperCalcApp:
                    command=lambda: self._on_find_extremum(minimum=True)).pack(side=tk.LEFT, padx=2)
         ttk.Button(erow2, text="Find Maximum",
                    command=lambda: self._on_find_extremum(minimum=False)).pack(side=tk.LEFT, padx=2)
+
+        # --- Auto Root Scanner ---
+        frm_scan = ttk.LabelFrame(scroll_frame, text="Auto Root Scanner",
+                                  style="Dark.TLabelframe")
+        frm_scan.pack(fill=tk.X, padx=8, pady=4)
+
+        srow = ttk.Frame(frm_scan, style="Dark.TFrame")
+        srow.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(srow, text="Scan interval [a,b] for all roots f(x)=0",
+                  style="Dark.TLabel").pack(side=tk.LEFT, padx=2)
+        ttk.Button(srow, text="Scan Roots",
+                   command=self._on_scan_roots).pack(side=tk.RIGHT, padx=2)
 
         # --- Coordinate Marking ---
         frm_mark = ttk.LabelFrame(scroll_frame, text="Coordinate Marking",
@@ -628,6 +641,7 @@ class SuperCalcApp:
         self.listbox_curves.delete(0, tk.END)
         self.marked_points.clear()
         self.auto_mark_point = None
+        self.root_markers = []
         self._var_mark_x.set("")
         if self.ax_2d is not None:
             self.ax_2d.clear()
@@ -775,6 +789,11 @@ class SuperCalcApp:
                     self.ax_2d.annotate(f"({x:.3f}, {y:.3f})",
                                    xy=(x, y), xytext=(10, -15),
                                    textcoords='offset points', color='#a6e3a1')
+
+        for rx in getattr(self, 'root_markers', []):
+            self.ax_2d.plot(rx, 0, 'rD', markersize=10)
+            self.ax_2d.annotate(f"x={rx:.4g}", xy=(rx, 0), xytext=(5, 15),
+                           textcoords='offset points', color='#f38ba8', fontsize=8)
 
         visible_2d = [c for c in self.curves if c.visible and not c.is_3d]
         if visible_2d:
@@ -1039,6 +1058,72 @@ class SuperCalcApp:
             f"{label}: x = {result:.12g}\n"
             f"f({result:.6g}) = {verify_str}")
         self.status_var.set(f"{label}: x = {result:.12g}, f(x) = {verify_str}")
+
+    def _on_scan_roots(self):
+        expr = self._get_active_expression()
+        if not expr:
+            return
+        try:
+            a = float(self._var_ext_a.get())
+            b = float(self._var_ext_b.get())
+        except ValueError:
+            messagebox.showerror("Error", "Invalid interval bounds.")
+            return
+        if a >= b:
+            messagebox.showerror("Error", "a must be less than b.")
+            return
+
+        expr_sub = self._substitute_params(expr)
+        n_samples = 2000
+        tol_zero = 1e-6
+        tol_dup = 1e-4
+
+        xs = np.linspace(a, b, n_samples)
+        ys = CalcEngine.evaluate_array(expr_sub, xs.tolist())
+
+        roots = []
+        # Detect points close to zero
+        for i, y in enumerate(ys):
+            if y is not None and abs(y) < tol_zero:
+                roots.append(float(xs[i]))
+
+        # Detect sign changes and refine with bisection
+        for i in range(n_samples - 1):
+            y1 = ys[i]
+            y2 = ys[i + 1]
+            if y1 is None or y2 is None:
+                continue
+            if y1 == 0.0 or y2 == 0.0:
+                continue
+            if y1 * y2 < 0:
+                root = CalcEngine.solve_bisection(expr_sub, float(xs[i]), float(xs[i + 1]))
+                if root is not None:
+                    roots.append(root)
+
+        # Deduplicate and sort
+        roots.sort()
+        unique_roots = []
+        for r in roots:
+            if not unique_roots or abs(r - unique_roots[-1]) > tol_dup:
+                unique_roots.append(r)
+
+        self.root_markers = unique_roots
+        self._plot_all()
+
+        if unique_roots:
+            lines = [f"Found {len(unique_roots)} root(s):"]
+            for i, r in enumerate(unique_roots[:20], 1):
+                verify = CalcEngine.evaluate(expr_sub, r)
+                v_str = f"{verify:.2e}" if verify is not None else "N/A"
+                lines.append(f"  x{i} = {r:.12g}  (f={v_str})")
+            if len(unique_roots) > 20:
+                lines.append(f"  ... and {len(unique_roots) - 20} more")
+            msg = "\n".join(lines)
+            messagebox.showinfo("Root Scan Results", msg)
+            self.status_var.set(f"Found {len(unique_roots)} root(s)")
+        else:
+            messagebox.showinfo("Root Scan Results", "No roots found in the interval.")
+            self.status_var.set("No roots found")
 
 
 # ---------------------------------------------------------------------------
