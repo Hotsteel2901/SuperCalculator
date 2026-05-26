@@ -31,14 +31,20 @@
 ## 功能特性
 
 - **函数绘图** — 支持输入任意含 `x` 的数学表达式并绘制曲线
+- **3D 函数绘图** — 支持含 `x` 和 `y` 的三维函数表达式，绘制 3D 曲面图
 - **多曲线叠加** — 同时绘制多条函数曲线，自动分配不同颜色
 - **数值微分** — 一阶导数 f'(x) 和二阶导数 f''(x)，采用中心差分法
 - **数值积分** — 定积分计算，采用自适应 Simpson 复合法则
 - **方程求解** — Newton-Raphson 法（二分法回退）+ 纯二分法
 - **极值查找** — 黄金分割搜索法，在指定区间内寻找局部最小值与最大值
-- **预设函数** — 内置 15 个常用函数，一键选择
-- **自定义视图** — X/Y 坐标范围、采样步长、网格开关均可调节
+- **预设函数** — 内置 19 个常用函数（含 3D 预设），一键选择
+- **参数系统** — 自动检测表达式中的额外参数（如 `a`、`b`），动态生成输入框实时调节
+- **坐标标记** — 点击图表即可标记坐标点，或输入 x 值自动定位
+- **快速输入面板** — 弹出式快捷按钮面板，一键输入运算符、函数与常数
+- **阶乘支持** — 后置运算符 `!`，支持非负整数阶乘
+- **自定义视图** — X/Y/Z 坐标范围、采样步长、网格开关均可调节
 - **交互式图表** — Matplotlib 工具栏支持缩放、平移、导出 PNG
+- **Windows EXE** — 提供独立 Windows 可执行文件，无需安装 Python
 - **Android 应用** — 独立 APK，Material Design 3 界面 + JNI 桥接
 
 ## 预编译二进制文件
@@ -47,13 +53,19 @@
 
 | 平台 | 架构 | 文件 | 预编译 |
 |------|------|------|:---:|
-| Windows | x64 | `calc_core.dll` | 是 |
+| Windows | x64 | `calc_core.dll` / `SuperCalculator.exe` | 是 |
 | Linux | x86_64 | `calc_core_x86_64.so` | 是 |
 | Linux | ARM64 | `calc_core_aarch64.so` | 是 |
 | macOS | x86_64 / ARM64 | `calc_core.dylib` | 需自行编译 |
 | Android | ARM64 | `SuperCalculator-*.apk` | 是 (工作流) |
 
 ## 快速开始
+
+### Windows（EXE — 无需 Python）
+
+在 [Releases](https://github.com/Hotsteel2901/SuperCalculator/releases) 页面下载 `SuperCalculator.exe`，双击即可运行，保留命令行窗口用于输出与调试。
+
+### Python 源码运行
 
 ```bash
 pip install numpy matplotlib
@@ -99,6 +111,7 @@ gcc -shared -O2 -fPIC -o calc_core.dylib calc_core.c -lm
 | 三角函数    | `sin` `cos` `tan`               | `sin(x) + cos(x)`   |
 | 对数/指数   | `ln` `log` `exp`                | `ln(x)` `exp(-x)`   |
 | 根号/绝对值 | `sqrt` `abs`                    | `sqrt(x)` `abs(x)`  |
+| 阶乘        | `!` (后置运算符)                 | `x!` `5!`           |
 | 数学常数    | `pi` `e`                        | `sin(pi*x)`         |
 
 ## 文件结构
@@ -107,21 +120,25 @@ gcc -shared -O2 -fPIC -o calc_core.dylib calc_core.c -lm
 SuperCalculator/
   calc_core.c              C 核心引擎 (表达式解析、微积分、方程求解)
   calc_bridge.py           Python ctypes 桥接层 (多架构自动检测)
-  super_calc_bridged.py    GUI 主程序
+  super_calc_bridged.py    GUI 主程序 (Tkinter + Matplotlib)
+  SuperCalculator.ico      Windows EXE 图标
+  SuperCalculator.spec     PyInstaller 构建配置 (Windows EXE)
   android/                 Android 项目 (Gradle + JNI + M3 UI)
-  .github/workflows/       CI: 多平台构建 + Android APK
+  .github/workflows/       CI: 多平台构建 + Android APK + Windows EXE
   README.md               英文说明文档
   README_CN.md            中文说明文档 (本文件)
+  index.html               项目展示页面
 ```
 
 ## CI / CD
 
-两个 GitHub Actions 工作流均需手动触发：
+GitHub Actions 工作流均需手动触发：
 
 | 工作流 | 功能 | 推送 Release |
 |--------|------|:---:|
-| `Build All Platforms` | 构建 Win x64, Linux x86_64, Linux ARM64 | 可选 |
+| `Build All Platforms` | 构建 Win x64 DLL, Linux x86_64, Linux ARM64 | 可选 |
 | `Build Android APK` | 构建 Android aarch64 APK | 否 |
+| `Build Windows EXE` | 构建独立 Windows 可执行文件（含图标） | 可选 |
 
 ## API 参考
 

@@ -76,6 +76,7 @@ DEFAULT_COLORS = [
 PARAM_PATTERN = re.compile(r'\b([a-zA-Z]+)\b')
 KNOWN_FUNCTIONS = {'sin', 'cos', 'tan', 'log', 'ln', 'exp', 'sqrt', 'abs'}
 KNOWN_CONSTANTS = {'pi', 'e'}
+INDEPENDENT_VARS = {'x', 'y'}  # variables used by the engine, not parameters
 
 def _detect_parameters_static(expr: str) -> list:
     params = set()
@@ -86,7 +87,7 @@ def _detect_parameters_static(expr: str) -> list:
         expr_lower = re.sub(r'\b' + const + r'\b', '', expr_lower)
     for match in PARAM_PATTERN.finditer(expr_lower):
         word = match.group(1)
-        if len(word) == 1 and word not in ('x', 'y'):
+        if len(word) == 1 and word not in INDEPENDENT_VARS:
             params.add(word)
         elif len(word) > 1 and word not in KNOWN_FUNCTIONS and word not in KNOWN_CONSTANTS:
             params.add(word)
@@ -674,23 +675,20 @@ class SuperCalcApp:
                 continue
             expr = self._substitute_params(curve.expression)
             Z = np.zeros_like(X)
-            
-            # Use batch evaluation for better performance
+
+            # C core only supports variable 'x', so substitute 'y' with current value
             xs_flat = X.flatten().tolist()
             ys_flat = Y.flatten().tolist()
-            
-            # Evaluate using expression substitution for both x and y
+
             Z_values = []
             for i in range(len(xs_flat)):
-                # For 3D functions, we need to substitute both x and y
-                eval_expr = expr
-                for param, value in self.param_values.items():
-                    eval_expr = re.sub(r'\b' + param + r'\b', str(value), eval_expr, flags=re.IGNORECASE)
+                # Substitute y variable with current y value since engine only understands x
+                eval_expr = re.sub(r'\by\b', str(ys_flat[i]), expr, flags=re.IGNORECASE)
                 val = CalcEngine.evaluate(eval_expr, xs_flat[i])
                 Z_values.append(val if val is not None else np.nan)
-            
+
             Z = np.array(Z_values).reshape(X.shape)
-            
+
             self.ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.8,
                                 label=curve.label)
 

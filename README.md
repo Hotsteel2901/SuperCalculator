@@ -29,14 +29,20 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
 ## Features
 
 - **Function Plotting** — plot arbitrary mathematical expressions with `x`
+- **3D Function Plotting** — plot surfaces for expressions with both `x` and `y`
 - **Multi-Curve Overlay** — plot multiple functions simultaneously with different colors
 - **Numerical Derivatives** — first and second derivative via central difference
 - **Numerical Integration** — adaptive Simpson's rule for definite integrals
 - **Equation Solving** — Newton-Raphson (with bisection fallback) and pure bisection
 - **Extremum Finder** — golden-section search for local minima and maxima on an interval
-- **Preset Functions** — quick-select from 15 common functions
-- **Customizable View** — adjustable X/Y ranges, step size, grid toggle
+- **Preset Functions** — quick-select from 19 common functions (including 3D presets)
+- **Parameter System** — auto-detects extra parameters (e.g., `a`, `b`) and provides live input fields
+- **Coordinate Marking** — click on the plot to mark points, or enter an x value to auto-locate
+- **Quick Input Panel** — popup keypad for fast insertion of operators, functions, and constants
+- **Factorial Support** — postfix `!` operator for non-negative integers
+- **Customizable View** — adjustable X/Y/Z ranges, step size, grid toggle
 - **Interactive Plot** — Matplotlib toolbar for zoom, pan, and export
+- **Windows EXE** — standalone executable, no Python installation required
 - **Android App** — standalone APK with Material Design 3 UI and JNI bridge
 
 ## Pre-compiled Binaries
@@ -45,13 +51,19 @@ Pre-compiled binaries are available in the [Releases](https://github.com/Hotstee
 
 | Platform | Architecture | Binary | Pre-compiled |
 |----------|-------------|--------|:---:|
-| Windows | x64 | `calc_core.dll` | Yes |
+| Windows | x64 | `calc_core.dll` / `SuperCalculator.exe` | Yes |
 | Linux | x86_64 | `calc_core_x86_64.so` | Yes |
 | Linux | ARM64 | `calc_core_aarch64.so` | Yes |
 | macOS | x86_64 / ARM64 | `calc_core.dylib` | Rebuild from source |
 | Android | ARM64 | `SuperCalculator-*.apk` | Yes (via workflow) |
 
 ## Quick Start
+
+### Windows (EXE — no Python needed)
+
+Download `SuperCalculator.exe` from the [Releases](https://github.com/Hotsteel2901/SuperCalculator/releases) page and double-click to run. The console window is kept for output and debugging.
+
+### Python Source
 
 ```bash
 pip install numpy matplotlib
@@ -97,6 +109,7 @@ gcc -shared -O2 -fPIC -o calc_core.dylib calc_core.c -lm
 | Trig         | `sin` `cos` `tan`                 | `sin(x) + cos(x)`  |
 | Log/Exp      | `ln` `log` `exp`                  | `ln(x)` `exp(-x)`  |
 | Roots/Abs    | `sqrt` `abs`                      | `sqrt(x)` `abs(x)` |
+| Factorial    | `!` (postfix)                      | `x!` `5!`          |
 | Constants    | `pi` `e`                          | `sin(pi*x)`        |
 
 ## File Structure
@@ -105,21 +118,25 @@ gcc -shared -O2 -fPIC -o calc_core.dylib calc_core.c -lm
 SuperCalculator/
   calc_core.c              C core engine (expression parser, calculus, solver)
   calc_bridge.py           Python ctypes bridge layer (multi-arch detection)
-  super_calc_bridged.py    GUI main program
+  super_calc_bridged.py    GUI main program (Tkinter + Matplotlib)
+  SuperCalculator.ico      Windows EXE icon
+  SuperCalculator.spec     PyInstaller spec for Windows EXE build
   android/                 Android project (Gradle + JNI + M3 UI)
-  .github/workflows/       CI: multi-platform build + Android APK
+  .github/workflows/       CI: multi-platform build + Android APK + Windows EXE
   README.md                This file
   README_CN.md             Chinese documentation
+  index.html               Project landing page
 ```
 
 ## CI / CD
 
-Two GitHub Actions workflows are available (manual trigger):
+GitHub Actions workflows are available (manual trigger):
 
 | Workflow | Purpose | Release Push |
 |----------|---------|:---:|
-| `Build All Platforms` | Win x64, Linux x86_64, Linux ARM64 | Optional |
+| `Build All Platforms` | Win x64 DLL, Linux x86_64, Linux ARM64 | Optional |
 | `Build Android APK` | Android aarch64 APK | No |
+| `Build Windows EXE` | Standalone Windows executable with icon | Optional |
 
 ## API Reference
 
