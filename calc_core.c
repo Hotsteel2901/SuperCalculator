@@ -83,6 +83,9 @@ static int tokenize(const char* s, Token* toks, int max_toks) {
         if (*s == 'x' || *s == 'X') {
             toks[n++].kind = T_VARIABLE; s++; continue;
         }
+        if (*s == '!') {
+            toks[n].kind = T_OP; toks[n].op = '!'; s++; n++; continue;
+        }
         if (*s == 'p' && *(s+1) == 'i' && !isalpha(*(s+2))) {
             toks[n].kind = T_NUMBER;
             toks[n].val  = M_PI;
@@ -121,6 +124,7 @@ static int tokenize(const char* s, Token* toks, int max_toks) {
 }
 
 static int precedence(char op) {
+    if (op == '!' ) return 4;
     if (op == '+' || op == '-') return 1;
     if (op == '*' || op == '/') return 2;
     if (op == '^')              return 3;
@@ -157,26 +161,49 @@ static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
             prev_was_op_or_lp = 1;
         } else if (t.kind == T_OP) {
             if (t.op == '-' && prev_was_op_or_lp) t.op = '~';
-            int prec = precedence(t.op);
-            int ra   = is_right_assoc(t.op);
-            while (sp > 0) {
-                Token top = stack[sp-1];
-                if (top.kind == T_OP) {
-                    int top_prec = precedence(top.op);
-                    if (top_prec > prec || (top_prec == prec && !ra)) {
+            if (t.op == '!' && prev_was_op_or_lp) { set_error("Invalid factorial position"); return -1; }
+            
+            if (t.op == '!') {
+                while (sp > 0) {
+                    Token top = stack[sp-1];
+                    if (top.kind == T_OP) {
+                        int top_prec = precedence(top.op);
+                        if (top_prec >= precedence('!')) {
+                            sp--;
+                            output[out_n].tag=2; output[out_n].op=top.op; out_n++;
+                            continue;
+                        }
+                    } else if (top.kind == T_FUNC) {
                         sp--;
-                        output[out_n].tag=2; output[out_n].op=top.op; out_n++;
+                        output[out_n].tag=3; output[out_n].func=top.func; out_n++;
                         continue;
                     }
-                } else if (top.kind == T_FUNC) {
-                    sp--;
-                    output[out_n].tag=3; output[out_n].func=top.func; out_n++;
-                    continue;
+                    break;
                 }
-                break;
+                stack[sp++] = t;
+                prev_was_op_or_lp = 0;
+            } else {
+                int prec = precedence(t.op);
+                int ra   = is_right_assoc(t.op);
+                while (sp > 0) {
+                    Token top = stack[sp-1];
+                    if (top.kind == T_OP) {
+                        int top_prec = precedence(top.op);
+                        if (top_prec > prec || (top_prec == prec && !ra)) {
+                            sp--;
+                            output[out_n].tag=2; output[out_n].op=top.op; out_n++;
+                            continue;
+                        }
+                    } else if (top.kind == T_FUNC) {
+                        sp--;
+                        output[out_n].tag=3; output[out_n].func=top.func; out_n++;
+                        continue;
+                    }
+                    break;
+                }
+                stack[sp++] = t;
+                prev_was_op_or_lp = 1;
             }
-            stack[sp++] = t;
-            prev_was_op_or_lp = 1;
         } else if (t.kind == T_LPAREN) {
             stack[sp++] = t;
             prev_was_op_or_lp = 1;
@@ -193,6 +220,12 @@ static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
                 sp--;
             else if (t.kind == T_RPAREN) {
                 set_error("Mismatched parentheses"); return -1;
+            }
+            if (t.kind == T_RPAREN || t.kind == T_END) {
+                while (sp > 0 && stack[sp-1].kind == T_OP && stack[sp-1].op == '!') {
+                    Token top = stack[--sp];
+                    output[out_n].tag=2; output[out_n].op=top.op; out_n++;
+                }
             }
             prev_was_op_or_lp = 0;
         }
@@ -222,8 +255,20 @@ static int eval_rpn(RPN* rpn, int nrpn, double x, double* result) {
         if (t.tag == 0) { stack[sp++] = t.num; }
         else if (t.tag == 1) { stack[sp++] = x; }
         else if (t.tag == 2) {
-            if (sp < 1) { set_error("Invalid expression"); return -1; }
-            if (t.op == '~') { stack[sp-1] = -stack[sp-1]; }
+            if (t.op == '~') { 
+                if (sp < 1) { set_error("Invalid expression"); return -1; }
+                stack[sp-1] = -stack[sp-1]; 
+            }
+            else if (t.op == '!') {
+                if (sp < 1) { set_error("Invalid expression"); return -1; }
+                double a = stack[--sp];
+                if (a < 0 || floor(a) != a) { set_error("Factorial requires non-negative integer"); stack[sp++] = NAN; }
+                else {
+                    double r = 1.0;
+                    for (int i = 2; i <= (int)a; i++) r *= i;
+                    stack[sp++] = r;
+                }
+            }
             else {
                 if (sp < 2) { set_error("Invalid expression"); return -1; }
                 double b = stack[--sp], a = stack[--sp];
