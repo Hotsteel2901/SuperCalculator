@@ -8,6 +8,7 @@
 #include <math.h>
 /* Forward declarations — implemented in calc_core.c (linked in same .so) */
 double evaluate(const char* expr, double x);
+double evaluate_xy(const char* expr, double x, double y);
 double derivative(const char* expr, double x, double h);
 double derivative2(const char* expr, double x, double h);
 double integrate_adaptive(const char* expr, double a, double b, double tol);
@@ -34,6 +35,16 @@ JNIEXPORT jdouble JNICALL
 Java_com_supercalc_CalcEngine_evaluate(JNIEnv* env, jclass clazz,
                                         jstring expr, jdouble x) {
     return call_with_expr(env, expr, x, evaluate);
+}
+
+JNIEXPORT jdouble JNICALL
+Java_com_supercalc_CalcEngine_evaluateXY(JNIEnv* env, jclass clazz,
+                                          jstring expr, jdouble x, jdouble y) {
+    const char* str = (*env)->GetStringUTFChars(env, expr, NULL);
+    if (!str) return NAN;
+    double result = evaluate_xy(str, x, y);
+    (*env)->ReleaseStringUTFChars(env, expr, str);
+    return result;
 }
 
 JNIEXPORT jdouble JNICALL

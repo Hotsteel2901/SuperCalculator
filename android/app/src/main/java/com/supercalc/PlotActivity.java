@@ -131,8 +131,12 @@ public class PlotActivity extends AppCompatActivity {
         }
         int idx = allExpressions.size() - 1;
         allExpressions.remove(idx);
-        curveColors.remove(idx);
-        allEntries.remove(idx);
+        if (idx < curveColors.size()) {
+            curveColors.remove(idx);
+        }
+        if (idx < allEntries.size()) {
+            allEntries.remove(idx);
+        }
         toast("Removed last curve");
     }
     

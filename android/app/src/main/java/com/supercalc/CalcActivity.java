@@ -51,6 +51,7 @@ public class CalcActivity extends AppCompatActivity {
         MaterialButton btnFindMin = findViewById(R.id.btn_find_min);
         MaterialButton btnFindMax = findViewById(R.id.btn_find_max);
         MaterialButton btnClear  = findViewById(R.id.btn_clear);
+        MaterialButton btnPlot3D = findViewById(R.id.btn_plot_3d);
 
         btnEval  .setOnClickListener(v -> onEvaluate());
         btnDeriv .setOnClickListener(v -> onDerivative());
@@ -61,17 +62,20 @@ public class CalcActivity extends AppCompatActivity {
         btnFindMin.setOnClickListener(v -> onFindExtremum(true));
         btnFindMax.setOnClickListener(v -> onFindExtremum(false));
         btnClear .setOnClickListener(v -> resultView.setText(""));
+        btnPlot3D.setOnClickListener(v -> openPlot3D());
 
         // Preset chips — set expression text and auto-evaluate
         Chip chipSin = findViewById(R.id.chip_sin);
         Chip chipCos = findViewById(R.id.chip_cos);
         Chip chipX2  = findViewById(R.id.chip_x2);
         Chip chipExp = findViewById(R.id.chip_exp);
+        Chip chip3D  = findViewById(R.id.chip_3d);
 
         chipSin.setOnClickListener(v -> { exprInput.setText("sin(x)"); onEvaluate(); });
         chipCos.setOnClickListener(v -> { exprInput.setText("cos(x)"); onEvaluate(); });
         chipX2 .setOnClickListener(v -> { exprInput.setText("x^2");     onEvaluate(); });
         chipExp.setOnClickListener(v -> { exprInput.setText("exp(-x)"); onEvaluate(); });
+        chip3D .setOnClickListener(v -> { exprInput.setText("x^2+y^2"); });
     }
 
     private String getExpr()  { return exprInput.getText().toString().trim(); }
@@ -162,6 +166,15 @@ public class CalcActivity extends AppCompatActivity {
             intent.putExtra("initial_expr", expr);
             intent.putExtra("x_min", getA());
             intent.putExtra("x_max", getB());
+        }
+        startActivity(intent);
+    }
+
+    private void openPlot3D() {
+        Intent intent = new Intent(this, Plot3DActivity.class);
+        String expr = getExpr();
+        if (!expr.isEmpty()) {
+            intent.putExtra("initial_expr", expr);
         }
         startActivity(intent);
     }

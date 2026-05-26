@@ -10,6 +10,9 @@ public class CalcEngine {
     /** Evaluate f(x) at a point. Returns NaN on error. */
     public static native double evaluate(String expr, double x);
 
+    /** Evaluate f(x,y) at given x and y. Returns NaN on error. */
+    public static native double evaluateXY(String expr, double x, double y);
+
     /** First derivative f'(x) at x with step h. */
     public static native double derivative(String expr, double x, double h);
 

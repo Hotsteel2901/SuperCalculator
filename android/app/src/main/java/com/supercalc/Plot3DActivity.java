@@ -1,0 +1,127 @@
+package com.supercalc;
+
+import android.os.Bundle;
+import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
+
+public class Plot3DActivity extends AppCompatActivity {
+
+    private Surface3DView surface3DView;
+    private TextInputEditText exprInput, xMinInput, xMaxInput, yMinInput, yMaxInput, zMinInput, zMaxInput;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_plot_3d);
+
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        toolbar.setNavigationOnClickListener(v -> finish());
+
+        surface3DView = findViewById(R.id.surface_3d_view);
+        exprInput = findViewById(R.id.expr_3d_input);
+        xMinInput = findViewById(R.id.x_min_3d_input);
+        xMaxInput = findViewById(R.id.x_max_3d_input);
+        yMinInput = findViewById(R.id.y_min_3d_input);
+        yMaxInput = findViewById(R.id.y_max_3d_input);
+        zMinInput = findViewById(R.id.z_min_3d_input);
+        zMaxInput = findViewById(R.id.z_max_3d_input);
+
+        MaterialButton btnPlot = findViewById(R.id.btn_plot_3d);
+        MaterialButton btnReset = findViewById(R.id.btn_reset_3d_view);
+        MaterialButton btnBack = findViewById(R.id.btn_back_3d);
+
+        btnPlot.setOnClickListener(v -> onPlot3D());
+        btnReset.setOnClickListener(v -> surface3DView.resetRotation());
+        btnBack.setOnClickListener(v -> finish());
+
+        // Default ranges
+        xMinInput.setText("-10");
+        xMaxInput.setText("10");
+        yMinInput.setText("-10");
+        yMaxInput.setText("10");
+        zMinInput.setText("-10");
+        zMaxInput.setText("10");
+
+        // Pre-fill expression if passed from CalcActivity
+        String initialExpr = getIntent().getStringExtra("initial_expr");
+        if (initialExpr != null && !initialExpr.isEmpty()) {
+            exprInput.setText(initialExpr);
+        }
+    }
+
+    private void onPlot3D() {
+        String expr = exprInput.getText().toString().trim();
+        if (expr.isEmpty()) {
+            toast("Enter an expression with x and y");
+            return;
+        }
+
+        float xMin, xMax, yMin, yMax, zMin, zMax;
+        try {
+            xMin = Float.parseFloat(xMinInput.getText().toString().trim());
+            xMax = Float.parseFloat(xMaxInput.getText().toString().trim());
+            yMin = Float.parseFloat(yMinInput.getText().toString().trim());
+            yMax = Float.parseFloat(yMaxInput.getText().toString().trim());
+            zMin = Float.parseFloat(zMinInput.getText().toString().trim());
+            zMax = Float.parseFloat(zMaxInput.getText().toString().trim());
+        } catch (NumberFormatException e) {
+            toast("Invalid range values");
+            return;
+        }
+
+        if (xMin >= xMax || yMin >= yMax || zMin >= zMax) {
+            toast("Min must be less than max for each axis");
+            return;
+        }
+
+        // Determine grid size: keep total points reasonable for mobile (~1200 max)
+        // to avoid excessive JNI calls (each point tokenizes the expression).
+        int targetPoints = 35; // 35x35 = 1225
+        int cols = targetPoints;
+        int rows = targetPoints;
+
+        float[][] zValues = new float[rows][cols];
+        boolean hasValid = false;
+        float actualZMin = Float.POSITIVE_INFINITY;
+        float actualZMax = Float.NEGATIVE_INFINITY;
+
+        for (int i = 0; i < rows; i++) {
+            double y = yMin + (yMax - yMin) * i / (rows - 1);
+            for (int j = 0; j < cols; j++) {
+                double x = xMin + (xMax - xMin) * j / (cols - 1);
+                double z = CalcEngine.evaluateXY(expr, x, y);
+                if (Double.isNaN(z) || Double.isInfinite(z)) {
+                    zValues[i][j] = 0f;
+                } else {
+                    zValues[i][j] = (float) z;
+                    hasValid = true;
+                    if (zValues[i][j] < actualZMin) actualZMin = zValues[i][j];
+                    if (zValues[i][j] > actualZMax) actualZMax = zValues[i][j];
+                }
+            }
+        }
+
+        if (!hasValid) {
+            toast("Could not evaluate expression");
+            return;
+        }
+
+        // Auto-adjust Z range if all values fit within user-specified tighter bounds
+        if (actualZMin > zMin) zMin = actualZMin;
+        if (actualZMax < zMax) zMax = actualZMax;
+        // Ensure zMin < zMax
+        if (zMin >= zMax) {
+            zMax = zMin + 1f;
+        }
+
+        surface3DView.setData(zValues, xMin, xMax, yMin, yMax, zMin, zMax);
+        toast("Plotted 3D surface");
+    }
+
+    private void toast(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+    }
+}

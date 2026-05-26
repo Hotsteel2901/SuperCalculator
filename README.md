@@ -43,7 +43,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
 - **Customizable View** — adjustable X/Y/Z ranges, step size, grid toggle
 - **Interactive Plot** — Matplotlib toolbar for zoom, pan, and export
 - **Windows EXE** — standalone executable, no Python installation required
-- **Android App** — standalone APK with Material Design 3 UI and JNI bridge
+- **Android App** — standalone APK with Material Design 3 UI and JNI bridge, now including 3D surface plotting with touch rotation
 
 ## Pre-compiled Binaries
 
@@ -145,6 +145,9 @@ from calc_bridge import CalcEngine
 
 # Evaluate at a point
 CalcEngine.evaluate("x^2", 3.0)         # -> 9.0
+
+# Evaluate f(x,y) at a point
+CalcEngine.evaluate_xy("x^2+y^2", 3.0, 4.0)  # -> 25.0
 
 # Evaluate array (efficient for plotting)
 CalcEngine.evaluate_array("sin(x)", [0, 0.5, 1.0])
