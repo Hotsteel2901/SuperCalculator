@@ -48,12 +48,13 @@
                     android:orientation="vertical"
                     android:padding="16dp">
                     <TextView android:text="Quick Select" android:textSize="12sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-                    <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content" android:scrollbars="none">
+                        <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content" android:scrollbars="none">
                         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
                             <com.google.android.material.chip.Chip android:id="@+id/chip_sin" style="@style/Widget.Material3.Chip.Suggestion" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="sin(x)" android:fontFamily="@font/jetbrains_mono" android:textSize="11sp" android:checkable="false" android:layout_marginEnd="6dp" />
                             <com.google.android.material.chip.Chip android:id="@+id/chip_cos" style="@style/Widget.Material3.Chip.Suggestion" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="cos(x)" android:fontFamily="@font/jetbrains_mono" android:textSize="11sp" android:checkable="false" android:layout_marginEnd="6dp" />
                             <com.google.android.material.chip.Chip android:id="@+id/chip_x2" style="@style/Widget.Material3.Chip.Suggestion" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="x^2" android:fontFamily="@font/jetbrains_mono" android:textSize="11sp" android:checkable="false" android:layout_marginEnd="6dp" />
                             <com.google.android.material.chip.Chip android:id="@+id/chip_exp" style="@style/Widget.Material3.Chip.Suggestion" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="exp(-x)" android:fontFamily="@font/jetbrains_mono" android:textSize="11sp" android:checkable="false" android:layout_marginEnd="6dp" />
+                            <com.google.android.material.chip.Chip android:id="@+id/chip_3d" style="@style/Widget.Material3.Chip.Suggestion" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="x^2+y^2" android:fontFamily="@font/jetbrains_mono" android:textSize="11sp" android:checkable="false" android:layout_marginEnd="6dp" />
                         </LinearLayout>
                     </HorizontalScrollView>
                 </LinearLayout>
@@ -110,6 +111,9 @@
                         <com.google.android.material.button.MaterialButton android:id="@+id/btn_find_min" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="Find Min" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp" app:strokeColor="@color/spectral_integrate" app:strokeWidth="1dp" />
                         <com.google.android.material.button.MaterialButton android:id="@+id/btn_find_max" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="Find Max" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp" app:strokeColor="@color/spectral_solve" app:strokeWidth="1dp" />
                         <com.google.android.material.button.MaterialButton android:id="@+id/btn_clear" style="@style/Widget.Material3.Button.TextButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="Clear" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp"  />
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_plot_3d" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="3D Plot" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp" app:strokeColor="@color/spectral_evaluate" app:strokeWidth="1dp" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

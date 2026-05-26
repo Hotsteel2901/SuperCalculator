@@ -45,7 +45,7 @@
 - **自定义视图** — X/Y/Z 坐标范围、采样步长、网格开关均可调节
 - **交互式图表** — Matplotlib 工具栏支持缩放、平移、导出 PNG
 - **Windows EXE** — 提供独立 Windows 可执行文件，无需安装 Python
-- **Android 应用** — 独立 APK，Material Design 3 界面 + JNI 桥接
+- **Android 应用** — 独立 APK，Material Design 3 界面 + JNI 桥接，现已支持 3D 曲面绘图与触控旋转
 
 ## 预编译二进制文件
 
@@ -147,6 +147,9 @@ from calc_bridge import CalcEngine
 
 # 求值
 CalcEngine.evaluate("x^2", 3.0)         # -> 9.0
+
+# 二元函数求值
+CalcEngine.evaluate_xy("x^2+y^2", 3.0, 4.0)  # -> 25.0
 
 # 批量求值 (绘图用)
 CalcEngine.evaluate_array("sin(x)", [0, 0.5, 1.0])

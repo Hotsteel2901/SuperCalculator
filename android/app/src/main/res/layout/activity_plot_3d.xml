@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/sc_void"
+    android:fitsSystemWindows="true">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/sc_void">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:navigationIcon="@drawable/ic_back"
+            app:title="3D Surface Plot"
+            app:titleTextColor="@color/m3_on_surface" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.SuperCalc.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:text="3D Function f(x,y)"
+                        android:textSize="12sp"
+                        android:textColor="@color/m3_on_surface_variant"
+                        android:fontFamily="@font/outfit_regular"
+                        android:letterSpacing="0.06"
+                        android:layout_marginBottom="8dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.SuperCalc.TextInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Expression e.g. x^2 + y^2"
+                        app:hintTextColor="@color/m3_outline"
+                        android:layout_marginBottom="8dp">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/expr_3d_input"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/m3_on_surface"
+                            android:textSize="16sp"
+                            android:fontFamily="@font/jetbrains_mono"
+                            android:singleLine="true"
+                            android:inputType="text" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:text="X Range"
+                        android:textSize="12sp"
+                        android:textColor="@color/m3_on_surface_variant"
+                        android:fontFamily="@font/outfit_regular"
+                        android:letterSpacing="0.06"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="4dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="4dp">
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:hint="X min"
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
+                            app:hintTextColor="@color/m3_outline"
+                            android:layout_marginEnd="4dp">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/x_min_3d_input"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="-10"
+                                android:fontFamily="@font/jetbrains_mono"
+                                android:textSize="14sp"
+                                android:textColor="@color/m3_on_surface"
+                                android:singleLine="true"
+                                android:inputType="numberDecimal|numberSigned" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:hint="X max"
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
+                            app:hintTextColor="@color/m3_outline"
+                            android:layout_marginStart="4dp">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/x_max_3d_input"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="10"
+                                android:fontFamily="@font/jetbrains_mono"
+                                android:textSize="14sp"
+                                android:textColor="@color/m3_on_surface"
+                                android:singleLine="true"
+                                android:inputType="numberDecimal|numberSigned" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:text="Y Range"
+                        android:textSize="12sp"
+                        android:textColor="@color/m3_on_surface_variant"
+                        android:fontFamily="@font/outfit_regular"
+                        android:letterSpacing="0.06"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="4dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="4dp">
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:hint="Y min"
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
+                            app:hintTextColor="@color/m3_outline"
+                            android:layout_marginEnd="4dp">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/y_min_3d_input"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="-10"
+                                android:fontFamily="@font/jetbrains_mono"
+                                android:textSize="14sp"
+                                android:textColor="@color/m3_on_surface"
+                                android:singleLine="true"
+                                android:inputType="numberDecimal|numberSigned" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:hint="Y max"
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
+                            app:hintTextColor="@color/m3_outline"
+                            android:layout_marginStart="4dp">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/y_max_3d_input"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="10"
+                                android:fontFamily="@font/jetbrains_mono"
+                                android:textSize="14sp"
+                                android:textColor="@color/m3_on_surface"
+                                android:singleLine="true"
+                                android:inputType="numberDecimal|numberSigned" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:text="Z Range (auto-adjusted)"
+                        android:textSize="12sp"
+                        android:textColor="@color/m3_on_surface_variant"
+                        android:fontFamily="@font/outfit_regular"
+                        android:letterSpacing="0.06"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="4dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="8dp">
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:hint="Z min"
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
+                            app:hintTextColor="@color/m3_outline"
+                            android:layout_marginEnd="4dp">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/z_min_3d_input"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="-10"
+                                android:fontFamily="@font/jetbrains_mono"
+                                android:textSize="14sp"
+                                android:textColor="@color/m3_on_surface"
+                                android:singleLine="true"
+                                android:inputType="numberDecimal|numberSigned" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:hint="Z max"
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
+                            app:hintTextColor="@color/m3_outline"
+                            android:layout_marginStart="4dp">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/z_max_3d_input"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="10"
+                                android:fontFamily="@font/jetbrains_mono"
+                                android:textSize="14sp"
+                                android:textColor="@color/m3_on_surface"
+                                android:singleLine="true"
+                                android:inputType="numberDecimal|numberSigned" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_plot_3d"
+                            style="@style/Widget.Material3.Button"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="56dp"
+                            android:text="Plot 3D"
+                            android:fontFamily="@font/jetbrains_mono"
+                            android:textSize="14sp"
+                            app:cornerRadius="14dp"
+                            android:layout_marginEnd="4dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_reset_3d_view"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="56dp"
+                            android:text="Reset View"
+                            android:fontFamily="@font/jetbrains_mono"
+                            android:textSize="14sp"
+                            app:cornerRadius="14dp"
+                            android:layout_marginStart="4dp" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.SuperCalc.Card"
+                android:layout_width="match_parent"
+                android:layout_height="400dp"
+                android:layout_marginBottom="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <TextView
+                        android:text="3D Surface (drag to rotate)"
+                        android:textSize="12sp"
+                        android:textColor="@color/m3_on_surface_variant"
+                        android:fontFamily="@font/outfit_regular"
+                        android:letterSpacing="0.06"
+                        android:layout_marginBottom="8dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                    <com.supercalc.Surface3DView
+                        android:id="@+id/surface_3d_view"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_back_3d"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Back to Calculator"
+                android:fontFamily="@font/jetbrains_mono"
+                android:textSize="14sp"
+                app:cornerRadius="14dp"
+                android:layout_marginBottom="24dp" />
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -71,6 +71,9 @@ except Exception as e:
 _lib.evaluate.argtypes = [ctypes.c_char_p, ctypes.c_double]
 _lib.evaluate.restype = ctypes.c_double
 
+_lib.evaluate_xy.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_double]
+_lib.evaluate_xy.restype = ctypes.c_double
+
 _lib.evaluate_array.argtypes = [ctypes.c_char_p,
                                  ctypes.POINTER(ctypes.c_double),
                                  ctypes.POINTER(ctypes.c_double),
@@ -132,6 +135,12 @@ class CalcEngine:
     def evaluate(expr: str, x: float) -> Optional[float]:
         """Evaluate expression f(x) at a given x."""
         result = _lib.evaluate(expr.encode("utf-8"), x)
+        return None if _isnan(result) else result
+
+    @staticmethod
+    def evaluate_xy(expr: str, x: float, y: float) -> Optional[float]:
+        """Evaluate expression f(x,y) at given x and y."""
+        result = _lib.evaluate_xy(expr.encode("utf-8"), x, y)
         return None if _isnan(result) else result
 
     @staticmethod

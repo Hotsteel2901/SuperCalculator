@@ -55,7 +55,7 @@ EXPORT const char* get_last_error(void) { return g_error; }
 #define MAX_RPN    512
 
 typedef enum {
-    T_NUMBER, T_VARIABLE, T_OP, T_FUNC, T_LPAREN, T_RPAREN, T_COMMA, T_END
+    T_NUMBER, T_VARIABLE_X, T_VARIABLE_Y, T_OP, T_FUNC, T_LPAREN, T_RPAREN, T_COMMA, T_END
 } TokenKind;
 
 typedef enum {
@@ -87,7 +87,10 @@ static int tokenize(const char* s, Token* toks, int max_toks) {
             s = end; n++; continue;
         }
         if (*s == 'x' || *s == 'X') {
-            toks[n++].kind = T_VARIABLE; s++; continue;
+            toks[n++].kind = T_VARIABLE_X; s++; continue;
+        }
+        if (*s == 'y' || *s == 'Y') {
+            toks[n++].kind = T_VARIABLE_Y; s++; continue;
         }
         if (*s == '!') {
             toks[n].kind = T_OP; toks[n].op = '!'; s++; n++; continue;
@@ -149,8 +152,11 @@ static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
         if (t.kind == T_NUMBER) {
             output[out_n].tag = 0; output[out_n].num = t.val; out_n++;
             prev_was_op_or_lp = 0;
-        } else if (t.kind == T_VARIABLE) {
+        } else if (t.kind == T_VARIABLE_X) {
             output[out_n].tag = 1; out_n++;
+            prev_was_op_or_lp = 0;
+        } else if (t.kind == T_VARIABLE_Y) {
+            output[out_n].tag = 4; out_n++;
             prev_was_op_or_lp = 0;
         } else if (t.kind == T_FUNC) {
             stack[sp++] = t;
@@ -254,7 +260,7 @@ static double apply_func(FuncId f, double v) {
     }
 }
 
-static int eval_rpn(RPN* rpn, int nrpn, double x, double* result) {
+static int eval_rpn(RPN* rpn, int nrpn, double x, double y, double* result) {
     double stack[256]; int sp = 0;
     const int MAX_STACK = 256;
     
@@ -267,6 +273,10 @@ static int eval_rpn(RPN* rpn, int nrpn, double x, double* result) {
         else if (t.tag == 1) { 
             if (sp >= MAX_STACK) { set_error("Stack overflow (expression too complex)"); return -1; }
             stack[sp++] = x; 
+        }
+        else if (t.tag == 4) { 
+            if (sp >= MAX_STACK) { set_error("Stack overflow (expression too complex)"); return -1; }
+            stack[sp++] = y; 
         }
         else if (t.tag == 2) {
             if (t.op == '~') { 
@@ -306,42 +316,49 @@ static int eval_rpn(RPN* rpn, int nrpn, double x, double* result) {
     return 0;
 }
 
-static int parse_and_eval(const char* expr, double x, double* result) {
+static int parse_and_eval(const char* expr, double x, double y, double* result) {
     Token toks[MAX_TOKENS];
     RPN   rpn[MAX_RPN];
     int nt = tokenize(expr, toks, MAX_TOKENS);
     if (nt < 0) return -1;
     int nr = shunt(toks, nt, rpn, MAX_RPN);
     if (nr < 0) return -1;
-    return eval_rpn(rpn, nr, x, result);
+    return eval_rpn(rpn, nr, x, y, result);
 }
 
 EXPORT double evaluate(const char* expr, double x) {
     double r;
-    if (parse_and_eval(expr, x, &r) != 0) return NAN;
+    if (parse_and_eval(expr, x, 0.0, &r) != 0) return NAN;
+    return r;
+}
+
+EXPORT double evaluate_xy(const char* expr, double x, double y) {
+    double r;
+    if (parse_and_eval(expr, x, y, &r) != 0) return NAN;
     return r;
 }
 
 EXPORT void evaluate_array(const char* expr, const double* xs, double* out, int n) {
+    if (!expr || !xs || !out || n <= 0) return;
     for (int i = 0; i < n; i++) {
         double r;
-        if (parse_and_eval(expr, xs[i], &r) != 0) out[i] = NAN;
+        if (parse_and_eval(expr, xs[i], 0.0, &r) != 0) out[i] = NAN;
         else out[i] = r;
     }
 }
 
 EXPORT double derivative(const char* expr, double x, double h) {
     double fp, fm;
-    if (parse_and_eval(expr, x+h, &fp) != 0) return NAN;
-    if (parse_and_eval(expr, x-h, &fm) != 0) return NAN;
+    if (parse_and_eval(expr, x+h, 0.0, &fp) != 0) return NAN;
+    if (parse_and_eval(expr, x-h, 0.0, &fm) != 0) return NAN;
     return (fp - fm) / (2.0 * h);
 }
 
 EXPORT double derivative2(const char* expr, double x, double h) {
     double fc, fp, fm;
-    if (parse_and_eval(expr, x,   &fc) != 0) return NAN;
-    if (parse_and_eval(expr, x+h, &fp) != 0) return NAN;
-    if (parse_and_eval(expr, x-h, &fm) != 0) return NAN;
+    if (parse_and_eval(expr, x,   0.0, &fc) != 0) return NAN;
+    if (parse_and_eval(expr, x+h, 0.0, &fp) != 0) return NAN;
+    if (parse_and_eval(expr, x-h, 0.0, &fm) != 0) return NAN;
     return (fp - 2.0*fc + fm) / (h*h);
 }
 
@@ -349,12 +366,12 @@ EXPORT double integrate(const char* expr, double a, double b, int n) {
     if (n < 2 || n % 2 != 0) { set_error("n must be even and >= 2"); return NAN; }
     double h = (b - a) / n;
     double fa, fb;
-    if (parse_and_eval(expr, a, &fa) != 0) return NAN;
-    if (parse_and_eval(expr, b, &fb) != 0) return NAN;
+    if (parse_and_eval(expr, a, 0.0, &fa) != 0) return NAN;
+    if (parse_and_eval(expr, b, 0.0, &fb) != 0) return NAN;
     double sum = fa + fb;
     for (int i = 1; i < n; i++) {
         double xi = a + i*h, fi;
-        if (parse_and_eval(expr, xi, &fi) != 0) return NAN;
+        if (parse_and_eval(expr, xi, 0.0, &fi) != 0) return NAN;
         sum += (i%2==0 ? 2.0 : 4.0) * fi;
     }
     return (h/3.0) * sum;
@@ -369,25 +386,25 @@ EXPORT double solve_equation(const char* expr, double guess,
 
     for (int iter = 0; iter < max_iter; iter++) {
         double f, df;
-        if (parse_and_eval(expr, x, &f) != 0) return NAN;
+        if (parse_and_eval(expr, x, 0.0, &f) != 0) return NAN;
         if (fabs(f) < tol) return x;
         double h = 1e-6 * (fabs(x) + 1.0);
-        if (parse_and_eval(expr, x+h, &fp) != 0) return NAN;
-        if (parse_and_eval(expr, x-h, &fm) != 0) return NAN;
+        if (parse_and_eval(expr, x+h, 0.0, &fp) != 0) return NAN;
+        if (parse_and_eval(expr, x-h, 0.0, &fm) != 0) return NAN;
         df = (fp - fm) / (2.0*h);
         if (fabs(df) < 1e-15) {
-            double fa; if (parse_and_eval(expr, xmin, &fa) != 0) return NAN;
+            double fa; if (parse_and_eval(expr, xmin, 0.0, &fa) != 0) return NAN;
             double mid = (xmin + xmax)/2.0, fmid;
-            if (parse_and_eval(expr, mid, &fmid) != 0) return NAN;
+            if (parse_and_eval(expr, mid, 0.0, &fmid) != 0) return NAN;
             if (fa*fmid <= 0) xmax = mid;
             else xmin = mid;
             x = mid;
         } else {
             double nx = x - f/df;
             if (nx < xmin || nx > xmax) {
-                double fa; if (parse_and_eval(expr, xmin, &fa) != 0) return NAN;
+                double fa; if (parse_and_eval(expr, xmin, 0.0, &fa) != 0) return NAN;
                 double mid = (xmin+xmax)/2.0, fmid;
-                if (parse_and_eval(expr, mid, &fmid) != 0) return NAN;
+                if (parse_and_eval(expr, mid, 0.0, &fmid) != 0) return NAN;
                 if (fa*fmid <= 0) xmax = mid; else xmin = mid;
                 x = mid;
             } else x = nx;
@@ -400,12 +417,12 @@ EXPORT double solve_equation(const char* expr, double guess,
 EXPORT double solve_bisection(const char* expr, double a, double b,
                                double tol, int max_iter) {
     double fa, fb, fc, c;
-    if (parse_and_eval(expr, a, &fa) != 0) return NAN;
-    if (parse_and_eval(expr, b, &fb) != 0) return NAN;
+    if (parse_and_eval(expr, a, 0.0, &fa) != 0) return NAN;
+    if (parse_and_eval(expr, b, 0.0, &fb) != 0) return NAN;
     if (signbit(fa) == signbit(fb)) { set_error("f(a) and f(b) must have opposite signs"); return NAN; }
     for (int i = 0; i < max_iter; i++) {
         c = (a+b)/2.0;
-        if (parse_and_eval(expr, c, &fc) != 0) return NAN;
+        if (parse_and_eval(expr, c, 0.0, &fc) != 0) return NAN;
         if (fabs(fc) < tol || (b-a)/2.0 < tol) return c;
         if (signbit(fa) != signbit(fc)) { b = c; fb = fc; }
         else { a = c; fa = fc; }
@@ -441,18 +458,18 @@ static double golden_section_min(const char* expr, double a, double b, double to
     double d = b - resphi * (b - a);
     double fc, fd;
 
-    if (parse_and_eval(expr, c, &fc) != 0) return NAN;
-    if (parse_and_eval(expr, d, &fd) != 0) return NAN;
+    if (parse_and_eval(expr, c, 0.0, &fc) != 0) return NAN;
+    if (parse_and_eval(expr, d, 0.0, &fd) != 0) return NAN;
 
     for (int i = 0; i < max_iter && fabs(b - a) > tol; i++) {
         if (fc < fd) {
             b = d; d = c; fd = fc;
             c = a + resphi * (b - a);
-            if (parse_and_eval(expr, c, &fc) != 0) return NAN;
+            if (parse_and_eval(expr, c, 0.0, &fc) != 0) return NAN;
         } else {
             a = c; c = d; fc = fd;
             d = b - resphi * (b - a);
-            if (parse_and_eval(expr, d, &fd) != 0) return NAN;
+            if (parse_and_eval(expr, d, 0.0, &fd) != 0) return NAN;
         }
     }
     return (b + a) / 2.0;
@@ -470,20 +487,20 @@ EXPORT double find_maximum(const char* expr, double a, double b, double tol, int
     double d = b - resphi * (b - a);
     double fc, fd;
 
-    if (parse_and_eval(expr, c, &fc) != 0) return NAN;
-    if (parse_and_eval(expr, d, &fd) != 0) return NAN;
+    if (parse_and_eval(expr, c, 0.0, &fc) != 0) return NAN;
+    if (parse_and_eval(expr, d, 0.0, &fd) != 0) return NAN;
     fc = -fc; fd = -fd;
 
     for (int i = 0; i < max_iter && fabs(b - a) > tol; i++) {
         if (fc < fd) {
             b = d; d = c; fd = fc;
             c = a + resphi * (b - a);
-            if (parse_and_eval(expr, c, &fc) != 0) return NAN;
+            if (parse_and_eval(expr, c, 0.0, &fc) != 0) return NAN;
             fc = -fc;
         } else {
             a = c; c = d; fc = fd;
             d = b - resphi * (b - a);
-            if (parse_and_eval(expr, d, &fd) != 0) return NAN;
+            if (parse_and_eval(expr, d, 0.0, &fd) != 0) return NAN;
             fd = -fd;
         }
     }

@@ -676,15 +676,12 @@ class SuperCalcApp:
             expr = self._substitute_params(curve.expression)
             Z = np.zeros_like(X)
 
-            # C core only supports variable 'x', so substitute 'y' with current value
+            # Use native evaluate_xy when available (C core now supports y variable)
             xs_flat = X.flatten().tolist()
             ys_flat = Y.flatten().tolist()
-
             Z_values = []
             for i in range(len(xs_flat)):
-                # Substitute y variable with current y value since engine only understands x
-                eval_expr = re.sub(r'\by\b', str(ys_flat[i]), expr, flags=re.IGNORECASE)
-                val = CalcEngine.evaluate(eval_expr, xs_flat[i])
+                val = CalcEngine.evaluate_xy(expr, xs_flat[i], ys_flat[i])
                 Z_values.append(val if val is not None else np.nan)
 
             Z = np.array(Z_values).reshape(X.shape)
@@ -695,24 +692,35 @@ class SuperCalcApp:
         self.ax.set_xlabel('X')
         self.ax.set_ylabel('Y')
         self.ax.set_zlabel('Z')
+        if hasattr(self.ax, 'set_zlim'):
+            self.ax.set_zlim(self.z_min, self.z_max)
 
         self.canvas.draw()
         self.status_var.set(f"Plotted 3D surface(s)")
 
     def _setup_axes(self):
+        is_3d = hasattr(self.ax, 'zaxis')
         try:
             if hasattr(self.ax, 'set_xlim'):
                 self.ax.set_xlim(self.x_min, self.x_max)
+            if hasattr(self.ax, 'set_ylim'):
                 self.ax.set_ylim(self.y_min, self.y_max)
-        except ValueError:
+            if is_3d and hasattr(self.ax, 'set_zlim'):
+                self.ax.set_zlim(self.z_min, self.z_max)
+        except (ValueError, AttributeError):
             pass
         if hasattr(self.ax, 'grid'):
             self.ax.grid(self.grid_on, color="#45475a", alpha=0.5, linestyle="--")
-        if hasattr(self.ax, 'axhline'):
+        if not is_3d and hasattr(self.ax, 'axhline'):
             self.ax.axhline(y=0, color="#585b70", linewidth=0.8)
             self.ax.axvline(x=0, color="#585b70", linewidth=0.8)
-        self.ax.set_xlabel("x")
-        self.ax.set_ylabel("f(x)")
+        if is_3d:
+            self.ax.set_xlabel("X")
+            self.ax.set_ylabel("Y")
+            self.ax.set_zlabel("Z")
+        else:
+            self.ax.set_xlabel("x")
+            self.ax.set_ylabel("f(x)")
         self.ax.tick_params(colors="#cdd6f4")
         self.ax.set_facecolor("#181825")
 
