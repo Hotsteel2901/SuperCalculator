@@ -263,6 +263,7 @@ static int eval_rpn(RPN* rpn, int nrpn, double x, double* result) {
                 if (sp < 1) { set_error("Invalid expression"); return -1; }
                 double a = stack[--sp];
                 if (a < 0 || floor(a) != a) { set_error("Factorial requires non-negative integer"); stack[sp++] = NAN; }
+                else if (a > 170) { set_error("Factorial overflow (max 170!)"); stack[sp++] = INFINITY; }
                 else {
                     double r = 1.0;
                     for (int i = 2; i <= (int)a; i++) r *= i;

@@ -13,6 +13,8 @@ double derivative2(const char* expr, double x, double h);
 double integrate_adaptive(const char* expr, double a, double b, double tol);
 double solve_equation(const char* expr, double guess, double xmin, double xmax,
                       double tol, int max_iter);
+double solve_bisection(const char* expr, double a, double b,
+                       double tol, int max_iter);
 double find_minimum(const char* expr, double a, double b, double tol, int max_iter);
 double find_maximum(const char* expr, double a, double b, double tol, int max_iter);
 void evaluate_array(const char* expr, const double* xs, double* out, int n);
@@ -130,6 +132,38 @@ Java_com_supercalc_CalcEngine_findMaximum(JNIEnv* env, jclass clazz,
     const char* str = (*env)->GetStringUTFChars(env, expr, NULL);
     if (!str) return NAN;
     double result = find_maximum(str, a, b, 1e-8, 200);
+    (*env)->ReleaseStringUTFChars(env, expr, str);
+    return result;
+}
+
+JNIEXPORT jdouble JNICALL
+Java_com_supercalc_CalcEngine_solve__Ljava_lang_String_2DDDD(
+        JNIEnv* env, jclass clazz, jstring expr, jdouble guess,
+        jdouble xmin, jdouble xmax) {
+    const char* str = (*env)->GetStringUTFChars(env, expr, NULL);
+    if (!str) return NAN;
+    double result = solve_equation(str, guess, xmin, xmax, 1e-8, 100);
+    (*env)->ReleaseStringUTFChars(env, expr, str);
+    return result;
+}
+
+JNIEXPORT jdouble JNICALL
+Java_com_supercalc_CalcEngine_solve__Ljava_lang_String_2DDDDI(
+        JNIEnv* env, jclass clazz, jstring expr, jdouble guess,
+        jdouble xmin, jdouble xmax, jint max_iter) {
+    const char* str = (*env)->GetStringUTFChars(env, expr, NULL);
+    if (!str) return NAN;
+    double result = solve_equation(str, guess, xmin, xmax, 1e-8, max_iter);
+    (*env)->ReleaseStringUTFChars(env, expr, str);
+    return result;
+}
+
+JNIEXPORT jdouble JNICALL
+Java_com_supercalc_CalcEngine_solveBisection(JNIEnv* env, jclass clazz,
+                                               jstring expr, jdouble a, jdouble b) {
+    const char* str = (*env)->GetStringUTFChars(env, expr, NULL);
+    if (!str) return NAN;
+    double result = solve_bisection(str, a, b, 1e-8, 200);
     (*env)->ReleaseStringUTFChars(env, expr, str);
     return result;
 }

@@ -32,6 +32,9 @@ public class CalcEngine {
     /** Find a local maximum of f(x) on [a, b]. */
     public static native double findMaximum(String expr, double a, double b);
 
+    /** Find root using bisection method (requires sign change on [a,b]). */
+    public static native double solveBisection(String expr, double a, double b);
+
     /** Last error message from the C core. */
     public static native String getLastError();
 }

@@ -23,6 +23,7 @@ import sys
 import os
 import tkinter as tk
 from tkinter import ttk, messagebox
+from typing import Optional
 import math
 import re
 
@@ -720,7 +721,7 @@ class SuperCalcApp:
     # ------------------------------------------------------------------
     #  Calculus operations
     # ------------------------------------------------------------------
-    def _get_active_expression(self) -> str | None:
+    def _get_active_expression(self) -> Optional[str]:
         sel = self.listbox_curves.curselection()
         if sel:
             return self.curves[sel[0]].expression

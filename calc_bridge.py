@@ -204,4 +204,5 @@ class CalcEngine:
     @staticmethod
     def integral(expr: str, a: float, b: float,
                  n: int = 1000) -> Optional[float]:
+        """Definite integral over [a,b] using Simpson's rule (alias for integrate)."""
         return CalcEngine.integrate(expr, a, b, n)
