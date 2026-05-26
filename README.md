@@ -1,5 +1,9 @@
 # Super Function Graphing Calculator
 
+[![Build Windows EXE](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-windows-exe.yml/badge.svg)](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-windows-exe.yml)
+
+[![Build Android APK](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-android-apk.yml/badge.svg)](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-android-apk.yml)
+
 [中文](README_CN.md) | **English**
 
 > **Note:** This project was generated entirely by AI (Claude Code). Use at your own discretion.
