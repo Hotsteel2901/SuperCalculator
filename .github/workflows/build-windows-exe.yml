@@ -39,19 +39,6 @@ jobs:
           gcc -shared -O2 -o calc_core.dll calc_core.c -lm
         shell: bash
 
-      - name: Create PyInstaller spec file
-        run: |
-          pyi-makespec --onefile --windowed --name SuperCalculator super_calc_bridged.py
-        shell: bash
-
-      - name: Modify spec file for data files
-        run: |
-          $spec = Get-Content "SuperCalculator.spec" -Raw
-          $spec = $spec -replace 'a = Analysis\(', 'a = Analysis(`calc_core.dll`,`'
-          $spec = $spec -replace "datas=\[\],", "datas=[('calc_core.dll', '.')],"
-          Set-Content "SuperCalculator.spec" -Value $spec
-        shell: pwsh
-
       - name: Build EXE with PyInstaller
         run: |
           pyinstaller SuperCalculator.spec
