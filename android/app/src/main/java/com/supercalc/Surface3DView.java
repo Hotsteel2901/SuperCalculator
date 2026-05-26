@@ -6,12 +6,13 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 
 /**
  * Custom Canvas-based 3D surface renderer for z = f(x,y).
  * Renders a wireframe mesh with simple perspective projection.
- * Supports touch-drag rotation.
+ * Supports touch-drag rotation and pinch-to-zoom.
  */
 public class Surface3DView extends View {
 
@@ -23,6 +24,8 @@ public class Surface3DView extends View {
     private float rotX = 25f; // rotation around X axis (degrees)
     private float rotY = -35f; // rotation around Y axis (degrees)
     private float scale = 1.0f;
+    private static final float MIN_SCALE = 0.3f;
+    private static final float MAX_SCALE = 3.0f;
 
     private Paint gridPaint;
     private Paint axisPaint;
@@ -30,6 +33,9 @@ public class Surface3DView extends View {
 
     private float lastTouchX, lastTouchY;
     private static final float ROT_SENSITIVITY = 0.5f;
+
+    private ScaleGestureDetector scaleDetector;
+    private boolean isZooming = false;
 
     public Surface3DView(Context context) {
         super(context);
@@ -52,6 +58,16 @@ public class Surface3DView extends View {
         textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         textPaint.setColor(Color.parseColor("#cdd6f4"));
         textPaint.setTextSize(28f);
+
+        scaleDetector = new ScaleGestureDetector(getContext(), new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            @Override
+            public boolean onScale(ScaleGestureDetector detector) {
+                scale *= detector.getScaleFactor();
+                scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
+                invalidate();
+                return true;
+            }
+        });
     }
 
     public void setData(float[][] zValues, float xMin, float xMax, float yMin, float yMax, float zMin, float zMax) {
@@ -68,27 +84,45 @@ public class Surface3DView extends View {
     public void resetRotation() {
         rotX = 25f;
         rotY = -35f;
+        scale = 1.0f;
         invalidate();
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        switch (event.getAction()) {
+        scaleDetector.onTouchEvent(event);
+
+        switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
+                isZooming = false;
                 lastTouchX = event.getX();
                 lastTouchY = event.getY();
                 return true;
+            case MotionEvent.ACTION_POINTER_DOWN:
+                isZooming = true;
+                break;
             case MotionEvent.ACTION_MOVE:
-                float dx = event.getX() - lastTouchX;
-                float dy = event.getY() - lastTouchY;
-                rotY += dx * ROT_SENSITIVITY;
-                rotX -= dy * ROT_SENSITIVITY;
-                // Clamp vertical rotation to avoid flipping
-                rotX = Math.max(-90f, Math.min(90f, rotX));
-                lastTouchX = event.getX();
-                lastTouchY = event.getY();
-                invalidate();
+                if (!isZooming && !scaleDetector.isInProgress()) {
+                    float dx = event.getX() - lastTouchX;
+                    float dy = event.getY() - lastTouchY;
+                    rotY += dx * ROT_SENSITIVITY;
+                    rotX -= dy * ROT_SENSITIVITY;
+                    rotX = Math.max(-90f, Math.min(90f, rotX));
+                    lastTouchX = event.getX();
+                    lastTouchY = event.getY();
+                    invalidate();
+                }
                 return true;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_POINTER_UP:
+                if (event.getPointerCount() <= 1) {
+                    isZooming = false;
+                    if (event.getPointerCount() == 1) {
+                        lastTouchX = event.getX();
+                        lastTouchY = event.getY();
+                    }
+                }
+                break;
         }
         return super.onTouchEvent(event);
     }
