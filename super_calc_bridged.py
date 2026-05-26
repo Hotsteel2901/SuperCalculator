@@ -20,15 +20,19 @@ Features:
 """
 
 import sys
-import os
 import tkinter as tk
 from tkinter import ttk, messagebox
-from typing import Optional
+from typing import Optional, List
 import math
 import re
 
 import matplotlib
-matplotlib.use("TkAgg")
+# Dynamically select backend: try TkAgg first, fallback to Agg for headless environments
+try:
+    import tkinter
+    matplotlib.use("TkAgg")
+except (ImportError, RuntimeError):
+    matplotlib.use("Agg")
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import numpy as np
@@ -38,6 +42,9 @@ from calc_bridge import CalcEngine
 # ---------------------------------------------------------------------------
 #  Constants
 # ---------------------------------------------------------------------------
+MIN_PLOT_POINTS = 10
+MAX_PLOT_POINTS = 5000
+MAX_3D_POINTS = 200
 PRESET_FUNCTIONS = {
     "sin(x)":              "sin(x)",
     "cos(x)":              "cos(x)",
@@ -124,7 +131,7 @@ class SuperCalcApp:
         self.root.minsize(1000, 600)
         self.root.configure(bg="#1e1e2e")
 
-        self.curves: list[CurveModel] = []
+        self.curves: List[CurveModel] = []
         self.color_index = 0
         self.x_min = -10.0
         self.x_max = 10.0
@@ -172,8 +179,9 @@ class SuperCalcApp:
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         def _on_mousewheel(event):
+            # Only scroll when mouse is over the control panel
             canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-        canvas.bind_all("<MouseWheel>", _on_mousewheel)
+        canvas.bind("<MouseWheel>", _on_mousewheel)
 
         # --- Expression Input ---
         frm_expr = ttk.LabelFrame(scroll_frame, text="Function Input",
@@ -556,11 +564,27 @@ class SuperCalcApp:
 
     def _on_apply_range(self):
         try:
-            self.x_min = float(self._var_x_min.get())
-            self.x_max = float(self._var_x_max.get())
-            self.y_min = float(self._var_y_min.get())
-            self.y_max = float(self._var_y_max.get())
-            self.step_size = float(self._var_step.get())
+            x_min = float(self._var_x_min.get())
+            x_max = float(self._var_x_max.get())
+            y_min = float(self._var_y_min.get())
+            y_max = float(self._var_y_max.get())
+            step = float(self._var_step.get())
+            
+            if x_min >= x_max:
+                messagebox.showerror("Error", "X min must be less than X max.")
+                return
+            if y_min >= y_max:
+                messagebox.showerror("Error", "Y min must be less than Y max.")
+                return
+            if step <= 0:
+                messagebox.showerror("Error", "Step size must be positive.")
+                return
+                
+            self.x_min = x_min
+            self.x_max = x_max
+            self.y_min = y_min
+            self.y_max = y_max
+            self.step_size = step
             self.grid_on = self._var_grid.get()
             self._plot_all()
         except ValueError:
@@ -592,7 +616,7 @@ class SuperCalcApp:
         self.ax = self.fig.add_subplot(111)
         self._setup_axes()
 
-        n_pts = max(10, min(5000, int((self.x_max - self.x_min) / self.step_size)))
+        n_pts = max(MIN_PLOT_POINTS, min(MAX_PLOT_POINTS, int((self.x_max - self.x_min) / self.step_size)))
         xs_np = np.linspace(self.x_min, self.x_max, n_pts)
         xs_list = xs_np.tolist()
 
@@ -638,7 +662,7 @@ class SuperCalcApp:
         self.ax = self.fig.add_subplot(111, projection='3d')
         self._setup_axes()
 
-        n_pts = max(10, min(200, int((self.x_max - self.x_min) / self.step_size)))
+        n_pts = max(MIN_PLOT_POINTS, min(MAX_3D_POINTS, int((self.x_max - self.x_min) / self.step_size)))
         x_vals = np.linspace(self.x_min, self.x_max, n_pts)
         y_vals = np.linspace(self.y_min, self.y_max, n_pts)
         X, Y = np.meshgrid(x_vals, y_vals)
@@ -650,9 +674,22 @@ class SuperCalcApp:
                 continue
             expr = self._substitute_params(curve.expression)
             Z = np.zeros_like(X)
-            for i in range(n_pts):
-                for j in range(n_pts):
-                    Z[i, j] = CalcEngine.evaluate(expr, X[i, j]) or np.nan
+            
+            # Use batch evaluation for better performance
+            xs_flat = X.flatten().tolist()
+            ys_flat = Y.flatten().tolist()
+            
+            # Evaluate using expression substitution for both x and y
+            Z_values = []
+            for i in range(len(xs_flat)):
+                # For 3D functions, we need to substitute both x and y
+                eval_expr = expr
+                for param, value in self.param_values.items():
+                    eval_expr = re.sub(r'\b' + param + r'\b', str(value), eval_expr, flags=re.IGNORECASE)
+                val = CalcEngine.evaluate(eval_expr, xs_flat[i])
+                Z_values.append(val if val is not None else np.nan)
+            
+            Z = np.array(Z_values).reshape(X.shape)
             
             self.ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.8,
                                 label=curve.label)

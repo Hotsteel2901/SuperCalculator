@@ -52,7 +52,9 @@ jobs:
             -alias androiddebugkey -keypass android \
             -keyalg RSA -keysize 2048 -validity 10000 \
             -dname "CN=Debug,O=SuperCalc,C=US" > /dev/null 2>&1
-          $ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner sign \
+          # Dynamically find build-tools version
+          BUILD_TOOLS_VERSION=$(ls $ANDROID_SDK_ROOT/build-tools | head -1)
+          $ANDROID_SDK_ROOT/build-tools/$BUILD_TOOLS_VERSION/apksigner sign \
             --ks debug.keystore --ks-pass pass:android \
             --out $APK_SIGNED $APK_UNSIGNED
           ls -lh $APK_SIGNED

@@ -44,6 +44,10 @@ public class PlotActivity extends AppCompatActivity {
         Color.parseColor("#17becf")
     };
     
+    private static final int COLOR_GRID = Color.parseColor("#45475a");
+    private static final int COLOR_TEXT = Color.parseColor("#cdd6f4");
+    private static final int COLOR_BG = Color.parseColor("#181825");
+    
     private int colorIndex = 0;
 
     @Override
@@ -68,6 +72,13 @@ public class PlotActivity extends AppCompatActivity {
         allExpressions = new ArrayList<>();
         curveColors = new ArrayList<>();
         
+        // Restore state after configuration change
+        if (savedInstanceState != null) {
+            allExpressions = savedInstanceState.getStringArrayList("expressions");
+            curveColors = savedInstanceState.getIntegerArrayList("colors");
+            // Note: entries need to be recalculated from expressions
+        }
+        
         btnAddCurve.setOnClickListener(v -> onAddCurve());
         btnPlot.setOnClickListener(v -> onPlotAll());
         btnRemoveCurve.setOnClickListener(v -> onRemoveCurve());
@@ -82,6 +93,17 @@ public class PlotActivity extends AppCompatActivity {
         lineChart.setDoubleTapToZoomEnabled(true);
         
         setupChart();
+    }
+    
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putStringArrayList("expressions", allExpressions);
+        outState.putIntegerArrayList("colors", curveColors);
+        outState.putString("x_min", xMinInput.getText().toString());
+        outState.putString("x_max", xMaxInput.getText().toString());
+        outState.putString("y_min", yMinInput.getText().toString());
+        outState.putString("y_max", yMaxInput.getText().toString());
     }
     
     private int getNextColor() {
@@ -137,7 +159,10 @@ public class PlotActivity extends AppCompatActivity {
         }
         
         allEntries.clear();
-        int numPoints = 300;
+        // Limit points to avoid TransactionTooLargeException (1MB limit)
+        // Each point is ~8 bytes (float pair), 300 points * 10 curves = ~24KB safe
+        int numPoints = Math.min(300, (int)((xMax - xMin) / 0.1));
+        numPoints = Math.max(50, Math.min(500, numPoints));
         
         for (int curveIdx = 0; curveIdx < allExpressions.size(); curveIdx++) {
             String expr = allExpressions.get(curveIdx);
@@ -193,7 +218,7 @@ public class PlotActivity extends AppCompatActivity {
         yAxisLeft.setAxisMinimum((float) yMin);
         yAxisLeft.setAxisMaximum((float) yMax);
         yAxisLeft.setDrawGridLines(true);
-        yAxisLeft.setGridColor(Color.parseColor("#45475a"));
+        yAxisLeft.setGridColor(COLOR_GRID);
         
         YAxis yAxisRight = lineChart.getAxisRight();
         yAxisRight.setEnabled(false);
@@ -201,7 +226,7 @@ public class PlotActivity extends AppCompatActivity {
         XAxis xAxis = lineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setDrawGridLines(true);
-        xAxis.setGridColor(Color.parseColor("#45475a"));
+        xAxis.setGridColor(COLOR_GRID);
         
         Legend legend = lineChart.getLegend();
         legend.setEnabled(true);
@@ -223,15 +248,41 @@ public class PlotActivity extends AppCompatActivity {
         Intent intent = new Intent(this, FullScreenPlotActivity.class);
         
         String[] expressions = allExpressions.toArray(new String[0]);
-        String[] entriesData = new String[allEntries.size()];
         
-        for (int i = 0; i < allEntries.size(); i++) {
-            StringBuilder sb = new StringBuilder();
-            for (Entry e : allEntries.get(i)) {
-                if (sb.length() > 0) sb.append(";");
-                sb.append(e.getX()).append(",").append(e.getY());
+        // Limit data to avoid TransactionTooLargeException (~1MB limit)
+        // Estimate size: each entry ~50 chars in string form
+        int maxTotalPoints = 10000; // Safe limit for Intent
+        int totalPoints = 0;
+        for (ArrayList<Entry> entries : allEntries) {
+            totalPoints += entries.size();
+        }
+        
+        String[] entriesData;
+        if (totalPoints > maxTotalPoints) {
+            // Downsample
+            entriesData = new String[allEntries.size()];
+            for (int i = 0; i < allEntries.size(); i++) {
+                StringBuilder sb = new StringBuilder();
+                ArrayList<Entry> entries = allEntries.get(i);
+                int step = Math.max(1, entries.size() / (maxTotalPoints / allEntries.size()));
+                for (int j = 0; j < entries.size(); j += step) {
+                    Entry e = entries.get(j);
+                    if (sb.length() > 0) sb.append(";");
+                    sb.append(String.format("%.4g,%.4g", e.getX(), e.getY()));
+                }
+                entriesData[i] = sb.toString();
             }
-            entriesData[i] = sb.toString();
+            toast("Downsampled for full screen view");
+        } else {
+            entriesData = new String[allEntries.size()];
+            for (int i = 0; i < allEntries.size(); i++) {
+                StringBuilder sb = new StringBuilder();
+                for (Entry e : allEntries.get(i)) {
+                    if (sb.length() > 0) sb.append(";");
+                    sb.append(String.format("%.4g,%.4g", e.getX(), e.getY()));
+                }
+                entriesData[i] = sb.toString();
+            }
         }
         
         int[] colors = new int[curveColors.size()];
@@ -263,20 +314,20 @@ public class PlotActivity extends AppCompatActivity {
     }
     
     private void setupChart() {
-        lineChart.setBackgroundColor(Color.parseColor("#181825"));
-        lineChart.setGridBackgroundColor(Color.parseColor("#181825"));
+        lineChart.setBackgroundColor(COLOR_BG);
+        lineChart.setGridBackgroundColor(COLOR_BG);
         
         XAxis xAxis = lineChart.getXAxis();
-        xAxis.setTextColor(Color.parseColor("#cdd6f4"));
+        xAxis.setTextColor(COLOR_TEXT);
         
         YAxis yAxisLeft = lineChart.getAxisLeft();
-        yAxisLeft.setTextColor(Color.parseColor("#cdd6f4"));
+        yAxisLeft.setTextColor(COLOR_TEXT);
         
         YAxis yAxisRight = lineChart.getAxisRight();
         yAxisRight.setEnabled(false);
         
         Legend legend = lineChart.getLegend();
-        legend.setTextColor(Color.parseColor("#cdd6f4"));
+        legend.setTextColor(COLOR_TEXT);
         
         xMinInput.setText("-10");
         xMaxInput.setText("10");

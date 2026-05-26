@@ -50,7 +50,11 @@ def _find_lib() -> str:
 
 try:
     _lib = ctypes.CDLL(_find_lib())
+except FileNotFoundError:
+    raise
 except Exception as e:
+    import warnings
+    warnings.warn(f"Failed to load C core library: {e}. Calculator will not function.")
     raise RuntimeError(f"Failed to load C core library: {e}")
 
 # ---------------------------------------------------------------------------

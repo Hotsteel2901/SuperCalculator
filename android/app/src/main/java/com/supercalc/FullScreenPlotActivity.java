@@ -42,6 +42,10 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
         Color.parseColor("#bcbd22"),
         Color.parseColor("#17becf")
     };
+    
+    private static final int COLOR_GRID = Color.parseColor("#45475a");
+    private static final int COLOR_TEXT = Color.parseColor("#cdd6f4");
+    private static final int COLOR_BG = Color.parseColor("#181825");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -136,7 +140,7 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
         yAxisLeft.setAxisMinimum(yMin);
         yAxisLeft.setAxisMaximum(yMax);
         yAxisLeft.setDrawGridLines(true);
-        yAxisLeft.setGridColor(Color.parseColor("#45475a"));
+        yAxisLeft.setGridColor(COLOR_GRID);
         
         YAxis yAxisRight = lineChart.getAxisRight();
         yAxisRight.setEnabled(false);
@@ -144,7 +148,7 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
         XAxis xAxis = lineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setDrawGridLines(true);
-        xAxis.setGridColor(Color.parseColor("#45475a"));
+        xAxis.setGridColor(COLOR_GRID);
         
         Legend legend = lineChart.getLegend();
         legend.setEnabled(true);
@@ -177,20 +181,20 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
     }
     
     private void setupChart() {
-        lineChart.setBackgroundColor(Color.parseColor("#181825"));
-        lineChart.setGridBackgroundColor(Color.parseColor("#181825"));
+        lineChart.setBackgroundColor(COLOR_BG);
+        lineChart.setGridBackgroundColor(COLOR_BG);
         
         XAxis xAxis = lineChart.getXAxis();
-        xAxis.setTextColor(Color.parseColor("#cdd6f4"));
+        xAxis.setTextColor(COLOR_TEXT);
         
         YAxis yAxisLeft = lineChart.getAxisLeft();
-        yAxisLeft.setTextColor(Color.parseColor("#cdd6f4"));
+        yAxisLeft.setTextColor(COLOR_TEXT);
         
         YAxis yAxisRight = lineChart.getAxisRight();
         yAxisRight.setEnabled(false);
         
         Legend legend = lineChart.getLegend();
-        legend.setTextColor(Color.parseColor("#cdd6f4"));
+        legend.setTextColor(COLOR_TEXT);
     }
     
     private void toast(String msg) {

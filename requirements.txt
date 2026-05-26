@@ -1,3 +1,7 @@
+# Core dependencies with tested version ranges
+# numpy 2.x has breaking changes; pinned to 1.x for stability
 numpy>=1.21.0,<2.0.0
-matplotlib>=3.5.0
-pyinstaller>=5.0.0
+# matplotlib with version cap for TkAgg backend stability
+matplotlib>=3.5.0,<3.9.0
+# pyinstaller with version cap for compatibility
+pyinstaller>=5.0.0,<6.0.0
