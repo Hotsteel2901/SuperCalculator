@@ -12,6 +12,11 @@ Features:
   - Preset functions library
   - Adjustable coordinate ranges, step size, and tolerances
   - Export plot as PNG
+  - Factorial support (!)
+  - 3D function plotting for z=f(x,y)
+  - Parameter detection and dynamic input
+  - Input panel with quick buttons
+  - Coordinate marking on click and by x input
 """
 
 import sys
@@ -19,6 +24,7 @@ import os
 import tkinter as tk
 from tkinter import ttk, messagebox
 import math
+import re
 
 import matplotlib
 matplotlib.use("TkAgg")
@@ -47,6 +53,10 @@ PRESET_FUNCTIONS = {
     "x*sin(x)":            "x*sin(x)",
     "exp(-x)*sin(2*pi*x)": "exp(-x)*sin(2*pi*x)",
     "x^2/2 - cos(x)":      "x^2/2-cos(x)",
+    "x! (factorial)":      "x!",
+    "3D: x^2+y^2":         "x^2+y^2",
+    "3D: sin(x)*cos(y)":   "sin(x)*cos(y)",
+    "3D: sin(sqrt(x^2+y^2))": "sin(sqrt(x^2+y^2))",
 }
 
 DEFAULT_COLORS = [
@@ -55,6 +65,25 @@ DEFAULT_COLORS = [
     "#bcbd22", "#17becf",
 ]
 
+PARAM_PATTERN = re.compile(r'\b([a-zA-Z]+)\b')
+KNOWN_FUNCTIONS = {'sin', 'cos', 'tan', 'log', 'ln', 'exp', 'sqrt', 'abs'}
+KNOWN_CONSTANTS = {'pi', 'e'}
+
+def _detect_parameters_static(expr: str) -> list:
+    params = set()
+    expr_lower = expr.lower()
+    for func in KNOWN_FUNCTIONS:
+        expr_lower = re.sub(r'\b' + func + r'\b', '', expr_lower)
+    for const in KNOWN_CONSTANTS:
+        expr_lower = re.sub(r'\b' + const + r'\b', '', expr_lower)
+    for match in PARAM_PATTERN.finditer(expr_lower):
+        word = match.group(1)
+        if len(word) == 1 and word not in ('x', 'y'):
+            params.add(word)
+        elif len(word) > 1 and word not in KNOWN_FUNCTIONS and word not in KNOWN_CONSTANTS:
+            params.add(word)
+    return sorted(list(params))
+
 
 # ---------------------------------------------------------------------------
 #  Curve data model
@@ -62,7 +91,7 @@ DEFAULT_COLORS = [
 class CurveModel:
     """Holds the configuration for a single plotted curve."""
     __slots__ = ("expression", "color", "linewidth", "linestyle",
-                 "visible", "label")
+                 "visible", "label", "is_3d", "parameters")
 
     def __init__(self, expr, color, label="", lw=2, ls="-"):
         self.expression = expr
@@ -71,6 +100,16 @@ class CurveModel:
         self.linestyle = ls
         self.visible = True
         self.label = label or expr
+        self.is_3d = self._detect_3d(expr)
+        self.parameters = self._detect_parameters(expr)
+
+    def _detect_3d(self, expr: str) -> bool:
+        has_x = 'x' in expr.lower()
+        has_y = 'y' in expr.lower()
+        return has_x and has_y
+
+    def _detect_parameters(self, expr: str) -> list:
+        return _detect_parameters_static(expr)
 
 
 # ---------------------------------------------------------------------------
@@ -80,8 +119,8 @@ class SuperCalcApp:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("Super Function Graphing Calculator")
-        self.root.geometry("1200x750")
-        self.root.minsize(900, 550)
+        self.root.geometry("1400x800")
+        self.root.minsize(1000, 600)
         self.root.configure(bg="#1e1e2e")
 
         self.curves: list[CurveModel] = []
@@ -90,8 +129,13 @@ class SuperCalcApp:
         self.x_max = 10.0
         self.y_min = -10.0
         self.y_max = 10.0
-        self.step_size = 0.02
+        self.z_min = -10.0
+        self.z_max = 10.0
+        self.step_size = 0.05
         self.grid_on = True
+        self.param_values = {}
+        self.marked_points = []
+        self.auto_mark_point = None
 
         self._build_ui()
         self._add_curve("sin(x)")
@@ -103,7 +147,7 @@ class SuperCalcApp:
         paned = ttk.PanedWindow(self.root, orient=tk.HORIZONTAL)
         paned.pack(fill=tk.BOTH, expand=True)
 
-        left = ttk.Frame(paned, width=340, style="Dark.TFrame")
+        left = ttk.Frame(paned, width=400, style="Dark.TFrame")
         paned.add(left, weight=0)
 
         right = ttk.Frame(paned, style="Dark.TFrame")
@@ -137,10 +181,19 @@ class SuperCalcApp:
 
         ttk.Label(frm_expr, text="Expression f(x):",
                   style="Dark.TLabel").pack(anchor=tk.W, padx=6, pady=(6, 0))
-        self.entry_expr = ttk.Entry(frm_expr, font=("Consolas", 12))
-        self.entry_expr.pack(fill=tk.X, padx=6, pady=4)
+        
+        input_row = ttk.Frame(frm_expr, style="Dark.TFrame")
+        input_row.pack(fill=tk.X, padx=6, pady=2)
+        
+        self.entry_expr = ttk.Entry(input_row, font=("Consolas", 12), width=25)
+        self.entry_expr.pack(side=tk.LEFT, padx=(0, 4))
         self.entry_expr.insert(0, "sin(x)")
         self.entry_expr.bind("<Return>", lambda e: self._on_plot())
+        
+        ttk.Button(input_row, text="📝", width=2,
+                   command=self._open_input_panel).pack(side=tk.RIGHT)
+        
+        self.entry_expr.bind("<FocusIn>", lambda e: self._update_param_inputs())
 
         btn_row = ttk.Frame(frm_expr, style="Dark.TFrame")
         btn_row.pack(fill=tk.X, padx=6, pady=4)
@@ -150,6 +203,14 @@ class SuperCalcApp:
                    command=self._on_plot).pack(side=tk.LEFT, padx=2)
         ttk.Button(btn_row, text="Clear All",
                    command=self._on_clear_all).pack(side=tk.LEFT, padx=4)
+
+        # --- Parameter Inputs ---
+        self.frm_params = ttk.LabelFrame(scroll_frame, text="Parameters",
+                                         style="Dark.TLabelframe")
+        self.frm_params.pack(fill=tk.X, padx=8, pady=4)
+        self.param_widgets = {}
+        ttk.Label(self.frm_params, text="No parameters detected",
+                  style="Dark.TLabel").pack(padx=6, pady=8)
 
         # --- Presets ---
         frm_preset = ttk.LabelFrame(scroll_frame, text="Preset Functions",
@@ -281,6 +342,23 @@ class SuperCalcApp:
         ttk.Button(erow2, text="Find Maximum",
                    command=lambda: self._on_find_extremum(minimum=False)).pack(side=tk.LEFT, padx=2)
 
+        # --- Coordinate Marking ---
+        frm_mark = ttk.LabelFrame(scroll_frame, text="Coordinate Marking",
+                                  style="Dark.TLabelframe")
+        frm_mark.pack(fill=tk.X, padx=8, pady=4)
+        
+        ttk.Label(frm_mark, text="Click on plot to mark, or enter x:",
+                  style="Dark.TLabel").pack(anchor=tk.W, padx=6, pady=(6, 0))
+        
+        mark_row = ttk.Frame(frm_mark, style="Dark.TFrame")
+        mark_row.pack(fill=tk.X, padx=6, pady=2)
+        self._var_mark_x = tk.StringVar(value="")
+        ttk.Entry(mark_row, textvariable=self._var_mark_x, width=10).pack(side=tk.LEFT, padx=2)
+        ttk.Button(mark_row, text="Mark Point",
+                   command=self._on_mark_point).pack(side=tk.LEFT, padx=2)
+        ttk.Button(mark_row, text="Clear Marks",
+                   command=self._clear_marks).pack(side=tk.LEFT, padx=2)
+
         # --- Status ---
         self.status_var = tk.StringVar(value="Ready.")
         status_bar = ttk.Label(scroll_frame, textvariable=self.status_var,
@@ -299,8 +377,8 @@ class SuperCalcApp:
                         foreground="#cdd6f4")
 
     def _build_plot_panel(self, parent):
-        self.fig = Figure(figsize=(8, 6), dpi=100, facecolor="#1e1e2e")
-        self.ax = self.fig.add_subplot(111)
+        self.fig = Figure(figsize=(10, 8), dpi=100, facecolor="#1e1e2e")
+        self.ax = self.fig.add_subplot(111, projection='3d')
         self._setup_axes()
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=parent)
@@ -310,6 +388,116 @@ class SuperCalcApp:
         toolbar.update()
 
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
+        
+        self.canvas.mpl_connect('button_press_event', self._on_canvas_click)
+
+    # ------------------------------------------------------------------
+    #  Input Panel
+    # ------------------------------------------------------------------
+    def _open_input_panel(self):
+        panel = tk.Toplevel(self.root)
+        panel.title("Quick Input Panel")
+        panel.geometry("500x400")
+        panel.configure(bg="#1e1e2e")
+        panel.transient(self.root)
+        panel.grab_set()
+        
+        style = ttk.Style()
+        style.configure("Dark.TButton", background="#313244", foreground="#cdd6f4")
+        
+        main_frame = ttk.Frame(panel, style="Dark.TFrame")
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        buttons_config = [
+            ("Basic", [
+                ("x²", "x^2"), ("x³", "x^3"), ("xⁿ", "x^n"),
+                ("√", "sqrt("), ("³√", "x^(1/3)"), ("|x|", "abs("),
+            ]),
+            ("Operators", [
+                ("÷", "/"), ("×", "*"), ("%", "%"), ("-", "-"), ("+", "+"),
+            ]),
+            ("Log/Exp", [
+                ("㏑", "ln("), ("㏒", "log("), ("lg", "log("), ("eˣ", "exp("), ("e", "e"),
+            ]),
+            ("Trig", [
+                ("sin", "sin("), ("cos", "cos("), ("tan", "tan("),
+                ("π", "pi"), ("°", "*pi/180"),
+            ]),
+            ("Special", [
+                ("!", "!"), ("(", "("), (")", ")"), (",", ","),
+                ("σ", "sigma"), ("μ", "mu"),
+            ]),
+            ("Constants", [
+                ("π", "pi"), ("e", "e"), ("φ", "1.6180339887"),
+            ]),
+        ]
+        
+        for category, buttons in buttons_config:
+            frame = ttk.LabelFrame(main_frame, text=category, style="Dark.TLabelframe")
+            frame.pack(fill=tk.X, pady=4)
+            
+            btn_frame = ttk.Frame(frame, style="Dark.TFrame")
+            btn_frame.pack(fill=tk.X, padx=4, pady=4)
+            
+            for i, (label, text) in enumerate(buttons):
+                btn = ttk.Button(btn_frame, text=label, width=5,
+                                command=lambda t=text: self._insert_text(t))
+                btn.grid(row=0, column=i, padx=2, pady=2)
+
+        ttk.Button(main_frame, text="Close", command=panel.destroy).pack(pady=10)
+
+    def _insert_text(self, text):
+        expr = self.entry_expr.get()
+        pos = self.entry_expr.index(tk.INSERT)
+        self.entry_expr.insert(pos, text)
+        self.entry_expr.focus()
+
+    # ------------------------------------------------------------------
+    #  Parameter handling
+    # ------------------------------------------------------------------
+    def _update_param_inputs(self):
+        expr = self.entry_expr.get().strip()
+        params = CurveModel._detect_parameters(expr)
+        
+        for widget in self.frm_params.winfo_children():
+            widget.destroy()
+        self.param_widgets.clear()
+        
+        if not params:
+            ttk.Label(self.frm_params, text="No parameters detected",
+                      style="Dark.TLabel").pack(padx=6, pady=8)
+            return
+        
+        ttk.Label(self.frm_params, text="Set parameter values:",
+                  style="Dark.TLabel").pack(anchor=tk.W, padx=6, pady=(6, 0))
+        
+        for param in params:
+            frame = ttk.Frame(self.frm_params, style="Dark.TFrame")
+            frame.pack(fill=tk.X, padx=6, pady=2)
+            
+            ttk.Label(frame, text=f"{param} =", width=5,
+                      style="Dark.TLabel").pack(side=tk.LEFT, padx=2)
+            var = tk.StringVar(value="1")
+            entry = ttk.Entry(frame, textvariable=var, width=10)
+            entry.pack(side=tk.LEFT, padx=2)
+            entry.bind("<KeyRelease>", lambda e: self._on_param_change())
+            self.param_widgets[param] = var
+            
+        self._on_param_change()
+
+    def _on_param_change(self):
+        self.param_values = {}
+        for param, var in self.param_widgets.items():
+            try:
+                self.param_values[param] = float(var.get())
+            except ValueError:
+                self.param_values[param] = 1.0
+
+    def _substitute_params(self, expr: str) -> str:
+        result = expr
+        for param, value in self.param_values.items():
+            result = re.sub(r'\b' + param + r'\b', str(value), result, flags=re.IGNORECASE)
+        return result
 
     # ------------------------------------------------------------------
     #  Curve management
@@ -321,6 +509,7 @@ class SuperCalcApp:
         self.curves.append(curve)
         self.listbox_curves.insert(tk.END, f"  {curve.label}")
         self.listbox_curves.itemconfig(tk.END, fg=color)
+        self._update_param_inputs()
 
     def _on_add_curve(self):
         expr = self.entry_expr.get().strip()
@@ -390,7 +579,16 @@ class SuperCalcApp:
         except ValueError:
             pass
 
+        has_3d = any(c.is_3d for c in self.curves)
+        
+        if has_3d:
+            self._plot_3d()
+        else:
+            self._plot_2d()
+
+    def _plot_2d(self):
         self.ax.clear()
+        self.ax = self.fig.add_subplot(111)
         self._setup_axes()
 
         n_pts = max(10, min(5000, int((self.x_max - self.x_min) / self.step_size)))
@@ -400,11 +598,30 @@ class SuperCalcApp:
         for curve in self.curves:
             if not curve.visible:
                 continue
-            ys = CalcEngine.evaluate_array(curve.expression, xs_list)
+            expr = self._substitute_params(curve.expression)
+            ys = CalcEngine.evaluate_array(expr, xs_list)
             ys_clean = np.array([y if y is not None else np.nan for y in ys])
             self.ax.plot(xs_np, ys_clean, color=curve.color,
                          linewidth=curve.linewidth, linestyle=curve.linestyle,
                          label=curve.label, alpha=0.9)
+
+        for point in self.marked_points:
+            self.ax.plot(point[0], point[1], 'ro', markersize=8)
+            self.ax.annotate(f"({point[0]:.3f}, {point[1]:.3f})",
+                           xy=(point[0], point[1]), xytext=(10, 10),
+                           textcoords='offset points', color='#f38ba8')
+
+        if self.auto_mark_point:
+            x = self.auto_mark_point
+            expr = self._get_active_expression()
+            if expr:
+                expr_sub = self._substitute_params(expr)
+                y = CalcEngine.evaluate(expr_sub, x)
+                if y is not None:
+                    self.ax.plot(x, y, 'go', markersize=10)
+                    self.ax.annotate(f"({x:.3f}, {y:.3f})",
+                                   xy=(x, y), xytext=(10, -15),
+                                   textcoords='offset points', color='#a6e3a1')
 
         if any(c.visible for c in self.curves):
             self.ax.legend(loc="upper right", facecolor="#313244",
@@ -415,19 +632,90 @@ class SuperCalcApp:
         self.status_var.set(
             f"Plotted {len(self.curves)} curve(s) on [{self.x_min}, {self.x_max}]")
 
+    def _plot_3d(self):
+        self.ax.clear()
+        self.ax = self.fig.add_subplot(111, projection='3d')
+        self._setup_axes()
+
+        n_pts = max(10, min(200, int((self.x_max - self.x_min) / self.step_size)))
+        x_vals = np.linspace(self.x_min, self.x_max, n_pts)
+        y_vals = np.linspace(self.y_min, self.y_max, n_pts)
+        X, Y = np.meshgrid(x_vals, y_vals)
+
+        for curve in self.curves:
+            if not curve.visible:
+                continue
+            if not curve.is_3d:
+                continue
+            expr = self._substitute_params(curve.expression)
+            Z = np.zeros_like(X)
+            for i in range(n_pts):
+                for j in range(n_pts):
+                    Z[i, j] = CalcEngine.evaluate(expr, X[i, j]) or np.nan
+            
+            self.ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.8,
+                                label=curve.label)
+
+        self.ax.set_xlabel('X')
+        self.ax.set_ylabel('Y')
+        self.ax.set_zlabel('Z')
+
+        self.canvas.draw()
+        self.status_var.set(f"Plotted 3D surface(s)")
+
     def _setup_axes(self):
         try:
-            self.ax.set_xlim(self.x_min, self.x_max)
-            self.ax.set_ylim(self.y_min, self.y_max)
+            if hasattr(self.ax, 'set_xlim'):
+                self.ax.set_xlim(self.x_min, self.x_max)
+                self.ax.set_ylim(self.y_min, self.y_max)
         except ValueError:
             pass
-        self.ax.grid(self.grid_on, color="#45475a", alpha=0.5, linestyle="--")
-        self.ax.axhline(y=0, color="#585b70", linewidth=0.8)
-        self.ax.axvline(x=0, color="#585b70", linewidth=0.8)
+        if hasattr(self.ax, 'grid'):
+            self.ax.grid(self.grid_on, color="#45475a", alpha=0.5, linestyle="--")
+        if hasattr(self.ax, 'axhline'):
+            self.ax.axhline(y=0, color="#585b70", linewidth=0.8)
+            self.ax.axvline(x=0, color="#585b70", linewidth=0.8)
         self.ax.set_xlabel("x")
         self.ax.set_ylabel("f(x)")
         self.ax.tick_params(colors="#cdd6f4")
         self.ax.set_facecolor("#181825")
+
+    # ------------------------------------------------------------------
+    #  Coordinate marking
+    # ------------------------------------------------------------------
+    def _on_canvas_click(self, event):
+        if event.inaxes != self.ax:
+            return
+        if hasattr(self.ax, 'zaxis'):
+            return
+        x, y = event.xdata, event.ydata
+        if x is not None and y is not None:
+            self.marked_points.append((x, y))
+            self._plot_all()
+            self.status_var.set(f"Marked point: ({x:.4f}, {y:.4f})")
+
+    def _on_mark_point(self):
+        try:
+            x = float(self._var_mark_x.get())
+            expr = self._get_active_expression()
+            if not expr:
+                return
+            expr_sub = self._substitute_params(expr)
+            y = CalcEngine.evaluate(expr_sub, x)
+            if y is not None:
+                self.auto_mark_point = x
+                self._plot_all()
+                self.status_var.set(f"Marked point at x={x}: ({x:.4f}, {y:.4f})")
+            else:
+                messagebox.showerror("Error", "Could not evaluate function at this x")
+        except ValueError:
+            messagebox.showerror("Error", "Invalid x value")
+
+    def _clear_marks(self):
+        self.marked_points.clear()
+        self.auto_mark_point = None
+        self._var_mark_x.set("")
+        self._plot_all()
 
     # ------------------------------------------------------------------
     #  Calculus operations
@@ -453,7 +741,8 @@ class SuperCalcApp:
         except ValueError:
             messagebox.showerror("Error", "Invalid x value.")
             return
-        result = CalcEngine.derivative(expr, x_val)
+        expr_sub = self._substitute_params(expr)
+        result = CalcEngine.derivative(expr_sub, x_val)
         if result is None:
             err = CalcEngine.get_last_error()
             messagebox.showerror("Error", f"Derivative failed.\n{err}")
@@ -473,7 +762,8 @@ class SuperCalcApp:
         except ValueError:
             messagebox.showerror("Error", "Invalid x value.")
             return
-        result = CalcEngine.derivative2(expr, x_val)
+        expr_sub = self._substitute_params(expr)
+        result = CalcEngine.derivative2(expr_sub, x_val)
         if result is None:
             err = CalcEngine.get_last_error()
             messagebox.showerror("Error", f"Second derivative failed.\n{err}")
@@ -494,7 +784,8 @@ class SuperCalcApp:
         except ValueError:
             messagebox.showerror("Error", "Invalid integration bounds.")
             return
-        result = CalcEngine.integrate_adaptive(expr, a, b)
+        expr_sub = self._substitute_params(expr)
+        result = CalcEngine.integrate_adaptive(expr_sub, a, b)
         if result is None:
             err = CalcEngine.get_last_error()
             messagebox.showerror("Error", f"Integration failed.\n{err}")
@@ -519,13 +810,14 @@ class SuperCalcApp:
         except ValueError:
             messagebox.showerror("Error", "Invalid solver parameters.")
             return
-        result = CalcEngine.solve(expr, guess=guess, xmin=a, xmax=b)
+        expr_sub = self._substitute_params(expr)
+        result = CalcEngine.solve(expr_sub, guess=guess, xmin=a, xmax=b)
         if result is None:
             err = CalcEngine.get_last_error()
             messagebox.showerror("Solver Error",
                                  f"Could not find root.\n{err}")
             return
-        verify = CalcEngine.evaluate(expr, result)
+        verify = CalcEngine.evaluate(expr_sub, result)
         verify_str = f"{verify:.2e}" if verify is not None else "N/A"
         messagebox.showinfo(
             "Root Found",
@@ -544,7 +836,8 @@ class SuperCalcApp:
         except ValueError:
             messagebox.showerror("Error", "Invalid bounds.")
             return
-        result = CalcEngine.solve_bisection(expr, a, b)
+        expr_sub = self._substitute_params(expr)
+        result = CalcEngine.solve_bisection(expr_sub, a, b)
         if result is None:
             err = CalcEngine.get_last_error()
             messagebox.showerror("Bisection Error",
@@ -566,12 +859,13 @@ class SuperCalcApp:
         except ValueError:
             messagebox.showerror("Error", "Invalid interval bounds.")
             return
+        expr_sub = self._substitute_params(expr)
         if minimum:
-            result = CalcEngine.find_minimum(expr, a, b)
+            result = CalcEngine.find_minimum(expr_sub, a, b)
             label = "Minimum"
             short = "min"
         else:
-            result = CalcEngine.find_maximum(expr, a, b)
+            result = CalcEngine.find_maximum(expr_sub, a, b)
             label = "Maximum"
             short = "max"
         if result is None:
@@ -579,7 +873,7 @@ class SuperCalcApp:
             messagebox.showerror("Extremum Error",
                                  f"Could not find {label.lower()}.\n{err}")
             return
-        f_val = CalcEngine.evaluate(expr, result)
+        f_val = CalcEngine.evaluate(expr_sub, result)
         verify_str = f"{f_val:.10g}" if f_val is not None else "N/A"
         messagebox.showinfo(
             f"{label} Found",
