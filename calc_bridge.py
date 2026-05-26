@@ -29,7 +29,14 @@ def _find_lib() -> str:
     if sys.platform == "win32":
         names = ["calc_core.dll"]
     elif sys.platform == "darwin":
-        names = ["calc_core.dylib"]
+        import platform
+        arch = platform.machine()
+        if arch in ("x86_64", "AMD64"):
+            names = ["calc_core_x86_64.dylib", "calc_core.dylib"]
+        elif arch in ("aarch64", "arm64"):
+            names = ["calc_core_aarch64.dylib", "calc_core_arm64.dylib", "calc_core.dylib"]
+        else:
+            names = ["calc_core.dylib"]
     else:
         import platform
         arch = platform.machine()

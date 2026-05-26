@@ -29,25 +29,56 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
+      - name: Verify core files exist
+        shell: bash
+        run: |
+          echo "=== Verifying the three main files ==="
+          for f in super_calc_bridged.py calc_bridge.py calc_core.c; do
+            if [ -f "$f" ]; then
+              echo "  [OK] $f"
+            else
+              echo "  [MISSING] $f" && exit 1
+            fi
+          done
+          echo "All three main files are present."
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install pyinstaller numpy matplotlib
 
       - name: Build calc_core.dll
+        shell: bash
         run: |
           gcc -shared -O2 -o calc_core.dll calc_core.c -lm
+
+      - name: Verify icon exists
         shell: bash
+        run: |
+          if [ -f "SuperCalculator.ico" ]; then
+            echo "  [OK] SuperCalculator.ico"
+          else
+            echo "  [MISSING] SuperCalculator.ico" && exit 1
+          fi
 
       - name: Build EXE with PyInstaller
         run: |
           pyinstaller SuperCalculator.spec
         shell: bash
 
-      - name: Verify EXE
+      - name: Verify EXE and bundled files
+        shell: pwsh
         run: |
-          ls dist/
-          Write-Host "EXE size: $((Get-Item dist/SuperCalculator.exe).Length) bytes"
+          Get-ChildItem dist/
+          $exe = Get-Item "dist/SuperCalculator.exe"
+          Write-Host "EXE size: $($exe.Length) bytes"
+          # Check that the three main components are embedded in the EXE
+          $data = [System.IO.File]::ReadAllBytes($exe.FullName)
+          $str = [System.Text.Encoding]::ASCII.GetString($data)
+          if ($str -notlike "*calc_bridge*") { throw "calc_bridge not found in EXE" }
+          if ($str -notlike "*super_calc_bridged*") { throw "super_calc_bridged not found in EXE" }
+          if ($str -notlike "*calc_core.dll*") { throw "calc_core.dll not found in EXE" }
+          Write-Host "Embedded components verified: calc_bridge, super_calc_bridged, calc_core.dll"
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4

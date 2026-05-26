@@ -37,11 +37,16 @@ jobs:
       - name: Copy C source into Android project
         run: cp calc_core.c android/app/src/main/cpp/calc_core.c
 
-      - name: Install Gradle and build APK
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.4'
+
+      - name: Build APK with Gradle
         working-directory: android
         run: |
-          sudo apt-get install -y -qq gradle > /dev/null 2>&1
           gradle wrapper --gradle-version 8.4
+          chmod +x ./gradlew
           ./gradlew assembleRelease --no-daemon
 
       - name: Sign APK with debug key
