@@ -1,5 +1,6 @@
 package com.supercalc;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -11,6 +12,10 @@ public class Plot3DActivity extends AppCompatActivity {
 
     private Surface3DView surface3DView;
     private TextInputEditText exprInput, xMinInput, xMaxInput, yMinInput, yMaxInput, zMinInput, zMaxInput;
+
+    private String lastExpression;
+    private float lastXMin, lastXMax, lastYMin, lastYMax, lastZMin, lastZMax;
+    private boolean hasPlot = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,10 +36,12 @@ public class Plot3DActivity extends AppCompatActivity {
 
         MaterialButton btnPlot = findViewById(R.id.btn_plot_3d);
         MaterialButton btnReset = findViewById(R.id.btn_reset_3d_view);
+        MaterialButton btnFullScreen = findViewById(R.id.btn_full_screen_3d);
         MaterialButton btnBack = findViewById(R.id.btn_back_3d);
 
         btnPlot.setOnClickListener(v -> onPlot3D());
         btnReset.setOnClickListener(v -> surface3DView.resetRotation());
+        btnFullScreen.setOnClickListener(v -> openFullScreen3D());
         btnBack.setOnClickListener(v -> finish());
 
         // Default ranges
@@ -118,7 +125,32 @@ public class Plot3DActivity extends AppCompatActivity {
         }
 
         surface3DView.setData(zValues, xMin, xMax, yMin, yMax, zMin, zMax);
+        lastExpression = expr;
+        lastXMin = xMin;
+        lastXMax = xMax;
+        lastYMin = yMin;
+        lastYMax = yMax;
+        lastZMin = zMin;
+        lastZMax = zMax;
+        hasPlot = true;
         toast("Plotted 3D surface");
+    }
+
+    private void openFullScreen3D() {
+        if (!hasPlot) {
+            toast("Plot a surface first");
+            return;
+        }
+
+        Intent intent = new Intent(this, FullScreenPlot3DActivity.class);
+        intent.putExtra("expression", lastExpression);
+        intent.putExtra("x_min", lastXMin);
+        intent.putExtra("x_max", lastXMax);
+        intent.putExtra("y_min", lastYMin);
+        intent.putExtra("y_max", lastYMax);
+        intent.putExtra("z_min", lastZMin);
+        intent.putExtra("z_max", lastZMax);
+        startActivity(intent);
     }
 
     private void toast(String msg) {

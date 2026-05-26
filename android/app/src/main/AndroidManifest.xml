@@ -29,5 +29,10 @@
             android:exported="false"
             android:configChanges="orientation|screenSize"
             android:parentActivityName="com.supercalc.CalcActivity" />
+        <activity
+            android:name="com.supercalc.FullScreenPlot3DActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize"
+            android:parentActivityName="com.supercalc.Plot3DActivity" />
     </application>
 </manifest>
