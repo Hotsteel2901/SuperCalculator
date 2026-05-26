@@ -48,6 +48,8 @@ public class CalcActivity extends AppCompatActivity {
         MaterialButton btnInt    = findViewById(R.id.btn_integrate);
         MaterialButton btnSolve  = findViewById(R.id.btn_solve);
         MaterialButton btnPlot   = findViewById(R.id.btn_plot);
+        MaterialButton btnFindMin = findViewById(R.id.btn_find_min);
+        MaterialButton btnFindMax = findViewById(R.id.btn_find_max);
         MaterialButton btnClear  = findViewById(R.id.btn_clear);
 
         btnEval  .setOnClickListener(v -> onEvaluate());
@@ -56,6 +58,8 @@ public class CalcActivity extends AppCompatActivity {
         btnInt   .setOnClickListener(v -> onIntegrate());
         btnSolve .setOnClickListener(v -> onSolve());
         btnPlot  .setOnClickListener(v -> openPlot());
+        btnFindMin.setOnClickListener(v -> onFindExtremum(true));
+        btnFindMax.setOnClickListener(v -> onFindExtremum(false));
         btnClear .setOnClickListener(v -> resultView.setText(""));
 
         // Preset chips — set expression text and auto-evaluate
@@ -127,6 +131,27 @@ public class CalcActivity extends AppCompatActivity {
         } else {
             appendResult("Root", root);
             appendResult("  f(root)", CalcEngine.evaluate(e, root));
+        }
+    }
+
+    private void onFindExtremum(boolean minimum) {
+        String e = getExpr(); if (e.isEmpty()) { toast("Enter an expression"); return; }
+        double a = getA();
+        double b = getB();
+        double result;
+        String label;
+        if (minimum) {
+            result = CalcEngine.findMinimum(e, a, b);
+            label = "Min";
+        } else {
+            result = CalcEngine.findMaximum(e, a, b);
+            label = "Max";
+        }
+        if (Double.isNaN(result)) {
+            appendResult(label, Double.NaN);
+        } else {
+            appendResult(label + " at x", result);
+            appendResult("  f(" + fmt(result) + ")", CalcEngine.evaluate(e, result));
         }
     }
 

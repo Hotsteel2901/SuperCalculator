@@ -33,6 +33,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
 - **Numerical Derivatives** — first and second derivative via central difference
 - **Numerical Integration** — adaptive Simpson's rule for definite integrals
 - **Equation Solving** — Newton-Raphson (with bisection fallback) and pure bisection
+- **Extremum Finder** — golden-section search for local minima and maxima on an interval
 - **Preset Functions** — quick-select from 15 common functions
 - **Customizable View** — adjustable X/Y ranges, step size, grid toggle
 - **Interactive Plot** — Matplotlib toolbar for zoom, pan, and export
@@ -142,6 +143,10 @@ CalcEngine.integrate_adaptive("x^2", 0, 1)  # -> ~0.333
 
 # Find root
 CalcEngine.solve("x^2 - 4", guess=1, xmin=0, xmax=3)  # -> 2.0
+
+# Find extremum
+CalcEngine.find_minimum("x^2", -5, 5)   # -> ~0.0
+CalcEngine.find_maximum("sin(x)", 0, 6) # -> ~1.571
 ```
 
 ## Numerical Methods
@@ -152,3 +157,4 @@ CalcEngine.solve("x^2 - 4", guess=1, xmin=0, xmax=3)  # -> 2.0
 | 2nd Derivative      | Central difference: (f(x+h)-2f(x)+f(x-h)) / h^2 | O(h^2)  |
 | Integration         | Adaptive composite Simpson's rule              | O(h^4)    |
 | Root Finding        | Newton-Raphson with bisection fallback         | —         |
+| Extremum Finder     | Golden-section search                          | Linear    |

@@ -368,3 +368,63 @@ EXPORT double integrate_adaptive(const char* expr, double a, double b, double to
     }
     return cur;
 }
+
+/* --------------------------------------------------------------------------
+ *  Extremum finding (golden-section search)
+ * -------------------------------------------------------------------------- */
+
+static double golden_section_min(const char* expr, double a, double b, double tol, int max_iter) {
+    const double resphi = 0.3819660113; /* (3 - sqrt(5)) / 2 */
+    double c = a + resphi * (b - a);
+    double d = b - resphi * (b - a);
+    double fc, fd;
+
+    if (parse_and_eval(expr, c, &fc) != 0) return NAN;
+    if (parse_and_eval(expr, d, &fd) != 0) return NAN;
+
+    for (int i = 0; i < max_iter && fabs(b - a) > tol; i++) {
+        if (fc < fd) {
+            b = d; d = c; fd = fc;
+            c = a + resphi * (b - a);
+            if (parse_and_eval(expr, c, &fc) != 0) return NAN;
+        } else {
+            a = c; c = d; fc = fd;
+            d = b - resphi * (b - a);
+            if (parse_and_eval(expr, d, &fd) != 0) return NAN;
+        }
+    }
+    return (b + a) / 2.0;
+}
+
+EXPORT double find_minimum(const char* expr, double a, double b, double tol, int max_iter) {
+    if (a >= b) { set_error("Invalid interval: a must be < b"); return NAN; }
+    return golden_section_min(expr, a, b, tol, max_iter);
+}
+
+EXPORT double find_maximum(const char* expr, double a, double b, double tol, int max_iter) {
+    if (a >= b) { set_error("Invalid interval: a must be < b"); return NAN; }
+    /* Transform to minimization of -f(x) by evaluating negated values */
+    const double resphi = 0.3819660113;
+    double c = a + resphi * (b - a);
+    double d = b - resphi * (b - a);
+    double fc, fd;
+
+    if (parse_and_eval(expr, c, &fc) != 0) return NAN;
+    if (parse_and_eval(expr, d, &fd) != 0) return NAN;
+    fc = -fc; fd = -fd;
+
+    for (int i = 0; i < max_iter && fabs(b - a) > tol; i++) {
+        if (fc < fd) {
+            b = d; d = c; fd = fc;
+            c = a + resphi * (b - a);
+            if (parse_and_eval(expr, c, &fc) != 0) return NAN;
+            fc = -fc;
+        } else {
+            a = c; c = d; fc = fd;
+            d = b - resphi * (b - a);
+            if (parse_and_eval(expr, d, &fd) != 0) return NAN;
+            fd = -fd;
+        }
+    }
+    return (b + a) / 2.0;
+}

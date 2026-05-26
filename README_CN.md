@@ -35,6 +35,7 @@
 - **数值微分** — 一阶导数 f'(x) 和二阶导数 f''(x)，采用中心差分法
 - **数值积分** — 定积分计算，采用自适应 Simpson 复合法则
 - **方程求解** — Newton-Raphson 法（二分法回退）+ 纯二分法
+- **极值查找** — 黄金分割搜索法，在指定区间内寻找局部最小值与最大值
 - **预设函数** — 内置 15 个常用函数，一键选择
 - **自定义视图** — X/Y 坐标范围、采样步长、网格开关均可调节
 - **交互式图表** — Matplotlib 工具栏支持缩放、平移、导出 PNG
@@ -144,6 +145,10 @@ CalcEngine.integrate_adaptive("x^2", 0, 1)  # -> ~0.333
 
 # 方程求根
 CalcEngine.solve("x^2 - 4", guess=1, xmin=0, xmax=3)  # -> 2.0
+
+# 极值查找
+CalcEngine.find_minimum("x^2", -5, 5)   # -> ~0.0
+CalcEngine.find_maximum("sin(x)", 0, 6) # -> ~1.571
 ```
 
 ## 数值方法
@@ -154,6 +159,7 @@ CalcEngine.solve("x^2 - 4", guess=1, xmin=0, xmax=3)  # -> 2.0
 | 二阶导数   | 中心差分: (f(x+h)-2f(x)+f(x-h)) / h² | O(h²)  |
 | 定积分     | 自适应 Simpson 复合法则             | O(h⁴)    |
 | 方程求根   | Newton-Raphson + 二分法回退         | —        |
+| 极值查找   | 黄金分割搜索法                       | 线性收敛  |
 
 ## 设计说明
 

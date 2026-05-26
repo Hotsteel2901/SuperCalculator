@@ -84,8 +84,16 @@ _lib.solve_equation.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_doubl
 _lib.solve_equation.restype = ctypes.c_double
 
 _lib.solve_bisection.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_double,
-                                  ctypes.c_double, ctypes.c_int]
+                                   ctypes.c_double, ctypes.c_int]
 _lib.solve_bisection.restype = ctypes.c_double
+
+_lib.find_minimum.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_double,
+                               ctypes.c_double, ctypes.c_int]
+_lib.find_minimum.restype = ctypes.c_double
+
+_lib.find_maximum.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_double,
+                               ctypes.c_double, ctypes.c_int]
+_lib.find_maximum.restype = ctypes.c_double
 
 _lib.get_last_error.argtypes = []
 _lib.get_last_error.restype = ctypes.c_char_p
@@ -165,6 +173,22 @@ class CalcEngine:
                         max_iter: int = 200) -> Optional[float]:
         """Solve f(x)=0 using pure bisection (requires sign change on [a,b])."""
         result = _lib.solve_bisection(expr.encode("utf-8"), a, b, tol, max_iter)
+        return None if _isnan(result) else result
+
+    @staticmethod
+    def find_minimum(expr: str, a: float, b: float,
+                     tol: float = 1e-8,
+                     max_iter: int = 200) -> Optional[float]:
+        """Find a local minimum of f(x) on [a, b] using golden-section search."""
+        result = _lib.find_minimum(expr.encode("utf-8"), a, b, tol, max_iter)
+        return None if _isnan(result) else result
+
+    @staticmethod
+    def find_maximum(expr: str, a: float, b: float,
+                     tol: float = 1e-8,
+                     max_iter: int = 200) -> Optional[float]:
+        """Find a local maximum of f(x) on [a, b] using golden-section search."""
+        result = _lib.find_maximum(expr.encode("utf-8"), a, b, tol, max_iter)
         return None if _isnan(result) else result
 
     @staticmethod
