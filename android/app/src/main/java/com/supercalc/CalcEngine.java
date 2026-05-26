@@ -26,6 +26,12 @@ public class CalcEngine {
     /** Evaluate f(x) for multiple x values. */
     public static native double[] evaluateArray(String expr, double[] xs);
 
+    /** Find a local minimum of f(x) on [a, b]. */
+    public static native double findMinimum(String expr, double a, double b);
+
+    /** Find a local maximum of f(x) on [a, b]. */
+    public static native double findMaximum(String expr, double a, double b);
+
     /** Last error message from the C core. */
     public static native String getLastError();
 }

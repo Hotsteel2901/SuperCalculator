@@ -260,6 +260,27 @@ class SuperCalcApp:
         ttk.Button(srow2, text="Find Root (Bisection)",
                    command=lambda: self._on_solve_bisection()).pack(side=tk.LEFT, padx=2)
 
+        # --- Extremum Finder ---
+        frm_extremum = ttk.LabelFrame(scroll_frame, text="Extremum Finder on [a,b]",
+                                      style="Dark.TLabelframe")
+        frm_extremum.pack(fill=tk.X, padx=8, pady=4)
+
+        erow1 = ttk.Frame(frm_extremum, style="Dark.TFrame")
+        erow1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(erow1, text="a:", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_ext_a = tk.StringVar(value="-10")
+        ttk.Entry(erow1, textvariable=self._var_ext_a, width=7).pack(side=tk.LEFT, padx=2)
+        ttk.Label(erow1, text="b:", style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
+        self._var_ext_b = tk.StringVar(value="10")
+        ttk.Entry(erow1, textvariable=self._var_ext_b, width=7).pack(side=tk.LEFT, padx=2)
+
+        erow2 = ttk.Frame(frm_extremum, style="Dark.TFrame")
+        erow2.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Button(erow2, text="Find Minimum",
+                   command=lambda: self._on_find_extremum(minimum=True)).pack(side=tk.LEFT, padx=2)
+        ttk.Button(erow2, text="Find Maximum",
+                   command=lambda: self._on_find_extremum(minimum=False)).pack(side=tk.LEFT, padx=2)
+
         # --- Status ---
         self.status_var = tk.StringVar(value="Ready.")
         status_bar = ttk.Label(scroll_frame, textvariable=self.status_var,
@@ -534,6 +555,38 @@ class SuperCalcApp:
             f"f(x) = {expr} = 0\n"
             f"Root: x = {result:.12g}")
         self.status_var.set(f"Root: x = {result:.12g}")
+
+    def _on_find_extremum(self, minimum: bool = True):
+        expr = self._get_active_expression()
+        if not expr:
+            return
+        try:
+            a = float(self._var_ext_a.get())
+            b = float(self._var_ext_b.get())
+        except ValueError:
+            messagebox.showerror("Error", "Invalid interval bounds.")
+            return
+        if minimum:
+            result = CalcEngine.find_minimum(expr, a, b)
+            label = "Minimum"
+            short = "min"
+        else:
+            result = CalcEngine.find_maximum(expr, a, b)
+            label = "Maximum"
+            short = "max"
+        if result is None:
+            err = CalcEngine.get_last_error()
+            messagebox.showerror("Extremum Error",
+                                 f"Could not find {label.lower()}.\n{err}")
+            return
+        f_val = CalcEngine.evaluate(expr, result)
+        verify_str = f"{f_val:.10g}" if f_val is not None else "N/A"
+        messagebox.showinfo(
+            f"{label} Found",
+            f"f(x) = {expr}\n"
+            f"{label}: x = {result:.12g}\n"
+            f"f({result:.6g}) = {verify_str}")
+        self.status_var.set(f"{label}: x = {result:.12g}, f(x) = {verify_str}")
 
 
 # ---------------------------------------------------------------------------
