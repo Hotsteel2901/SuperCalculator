@@ -2,7 +2,7 @@ name: Scheduled OpenCode Fix Bugs
 
 on:
   schedule:
-    - cron: "0 4 * * *"
+    - cron: "0 21,7 * * *"
   workflow_dispatch:
   
 jobs:
