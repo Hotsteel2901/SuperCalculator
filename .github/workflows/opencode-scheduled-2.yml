@@ -24,6 +24,6 @@ jobs:
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         with:
-          model: opencode-go/qwen3.5-plus
+          model: opencode-go/deepseek-v4-pro
           prompt: |
             全面检查仓库，并修复潜在的bug，修好后处理依赖和兼容性，再次检查有无新增或没修好的bug，再修复后提交（记得为安卓版同步）
