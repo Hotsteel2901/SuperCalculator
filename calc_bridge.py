@@ -57,7 +57,7 @@ def _find_lib() -> str:
 
 try:
     _lib = ctypes.CDLL(_find_lib())
-except FileNotFoundError:
+except (FileNotFoundError, OSError):
     raise
 except Exception as e:
     import warnings

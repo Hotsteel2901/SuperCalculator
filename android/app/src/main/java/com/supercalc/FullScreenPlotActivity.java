@@ -169,7 +169,10 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
         coordText.append(String.format("(%.6g, %.6g)", x, y));
         
         if (allExpressions.size() > 1) {
-            coordText.append(" - ").append(allExpressions.get(highlight.getDataSetIndex()));
+            int idx = highlight.getDataSetIndex();
+            if (idx >= 0 && idx < allExpressions.size()) {
+                coordText.append(" - ").append(allExpressions.get(idx));
+            }
         }
         
         coordinateDisplay.setText(coordText.toString());

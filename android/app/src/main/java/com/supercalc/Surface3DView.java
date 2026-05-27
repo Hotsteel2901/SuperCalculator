@@ -162,8 +162,8 @@ public class Surface3DView extends View {
 
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                float x = ((j / (float) (cols - 1)) * xRange + xMin) / Math.max(xRange, 1f);
-                float y = ((i / (float) (rows - 1)) * yRange + yMin) / Math.max(yRange, 1f);
+                float x = ((j / (float) Math.max(cols - 1, 1)) * xRange + xMin) / Math.max(xRange, 1f);
+                float y = ((i / (float) Math.max(rows - 1, 1)) * yRange + yMin) / Math.max(yRange, 1f);
                 float z = (zValues[i][j] - zMin) / zRange;
 
                 // Rotation around Y then X

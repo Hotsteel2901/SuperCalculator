@@ -148,28 +148,6 @@ Java_com_supercalc_CalcEngine_findMaximum(JNIEnv* env, jclass clazz,
 }
 
 JNIEXPORT jdouble JNICALL
-Java_com_supercalc_CalcEngine_solve__Ljava_lang_String_2DDDD(
-        JNIEnv* env, jclass clazz, jstring expr, jdouble guess,
-        jdouble xmin, jdouble xmax) {
-    const char* str = (*env)->GetStringUTFChars(env, expr, NULL);
-    if (!str) return NAN;
-    double result = solve_equation(str, guess, xmin, xmax, 1e-8, 100);
-    (*env)->ReleaseStringUTFChars(env, expr, str);
-    return result;
-}
-
-JNIEXPORT jdouble JNICALL
-Java_com_supercalc_CalcEngine_solve__Ljava_lang_String_2DDDDI(
-        JNIEnv* env, jclass clazz, jstring expr, jdouble guess,
-        jdouble xmin, jdouble xmax, jint max_iter) {
-    const char* str = (*env)->GetStringUTFChars(env, expr, NULL);
-    if (!str) return NAN;
-    double result = solve_equation(str, guess, xmin, xmax, 1e-8, max_iter);
-    (*env)->ReleaseStringUTFChars(env, expr, str);
-    return result;
-}
-
-JNIEXPORT jdouble JNICALL
 Java_com_supercalc_CalcEngine_solveBisection(JNIEnv* env, jclass clazz,
                                                jstring expr, jdouble a, jdouble b) {
     const char* str = (*env)->GetStringUTFChars(env, expr, NULL);

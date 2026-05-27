@@ -30,6 +30,13 @@
 #include <math.h>
 #include <ctype.h>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+#ifndef M_E
+#define M_E  2.71828182845904523536
+#endif
+
 #ifdef _WIN32
 #define EXPORT __declspec(dllexport)
 #else
@@ -143,7 +150,8 @@ static int precedence(char op) {
 static int is_right_assoc(char op) { return op == '^'; }
 
 static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
-    Token stack[256]; int sp = 0;
+    #define MAX_STACK 256
+    Token stack[MAX_STACK]; int sp = 0;
     int    out_n = 0;
     int    prev_was_op_or_lp = 1;
 
@@ -159,6 +167,7 @@ static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
             output[out_n].tag = 4; out_n++;
             prev_was_op_or_lp = 0;
         } else if (t.kind == T_FUNC) {
+            if (sp >= MAX_STACK) { set_error("Expression too deeply nested"); return -1; }
             stack[sp++] = t;
             prev_was_op_or_lp = 1;
         } else if (t.kind == T_COMMA) {
@@ -172,7 +181,10 @@ static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
             }
             prev_was_op_or_lp = 1;
         } else if (t.kind == T_OP) {
-            if (t.op == '-' && prev_was_op_or_lp) t.op = '~';
+            if ((t.op == '-' || t.op == '+') && prev_was_op_or_lp) {
+                if (t.op == '+') continue;
+                t.op = '~';
+            }
             if (t.op == '!' && prev_was_op_or_lp) { set_error("Invalid factorial position"); return -1; }
             
             if (t.op == '!') {
@@ -192,6 +204,7 @@ static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
                     }
                     break;
                 }
+                if (sp >= MAX_STACK) { set_error("Expression too deeply nested"); return -1; }
                 stack[sp++] = t;
                 prev_was_op_or_lp = 0;
             } else {
@@ -213,10 +226,12 @@ static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
                     }
                     break;
                 }
+                if (sp >= MAX_STACK) { set_error("Expression too deeply nested"); return -1; }
                 stack[sp++] = t;
                 prev_was_op_or_lp = 1;
             }
         } else if (t.kind == T_LPAREN) {
+            if (sp >= MAX_STACK) { set_error("Expression too deeply nested"); return -1; }
             stack[sp++] = t;
             prev_was_op_or_lp = 1;
         } else if (t.kind == T_RPAREN || t.kind == T_END) {
@@ -239,10 +254,23 @@ static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
                     output[out_n].tag=2; output[out_n].op=top.op; out_n++;
                 }
             }
+            if (t.kind == T_END) {
+                while (sp > 0) {
+                    Token top = stack[--sp];
+                    if (top.kind == T_OP) {
+                        output[out_n].tag=2; output[out_n].op=top.op; out_n++;
+                    } else if (top.kind == T_FUNC) {
+                        output[out_n].tag=3; output[out_n].func=top.func; out_n++;
+                    } else if (top.kind == T_LPAREN) {
+                        set_error("Mismatched parentheses"); return -1;
+                    }
+                }
+            }
             prev_was_op_or_lp = 0;
         }
     }
     if (out_n >= max_out) { set_error("Expression too long"); return -1; }
+    #undef MAX_STACK
     return out_n;
 }
 
@@ -290,7 +318,7 @@ static int eval_rpn(RPN* rpn, int nrpn, double x, double y, double* result) {
                 else if (a > 170) { set_error("Factorial overflow (max 170!)"); stack[sp++] = INFINITY; }
                 else {
                     double r = 1.0;
-                    for (int i = 2; i <= (int)a; i++) r *= i;
+                    for (int k = 2; k <= (int)a; k++) r *= k;
                     stack[sp++] = r;
                 }
             }
@@ -317,6 +345,7 @@ static int eval_rpn(RPN* rpn, int nrpn, double x, double y, double* result) {
 }
 
 static int parse_and_eval(const char* expr, double x, double y, double* result) {
+    g_error[0] = '\0';
     Token toks[MAX_TOKENS];
     RPN   rpn[MAX_RPN];
     int nt = tokenize(expr, toks, MAX_TOKENS);
@@ -364,6 +393,7 @@ EXPORT double derivative2(const char* expr, double x, double h) {
 
 EXPORT double integrate(const char* expr, double a, double b, int n) {
     if (n < 2 || n % 2 != 0) { set_error("n must be even and >= 2"); return NAN; }
+    if (a == b) return 0.0;
     double h = (b - a) / n;
     double fa, fb;
     if (parse_and_eval(expr, a, 0.0, &fa) != 0) return NAN;
