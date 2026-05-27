@@ -37,8 +37,8 @@ public class FullScreenPlot3DActivity extends AppCompatActivity {
         }
 
         int targetPoints = 50;
-        int cols = targetPoints;
-        int rows = targetPoints;
+        int cols = Math.max(targetPoints, 2);
+        int rows = Math.max(targetPoints, 2);
 
         float[][] zValues = new float[rows][cols];
         boolean hasValid = false;
