@@ -53,6 +53,7 @@ public class CalcActivity extends AppCompatActivity {
         MaterialButton btnClear  = findViewById(R.id.btn_clear);
         MaterialButton btnScanRoots = findViewById(R.id.btn_scan_roots);
         MaterialButton btnPlot3D = findViewById(R.id.btn_plot_3d);
+        MaterialButton btnTable = findViewById(R.id.btn_table);
 
         btnEval  .setOnClickListener(v -> onEvaluate());
         btnDeriv .setOnClickListener(v -> onDerivative());
@@ -65,6 +66,7 @@ public class CalcActivity extends AppCompatActivity {
         btnClear .setOnClickListener(v -> resultView.setText(""));
         btnScanRoots.setOnClickListener(v -> onScanRoots());
         btnPlot3D.setOnClickListener(v -> openPlot3D());
+        btnTable.setOnClickListener(v -> onGenerateTable());
 
         // Preset chips — set expression text and auto-evaluate
         Chip chipSin = findViewById(R.id.chip_sin);
@@ -242,6 +244,77 @@ public class CalcActivity extends AppCompatActivity {
             intent.putExtra("initial_expr", expr);
         }
         startActivity(intent);
+    }
+
+    private void onGenerateTable() {
+        String e = getExpr();
+        if (e.isEmpty()) { toast("Enter an expression"); return; }
+        double a = getA();
+        double b = getB();
+        if (a >= b) { toast("a must be less than b for table range"); return; }
+        int n = 21; // default points
+
+        double step = (b - a) / (n - 1);
+        double[] xs = new double[n];
+        for (int i = 0; i < n; i++) {
+            xs[i] = a + i * step;
+        }
+        double[] ys = CalcEngine.evaluateArray(e, xs);
+        if (ys == null) {
+            resultView.append("Table: Error: " + CalcEngine.getLastError() + "\n");
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("x\t\tf(x)\n");
+        sb.append("----------------------------\n");
+        int valid = 0;
+        for (int i = 0; i < n; i++) {
+            String yStr = Double.isNaN(ys[i]) ? "N/A" : fmt(ys[i]);
+            sb.append(fmt(xs[i])).append("\t").append(yStr).append("\n");
+            if (!Double.isNaN(ys[i])) valid++;
+        }
+        sb.append("----------------------------\n");
+        sb.append("Valid: ").append(valid).append(" / ").append(n).append("\n");
+
+        // Build CSV for sharing
+        StringBuilder csv = new StringBuilder();
+        csv.append("x,f(x)=").append(e.replace(",", ";")).append("\n");
+        for (int i = 0; i < n; i++) {
+            csv.append(xs[i]).append(",").append(Double.isNaN(ys[i]) ? "" : ys[i]).append("\n");
+        }
+
+        final String tableText = sb.toString();
+        final String csvText = csv.toString();
+
+        android.widget.TextView textView = new android.widget.TextView(this);
+        textView.setText(tableText);
+        textView.setTypeface(android.graphics.Typeface.MONOSPACE);
+        textView.setTextSize(13);
+        textView.setPadding(40, 24, 40, 24);
+        textView.setTextColor(android.graphics.Color.parseColor("#cdd6f4"));
+        textView.setBackgroundColor(android.graphics.Color.parseColor("#181825"));
+
+        android.widget.ScrollView scrollView = new android.widget.ScrollView(this);
+        scrollView.addView(textView);
+        scrollView.setPadding(0, 0, 0, 0);
+
+        new androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert)
+            .setTitle("Function Table (" + n + " pts)")
+            .setView(scrollView)
+            .setPositiveButton("Share CSV", (dialog, which) -> shareText(csvText, "SuperCalc Table"))
+            .setNegativeButton("Close", null)
+            .show();
+
+        resultView.append("Table generated: " + valid + "/" + n + " valid points\n");
+    }
+
+    private void shareText(String text, String title) {
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_SUBJECT, title);
+        shareIntent.putExtra(Intent.EXTRA_TEXT, text);
+        startActivity(Intent.createChooser(shareIntent, "Share table"));
     }
 
     private static String fmt(double v) {

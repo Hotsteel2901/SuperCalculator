@@ -21,10 +21,12 @@ Features:
 
 import sys
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 from typing import Optional, List
 import math
 import re
+import csv
+import os
 
 import matplotlib
 # Dynamically select backend: try TkAgg first, fallback to Agg for headless environments
@@ -401,10 +403,10 @@ class SuperCalcApp:
         frm_mark = ttk.LabelFrame(scroll_frame, text="Coordinate Marking",
                                   style="Dark.TLabelframe")
         frm_mark.pack(fill=tk.X, padx=8, pady=4)
-        
+
         ttk.Label(frm_mark, text="Click on 2D plot to mark, or enter x:",
                   style="Dark.TLabel").pack(anchor=tk.W, padx=6, pady=(6, 0))
-        
+
         mark_row = ttk.Frame(frm_mark, style="Dark.TFrame")
         mark_row.pack(fill=tk.X, padx=6, pady=2)
         self._var_mark_x = tk.StringVar(value="")
@@ -413,6 +415,35 @@ class SuperCalcApp:
                    command=self._on_mark_point).pack(side=tk.LEFT, padx=2)
         ttk.Button(mark_row, text="Clear Marks",
                    command=self._clear_marks).pack(side=tk.LEFT, padx=2)
+
+        # --- Function Table ---
+        frm_table = ttk.LabelFrame(scroll_frame, text="Function Table & Export",
+                                   style="Dark.TLabelframe")
+        frm_table.pack(fill=tk.X, padx=8, pady=4)
+
+        trow = ttk.Frame(frm_table, style="Dark.TFrame")
+        trow.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(trow, text="From:", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_tbl_from = tk.StringVar(value="-10")
+        ttk.Entry(trow, textvariable=self._var_tbl_from, width=7).pack(side=tk.LEFT, padx=2)
+        ttk.Label(trow, text="To:", style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
+        self._var_tbl_to = tk.StringVar(value="10")
+        ttk.Entry(trow, textvariable=self._var_tbl_to, width=7).pack(side=tk.LEFT, padx=2)
+        ttk.Label(trow, text="Points:", style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
+        self._var_tbl_n = tk.StringVar(value="21")
+        ttk.Entry(trow, textvariable=self._var_tbl_n, width=5).pack(side=tk.LEFT, padx=2)
+
+        trow2 = ttk.Frame(frm_table, style="Dark.TFrame")
+        trow2.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Button(trow2, text="Generate Table",
+                   command=self._on_generate_table).pack(side=tk.LEFT, padx=2)
+        ttk.Button(trow2, text="Export CSV",
+                   command=self._on_export_csv).pack(side=tk.LEFT, padx=2)
+        ttk.Button(trow2, text="Copy Table",
+                   command=self._on_copy_table).pack(side=tk.LEFT, padx=2)
+
+        self._table_data = []   # list of (x, y) tuples
+        self._table_expr = ""   # expression used for last table
 
         # --- Status ---
         self.status_var = tk.StringVar(value="Ready.")
@@ -893,6 +924,107 @@ class SuperCalcApp:
         self.auto_mark_point = None
         self._var_mark_x.set("")
         self._plot_all()
+
+    # ------------------------------------------------------------------
+    #  Function Table
+    # ------------------------------------------------------------------
+    def _on_generate_table(self):
+        expr = self._get_active_expression()
+        if not expr:
+            return
+        try:
+            a = float(self._var_tbl_from.get())
+            b = float(self._var_tbl_to.get())
+            n = int(self._var_tbl_n.get())
+        except ValueError:
+            messagebox.showerror("Error", "Invalid table parameters.")
+            return
+        if a >= b:
+            messagebox.showerror("Error", "From must be less than To.")
+            return
+        if n < 2 or n > 5000:
+            messagebox.showerror("Error", "Points must be between 2 and 5000.")
+            return
+
+        expr_sub = self._substitute_params(expr)
+        xs = [a + (b - a) * i / (n - 1) for i in range(n)]
+        ys = CalcEngine.evaluate_array(expr_sub, xs)
+
+        self._table_data = []
+        valid_count = 0
+        for x, y in zip(xs, ys):
+            self._table_data.append((x, y))
+            if y is not None:
+                valid_count += 1
+        self._table_expr = expr
+
+        self._show_table_window(expr, valid_count)
+        self.status_var.set(f"Table generated: {valid_count}/{n} valid points.")
+
+    def _show_table_window(self, expr, valid_count):
+        win = tk.Toplevel(self.root)
+        win.title("Function Table")
+        win.geometry("420x500")
+        win.configure(bg="#1e1e2e")
+        win.minsize(320, 300)
+
+        ttk.Label(win, text=f"f(x) = {expr}", style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(10, 4))
+        ttk.Label(win, text=f"Valid points: {valid_count} / {len(self._table_data)}", style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(0, 6))
+
+        # Use a treeview for clean tabular display
+        cols = ("x", "f(x)")
+        tree = ttk.Treeview(win, columns=cols, show="headings", height=18)
+        tree.heading("x", text="x")
+        tree.heading("f(x)", text="f(x)")
+        tree.column("x", width=180, anchor="center")
+        tree.column("f(x)", width=180, anchor="center")
+        tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 10))
+
+        # Style the treeview for dark theme
+        style = ttk.Style(win)
+        style.configure("Treeview", background="#313244", foreground="#cdd6f4",
+                        fieldbackground="#313244", rowheight=22)
+        style.configure("Treeview.Heading", background="#45475a", foreground="#cdd6f4")
+
+        for x, y in self._table_data:
+            xv = f"{x:.10g}"
+            yv = f"{y:.10g}" if y is not None else "N/A"
+            tree.insert("", tk.END, values=(xv, yv))
+
+        ttk.Button(win, text="Close", command=win.destroy).pack(pady=(0, 10))
+
+    def _on_export_csv(self):
+        if not self._table_data:
+            messagebox.showinfo("Info", "Generate a table first.")
+            return
+        path = filedialog.asksaveasfilename(
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+            title="Export Function Table"
+        )
+        if not path:
+            return
+        try:
+            with open(path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                writer.writerow(["x", f"f(x) = {self._table_expr}"])
+                for x, y in self._table_data:
+                    writer.writerow([x, y if y is not None else ""])
+            self.status_var.set(f"Exported table to {os.path.basename(path)}")
+        except Exception as e:
+            messagebox.showerror("Export Error", str(e))
+
+    def _on_copy_table(self):
+        if not self._table_data:
+            messagebox.showinfo("Info", "Generate a table first.")
+            return
+        lines = [f"x\tf(x) = {self._table_expr}"]
+        for x, y in self._table_data:
+            lines.append(f"{x:.10g}\t{y if y is not None else 'N/A'}")
+        text = "\n".join(lines)
+        self.root.clipboard_clear()
+        self.root.clipboard_append(text)
+        self.status_var.set("Table copied to clipboard.")
 
     # ------------------------------------------------------------------
     #  Calculus operations
