@@ -7,9 +7,6 @@
 [![Build Android APK](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-android-apk.yml/badge.svg)](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-android-apk.yml)
 
 [English](README.md) | **中文**
-
-> **注意：** 本项目完全由 AI (Claude Code) 生成，请自行评估使用风险。
-
 同时包含一个基于 Material Design 3 的 **Android APK** (aarch64)。
 
 ## 架构
