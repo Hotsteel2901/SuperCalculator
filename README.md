@@ -36,16 +36,17 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
 - **Numerical Integration** — adaptive Simpson's rule for definite integrals
 - **Equation Solving** — Newton-Raphson (with bisection fallback) and pure bisection
 - **Extremum Finder** — golden-section search for local minima and maxima on an interval
-- **Auto Root Scanner** — automatically scan an interval for all roots of f(x)=0, sign-change detection plus bisection refinement
-- **Preset Functions** — quick-select from 19 common functions (including 3D presets)
-- **Parameter System** — auto-detects extra parameters (e.g., `a`, `b`) and provides live input fields
-- **Coordinate Marking** — click on the plot to mark points, or enter an x value to auto-locate
-- **Quick Input Panel** — popup keypad for fast insertion of operators, functions, and constants
-- **Factorial Support** — postfix `!` operator for non-negative integers
-- **Customizable View** — adjustable X/Y/Z ranges, step size, grid toggle
-- **Interactive Plot** — Matplotlib toolbar for zoom, pan, and export
-- **Windows EXE** — standalone executable, no Python installation required
-- **Android App** — standalone APK with Material Design 3 UI and JNI bridge, now including 3D surface plotting with touch rotation
+ - **Auto Root Scanner** — automatically scan an interval for all roots of f(x)=0, sign-change detection plus bisection refinement
+ - **Preset Functions** — quick-select from 19 common functions (including 3D presets)
+ - **Parameter System** — auto-detects extra parameters (e.g., `a`, `b`) and provides live input fields
+ - **Coordinate Marking** — click on the plot to mark points, or enter an x value to auto-locate
+ - **Quick Input Panel** — popup keypad for fast insertion of operators, functions, and constants
+ - **Factorial Support** — postfix `!` operator for non-negative integers
+ - **Customizable View** — adjustable X/Y/Z ranges, step size, grid toggle
+ - **Interactive Plot** — Matplotlib toolbar for zoom, pan, and export
+ - **Function Table & CSV Export** — generate a data table of x and f(x) over any interval, then export to CSV or copy to clipboard
+ - **Windows EXE** — standalone executable, no Python installation required
+ - **Android App** — standalone APK with Material Design 3 UI and JNI bridge, now including 3D surface plotting with touch rotation
 
 ## Pre-compiled Binaries
 
