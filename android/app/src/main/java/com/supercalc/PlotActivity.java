@@ -74,8 +74,10 @@ public class PlotActivity extends AppCompatActivity {
         
         // Restore state after configuration change
         if (savedInstanceState != null) {
-            allExpressions = savedInstanceState.getStringArrayList("expressions");
-            curveColors = savedInstanceState.getIntegerArrayList("colors");
+            ArrayList<String> savedExprs = savedInstanceState.getStringArrayList("expressions");
+            if (savedExprs != null) allExpressions = savedExprs;
+            ArrayList<Integer> savedColors = savedInstanceState.getIntegerArrayList("colors");
+            if (savedColors != null) curveColors = savedColors;
             // Note: entries need to be recalculated from expressions
         }
         

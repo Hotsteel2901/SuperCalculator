@@ -1,4 +1,3 @@
-# Core dependencies with tested version ranges
-numpy>=1.21.0
-matplotlib>=3.5.0
+numpy>=1.21.0,<2.0.0
+matplotlib>=3.5.0,<4.0.0
 pyinstaller>=5.0.0

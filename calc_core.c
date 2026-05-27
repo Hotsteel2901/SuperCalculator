@@ -85,7 +85,7 @@ typedef struct {
 
 static int tokenize(const char* s, Token* toks, int max_toks) {
     int n = 0;
-    while (*s && n < max_toks) {
+    while (*s && n < max_toks - 1) {
         if (isspace(*s)) { s++; continue; }
         if (isdigit(*s) || (*s == '.' && isdigit(*(s+1)))) {
             char* end;

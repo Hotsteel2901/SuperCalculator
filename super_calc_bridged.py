@@ -28,7 +28,13 @@ import re
 import csv
 import os
 
-import matplotlib
+try:
+    import matplotlib
+except ImportError as e:
+    print(f"[ERROR] matplotlib is required but not installed.", file=sys.stderr)
+    print("Please install: pip install numpy matplotlib", file=sys.stderr)
+    sys.exit(1)
+
 # Dynamically select backend: try TkAgg first, fallback to Agg for headless environments
 try:
     import tkinter
@@ -37,7 +43,13 @@ except (ImportError, RuntimeError):
     matplotlib.use("Agg")
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-import numpy as np
+
+try:
+    import numpy as np
+except ImportError as e:
+    print(f"[ERROR] numpy is required but not installed.", file=sys.stderr)
+    print("Please install: pip install numpy matplotlib", file=sys.stderr)
+    sys.exit(1)
 
 from calc_bridge import CalcEngine
 
