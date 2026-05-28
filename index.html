@@ -73,6 +73,26 @@
                 animation-iteration-count: 1 !important;
                 transition-duration: 0.01ms !important;
             }
+            body::before {
+                animation: none !important;
+            }
+        }
+
+        @media (hover: none) {
+            .card:hover {
+                transform: none;
+                box-shadow: none;
+                border-color: var(--glass-border);
+            }
+            .feature-item:hover {
+                transform: none;
+                border-color: var(--glass-border);
+            }
+            .platform-card:hover {
+                transform: none;
+                box-shadow: none;
+                border-color: var(--glass-border);
+            }
         }
 
         body {
@@ -364,7 +384,8 @@
             bottom: -14px;
             left: 50%;
             transform: translateX(-50%);
-            width: min(120px, 60%);
+            width: 120px;
+            max-width: 60%;
             height: 4px;
             background: linear-gradient(90deg, transparent, var(--glow-primary), var(--glow-accent), transparent);
             border-radius: 2px;
@@ -1321,6 +1342,21 @@
                 </div>
                 <div class="card glass reveal">
                     <div class="card-icon">
+                        <!-- Tangent and normal lines -->
+                        <svg viewBox="0 0 24 24">
+                            <line x1="2" y1="20" x2="22" y2="20"/>
+                            <line x1="4" y1="2" x2="4" y2="22"/>
+                            <path d="M4 16c3-6 6-2 9-6s3 4 6-2"/>
+                            <line x1="7" y1="18" x2="19" y2="6" stroke-dasharray="2 2"/>
+                            <line x1="10" y1="4" x2="16" y2="20" stroke-dasharray="2 2"/>
+                            <circle cx="13" cy="12" r="1.5" fill="white" stroke="none"/>
+                        </svg>
+                    </div>
+                    <h3 class="card-title">切线与法线</h3>
+                    <p class="card-text">在 2D 曲线任意点处一键绘制切线与法线，以虚线形式直观标注在图上，便于分析函数局部特征</p>
+                </div>
+                <div class="card glass reveal">
+                    <div class="card-icon">
                         <!-- Adjustable sliders -->
                         <svg viewBox="0 0 24 24">
                             <line x1="4" y1="6" x2="20" y2="6"/>
@@ -1635,6 +1671,12 @@
                     <h3 class="card-title">曲线交点查找</h3>
                     <div class="code-block">
                         <code># Solve (expr_a) - (expr_b) = 0<br>CalcEngine.solve_bisection("(sin(x))-(cos(x))", 0, 3.14)<br># -> ~0.785</code>
+                    </div>
+                </div>
+                <div class="card glass reveal">
+                    <h3 class="card-title">切线与法线</h3>
+                    <div class="code-block">
+                        <code># Tangent slope = derivative at x0<br>slope = CalcEngine.derivative("x^2", 2.0)<br>y0 = CalcEngine.evaluate("x^2", 2.0)<br># Normal slope = -1/slope</code>
                     </div>
                 </div>
             </div>

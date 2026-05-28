@@ -54,6 +54,8 @@ public class CalcActivity extends AppCompatActivity {
         MaterialButton btnScanRoots = findViewById(R.id.btn_scan_roots);
         MaterialButton btnPlot3D = findViewById(R.id.btn_plot_3d);
         MaterialButton btnTable = findViewById(R.id.btn_table);
+        MaterialButton btnTangent = findViewById(R.id.btn_tangent);
+        MaterialButton btnNormal = findViewById(R.id.btn_normal);
 
         btnEval  .setOnClickListener(v -> onEvaluate());
         btnDeriv .setOnClickListener(v -> onDerivative());
@@ -67,6 +69,8 @@ public class CalcActivity extends AppCompatActivity {
         btnScanRoots.setOnClickListener(v -> onScanRoots());
         btnPlot3D.setOnClickListener(v -> openPlot3D());
         btnTable.setOnClickListener(v -> onGenerateTable());
+        btnTangent.setOnClickListener(v -> onTangentNormal(true));
+        btnNormal.setOnClickListener(v -> onTangentNormal(false));
 
         // Preset chips — set expression text and auto-evaluate
         Chip chipSin = findViewById(R.id.chip_sin);
@@ -244,6 +248,29 @@ public class CalcActivity extends AppCompatActivity {
             intent.putExtra("initial_expr", expr);
         }
         startActivity(intent);
+    }
+
+    private void onTangentNormal(boolean tangent) {
+        String e = getExpr();
+        if (e.isEmpty()) { toast("Enter an expression"); return; }
+        double x0 = getX();
+        double y0 = CalcEngine.evaluate(e, x0);
+        double slope = CalcEngine.derivative(e, x0, 1e-6);
+        if (Double.isNaN(y0) || Double.isNaN(slope)) {
+            resultView.append((tangent ? "Tangent" : "Normal") + ": Error: " + CalcEngine.getLastError() + "\n");
+            return;
+        }
+        String label = tangent ? "Tangent" : "Normal";
+        if (tangent) {
+            resultView.append(label + " at x=" + fmt(x0) + ": y = " + fmt(slope) + "*(x-" + fmt(x0) + ") + " + fmt(y0) + "\n");
+        } else {
+            if (Math.abs(slope) < 1e-12) {
+                resultView.append(label + " at x=" + fmt(x0) + ": vertical line x = " + fmt(x0) + "\n");
+            } else {
+                double ns = -1.0 / slope;
+                resultView.append(label + " at x=" + fmt(x0) + ": y = " + fmt(ns) + "*(x-" + fmt(x0) + ") + " + fmt(y0) + "\n");
+            }
+        }
     }
 
     private void onGenerateTable() {
