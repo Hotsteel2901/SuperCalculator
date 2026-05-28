@@ -166,6 +166,8 @@ class SuperCalcApp:
         self.auto_mark_point = None
         self.root_markers = []
         self.intersection_marks = []  # list of (x, y) tuples for curve intersections
+        self.tangent_data = []   # list of dicts: {x0, y0, slope, expr}
+        self.normal_data = []    # list of dicts: {x0, y0, slope, expr}
 
         # Separate windows for 2D and 3D plots
         self.window_2d = None
@@ -431,6 +433,23 @@ class SuperCalcApp:
         ttk.Button(mark_row, text="Clear Marks",
                    command=self._clear_marks).pack(side=tk.LEFT, padx=2)
 
+        # --- Tangent & Normal Lines ---
+        frm_tan = ttk.LabelFrame(scroll_frame, text="Tangent & Normal Lines",
+                                 style="Dark.TLabelframe")
+        frm_tan.pack(fill=tk.X, padx=8, pady=4)
+
+        trow_tan = ttk.Frame(frm_tan, style="Dark.TFrame")
+        trow_tan.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(trow_tan, text="At x =", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_tan_x = tk.StringVar(value="0")
+        ttk.Entry(trow_tan, textvariable=self._var_tan_x, width=8).pack(side=tk.LEFT, padx=4)
+        ttk.Button(trow_tan, text="Draw Tangent",
+                   command=self._on_draw_tangent).pack(side=tk.LEFT, padx=2)
+        ttk.Button(trow_tan, text="Draw Normal",
+                   command=self._on_draw_normal).pack(side=tk.LEFT, padx=2)
+        ttk.Button(trow_tan, text="Clear Lines",
+                   command=self._clear_tangent_normal).pack(side=tk.LEFT, padx=2)
+
         # --- Function Table ---
         frm_table = ttk.LabelFrame(scroll_frame, text="Function Table & Export",
                                    style="Dark.TLabelframe")
@@ -692,6 +711,8 @@ class SuperCalcApp:
         self.auto_mark_point = None
         self.root_markers = []
         self.intersection_marks.clear()
+        self.tangent_data.clear()
+        self.normal_data.clear()
         self._var_mark_x.set("")
         if self.ax_2d is not None:
             self.ax_2d.clear()
@@ -850,8 +871,39 @@ class SuperCalcApp:
             self.ax_2d.annotate(f"({ix:.3g}, {iy:.3g})", xy=(ix, iy), xytext=(8, -12),
                            textcoords='offset points', color='#cba6f7', fontsize=8)
 
+        # Draw tangent lines
+        for t in getattr(self, 'tangent_data', []):
+            x0, y0, slope = t["x0"], t["y0"], t["slope"]
+            # Tangent line: y = slope*(x - x0) + y0
+            x_left = max(self.x_min, x0 - (self.x_max - self.x_min) * 0.3)
+            x_right = min(self.x_max, x0 + (self.x_max - self.x_min) * 0.3)
+            y_left = slope * (x_left - x0) + y0
+            y_right = slope * (x_right - x0) + y0
+            self.ax_2d.plot([x_left, x_right], [y_left, y_right], 'c--',
+                           linewidth=1.5, alpha=0.8, label=f"Tangent at x={x0:.3g}")
+            self.ax_2d.plot(x0, y0, 'co', markersize=6)
+
+        # Draw normal lines
+        for n in getattr(self, 'normal_data', []):
+            x0, y0, slope = n["x0"], n["y0"], n["slope"]
+            if abs(slope) < 1e-12:
+                # Vertical normal line
+                y_bottom = max(self.y_min, y0 - (self.y_max - self.y_min) * 0.3)
+                y_top = min(self.y_max, y0 + (self.y_max - self.y_min) * 0.3)
+                self.ax_2d.plot([x0, x0], [y_bottom, y_top], 'y--',
+                               linewidth=1.5, alpha=0.8, label=f"Normal at x={x0:.3g}")
+            else:
+                normal_slope = -1.0 / slope
+                x_left = max(self.x_min, x0 - (self.x_max - self.x_min) * 0.3)
+                x_right = min(self.x_max, x0 + (self.x_max - self.x_min) * 0.3)
+                y_left = normal_slope * (x_left - x0) + y0
+                y_right = normal_slope * (x_right - x0) + y0
+                self.ax_2d.plot([x_left, x_right], [y_left, y_right], 'y--',
+                               linewidth=1.5, alpha=0.8, label=f"Normal at x={x0:.3g}")
+            self.ax_2d.plot(x0, y0, 'yo', markersize=6)
+
         visible_2d = [c for c in self.curves if c.visible and not c.is_3d]
-        if visible_2d:
+        if visible_2d or self.tangent_data or self.normal_data:
             self.ax_2d.legend(loc="upper right", facecolor="#313244",
                            edgecolor="#585b70", labelcolor="#cdd6f4",
                            fontsize=9)
@@ -949,6 +1001,59 @@ class SuperCalcApp:
         self.intersection_marks.clear()
         self._var_mark_x.set("")
         self._plot_all()
+
+    # ------------------------------------------------------------------
+    #  Tangent & Normal Lines
+    # ------------------------------------------------------------------
+    def _on_draw_tangent(self):
+        expr = self._get_active_expression()
+        if not expr:
+            return
+        try:
+            x0 = float(self._var_tan_x.get())
+        except ValueError:
+            messagebox.showerror("Error", "Invalid x value.")
+            return
+        expr_sub = self._substitute_params(expr)
+        y0 = CalcEngine.evaluate(expr_sub, x0)
+        slope = CalcEngine.derivative(expr_sub, x0)
+        if y0 is None or slope is None:
+            err = CalcEngine.get_last_error()
+            messagebox.showerror("Error", f"Could not compute tangent.\n{err}")
+            return
+        self.tangent_data.append({"x0": x0, "y0": y0, "slope": slope, "expr": expr})
+        self._plot_all()
+        self.status_var.set(f"Tangent at x={x0}: y = {slope:.4g}(x-{x0:.4g}) + {y0:.4g}")
+
+    def _on_draw_normal(self):
+        expr = self._get_active_expression()
+        if not expr:
+            return
+        try:
+            x0 = float(self._var_tan_x.get())
+        except ValueError:
+            messagebox.showerror("Error", "Invalid x value.")
+            return
+        expr_sub = self._substitute_params(expr)
+        y0 = CalcEngine.evaluate(expr_sub, x0)
+        slope = CalcEngine.derivative(expr_sub, x0)
+        if y0 is None or slope is None:
+            err = CalcEngine.get_last_error()
+            messagebox.showerror("Error", f"Could not compute normal.\n{err}")
+            return
+        self.normal_data.append({"x0": x0, "y0": y0, "slope": slope, "expr": expr})
+        self._plot_all()
+        if abs(slope) < 1e-12:
+            self.status_var.set(f"Normal at x={x0}: vertical line x = {x0}")
+        else:
+            normal_slope = -1.0 / slope
+            self.status_var.set(f"Normal at x={x0}: y = {normal_slope:.4g}(x-{x0:.4g}) + {y0:.4g}")
+
+    def _clear_tangent_normal(self):
+        self.tangent_data.clear()
+        self.normal_data.clear()
+        self._plot_all()
+        self.status_var.set("Cleared tangent and normal lines.")
 
     # ------------------------------------------------------------------
     #  Intersection Finder
