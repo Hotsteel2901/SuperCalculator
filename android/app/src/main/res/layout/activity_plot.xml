@@ -106,6 +106,18 @@
                             android:fontFamily="@font/jetbrains_mono"
                             android:textSize="12sp"
                             app:cornerRadius="12dp"
+                            android:layout_marginEnd="4dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_find_intersections"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="48dp"
+                            android:text="Intersect"
+                            android:fontFamily="@font/jetbrains_mono"
+                            android:textSize="12sp"
+                            app:cornerRadius="12dp"
                             android:layout_marginStart="4dp" />
 
                     </LinearLayout>

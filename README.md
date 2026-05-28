@@ -37,6 +37,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
 - **Equation Solving** — Newton-Raphson (with bisection fallback) and pure bisection
 - **Extremum Finder** — golden-section search for local minima and maxima on an interval
  - **Auto Root Scanner** — automatically scan an interval for all roots of f(x)=0, sign-change detection plus bisection refinement
+ - **Curve Intersection Finder** — find all intersection points between any two 2D curves with sign-change detection and bisection refinement, results annotated on the plot
  - **Preset Functions** — quick-select from 19 common functions (including 3D presets)
  - **Parameter System** — auto-detects extra parameters (e.g., `a`, `b`) and provides live input fields
  - **Coordinate Marking** — click on the plot to mark points, or enter an x value to auto-locate
@@ -170,6 +171,11 @@ CalcEngine.solve("x^2 - 4", guess=1, xmin=0, xmax=3)  # -> 2.0
 # Find extremum
 CalcEngine.find_minimum("x^2", -5, 5)   # -> ~0.0
 CalcEngine.find_maximum("sin(x)", 0, 6) # -> ~1.571
+
+# Curve intersection (compute difference and solve)
+# Example: intersection of sin(x) and cos(x) in [0, pi]
+# Use solve_bisection on the difference expression
+CalcEngine.solve_bisection("(sin(x))-(cos(x))", 0, 3.14)  # -> ~0.785
 ```
 
 ## Numerical Methods

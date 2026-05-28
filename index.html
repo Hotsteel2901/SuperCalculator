@@ -103,6 +103,7 @@
             z-index: -1;
             opacity: 0.5;
             filter: blur(60px);
+            will-change: transform;
         }
 
         @keyframes bgFloat {
@@ -363,7 +364,7 @@
             bottom: -14px;
             left: 50%;
             transform: translateX(-50%);
-            width: 120px;
+            width: min(120px, 60%);
             height: 4px;
             background: linear-gradient(90deg, transparent, var(--glow-primary), var(--glow-accent), transparent);
             border-radius: 2px;
@@ -1293,6 +1294,20 @@
                 </div>
                 <div class="card glass reveal">
                     <div class="card-icon">
+                        <!-- Two curves crossing -->
+                        <svg viewBox="0 0 24 24">
+                            <line x1="2" y1="20" x2="22" y2="20"/>
+                            <line x1="4" y1="2" x2="4" y2="22"/>
+                            <path d="M4 16c3-4 6 0 9-4"/>
+                            <path d="M4 8c3 4 6 0 9 4"/>
+                            <circle cx="13" cy="12" r="2" fill="none" stroke-dasharray="2 1"/>
+                        </svg>
+                    </div>
+                    <h3 class="card-title">曲线交点查找</h3>
+                    <p class="card-text">在任意两条 2D 曲线之间自动查找所有交点，符号变化检测 + 二分法精确定位，紫色星标标注在图上</p>
+                </div>
+                <div class="card glass reveal">
+                    <div class="card-icon">
                         <!-- Peak and valley markers -->
                         <svg viewBox="0 0 24 24">
                             <line x1="2" y1="20" x2="22" y2="20"/>
@@ -1614,6 +1629,12 @@
                     <h3 class="card-title">查找最大值</h3>
                     <div class="code-block">
                         <code>CalcEngine.find_maximum("sin(x)", 0, 6)<br># -> ~1.571</code>
+                    </div>
+                </div>
+                <div class="card glass reveal">
+                    <h3 class="card-title">曲线交点查找</h3>
+                    <div class="code-block">
+                        <code># Solve (expr_a) - (expr_b) = 0<br>CalcEngine.solve_bisection("(sin(x))-(cos(x))", 0, 3.14)<br># -> ~0.785</code>
                     </div>
                 </div>
             </div>
