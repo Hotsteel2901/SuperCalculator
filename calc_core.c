@@ -393,6 +393,7 @@ EXPORT double derivative2(const char* expr, double x, double h) {
 
 EXPORT double integrate(const char* expr, double a, double b, int n) {
     if (n < 2 || n % 2 != 0) { set_error("n must be even and >= 2"); return NAN; }
+    if (a > b) { set_error("Invalid interval: a must be <= b"); return NAN; }
     if (a == b) return 0.0;
     double h = (b - a) / n;
     double fa, fb;
@@ -410,6 +411,7 @@ EXPORT double integrate(const char* expr, double a, double b, int n) {
 EXPORT double solve_equation(const char* expr, double guess,
                               double xmin, double xmax,
                               double tol, int max_iter) {
+    if (xmin >= xmax) { set_error("Invalid interval: xmin must be < xmax"); return NAN; }
     double x = guess, fp, fm;
     if (x < xmin) x = xmin + 0.1*(xmax-xmin);
     if (x > xmax) x = xmax - 0.1*(xmax-xmin);
@@ -446,6 +448,7 @@ EXPORT double solve_equation(const char* expr, double guess,
 
 EXPORT double solve_bisection(const char* expr, double a, double b,
                                double tol, int max_iter) {
+    if (a >= b) { set_error("Invalid interval: a must be < b"); return NAN; }
     double fa, fb, fc, c;
     if (parse_and_eval(expr, a, 0.0, &fa) != 0) return NAN;
     if (parse_and_eval(expr, b, 0.0, &fb) != 0) return NAN;
@@ -464,6 +467,8 @@ EXPORT double solve_bisection(const char* expr, double a, double b,
 }
 
 EXPORT double integrate_adaptive(const char* expr, double a, double b, double tol) {
+    if (a > b) { set_error("Invalid interval: a must be <= b"); return NAN; }
+    if (a == b) return 0.0;
     int n = 64;
     double prev, cur;
     cur = integrate(expr, a, b, n);
