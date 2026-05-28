@@ -611,31 +611,34 @@ class SuperCalcApp:
     def _update_param_inputs(self):
         expr = self.entry_expr.get().strip()
         params = _detect_parameters_static(expr)
-        
+
+        saved_values = {param: var.get() for param, var in self.param_widgets.items()}
+
         for widget in self.frm_params.winfo_children():
             widget.destroy()
         self.param_widgets.clear()
-        
+
         if not params:
             ttk.Label(self.frm_params, text="No parameters detected",
                       style="Dark.TLabel").pack(padx=6, pady=8)
             return
-        
+
         ttk.Label(self.frm_params, text="Set parameter values:",
                   style="Dark.TLabel").pack(anchor=tk.W, padx=6, pady=(6, 0))
-        
+
         for param in params:
             frame = ttk.Frame(self.frm_params, style="Dark.TFrame")
             frame.pack(fill=tk.X, padx=6, pady=2)
-            
+
             ttk.Label(frame, text=f"{param} =", width=5,
                       style="Dark.TLabel").pack(side=tk.LEFT, padx=2)
-            var = tk.StringVar(value="1")
+            default_val = saved_values.get(param, "1")
+            var = tk.StringVar(value=default_val)
             entry = ttk.Entry(frame, textvariable=var, width=10)
             entry.pack(side=tk.LEFT, padx=2)
             entry.bind("<KeyRelease>", lambda e: self._on_param_change())
             self.param_widgets[param] = var
-            
+
         self._on_param_change()
 
     def _on_param_change(self):

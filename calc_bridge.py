@@ -111,7 +111,7 @@ _lib.get_last_error.restype = ctypes.c_char_p
 
 def _isnan(x: float) -> bool:
     try:
-        return _math.isnan(x)
+        return _math.isnan(x) or _math.isinf(x)
     except Exception:
         return x != x
 

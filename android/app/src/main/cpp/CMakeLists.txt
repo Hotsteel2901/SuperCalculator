@@ -7,7 +7,7 @@ add_library(calc_core SHARED
 )
 
 target_compile_options(calc_core PRIVATE
-    -Wall -Wextra -O2
+    -Wall -Wextra -O2 -Wno-unused-parameter
 )
 
 target_link_libraries(calc_core
