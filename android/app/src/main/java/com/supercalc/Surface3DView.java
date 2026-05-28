@@ -180,17 +180,27 @@ public class Surface3DView extends View {
             }
         }
 
-        // Draw grid lines (back to front ordering based on average depth)
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
+                if (Float.isNaN(zValues[i][j])
+                        || Float.isNaN(projX[i][j])
+                        || Float.isNaN(projY[i][j]))
+                    continue;
+
                 float zNorm = (zValues[i][j] - zMin) / zRange;
                 int color = heightToColor(zNorm);
                 gridPaint.setColor(color);
 
-                if (j + 1 < cols) {
+                if (j + 1 < cols
+                        && !Float.isNaN(zValues[i][j + 1])
+                        && !Float.isNaN(projX[i][j + 1])
+                        && !Float.isNaN(projY[i][j + 1])) {
                     canvas.drawLine(projX[i][j], projY[i][j], projX[i][j + 1], projY[i][j + 1], gridPaint);
                 }
-                if (i + 1 < rows) {
+                if (i + 1 < rows
+                        && !Float.isNaN(zValues[i + 1][j])
+                        && !Float.isNaN(projX[i + 1][j])
+                        && !Float.isNaN(projY[i + 1][j])) {
                     canvas.drawLine(projX[i][j], projY[i][j], projX[i + 1][j], projY[i + 1][j], gridPaint);
                 }
             }

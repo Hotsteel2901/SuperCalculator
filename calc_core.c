@@ -140,14 +140,15 @@ static int tokenize(const char* s, Token* toks, int max_toks) {
 }
 
 static int precedence(char op) {
-    if (op == '!' ) return 4;
+    if (op == '!' ) return 5;
+    if (op == '~' ) return 2;
     if (op == '+' || op == '-') return 1;
     if (op == '*' || op == '/') return 2;
     if (op == '^')              return 3;
     return 0;
 }
 
-static int is_right_assoc(char op) { return op == '^'; }
+static int is_right_assoc(char op) { return op == '^' || op == '~'; }
 
 static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
     #define MAX_STACK 256
@@ -243,7 +244,7 @@ static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
                     output[out_n].tag=3; output[out_n].func=top.func; out_n++;
                 }
             }
-            if (sp > 0 && stack[sp-1].kind == T_LPAREN)
+            if (t.kind == T_RPAREN && sp > 0 && stack[sp-1].kind == T_LPAREN)
                 sp--;
             else if (t.kind == T_RPAREN) {
                 set_error("Mismatched parentheses"); return -1;
