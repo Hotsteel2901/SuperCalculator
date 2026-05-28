@@ -51,12 +51,13 @@ public class FullScreenPlot3DActivity extends AppCompatActivity {
                 double x = xMin + (xMax - xMin) * j / (cols - 1);
                 double z = CalcEngine.evaluateXY(expr, x, y);
                 if (Double.isNaN(z) || Double.isInfinite(z)) {
-                    zValues[i][j] = 0f;
+                    zValues[i][j] = Float.NaN;
                 } else {
-                    zValues[i][j] = (float) z;
+                    float zf = (float) z;
+                    zValues[i][j] = zf;
                     hasValid = true;
-                    if (zValues[i][j] < actualZMin) actualZMin = zValues[i][j];
-                    if (zValues[i][j] > actualZMax) actualZMax = zValues[i][j];
+                    if (zf < actualZMin) actualZMin = zf;
+                    if (zf > actualZMax) actualZMax = zf;
                 }
             }
         }
