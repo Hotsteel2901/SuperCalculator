@@ -165,6 +165,7 @@ class SuperCalcApp:
         self.marked_points = []
         self.auto_mark_point = None
         self.root_markers = []
+        self.intersection_marks = []  # list of (x, y) tuples for curve intersections
 
         # Separate windows for 2D and 3D plots
         self.window_2d = None
@@ -288,6 +289,8 @@ class SuperCalcApp:
         self.listbox_curves.pack(fill=tk.X, padx=6, pady=4)
         ttk.Button(frm_curves, text="Remove Selected",
                    command=self._on_remove_curve).pack(padx=6, pady=(0, 4))
+        ttk.Button(frm_curves, text="Find Intersections...",
+                   command=self._show_intersection_dialog).pack(padx=6, pady=(0, 4))
 
         # --- Range ---
         frm_range = ttk.LabelFrame(scroll_frame, text="Coordinate Range",
@@ -685,6 +688,7 @@ class SuperCalcApp:
         self.marked_points.clear()
         self.auto_mark_point = None
         self.root_markers = []
+        self.intersection_marks.clear()
         self._var_mark_x.set("")
         if self.ax_2d is not None:
             self.ax_2d.clear()
@@ -838,6 +842,11 @@ class SuperCalcApp:
             self.ax_2d.annotate(f"x={rx:.4g}", xy=(rx, 0), xytext=(5, 15),
                            textcoords='offset points', color='#f38ba8', fontsize=8)
 
+        for ix, iy in getattr(self, 'intersection_marks', []):
+            self.ax_2d.plot(ix, iy, 'mP', markersize=10)
+            self.ax_2d.annotate(f"({ix:.3g}, {iy:.3g})", xy=(ix, iy), xytext=(8, -12),
+                           textcoords='offset points', color='#cba6f7', fontsize=8)
+
         visible_2d = [c for c in self.curves if c.visible and not c.is_3d]
         if visible_2d:
             self.ax_2d.legend(loc="upper right", facecolor="#313244",
@@ -934,8 +943,141 @@ class SuperCalcApp:
     def _clear_marks(self):
         self.marked_points.clear()
         self.auto_mark_point = None
+        self.intersection_marks.clear()
         self._var_mark_x.set("")
         self._plot_all()
+
+    # ------------------------------------------------------------------
+    #  Intersection Finder
+    # ------------------------------------------------------------------
+    def _show_intersection_dialog(self):
+        if len(self.curves) < 2:
+            messagebox.showinfo("Info", "Add at least two curves to find intersections.")
+            return
+        win = tk.Toplevel(self.root)
+        win.title("Find Curve Intersections")
+        win.geometry("420x420")
+        win.configure(bg="#1e1e2e")
+        win.minsize(320, 300)
+        win.transient(self.root)
+        win.grab_set()
+
+        ttk.Label(win, text="Select two curves to find their intersections:",
+                  style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(10, 4))
+
+        # Curve A
+        ttk.Label(win, text="Curve A:", style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(8, 0))
+        var_a = tk.StringVar()
+        combo_a = ttk.Combobox(win, textvariable=var_a,
+                               values=[c.label for c in self.curves],
+                               state="readonly", font=("Consolas", 10), width=40)
+        combo_a.pack(fill=tk.X, padx=10, pady=2)
+        if self.curves:
+            combo_a.current(0)
+
+        # Curve B
+        ttk.Label(win, text="Curve B:", style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(8, 0))
+        var_b = tk.StringVar()
+        combo_b = ttk.Combobox(win, textvariable=var_b,
+                               values=[c.label for c in self.curves],
+                               state="readonly", font=("Consolas", 10), width=40)
+        combo_b.pack(fill=tk.X, padx=10, pady=2)
+        if len(self.curves) > 1:
+            combo_b.current(1)
+        elif self.curves:
+            combo_b.current(0)
+
+        result_text = tk.Text(win, height=10, bg="#313244", fg="#cdd6f4",
+                              font=("Consolas", 10), wrap=tk.WORD, state=tk.DISABLED)
+        result_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=8)
+
+        def do_find():
+            label_a = var_a.get()
+            label_b = var_b.get()
+            if not label_a or not label_b:
+                messagebox.showwarning("Input", "Please select both curves.", parent=win)
+                return
+            if label_a == label_b:
+                messagebox.showwarning("Input", "Please select two different curves.", parent=win)
+                return
+            curve_a = None
+            curve_b = None
+            for c in self.curves:
+                if c.label == label_a:
+                    curve_a = c
+                if c.label == label_b:
+                    curve_b = c
+            if curve_a is None or curve_b is None:
+                messagebox.showerror("Error", "Could not locate selected curves.", parent=win)
+                return
+            intersections = self._find_intersections(curve_a, curve_b)
+            result_text.configure(state=tk.NORMAL)
+            result_text.delete("1.0", tk.END)
+            if intersections:
+                result_text.insert(tk.END, f"Found {len(intersections)} intersection(s):\n\n")
+                for i, (xi, yi) in enumerate(intersections, 1):
+                    result_text.insert(tk.END, f"  {i}. x = {xi:.10g}, y = {yi:.10g}\n")
+            else:
+                result_text.insert(tk.END, "No intersections found in the current X range.\n")
+            result_text.configure(state=tk.DISABLED)
+            self._plot_all()
+
+        btn_frame = ttk.Frame(win, style="Dark.TFrame")
+        btn_frame.pack(fill=tk.X, padx=10, pady=(0, 10))
+        ttk.Button(btn_frame, text="Find Intersections", command=do_find).pack(side=tk.LEFT, padx=2)
+        ttk.Button(btn_frame, text="Clear Marks", command=lambda: (self.intersection_marks.clear(), self._plot_all())).pack(side=tk.LEFT, padx=2)
+        ttk.Button(btn_frame, text="Close", command=win.destroy).pack(side=tk.RIGHT, padx=2)
+
+    def _find_intersections(self, curve_a, curve_b):
+        """Find intersections of two 2D curves within the current X range."""
+        expr_a = self._substitute_params(curve_a.expression)
+        expr_b = self._substitute_params(curve_b.expression)
+
+        n_samples = max(MIN_PLOT_POINTS, min(MAX_PLOT_POINTS, int((self.x_max - self.x_min) / self.step_size)))
+        xs = np.linspace(self.x_min, self.x_max, n_samples)
+        xs_list = xs.tolist()
+
+        ys_a = CalcEngine.evaluate_array(expr_a, xs_list)
+        ys_b = CalcEngine.evaluate_array(expr_b, xs_list)
+
+        tol_zero = 1e-6
+        tol_dup = 1e-4
+        intersections = []
+
+        # Detect near-zero differences
+        for i, (ya, yb) in enumerate(zip(ys_a, ys_b)):
+            if ya is not None and yb is not None and abs(ya - yb) < tol_zero:
+                intersections.append((float(xs[i]), float((ya + yb) / 2.0)))
+
+        # Detect sign changes and refine with bisection
+        for i in range(n_samples - 1):
+            y1a = ys_a[i]
+            y1b = ys_b[i]
+            y2a = ys_a[i + 1]
+            y2b = ys_b[i + 1]
+            if y1a is None or y1b is None or y2a is None or y2b is None:
+                continue
+            diff1 = y1a - y1b
+            diff2 = y2a - y2b
+            if diff1 == 0.0 or diff2 == 0.0:
+                continue
+            if diff1 * diff2 < 0:
+                diff_expr = f"({expr_a})-({expr_b})"
+                root = CalcEngine.solve_bisection(diff_expr, float(xs[i]), float(xs[i + 1]))
+                if root is not None:
+                    y_at_root = CalcEngine.evaluate(expr_a, root)
+                    if y_at_root is not None:
+                        intersections.append((root, y_at_root))
+
+        # Deduplicate and sort by x
+        intersections.sort(key=lambda p: p[0])
+        unique = []
+        for p in intersections:
+            if not unique or abs(p[0] - unique[-1][0]) > tol_dup:
+                unique.append(p)
+
+        self.intersection_marks = unique
+        return unique
 
     # ------------------------------------------------------------------
     #  Function Table
