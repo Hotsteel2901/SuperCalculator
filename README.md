@@ -39,6 +39,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
  - **Auto Root Scanner** — automatically scan an interval for all roots of f(x)=0, sign-change detection plus bisection refinement
  - **Curve Intersection Finder** — find all intersection points between any two 2D curves with sign-change detection and bisection refinement, results annotated on the plot
  - **Tangent & Normal Lines** — draw tangent and normal lines at any point on a 2D curve, visualized with dashed lines and labeled on the plot
+ - **Arc Length** — approximate the arc length of a curve over any interval using adaptive chord summation
  - **Preset Functions** — quick-select from 19 common functions (including 3D presets)
  - **Parameter System** — auto-detects extra parameters (e.g., `a`, `b`) and provides live input fields
  - **Coordinate Marking** — click on the plot to mark points, or enter an x value to auto-locate
@@ -177,6 +178,9 @@ CalcEngine.find_maximum("sin(x)", 0, 6) # -> ~1.571
 # Example: intersection of sin(x) and cos(x) in [0, pi]
 # Use solve_bisection on the difference expression
 CalcEngine.solve_bisection("(sin(x))-(cos(x))", 0, 3.14)  # -> ~0.785
+
+# Arc length
+CalcEngine.arc_length("sin(x)", 0, 3.141592653589793)  # -> ~3.820
 ```
 
 ## Numerical Methods
