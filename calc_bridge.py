@@ -227,7 +227,7 @@ class CalcEngine:
     def arc_length(expr: str, a: float, b: float, n: int = 5000) -> Optional[float]:
         """Approximate arc length of f(x) over [a,b] using chord summation."""
         if a >= b:
-            return None
+            return 0.0 if a == b else None
         try:
             import math as _math
             h = (b - a) / n

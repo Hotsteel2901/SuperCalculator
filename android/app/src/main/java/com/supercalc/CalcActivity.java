@@ -284,12 +284,19 @@ public class CalcActivity extends AppCompatActivity {
 
         int n = 5000;
         double h = (b - a) / n;
+        double[] xs = new double[n + 1];
+        for (int i = 0; i <= n; i++) {
+            xs[i] = a + i * h;
+        }
+        double[] ys = CalcEngine.evaluateArray(e, xs);
+        if (ys == null) {
+            resultView.append("Arc Length: Error: " + CalcEngine.getLastError() + "\n");
+            return;
+        }
         double length = 0.0;
         for (int i = 0; i < n; i++) {
-            double x1 = a + i * h;
-            double x2 = x1 + h;
-            double y1 = CalcEngine.evaluate(e, x1);
-            double y2 = CalcEngine.evaluate(e, x2);
+            double y1 = ys[i];
+            double y2 = ys[i + 1];
             if (Double.isNaN(y1) || Double.isNaN(y2)) {
                 continue;
             }
