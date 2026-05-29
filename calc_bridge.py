@@ -116,7 +116,7 @@ _lib.get_last_error.argtypes = []
 _lib.get_last_error.restype = ctypes.c_char_p
 
 
-def _isnan(x: float) -> bool:
+def _is_invalid(x: float) -> bool:
     try:
         return _math.isnan(x) or _math.isinf(x)
     except Exception:
@@ -138,13 +138,13 @@ class CalcEngine:
     def evaluate(expr: str, x: float) -> Optional[float]:
         """Evaluate expression f(x) at a given x."""
         result = _lib.evaluate(expr.encode("utf-8"), x)
-        return None if _isnan(result) else result
+        return None if _is_invalid(result) else result
 
     @staticmethod
     def evaluate_xy(expr: str, x: float, y: float) -> Optional[float]:
         """Evaluate expression f(x,y) at given x and y."""
         result = _lib.evaluate_xy(expr.encode("utf-8"), x, y)
-        return None if _isnan(result) else result
+        return None if _is_invalid(result) else result
 
     @staticmethod
     def evaluate_array(expr: str, xs: List[float]) -> List[Optional[float]]:
@@ -153,7 +153,7 @@ class CalcEngine:
         arr_x = (ctypes.c_double * n)(*xs)
         arr_y = (ctypes.c_double * n)()
         _lib.evaluate_array(expr.encode("utf-8"), arr_x, arr_y, n)
-        return [None if _isnan(arr_y[i]) else arr_y[i] for i in range(n)]
+        return [None if _is_invalid(arr_y[i]) else arr_y[i] for i in range(n)]
 
     @staticmethod
     def evaluate_xy_array(expr: str, xs: List[float], ys: List[float]) -> List[Optional[float]]:
@@ -171,33 +171,33 @@ class CalcEngine:
         arr_y = (ctypes.c_double * n)(*ys)
         arr_z = (ctypes.c_double * n)()
         _lib.evaluate_xy_array(expr.encode("utf-8"), arr_x, arr_y, arr_z, n)
-        return [None if _isnan(arr_z[i]) else arr_z[i] for i in range(n)]
+        return [None if _is_invalid(arr_z[i]) else arr_z[i] for i in range(n)]
 
     @staticmethod
     def derivative(expr: str, x: float, h: float = 1e-6) -> Optional[float]:
         """First derivative f'(x) via central difference."""
         result = _lib.derivative(expr.encode("utf-8"), x, h)
-        return None if _isnan(result) else result
+        return None if _is_invalid(result) else result
 
     @staticmethod
     def derivative2(expr: str, x: float, h: float = 1e-6) -> Optional[float]:
         """Second derivative f''(x) via central difference."""
         result = _lib.derivative2(expr.encode("utf-8"), x, h)
-        return None if _isnan(result) else result
+        return None if _is_invalid(result) else result
 
     @staticmethod
     def integrate(expr: str, a: float, b: float,
                   n: int = 1000) -> Optional[float]:
         """Definite integral over [a,b] using Simpson's rule (n must be even)."""
         result = _lib.integrate(expr.encode("utf-8"), a, b, n)
-        return None if _isnan(result) else result
+        return None if _is_invalid(result) else result
 
     @staticmethod
     def integrate_adaptive(expr: str, a: float, b: float,
                            tol: float = 1e-8) -> Optional[float]:
         """Definite integral with adaptive step refinement."""
         result = _lib.integrate_adaptive(expr.encode("utf-8"), a, b, tol)
-        return None if _isnan(result) else result
+        return None if _is_invalid(result) else result
 
     @staticmethod
     def solve(expr: str, guess: float = 0.0, xmin: float = -100.0,
@@ -206,7 +206,7 @@ class CalcEngine:
         """Solve f(x)=0 using Newton-Raphson with bisection fallback."""
         result = _lib.solve_equation(expr.encode("utf-8"),
                                      guess, xmin, xmax, tol, max_iter)
-        return None if _isnan(result) else result
+        return None if _is_invalid(result) else result
 
     @staticmethod
     def solve_bisection(expr: str, a: float, b: float,
@@ -214,7 +214,7 @@ class CalcEngine:
                         max_iter: int = 200) -> Optional[float]:
         """Solve f(x)=0 using pure bisection (requires sign change on [a,b])."""
         result = _lib.solve_bisection(expr.encode("utf-8"), a, b, tol, max_iter)
-        return None if _isnan(result) else result
+        return None if _is_invalid(result) else result
 
     @staticmethod
     def find_minimum(expr: str, a: float, b: float,
@@ -222,7 +222,7 @@ class CalcEngine:
                      max_iter: int = 200) -> Optional[float]:
         """Find a local minimum of f(x) on [a, b] using golden-section search."""
         result = _lib.find_minimum(expr.encode("utf-8"), a, b, tol, max_iter)
-        return None if _isnan(result) else result
+        return None if _is_invalid(result) else result
 
     @staticmethod
     def find_maximum(expr: str, a: float, b: float,
@@ -230,7 +230,7 @@ class CalcEngine:
                      max_iter: int = 200) -> Optional[float]:
         """Find a local maximum of f(x) on [a, b] using golden-section search."""
         result = _lib.find_maximum(expr.encode("utf-8"), a, b, tol, max_iter)
-        return None if _isnan(result) else result
+        return None if _is_invalid(result) else result
 
     @staticmethod
     def get_last_error() -> str:
@@ -288,7 +288,7 @@ class CalcEngine:
             import numpy as np
             xs = np.linspace(a, b, n, endpoint=False)
             ys = CalcEngine.evaluate_array(expr, xs.tolist())
-            y_arr = np.array([0.0 if y is None or _isnan(y) else float(y)
+            y_arr = np.array([0.0 if y is None or _is_invalid(y) else float(y)
                               for y in ys])
             # Remove DC offset (mean) for cleaner spectrum
             y_arr = y_arr - np.mean(y_arr)

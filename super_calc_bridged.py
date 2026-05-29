@@ -922,6 +922,9 @@ class SuperCalcApp:
         self.ax_2d.clear()
         self._setup_axes(self.ax_2d, is_3d=False)
 
+        if self.x_min >= self.x_max or self.step_size <= 0:
+            self.status_var.set("Invalid plot range or step size")
+            return
         n_pts = max(MIN_PLOT_POINTS, min(MAX_PLOT_POINTS, int((self.x_max - self.x_min) / self.step_size)))
         xs_np = np.linspace(self.x_min, self.x_max, n_pts)
         xs_list = xs_np.tolist()
@@ -1011,6 +1014,9 @@ class SuperCalcApp:
         self.ax_3d.clear()
         self._setup_axes(self.ax_3d, is_3d=True)
 
+        if self.x_min >= self.x_max or self.y_min >= self.y_max or self.n_pts_3d < 2:
+            self.status_var.set("Invalid 3D plot range or resolution")
+            return
         n_pts = self.n_pts_3d
         x_vals = np.linspace(self.x_min, self.x_max, n_pts)
         y_vals = np.linspace(self.y_min, self.y_max, n_pts)
@@ -1185,8 +1191,9 @@ class SuperCalcApp:
     #  Intersection Finder
     # ------------------------------------------------------------------
     def _show_intersection_dialog(self):
-        if len(self.curves) < 2:
-            messagebox.showinfo("Info", "Add at least two curves to find intersections.")
+        curves_2d = [c for c in self.curves if not c.is_3d]
+        if len(curves_2d) < 2:
+            messagebox.showinfo("Info", "Add at least two 2D curves to find intersections.")
             return
         win = tk.Toplevel(self.root)
         win.title("Find Curve Intersections")
@@ -1203,22 +1210,21 @@ class SuperCalcApp:
         ttk.Label(win, text="Curve A:", style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(8, 0))
         var_a = tk.StringVar()
         combo_a = ttk.Combobox(win, textvariable=var_a,
-                               values=[c.label for c in self.curves],
+                               values=[c.label for c in curves_2d],
                                state="readonly", font=("Consolas", 10), width=40)
         combo_a.pack(fill=tk.X, padx=10, pady=2)
-        if self.curves:
-            combo_a.current(0)
+        combo_a.current(0)
 
         # Curve B
         ttk.Label(win, text="Curve B:", style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(8, 0))
         var_b = tk.StringVar()
         combo_b = ttk.Combobox(win, textvariable=var_b,
-                               values=[c.label for c in self.curves],
+                               values=[c.label for c in curves_2d],
                                state="readonly", font=("Consolas", 10), width=40)
         combo_b.pack(fill=tk.X, padx=10, pady=2)
-        if len(self.curves) > 1:
+        if len(curves_2d) > 1:
             combo_b.current(1)
-        elif self.curves:
+        else:
             combo_b.current(0)
 
         result_text = tk.Text(win, height=10, bg="#313244", fg="#cdd6f4",
@@ -1264,6 +1270,9 @@ class SuperCalcApp:
 
     def _find_intersections(self, curve_a, curve_b):
         """Find intersections of two 2D curves within the current X range."""
+        if self.x_min >= self.x_max or self.step_size <= 0:
+            self.intersection_marks = []
+            return []
         expr_a = self._substitute_params(curve_a.expression)
         expr_b = self._substitute_params(curve_b.expression)
 

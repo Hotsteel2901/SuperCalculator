@@ -107,6 +107,10 @@ public class Plot3DActivity extends AppCompatActivity {
             }
         }
         double[] zs = CalcEngine.evaluateXYArray(expr, xs, ys);
+        if (zs == null) {
+            toast("Error evaluating expression");
+            return;
+        }
 
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {

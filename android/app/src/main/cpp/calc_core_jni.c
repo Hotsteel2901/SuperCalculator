@@ -135,6 +135,11 @@ Java_com_supercalc_CalcEngine_evaluateXYArray(JNIEnv* env, jclass clazz,
     if (!str) return NULL;
 
     jsize n = (*env)->GetArrayLength(env, xs);
+    jsize ny = (*env)->GetArrayLength(env, ys);
+    if (n != ny) {
+        (*env)->ReleaseStringUTFChars(env, expr, str);
+        return NULL;
+    }
     jdouble* x_vals = (*env)->GetDoubleArrayElements(env, xs, NULL);
     jdouble* y_vals = (*env)->GetDoubleArrayElements(env, ys, NULL);
     if (!x_vals || !y_vals) {
