@@ -280,9 +280,15 @@ static double apply_func(FuncId f, double v) {
         case F_SIN:  return sin(v);
         case F_COS:  return cos(v);
         case F_TAN:  return tan(v);
-        case F_LOG:  return log10(v);
-        case F_LN:   return log(v);
-        case F_SQRT: return sqrt(v);
+        case F_LOG:
+            if (v <= 0.0) { set_error("log() domain error: argument must be > 0"); return NAN; }
+            return log10(v);
+        case F_LN:
+            if (v <= 0.0) { set_error("ln() domain error: argument must be > 0"); return NAN; }
+            return log(v);
+        case F_SQRT:
+            if (v < 0.0) { set_error("sqrt() domain error: argument must be >= 0"); return NAN; }
+            return sqrt(v);
         case F_EXP:  return exp(v);
         case F_ABS:  return fabs(v);
         default:     return NAN;
@@ -420,24 +426,32 @@ EXPORT double solve_equation(const char* expr, double guess,
     for (int iter = 0; iter < max_iter; iter++) {
         double f, df;
         if (parse_and_eval(expr, x, 0.0, &f) != 0) return NAN;
+        if (isnan(f)) { set_error("Function returned NaN at current point"); return NAN; }
         if (fabs(f) < tol) return x;
         double h = 1e-6 * (fabs(x) + 1.0);
         if (parse_and_eval(expr, x+h, 0.0, &fp) != 0) return NAN;
+        if (isnan(fp)) { set_error("Function returned NaN during derivative evaluation"); return NAN; }
         if (parse_and_eval(expr, x-h, 0.0, &fm) != 0) return NAN;
+        if (isnan(fm)) { set_error("Function returned NaN during derivative evaluation"); return NAN; }
         df = (fp - fm) / (2.0*h);
         if (fabs(df) < 1e-15) {
             double fa; if (parse_and_eval(expr, xmin, 0.0, &fa) != 0) return NAN;
+            if (isnan(fa)) { set_error("Function returned NaN at interval endpoint"); return NAN; }
             double mid = (xmin + xmax)/2.0, fmid;
             if (parse_and_eval(expr, mid, 0.0, &fmid) != 0) return NAN;
+            if (isnan(fmid)) { set_error("Function returned NaN during bisection"); return NAN; }
             if (fa*fmid <= 0) xmax = mid;
             else xmin = mid;
             x = mid;
         } else {
             double nx = x - f/df;
+            if (isnan(nx)) { set_error("Newton step produced NaN"); return NAN; }
             if (nx < xmin || nx > xmax) {
                 double fa; if (parse_and_eval(expr, xmin, 0.0, &fa) != 0) return NAN;
+                if (isnan(fa)) { set_error("Function returned NaN at interval endpoint"); return NAN; }
                 double mid = (xmin+xmax)/2.0, fmid;
                 if (parse_and_eval(expr, mid, 0.0, &fmid) != 0) return NAN;
+                if (isnan(fmid)) { set_error("Function returned NaN during bisection"); return NAN; }
                 if (fa*fmid <= 0) xmax = mid; else xmin = mid;
                 x = mid;
             } else x = nx;
@@ -452,13 +466,16 @@ EXPORT double solve_bisection(const char* expr, double a, double b,
     if (a >= b) { set_error("Invalid interval: a must be < b"); return NAN; }
     double fa, fb, fc, c;
     if (parse_and_eval(expr, a, 0.0, &fa) != 0) return NAN;
+    if (isnan(fa)) { set_error("Function returned NaN at interval endpoint"); return NAN; }
     if (parse_and_eval(expr, b, 0.0, &fb) != 0) return NAN;
+    if (isnan(fb)) { set_error("Function returned NaN at interval endpoint"); return NAN; }
     if (fabs(fa) < tol) return a;
     if (fabs(fb) < tol) return b;
     if (signbit(fa) == signbit(fb)) { set_error("f(a) and f(b) must have opposite signs"); return NAN; }
     for (int i = 0; i < max_iter; i++) {
         c = (a+b)/2.0;
         if (parse_and_eval(expr, c, 0.0, &fc) != 0) return NAN;
+        if (isnan(fc)) { set_error("Function returned NaN during bisection"); return NAN; }
         if (fabs(fc) < tol || (b-a)/2.0 < tol) return c;
         if (signbit(fa) != signbit(fc)) { b = c; fb = fc; }
         else { a = c; fa = fc; }
@@ -481,6 +498,7 @@ EXPORT double integrate_adaptive(const char* expr, double a, double b, double to
         if (isnan(cur)) return NAN;
         if (fabs(cur - prev) < tol) return cur;
     }
+    set_error("Adaptive integration did not converge");
     return cur;
 }
 
@@ -497,17 +515,21 @@ static double golden_section_min(const char* expr, double a, double b, double to
     double fc, fd;
 
     if (parse_and_eval(expr, c, 0.0, &fc) != 0) return NAN;
+    if (isnan(fc)) { set_error("Function returned NaN during extremum search"); return NAN; }
     if (parse_and_eval(expr, d, 0.0, &fd) != 0) return NAN;
+    if (isnan(fd)) { set_error("Function returned NaN during extremum search"); return NAN; }
 
     for (int i = 0; i < max_iter && fabs(b - a) > tol; i++) {
         if (fc < fd) {
             b = d; d = c; fd = fc;
             c = a + resphi * (b - a);
             if (parse_and_eval(expr, c, 0.0, &fc) != 0) return NAN;
+            if (isnan(fc)) { set_error("Function returned NaN during extremum search"); return NAN; }
         } else {
             a = c; c = d; fc = fd;
             d = b - resphi * (b - a);
             if (parse_and_eval(expr, d, 0.0, &fd) != 0) return NAN;
+            if (isnan(fd)) { set_error("Function returned NaN during extremum search"); return NAN; }
         }
     }
     return (b + a) / 2.0;
@@ -526,7 +548,9 @@ EXPORT double find_maximum(const char* expr, double a, double b, double tol, int
     double fc, fd;
 
     if (parse_and_eval(expr, c, 0.0, &fc) != 0) return NAN;
+    if (isnan(fc)) { set_error("Function returned NaN during extremum search"); return NAN; }
     if (parse_and_eval(expr, d, 0.0, &fd) != 0) return NAN;
+    if (isnan(fd)) { set_error("Function returned NaN during extremum search"); return NAN; }
     fc = -fc; fd = -fd;
 
     for (int i = 0; i < max_iter && fabs(b - a) > tol; i++) {
@@ -534,11 +558,13 @@ EXPORT double find_maximum(const char* expr, double a, double b, double tol, int
             b = d; d = c; fd = fc;
             c = a + resphi * (b - a);
             if (parse_and_eval(expr, c, 0.0, &fc) != 0) return NAN;
+            if (isnan(fc)) { set_error("Function returned NaN during extremum search"); return NAN; }
             fc = -fc;
         } else {
             a = c; c = d; fc = fd;
             d = b - resphi * (b - a);
             if (parse_and_eval(expr, d, 0.0, &fd) != 0) return NAN;
+            if (isnan(fd)) { set_error("Function returned NaN during extremum search"); return NAN; }
             fd = -fd;
         }
     }
