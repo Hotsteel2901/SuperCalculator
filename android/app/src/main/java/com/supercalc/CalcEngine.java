@@ -29,6 +29,9 @@ public class CalcEngine {
     /** Evaluate f(x) for multiple x values. */
     public static native double[] evaluateArray(String expr, double[] xs);
 
+    /** Evaluate f(x,y) for multiple (x,y) pairs. xs and ys must have the same length. */
+    public static native double[] evaluateXYArray(String expr, double[] xs, double[] ys);
+
     /** Find a local minimum of f(x) on [a, b]. */
     public static native double findMinimum(String expr, double a, double b);
 

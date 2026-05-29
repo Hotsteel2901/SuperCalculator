@@ -376,10 +376,49 @@ EXPORT double evaluate_xy(const char* expr, double x, double y) {
 
 EXPORT void evaluate_array(const char* expr, const double* xs, double* out, int n) {
     if (!expr || !xs || !out || n <= 0) return;
+    Token toks[MAX_TOKENS];
+    RPN   rpn[MAX_RPN];
+    g_error[0] = '\0';
+    int nt = tokenize(expr, toks, MAX_TOKENS);
+    if (nt < 0) {
+        for (int i = 0; i < n; i++) out[i] = NAN;
+        return;
+    }
+    int nr = shunt(toks, nt, rpn, MAX_RPN);
+    if (nr < 0) {
+        for (int i = 0; i < n; i++) out[i] = NAN;
+        return;
+    }
     for (int i = 0; i < n; i++) {
         double r;
-        if (parse_and_eval(expr, xs[i], 0.0, &r) != 0) out[i] = NAN;
-        else out[i] = r;
+        if (eval_rpn(rpn, nr, xs[i], 0.0, &r) != 0)
+            out[i] = NAN;
+        else
+            out[i] = r;
+    }
+}
+
+EXPORT void evaluate_xy_array(const char* expr, const double* xs, const double* ys, double* out, int n) {
+    if (!expr || !xs || !ys || !out || n <= 0) return;
+    Token toks[MAX_TOKENS];
+    RPN   rpn[MAX_RPN];
+    g_error[0] = '\0';
+    int nt = tokenize(expr, toks, MAX_TOKENS);
+    if (nt < 0) {
+        for (int i = 0; i < n; i++) out[i] = NAN;
+        return;
+    }
+    int nr = shunt(toks, nt, rpn, MAX_RPN);
+    if (nr < 0) {
+        for (int i = 0; i < n; i++) out[i] = NAN;
+        return;
+    }
+    for (int i = 0; i < n; i++) {
+        double r;
+        if (eval_rpn(rpn, nr, xs[i], ys[i], &r) != 0)
+            out[i] = NAN;
+        else
+            out[i] = r;
     }
 }
 
