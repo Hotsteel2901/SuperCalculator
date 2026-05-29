@@ -450,6 +450,18 @@ class SuperCalcApp:
         ttk.Button(trow_tan, text="Clear Lines",
                    command=self._clear_tangent_normal).pack(side=tk.LEFT, padx=2)
 
+        # --- Arc Length ---
+        frm_arc = ttk.LabelFrame(scroll_frame, text="Arc Length",
+                                 style="Dark.TLabelframe")
+        frm_arc.pack(fill=tk.X, padx=8, pady=4)
+
+        arow = ttk.Frame(frm_arc, style="Dark.TFrame")
+        arow.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(arow, text="Uses integration bounds [a,b] above",
+                  style="Dark.TLabel").pack(side=tk.LEFT, padx=2)
+        ttk.Button(arow, text="Compute Arc Length",
+                   command=self._on_arc_length).pack(side=tk.RIGHT, padx=2)
+
         # --- Function Table ---
         frm_table = ttk.LabelFrame(scroll_frame, text="Function Table & Export",
                                    style="Dark.TLabelframe")
@@ -1366,6 +1378,30 @@ class SuperCalcApp:
             f"f(x) = {expr}\n"
             f"Integrate [{a}, {b}] f(x) dx = {result:.10g}")
         self.status_var.set(f"Integrate [{a},{b}] = {result:.10g}")
+
+    def _on_arc_length(self):
+        expr = self._get_active_expression()
+        if not expr:
+            return
+        try:
+            a = float(self._var_int_a.get())
+            b = float(self._var_int_b.get())
+        except ValueError:
+            messagebox.showerror("Error", "Invalid arc length bounds.")
+            return
+        if a >= b:
+            messagebox.showerror("Error", "a must be less than b.")
+            return
+        expr_sub = self._substitute_params(expr)
+        result = CalcEngine.arc_length(expr_sub, a, b)
+        if result is None:
+            messagebox.showerror("Error", "Could not compute arc length.")
+            return
+        messagebox.showinfo(
+            "Arc Length Result",
+            f"f(x) = {expr}\n"
+            f"Arc length from {a} to {b} = {result:.10g}")
+        self.status_var.set(f"Arc length [{a},{b}] = {result:.10g}")
 
     # ------------------------------------------------------------------
     #  Equation solving

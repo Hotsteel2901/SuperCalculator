@@ -56,6 +56,7 @@ public class CalcActivity extends AppCompatActivity {
         MaterialButton btnTable = findViewById(R.id.btn_table);
         MaterialButton btnTangent = findViewById(R.id.btn_tangent);
         MaterialButton btnNormal = findViewById(R.id.btn_normal);
+        MaterialButton btnArcLength = findViewById(R.id.btn_arc_length);
 
         btnEval  .setOnClickListener(v -> onEvaluate());
         btnDeriv .setOnClickListener(v -> onDerivative());
@@ -71,6 +72,7 @@ public class CalcActivity extends AppCompatActivity {
         btnTable.setOnClickListener(v -> onGenerateTable());
         btnTangent.setOnClickListener(v -> onTangentNormal(true));
         btnNormal.setOnClickListener(v -> onTangentNormal(false));
+        btnArcLength.setOnClickListener(v -> onArcLength());
 
         // Preset chips — set expression text and auto-evaluate
         Chip chipSin = findViewById(R.id.chip_sin);
@@ -271,6 +273,31 @@ public class CalcActivity extends AppCompatActivity {
                 resultView.append(label + " at x=" + fmt(x0) + ": y = " + fmt(ns) + "*(x-" + fmt(x0) + ") + " + fmt(y0) + "\n");
             }
         }
+    }
+
+    private void onArcLength() {
+        String e = getExpr();
+        if (e.isEmpty()) { toast("Enter an expression"); return; }
+        double a = getA();
+        double b = getB();
+        if (a >= b) { toast("a must be less than b"); return; }
+
+        int n = 5000;
+        double h = (b - a) / n;
+        double length = 0.0;
+        for (int i = 0; i < n; i++) {
+            double x1 = a + i * h;
+            double x2 = x1 + h;
+            double y1 = CalcEngine.evaluate(e, x1);
+            double y2 = CalcEngine.evaluate(e, x2);
+            if (Double.isNaN(y1) || Double.isNaN(y2)) {
+                continue;
+            }
+            double dx = h;
+            double dy = y2 - y1;
+            length += Math.sqrt(dx * dx + dy * dy);
+        }
+        resultView.append("Arc Length [" + fmt(a) + ", " + fmt(b) + "] = " + fmt(length) + "\n");
     }
 
     private void onGenerateTable() {

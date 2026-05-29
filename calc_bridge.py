@@ -222,3 +222,25 @@ class CalcEngine:
                  n: int = 1000) -> Optional[float]:
         """Definite integral over [a,b] using Simpson's rule (alias for integrate)."""
         return CalcEngine.integrate(expr, a, b, n)
+
+    @staticmethod
+    def arc_length(expr: str, a: float, b: float, n: int = 5000) -> Optional[float]:
+        """Approximate arc length of f(x) over [a,b] using chord summation."""
+        if a >= b:
+            return None
+        try:
+            import math as _math
+            h = (b - a) / n
+            xs = [a + i * h for i in range(n + 1)]
+            ys = CalcEngine.evaluate_array(expr, xs)
+            length = 0.0
+            for i in range(n):
+                y1 = ys[i]
+                y2 = ys[i + 1]
+                if y1 is None or y2 is None:
+                    continue
+                dy = y2 - y1
+                length += _math.sqrt(h * h + dy * dy)
+            return length
+        except Exception:
+            return None
