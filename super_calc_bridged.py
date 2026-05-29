@@ -421,7 +421,7 @@ class SuperCalcApp:
                                   style="Dark.TLabelframe")
         frm_mark.pack(fill=tk.X, padx=8, pady=4)
 
-        ttk.Label(frm_mark, text="Click on 2D plot to mark, or enter x:",
+        ttk.Label(frm_mark, text="Left-click to mark, right-click to delete, or enter x:",
                   style="Dark.TLabel").pack(anchor=tk.W, padx=6, pady=(6, 0))
 
         mark_row = ttk.Frame(frm_mark, style="Dark.TFrame")
@@ -985,10 +985,41 @@ class SuperCalcApp:
         if self.ax_2d is None or event.inaxes != self.ax_2d:
             return
         x, y = event.xdata, event.ydata
-        if x is not None and y is not None:
+        if x is None or y is None:
+            return
+
+        # Left click (button 1) – add point
+        if event.button == 1:
             self.marked_points.append((x, y))
             self._plot_all()
             self.status_var.set(f"Marked point: ({x:.4f}, {y:.4f})")
+
+        # Right click (button 3) – delete nearest marked point
+        elif event.button == 3:
+            if not self.marked_points:
+                self.status_var.set("No points to delete")
+                return
+
+            nearest_idx = 0
+            nearest_dist = float('inf')
+            for i, (px, py) in enumerate(self.marked_points):
+                dist = ((px - x) ** 2 + (py - y) ** 2) ** 0.5
+                if dist < nearest_dist:
+                    nearest_dist = dist
+                    nearest_idx = i
+
+            # Threshold = ~15 pixels converted to data coordinates
+            pt_px = self.ax_2d.transData.transform((x, y))
+            pt_px_away = (pt_px[0] + 15, pt_px[1])
+            data_away = self.ax_2d.transData.inverted().transform(pt_px_away)
+            threshold = abs(data_away[0] - x)
+
+            if nearest_dist < threshold:
+                removed = self.marked_points.pop(nearest_idx)
+                self._plot_all()
+                self.status_var.set(f"Deleted point: ({removed[0]:.4f}, {removed[1]:.4f})")
+            else:
+                self.status_var.set("Right-click: no point nearby to delete")
 
     def _on_mark_point(self):
         try:
