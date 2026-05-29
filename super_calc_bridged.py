@@ -79,6 +79,8 @@ PRESET_FUNCTIONS = {
     "3D: x^2+y^2":         "x^2+y^2",
     "3D: sin(x)*cos(y)":   "sin(x)*cos(y)",
     "3D: sin(sqrt(x^2+y^2))": "sin(sqrt(x^2+y^2))",
+    "FFT: sin(2*pi*x) + 0.5*sin(6*pi*x)": "sin(2*pi*x)+0.5*sin(6*pi*x)",
+    "FFT: sin(5*x) + cos(10*x)": "sin(5*x)+cos(10*x)",
 }
 
 DEFAULT_COLORS = [
@@ -182,6 +184,14 @@ class SuperCalcApp:
         self.canvas_3d = None
         self.toolbar_3d = None
 
+        # FFT spectrum window
+        self.window_fft = None
+        self.fig_fft = None
+        self.ax_fft_amp = None
+        self.ax_fft_phase = None
+        self.canvas_fft = None
+        self.toolbar_fft = None
+
         self.root.protocol("WM_DELETE_WINDOW", self._on_main_close)
         self._build_ui()
         self._add_curve("sin(x)")
@@ -192,6 +202,8 @@ class SuperCalcApp:
             self.window_2d.destroy()
         if self.window_3d is not None and self.window_3d.winfo_exists():
             self.window_3d.destroy()
+        if self.window_fft is not None and self.window_fft.winfo_exists():
+            self.window_fft.destroy()
         self.root.destroy()
 
     # ------------------------------------------------------------------
@@ -490,6 +502,27 @@ class SuperCalcApp:
 
         self._table_data = []   # list of (x, y) tuples
         self._table_expr = ""   # expression used for last table
+        self._fft_data = {}     # last FFT result dict
+
+        # --- Fourier Transform & Spectrum ---
+        frm_fft = ttk.LabelFrame(scroll_frame, text="Fourier Transform & Spectrum",
+                                 style="Dark.TLabelframe")
+        frm_fft.pack(fill=tk.X, padx=8, pady=4)
+
+        fft_row1 = ttk.Frame(frm_fft, style="Dark.TFrame")
+        fft_row1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(fft_row1, text="Samples:", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_fft_n = tk.StringVar(value="1024")
+        ttk.Entry(fft_row1, textvariable=self._var_fft_n, width=8).pack(side=tk.LEFT, padx=2)
+        ttk.Label(fft_row1, text="Uses [a,b] from Integrate bounds",
+                  style="Dark.TLabel").pack(side=tk.LEFT, padx=(8, 0))
+
+        fft_row2 = ttk.Frame(frm_fft, style="Dark.TFrame")
+        fft_row2.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Button(fft_row2, text="Compute FFT",
+                   command=self._on_fft_compute).pack(side=tk.LEFT, padx=2)
+        ttk.Button(fft_row2, text="Export Spectrum CSV",
+                   command=self._on_export_fft_csv).pack(side=tk.LEFT, padx=2)
 
         # --- Status ---
         self.status_var = tk.StringVar(value="Ready.")
@@ -569,6 +602,44 @@ class SuperCalcApp:
         self.ax_3d = None
         self.canvas_3d = None
         self.toolbar_3d = None
+
+    def _ensure_fft_window(self):
+        if self.window_fft is not None and self.window_fft.winfo_exists():
+            return
+        self.window_fft = tk.Toplevel(self.root)
+        self.window_fft.title("FFT Spectrum Analysis")
+        self.window_fft.geometry("900x750")
+        self.window_fft.minsize(600, 500)
+        self.window_fft.configure(bg="#1e1e2e")
+        self.window_fft.protocol("WM_DELETE_WINDOW", self._on_fft_window_close)
+
+        self.fig_fft = Figure(figsize=(9, 7.5), dpi=100, facecolor="#1e1e2e")
+        self.ax_fft_amp = self.fig_fft.add_subplot(211)
+        self.ax_fft_phase = self.fig_fft.add_subplot(212)
+        self._setup_axes(self.ax_fft_amp, is_3d=False)
+        self._setup_axes(self.ax_fft_phase, is_3d=False)
+        self.ax_fft_amp.set_title("Amplitude Spectrum", color="#cdd6f4", fontsize=11)
+        self.ax_fft_phase.set_title("Phase Spectrum", color="#cdd6f4", fontsize=11)
+        self.ax_fft_amp.set_xlabel("Frequency")
+        self.ax_fft_amp.set_ylabel("Amplitude")
+        self.ax_fft_phase.set_xlabel("Frequency")
+        self.ax_fft_phase.set_ylabel("Phase (rad)")
+
+        self.canvas_fft = FigureCanvasTkAgg(self.fig_fft, master=self.window_fft)
+        self.canvas_fft.draw()
+        self.toolbar_fft = NavigationToolbar2Tk(self.canvas_fft, self.window_fft)
+        self.toolbar_fft.update()
+        self.canvas_fft.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
+
+    def _on_fft_window_close(self):
+        if self.window_fft is not None:
+            self.window_fft.destroy()
+        self.window_fft = None
+        self.fig_fft = None
+        self.ax_fft_amp = None
+        self.ax_fft_phase = None
+        self.canvas_fft = None
+        self.toolbar_fft = None
 
     # ------------------------------------------------------------------
     #  Input Panel
@@ -726,6 +797,7 @@ class SuperCalcApp:
         self.tangent_data.clear()
         self.normal_data.clear()
         self._var_mark_x.set("")
+        self._fft_data = {}
         if self.ax_2d is not None:
             self.ax_2d.clear()
             self._setup_axes(self.ax_2d, is_3d=False)
@@ -1434,8 +1506,97 @@ class SuperCalcApp:
             f"Arc length from {a} to {b} = {result:.10g}")
         self.status_var.set(f"Arc length [{a},{b}] = {result:.10g}")
 
+    def _on_fft_compute(self):
+        expr = self._get_active_expression()
+        if not expr:
+            return
+        try:
+            a = float(self._var_int_a.get())
+            b = float(self._var_int_b.get())
+            n = int(self._var_fft_n.get())
+        except ValueError:
+            messagebox.showerror("Error", "Invalid FFT parameters.")
+            return
+        if a >= b:
+            messagebox.showerror("Error", "a must be less than b.")
+            return
+        if n < 2 or n > 65536:
+            messagebox.showerror("Error", "Samples must be between 2 and 65536.")
+            return
+
+        expr_sub = self._substitute_params(expr)
+        result = CalcEngine.fft_spectrum(expr_sub, a, b, n)
+        if result is None:
+            messagebox.showerror("Error", "Could not compute FFT spectrum.")
+            return
+        self._fft_data = result
+        self._ensure_fft_window()
+        self._plot_fft(result, expr)
+        self.status_var.set(f"FFT computed: {len(result['freqs'])} frequency bins")
+
+    def _plot_fft(self, result, expr):
+        if self.ax_fft_amp is None or self.ax_fft_phase is None:
+            return
+        freqs = np.array(result['freqs'])
+        amps = np.array(result['amps'])
+        phases = np.array(result['phases'])
+
+        self.ax_fft_amp.clear()
+        self.ax_fft_phase.clear()
+        self._setup_axes(self.ax_fft_amp, is_3d=False)
+        self._setup_axes(self.ax_fft_phase, is_3d=False)
+
+        self.ax_fft_amp.set_title(f"Amplitude Spectrum — {expr}", color="#cdd6f4", fontsize=11)
+        self.ax_fft_phase.set_title(f"Phase Spectrum — {expr}", color="#cdd6f4", fontsize=11)
+        self.ax_fft_amp.set_xlabel("Frequency")
+        self.ax_fft_amp.set_ylabel("Amplitude")
+        self.ax_fft_phase.set_xlabel("Frequency")
+        self.ax_fft_phase.set_ylabel("Phase (rad)")
+
+        # Amplitude plot with stem-like visualization using vlines for performance
+        self.ax_fft_amp.plot(freqs, amps, color="#00e5c9", linewidth=1.2, alpha=0.9)
+        self.ax_fft_amp.fill_between(freqs, amps, color="#00e5c9", alpha=0.15)
+        # Highlight dominant frequencies
+        if len(amps) > 1:
+            peak_idx = int(np.argmax(amps[1:])) + 1
+            if peak_idx < len(freqs) and peak_idx < len(amps):
+                self.ax_fft_amp.plot(freqs[peak_idx], amps[peak_idx], 'ro', markersize=8)
+                self.ax_fft_amp.annotate(f"f={freqs[peak_idx]:.4g}, A={amps[peak_idx]:.4g}",
+                                         xy=(freqs[peak_idx], amps[peak_idx]),
+                                         xytext=(10, 10), textcoords='offset points',
+                                         color='#f38ba8', fontsize=9)
+
+        # Phase plot
+        self.ax_fft_phase.plot(freqs, phases, color="#4f8cff", linewidth=1.0, alpha=0.8)
+        self.ax_fft_phase.axhline(y=0, color="#585b70", linewidth=0.5, linestyle="--")
+
+        self.canvas_fft.draw()
+
+    def _on_export_fft_csv(self):
+        if not self._fft_data or not self._fft_data.get('freqs'):
+            messagebox.showinfo("Info", "Compute FFT first.")
+            return
+        path = filedialog.asksaveasfilename(
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+            title="Export FFT Spectrum"
+        )
+        if not path:
+            return
+        try:
+            with open(path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                writer.writerow(["Frequency", "Amplitude", "Phase_rad"])
+                for fr, am, ph in zip(self._fft_data['freqs'],
+                                      self._fft_data['amps'],
+                                      self._fft_data['phases']):
+                    writer.writerow([fr, am, ph])
+            self.status_var.set(f"Exported FFT to {os.path.basename(path)}")
+        except Exception as e:
+            messagebox.showerror("Export Error", str(e))
+
     # ------------------------------------------------------------------
-    #  Equation solving
+    #  Equation Solver
     # ------------------------------------------------------------------
     def _on_solve(self):
         expr = self._get_active_expression()

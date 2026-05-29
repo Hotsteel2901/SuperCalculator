@@ -80,7 +80,8 @@
         }
 
         @media (hover: none) {
-            .card:hover {
+            .card:hover,
+            .glass:hover {
                 transform: none;
                 box-shadow: none;
                 border-color: var(--glass-border);
@@ -93,6 +94,17 @@
                 transform: none;
                 box-shadow: none;
                 border-color: var(--glass-border);
+            }
+            .btn-icon:hover {
+                transform: none;
+                box-shadow: none;
+                border-color: var(--glass-border);
+            }
+            .btn:hover::before {
+                left: -100%;
+            }
+            .footer-link:hover::after {
+                width: 0;
             }
         }
 
@@ -709,11 +721,15 @@
             border-radius: 14px;
             padding: 20px;
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
             font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Courier New', monospace;
             font-size: 14px;
             color: var(--text-muted);
             border: 1px solid var(--glass-border);
             line-height: 1.8;
+            max-width: 100%;
+            word-wrap: normal;
+            white-space: pre;
         }
 
         .code-block:hover {
@@ -1375,6 +1391,21 @@
                 </div>
                 <div class="card glass reveal">
                     <div class="card-icon">
+                        <!-- Spectrum / waveform bars -->
+                        <svg viewBox="0 0 24 24">
+                            <line x1="2" y1="20" x2="22" y2="20"/>
+                            <line x1="4" y1="2" x2="4" y2="22"/>
+                            <rect x="6" y="10" width="2" height="8" rx="0.5"/>
+                            <rect x="10" y="6" width="2" height="12" rx="0.5"/>
+                            <rect x="14" y="14" width="2" height="4" rx="0.5"/>
+                            <rect x="18" y="8" width="2" height="10" rx="0.5"/>
+                        </svg>
+                    </div>
+                    <h3 class="card-title">傅里叶变换与频谱分析</h3>
+                    <p class="card-text">对任意函数进行 FFT 频谱分析，自动识别主频分量，绘制幅度谱与相位谱，支持 CSV 导出</p>
+                </div>
+                <div class="card glass reveal">
+                    <div class="card-icon">
                         <!-- Adjustable sliders -->
                         <svg viewBox="0 0 24 24">
                             <line x1="4" y1="6" x2="20" y2="6"/>
@@ -1703,6 +1734,12 @@
                         <code>CalcEngine.arc_length("sin(x)", 0, 3.141592653589793)<br># -> ~3.820</code>
                     </div>
                 </div>
+                <div class="card glass reveal">
+                    <h3 class="card-title">傅里叶变换频谱</h3>
+                    <div class="code-block">
+                        <code>CalcEngine.fft_spectrum("sin(2*pi*x)+0.5*sin(6*pi*x)", 0, 2, 1024)<br># -> {'freqs': [...], 'amps': [...], 'phases': [...]}</code>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -1838,6 +1875,10 @@
             if (savedTheme) {
                 isDarkMode = savedTheme === 'dark';
                 document.documentElement.setAttribute('data-theme', savedTheme);
+                updateThemeIcon();
+            } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                isDarkMode = false;
+                document.documentElement.setAttribute('data-theme', 'light');
                 updateThemeIcon();
             }
 
