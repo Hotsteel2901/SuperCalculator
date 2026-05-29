@@ -244,3 +244,41 @@ class CalcEngine:
             return length
         except Exception:
             return None
+
+    @staticmethod
+    def fft_spectrum(expr: str, a: float, b: float, n: int = 1024):
+        """Compute FFT amplitude and phase spectrum for f(x) over [a,b].
+
+        Returns a dict with keys:
+            'freqs'  : list of positive frequencies (Hz, assuming unit spacing)
+            'amps'   : list of amplitudes
+            'phases' : list of phases (radians)
+            'xs'     : sample x values
+            'ys'     : sample y values (real)
+        Returns None on error.
+        """
+        if a >= b or n < 2:
+            return None
+        try:
+            import numpy as np
+            xs = np.linspace(a, b, n, endpoint=False)
+            ys = CalcEngine.evaluate_array(expr, xs.tolist())
+            y_arr = np.array([0.0 if y is None or _isnan(y) else float(y)
+                              for y in ys])
+            # Remove DC offset (mean) for cleaner spectrum
+            y_arr = y_arr - np.mean(y_arr)
+            Y = np.fft.rfft(y_arr)
+            freqs = np.fft.rfftfreq(n, d=(b - a) / n)
+            amps = np.abs(Y) * (2.0 / n)
+            # Fix DC component scaling
+            amps[0] = amps[0] / 2.0 if len(amps) > 0 else amps[0]
+            phases = np.angle(Y)
+            return {
+                'freqs': freqs.tolist(),
+                'amps': amps.tolist(),
+                'phases': phases.tolist(),
+                'xs': xs.tolist(),
+                'ys': y_arr.tolist(),
+            }
+        except Exception:
+            return None

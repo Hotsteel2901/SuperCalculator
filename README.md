@@ -40,14 +40,16 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
  - **Curve Intersection Finder** — find all intersection points between any two 2D curves with sign-change detection and bisection refinement, results annotated on the plot
  - **Tangent & Normal Lines** — draw tangent and normal lines at any point on a 2D curve, visualized with dashed lines and labeled on the plot
  - **Arc Length** — approximate the arc length of a curve over any interval using adaptive chord summation
- - **Preset Functions** — quick-select from 19 common functions (including 3D presets)
- - **Parameter System** — auto-detects extra parameters (e.g., `a`, `b`) and provides live input fields
+  - **Fourier Transform & Spectrum Analysis** — FFT amplitude and phase spectrum for any function, with dominant-frequency detection and CSV export
+  - **Preset Functions** — quick-select from 21 common functions (including 3D and FFT presets)
+  - **Parameter System** — auto-detects extra parameters (e.g., `a`, `b`) and provides live input fields
   - **Coordinate Marking** — left-click to mark points, right-click to delete the nearest marked point, or enter an x value to auto-locate
  - **Quick Input Panel** — popup keypad for fast insertion of operators, functions, and constants
  - **Factorial Support** — postfix `!` operator for non-negative integers
  - **Customizable View** — adjustable X/Y/Z ranges, step size, grid toggle
  - **Interactive Plot** — Matplotlib toolbar for zoom, pan, and export
- - **Function Table & CSV Export** — generate a data table of x and f(x) over any interval, then export to CSV or copy to clipboard
+  - **Function Table & CSV Export** — generate a data table of x and f(x) over any interval, then export to CSV or copy to clipboard
+  - **FFT Spectrum Export** — export frequency, amplitude and phase data to CSV for external analysis
  - **Windows EXE** — standalone executable, no Python installation required
  - **Android App** — standalone APK with Material Design 3 UI and JNI bridge, now including 3D surface plotting with touch rotation
 
@@ -134,6 +136,11 @@ SuperCalculator/
   index.html               Project landing page
 ```
 
+## What's New
+
+- **Fourier Transform & Spectrum Analysis** — FFT amplitude and phase spectrum computation with dominant-frequency detection and CSV export. Available on both desktop (Python) and Android (DFT implementation).
+- **21 Preset Functions** — now includes dedicated FFT demonstration expressions for instant spectrum analysis.
+
 ## CI / CD
 
 GitHub Actions workflows are available (manual trigger):
@@ -181,6 +188,12 @@ CalcEngine.solve_bisection("(sin(x))-(cos(x))", 0, 3.14)  # -> ~0.785
 
 # Arc length
 CalcEngine.arc_length("sin(x)", 0, 3.141592653589793)  # -> ~3.820
+
+# FFT Spectrum
+spec = CalcEngine.fft_spectrum("sin(2*pi*x)+0.5*sin(6*pi*x)", 0, 2, 1024)
+# spec['freqs'] -> list of frequencies
+# spec['amps']  -> list of amplitudes
+# spec['phases']-> list of phases (radians)
 ```
 
 ## Numerical Methods

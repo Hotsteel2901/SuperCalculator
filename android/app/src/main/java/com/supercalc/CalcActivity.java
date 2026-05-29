@@ -57,6 +57,7 @@ public class CalcActivity extends AppCompatActivity {
         MaterialButton btnTangent = findViewById(R.id.btn_tangent);
         MaterialButton btnNormal = findViewById(R.id.btn_normal);
         MaterialButton btnArcLength = findViewById(R.id.btn_arc_length);
+        MaterialButton btnFFT = findViewById(R.id.btn_fft);
 
         btnEval  .setOnClickListener(v -> onEvaluate());
         btnDeriv .setOnClickListener(v -> onDerivative());
@@ -73,6 +74,7 @@ public class CalcActivity extends AppCompatActivity {
         btnTangent.setOnClickListener(v -> onTangentNormal(true));
         btnNormal.setOnClickListener(v -> onTangentNormal(false));
         btnArcLength.setOnClickListener(v -> onArcLength());
+        btnFFT.setOnClickListener(v -> onFFT());
 
         // Preset chips — set expression text and auto-evaluate
         Chip chipSin = findViewById(R.id.chip_sin);
@@ -305,6 +307,86 @@ public class CalcActivity extends AppCompatActivity {
             length += Math.sqrt(dx * dx + dy * dy);
         }
         resultView.append("Arc Length [" + fmt(a) + ", " + fmt(b) + "] = " + fmt(length) + "\n");
+    }
+
+    private void onFFT() {
+        String e = getExpr();
+        if (e.isEmpty()) { toast("Enter an expression"); return; }
+        double a = getA();
+        double b = getB();
+        if (a >= b) { toast("a must be less than b"); return; }
+        int n = 256; // default samples for DFT
+        double step = (b - a) / n;
+        double[] xs = new double[n];
+        double[] ys = new double[n];
+        for (int i = 0; i < n; i++) {
+            xs[i] = a + i * step;
+            double val = CalcEngine.evaluate(e, xs[i]);
+            ys[i] = Double.isNaN(val) ? 0.0 : val;
+        }
+        // Remove DC offset
+        double mean = 0.0;
+        for (double v : ys) mean += v;
+        mean /= n;
+        for (int i = 0; i < n; i++) ys[i] -= mean;
+
+        int m = n / 2 + 1;
+        double[] amps = new double[m];
+        double[] phases = new double[m];
+        double[] freqs = new double[m];
+        double df = 1.0 / (b - a); // frequency resolution
+        for (int k = 0; k < m; k++) {
+            double real = 0.0, imag = 0.0;
+            for (int i = 0; i < n; i++) {
+                double angle = -2.0 * Math.PI * k * i / n;
+                real += ys[i] * Math.cos(angle);
+                imag += ys[i] * Math.sin(angle);
+            }
+            double amp = (2.0 / n) * Math.sqrt(real * real + imag * imag);
+            if (k == 0) amp /= 2.0;
+            amps[k] = amp;
+            phases[k] = Math.atan2(imag, real);
+            freqs[k] = k * df;
+        }
+
+        // Find dominant frequency
+        int peakIdx = 1;
+        for (int i = 2; i < m; i++) {
+            if (amps[i] > amps[peakIdx]) peakIdx = i;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("DFT Spectrum (").append(n).append(" samples)\n");
+        sb.append("Dominant: f=").append(fmt(freqs[peakIdx]))
+          .append(" A=").append(fmt(amps[peakIdx])).append("\n\n");
+        int show = Math.min(m, 16);
+        sb.append("Freq\t\tAmp\t\tPhase\n");
+        sb.append("--------------------------------\n");
+        for (int i = 0; i < show; i++) {
+            sb.append(fmt(freqs[i])).append("\t")
+              .append(fmt(amps[i])).append("\t")
+              .append(fmt(phases[i])).append("\n");
+        }
+        if (m > show) sb.append("... and ").append(m - show).append(" more bins\n");
+
+        android.widget.TextView tv = new android.widget.TextView(this);
+        tv.setText(sb.toString());
+        tv.setTypeface(android.graphics.Typeface.MONOSPACE);
+        tv.setTextSize(13);
+        tv.setPadding(40, 24, 40, 24);
+        tv.setTextColor(android.graphics.Color.parseColor("#cdd6f4"));
+        tv.setBackgroundColor(android.graphics.Color.parseColor("#181825"));
+
+        android.widget.ScrollView sv = new android.widget.ScrollView(this);
+        sv.addView(tv);
+
+        new androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert)
+            .setTitle("FFT Spectrum")
+            .setView(sv)
+            .setPositiveButton("Close", null)
+            .show();
+
+        resultView.append("FFT: dominant f=" + fmt(freqs[peakIdx]) + " A=" + fmt(amps[peakIdx]) + "\n");
     }
 
     private void onGenerateTable() {
