@@ -42,7 +42,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
  - **Arc Length** — approximate the arc length of a curve over any interval using adaptive chord summation
  - **Preset Functions** — quick-select from 19 common functions (including 3D presets)
  - **Parameter System** — auto-detects extra parameters (e.g., `a`, `b`) and provides live input fields
- - **Coordinate Marking** — click on the plot to mark points, or enter an x value to auto-locate
+  - **Coordinate Marking** — left-click to mark points, right-click to delete the nearest marked point, or enter an x value to auto-locate
  - **Quick Input Panel** — popup keypad for fast insertion of operators, functions, and constants
  - **Factorial Support** — postfix `!` operator for non-negative integers
  - **Customizable View** — adjustable X/Y/Z ranges, step size, grid toggle

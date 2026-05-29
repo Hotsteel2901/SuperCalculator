@@ -3,6 +3,7 @@ package com.supercalc;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.widget.NestedScrollView;
@@ -17,6 +18,9 @@ import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.listener.OnChartGestureListener;
+import com.github.mikephil.charting.listener.ChartTouchListener;
+import com.github.mikephil.charting.utils.MPPointD;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,6 +34,10 @@ public class PlotActivity extends AppCompatActivity {
     private ArrayList<ArrayList<Entry>> allEntries;
     private ArrayList<String> allExpressions;
     private ArrayList<Integer> curveColors;
+    
+    // Marked points for coordinate marking
+    private ArrayList<Entry> markedPoints;
+    private LineDataSet markedPointDataSet;
     
     private static final int[] COLOR_PALETTE = {
         Color.parseColor("#1f77b4"),
@@ -47,6 +55,7 @@ public class PlotActivity extends AppCompatActivity {
     private static final int COLOR_GRID = Color.parseColor("#45475a");
     private static final int COLOR_TEXT = Color.parseColor("#cdd6f4");
     private static final int COLOR_BG = Color.parseColor("#181825");
+    private static final int MARK_COLOR = Color.parseColor("#f38ba8");
     
     private int colorIndex = 0;
 
@@ -71,6 +80,7 @@ public class PlotActivity extends AppCompatActivity {
         allEntries = new ArrayList<>();
         allExpressions = new ArrayList<>();
         curveColors = new ArrayList<>();
+        markedPoints = new ArrayList<>();
         
         // Restore state after configuration change
         if (savedInstanceState != null) {
@@ -95,6 +105,102 @@ public class PlotActivity extends AppCompatActivity {
         lineChart.setDoubleTapToZoomEnabled(true);
         
         setupChart();
+        setupGestureListener();
+    }
+    
+    private void setupGestureListener() {
+        lineChart.setOnChartGestureListener(new OnChartGestureListener() {
+            @Override
+            public void onChartGestureStart(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {}
+            
+            @Override
+            public void onChartGestureEnd(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {}
+            
+            @Override
+            public void onChartLongPressed(MotionEvent me) {
+                if (markedPoints.isEmpty()) return;
+                
+                MPPointD point = lineChart.getTransformer(YAxis.AxisDependency.LEFT).getValuesByTouchPoint(me.getX(), me.getY());
+                float x = (float) point.x;
+                float y = (float) point.y;
+                MPPointD.recycleInstance(point);
+                
+                float nearestDist = Float.MAX_VALUE;
+                int nearestIdx = -1;
+                for (int i = 0; i < markedPoints.size(); i++) {
+                    Entry e = markedPoints.get(i);
+                    float dx = e.getX() - x;
+                    float dy = e.getY() - y;
+                    float dist = (float) Math.sqrt(dx * dx + dy * dy);
+                    if (dist < nearestDist) {
+                        nearestDist = dist;
+                        nearestIdx = i;
+                    }
+                }
+                
+                if (nearestIdx >= 0) {
+                    float xRange = lineChart.getXAxis().getAxisMaximum() - lineChart.getXAxis().getAxisMinimum();
+                    float yRange = lineChart.getAxisLeft().getAxisMaximum() - lineChart.getAxisLeft().getAxisMinimum();
+                    float threshold = Math.max(xRange, yRange) * 0.05f;
+                    if (nearestDist < threshold) {
+                        markedPoints.remove(nearestIdx);
+                        refreshMarkedPoints();
+                        toast("Deleted marked point");
+                    }
+                }
+            }
+            
+            @Override
+            public void onChartDoubleTapped(MotionEvent me) {}
+            
+            @Override
+            public void onChartSingleTapped(MotionEvent me) {
+                MPPointD point = lineChart.getTransformer(YAxis.AxisDependency.LEFT).getValuesByTouchPoint(me.getX(), me.getY());
+                float x = (float) point.x;
+                float y = (float) point.y;
+                MPPointD.recycleInstance(point);
+                
+                markedPoints.add(new Entry(x, y));
+                refreshMarkedPoints();
+                toast(String.format("Marked point: (%.4g, %.4g)", x, y));
+            }
+            
+            @Override
+            public void onChartFling(MotionEvent me1, MotionEvent me2, float velocityX, float velocityY) {}
+            
+            @Override
+            public void onChartScale(MotionEvent me, float scaleX, float scaleY) {}
+            
+            @Override
+            public void onChartTranslate(MotionEvent me, float dX, float dY) {}
+        });
+    }
+    
+    private void refreshMarkedPoints() {
+        if (markedPointDataSet == null) {
+            LineData data = lineChart.getData();
+            if (data == null) return;
+            
+            markedPointDataSet = new LineDataSet(new ArrayList<>(), "Marked Points");
+            markedPointDataSet.setColor(Color.TRANSPARENT);
+            markedPointDataSet.setDrawCircles(true);
+            markedPointDataSet.setCircleColor(MARK_COLOR);
+            markedPointDataSet.setCircleRadius(6f);
+            markedPointDataSet.setCircleHoleRadius(3f);
+            markedPointDataSet.setCircleHoleColor(MARK_COLOR);
+            markedPointDataSet.setDrawValues(false);
+            markedPointDataSet.setHighlightEnabled(false);
+            data.addDataSet(markedPointDataSet);
+        }
+        
+        markedPointDataSet.clear();
+        for (Entry e : markedPoints) {
+            markedPointDataSet.addEntry(e);
+        }
+        markedPointDataSet.notifyDataSetChanged();
+        lineChart.getData().notifyDataChanged();
+        lineChart.notifyDataSetChanged();
+        lineChart.invalidate();
     }
     
     @Override
@@ -211,6 +317,18 @@ public class PlotActivity extends AppCompatActivity {
             dataSet.setDrawValues(false);
             dataSets.add(dataSet);
         }
+        
+        // Marked points dataset
+        markedPointDataSet = new LineDataSet(new ArrayList<>(markedPoints), "Marked Points");
+        markedPointDataSet.setColor(Color.TRANSPARENT);
+        markedPointDataSet.setDrawCircles(true);
+        markedPointDataSet.setCircleColor(MARK_COLOR);
+        markedPointDataSet.setCircleRadius(6f);
+        markedPointDataSet.setCircleHoleRadius(3f);
+        markedPointDataSet.setCircleHoleColor(MARK_COLOR);
+        markedPointDataSet.setDrawValues(false);
+        markedPointDataSet.setHighlightEnabled(false);
+        dataSets.add(markedPointDataSet);
         
         if (dataSets.isEmpty()) {
             toast("No valid data to display");
