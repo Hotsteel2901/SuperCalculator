@@ -17,6 +17,7 @@ import android.view.View;
 public class Surface3DView extends View {
 
     private float[][] zValues;
+    private int[][] colors;
     private float xMin = -10f, xMax = 10f;
     private float yMin = -10f, yMax = 10f;
     private float zMin = -10f, zMax = 10f;
@@ -78,6 +79,28 @@ public class Surface3DView extends View {
         this.yMax = yMax;
         this.zMin = zMin;
         this.zMax = zMax;
+
+        // Precompute colors to avoid per-frame allocation during drawing
+        if (zValues != null && zValues.length > 0 && zValues[0].length > 0) {
+            int rows = zValues.length;
+            int cols = zValues[0].length;
+            float zRange = zMax - zMin;
+            if (zRange == 0) zRange = 1f;
+            colors = new int[rows][cols];
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < cols; j++) {
+                    if (Float.isNaN(zValues[i][j])) {
+                        colors[i][j] = 0;
+                    } else {
+                        float t = (zValues[i][j] - zMin) / zRange;
+                        colors[i][j] = heightToColor(t);
+                    }
+                }
+            }
+        } else {
+            colors = null;
+        }
+
         invalidate();
     }
 
@@ -132,7 +155,7 @@ public class Surface3DView extends View {
         super.onDraw(canvas);
         canvas.drawColor(Color.parseColor("#181825"));
 
-        if (zValues == null || zValues.length == 0 || zValues[0].length == 0) {
+        if (zValues == null || zValues.length == 0 || zValues[0].length == 0 || colors == null) {
             canvas.drawText("No 3D data", getWidth() / 2f - 60, getHeight() / 2f, textPaint);
             return;
         }
@@ -187,9 +210,7 @@ public class Surface3DView extends View {
                         || Float.isNaN(projY[i][j]))
                     continue;
 
-                float zNorm = (zValues[i][j] - zMin) / zRange;
-                int color = heightToColor(zNorm);
-                gridPaint.setColor(color);
+                gridPaint.setColor(colors[i][j]);
 
                 if (j + 1 < cols
                         && !Float.isNaN(zValues[i][j + 1])

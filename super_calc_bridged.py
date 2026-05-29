@@ -58,7 +58,9 @@ from calc_bridge import CalcEngine
 # ---------------------------------------------------------------------------
 MIN_PLOT_POINTS = 10
 MAX_PLOT_POINTS = 5000
-MAX_3D_POINTS = 200
+MIN_3D_POINTS = 10
+MAX_3D_POINTS = 120
+DEFAULT_3D_POINTS = 50
 PRESET_FUNCTIONS = {
     "sin(x)":              "sin(x)",
     "cos(x)":              "cos(x)",
@@ -162,6 +164,7 @@ class SuperCalcApp:
         self.z_min = -10.0
         self.z_max = 10.0
         self.step_size = 0.05
+        self.n_pts_3d = DEFAULT_3D_POINTS
         self.grid_on = True
         self.param_values = {}
         self.marked_points = []
@@ -334,12 +337,16 @@ class SuperCalcApp:
         ttk.Entry(range_row2, textvariable=self._var_step, width=6).pack(
             side=tk.LEFT)
         ttk.Button(range_row2, text="Apply",
-                   command=self._on_apply_range).pack(side=tk.RIGHT, padx=6)
+                    command=self._on_apply_range).pack(side=tk.RIGHT, padx=6)
 
         self._var_grid = tk.BooleanVar(value=True)
         ttk.Checkbutton(range_row2, text="Grid",
-                        variable=self._var_grid).pack(
+                         variable=self._var_grid).pack(
             side=tk.LEFT, padx=(12, 0))
+
+        ttk.Label(range_row2, text="3D Grid:", style="Dark.TLabel").pack(side=tk.LEFT, padx=(12, 0))
+        self._var_3d_res = tk.StringVar(value=str(DEFAULT_3D_POINTS))
+        ttk.Entry(range_row2, textvariable=self._var_3d_res, width=5).pack(side=tk.LEFT)
 
         # --- Calculus ---
         frm_calc = ttk.LabelFrame(scroll_frame, text="Calculus Operations",
@@ -855,6 +862,7 @@ class SuperCalcApp:
             self.z_min = z_min
             self.z_max = z_max
             self.step_size = step
+            self.n_pts_3d = max(MIN_3D_POINTS, min(MAX_3D_POINTS, int(self._var_3d_res.get())))
             self.grid_on = self._var_grid.get()
             self._plot_all()
         except ValueError:
@@ -869,6 +877,7 @@ class SuperCalcApp:
             self.z_min = float(self._var_z_min.get())
             self.z_max = float(self._var_z_max.get())
             self.step_size = float(self._var_step.get())
+            self.n_pts_3d = max(MIN_3D_POINTS, min(MAX_3D_POINTS, int(self._var_3d_res.get())))
             self.grid_on = self._var_grid.get()
         except ValueError:
             pass
@@ -1002,7 +1011,7 @@ class SuperCalcApp:
         self.ax_3d.clear()
         self._setup_axes(self.ax_3d, is_3d=True)
 
-        n_pts = max(MIN_PLOT_POINTS, min(MAX_3D_POINTS, int((self.x_max - self.x_min) / self.step_size)))
+        n_pts = self.n_pts_3d
         x_vals = np.linspace(self.x_min, self.x_max, n_pts)
         y_vals = np.linspace(self.y_min, self.y_max, n_pts)
         X, Y = np.meshgrid(x_vals, y_vals)
@@ -1013,19 +1022,21 @@ class SuperCalcApp:
                 continue
             expr = self._substitute_params(curve.expression)
 
-            def eval_xy(xv, yv):
-                val = CalcEngine.evaluate_xy(expr, xv, yv)
-                return val if val is not None else np.nan
-
-            vfunc = np.vectorize(eval_xy)
-            Z = vfunc(X, Y)
+            X_flat = X.flatten().tolist()
+            Y_flat = Y.flatten().tolist()
+            Z_flat = CalcEngine.evaluate_xy_array(expr, X_flat, Y_flat)
+            Z = np.array([np.nan if z is None else z for z in Z_flat]).reshape(n_pts, n_pts)
 
             cmap = CMAP_3D_OPTIONS[cmap_idx % len(CMAP_3D_OPTIONS)]
             cmap_idx += 1
-            self.ax_3d.plot_surface(X, Y, Z, cmap=cmap, alpha=0.8)
+            rstride = max(1, n_pts // 40)
+            cstride = max(1, n_pts // 40)
+            self.ax_3d.plot_surface(X, Y, Z, cmap=cmap, alpha=0.8,
+                                     rstride=rstride, cstride=cstride,
+                                     antialiased=False)
 
         self.canvas_3d.draw()
-        self.status_var.set(f"Plotted 3D surface(s)")
+        self.status_var.set(f"Plotted 3D surface(s) [{n_pts}×{n_pts} grid]")
 
     def _setup_axes(self, ax, is_3d=False):
         try:

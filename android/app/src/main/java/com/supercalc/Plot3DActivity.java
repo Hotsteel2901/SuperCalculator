@@ -84,8 +84,7 @@ public class Plot3DActivity extends AppCompatActivity {
             return;
         }
 
-        // Determine grid size: keep total points reasonable for mobile (~1200 max)
-        // to avoid excessive JNI calls (each point tokenizes the expression).
+        // Determine grid size: keep total points reasonable for mobile
         int gridSize = 35;
         int cols = Math.max(gridSize, 2);
         int rows = Math.max(gridSize, 2);
@@ -95,11 +94,24 @@ public class Plot3DActivity extends AppCompatActivity {
         float actualZMin = Float.POSITIVE_INFINITY;
         float actualZMax = Float.NEGATIVE_INFINITY;
 
+        // Batch evaluation: flatten the grid and evaluate all points in one JNI call
+        double[] xs = new double[rows * cols];
+        double[] ys = new double[rows * cols];
         for (int i = 0; i < rows; i++) {
             double y = yMin + (yMax - yMin) * i / (rows - 1);
             for (int j = 0; j < cols; j++) {
                 double x = xMin + (xMax - xMin) * j / (cols - 1);
-                double z = CalcEngine.evaluateXY(expr, x, y);
+                int idx = i * cols + j;
+                xs[idx] = x;
+                ys[idx] = y;
+            }
+        }
+        double[] zs = CalcEngine.evaluateXYArray(expr, xs, ys);
+
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                int idx = i * cols + j;
+                double z = zs[idx];
                 if (Double.isNaN(z) || Double.isInfinite(z)) {
                     zValues[i][j] = Float.NaN;
                 } else {

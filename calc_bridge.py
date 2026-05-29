@@ -76,6 +76,13 @@ _lib.evaluate_array.argtypes = [ctypes.c_char_p,
                                  ctypes.c_int]
 _lib.evaluate_array.restype = None
 
+_lib.evaluate_xy_array.argtypes = [ctypes.c_char_p,
+                                     ctypes.POINTER(ctypes.c_double),
+                                     ctypes.POINTER(ctypes.c_double),
+                                     ctypes.POINTER(ctypes.c_double),
+                                     ctypes.c_int]
+_lib.evaluate_xy_array.restype = None
+
 _lib.derivative.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_double]
 _lib.derivative.restype = ctypes.c_double
 
@@ -147,6 +154,24 @@ class CalcEngine:
         arr_y = (ctypes.c_double * n)()
         _lib.evaluate_array(expr.encode("utf-8"), arr_x, arr_y, n)
         return [None if _isnan(arr_y[i]) else arr_y[i] for i in range(n)]
+
+    @staticmethod
+    def evaluate_xy_array(expr: str, xs: List[float], ys: List[float]) -> List[Optional[float]]:
+        """Evaluate expression f(x,y) at multiple (x,y) points (batched).
+
+        xs and ys must have the same length. Returns a list of the same length
+        where each element is f(xs[i], ys[i]) or None if evaluation failed.
+        """
+        n = len(xs)
+        if n != len(ys):
+            raise ValueError("xs and ys must have the same length")
+        if n == 0:
+            return []
+        arr_x = (ctypes.c_double * n)(*xs)
+        arr_y = (ctypes.c_double * n)(*ys)
+        arr_z = (ctypes.c_double * n)()
+        _lib.evaluate_xy_array(expr.encode("utf-8"), arr_x, arr_y, arr_z, n)
+        return [None if _isnan(arr_z[i]) else arr_z[i] for i in range(n)]
 
     @staticmethod
     def derivative(expr: str, x: float, h: float = 1e-6) -> Optional[float]:
