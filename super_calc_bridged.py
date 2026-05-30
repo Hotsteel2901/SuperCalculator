@@ -944,9 +944,27 @@ class SuperCalcApp:
     #  Plotting
     # ------------------------------------------------------------------
     def _on_plot(self):
-        expr = self.entry_expr.get().strip()
-        if expr:
-            self._add_curve(expr)
+        if self._var_parametric.get():
+            x_expr = self._var_x_param.get().strip()
+            y_expr = self._var_y_param.get().strip()
+            if not x_expr or not y_expr:
+                messagebox.showwarning("Input Error", "Please enter both x(t) and y(t) expressions.")
+                return
+            label = f"x(t)={x_expr}, y(t)={y_expr}"
+            if not any(c.is_parametric and c.label == label for c in self.curves):
+                color = DEFAULT_COLORS[self.color_index % len(DEFAULT_COLORS)]
+                self.color_index += 1
+                curve = CurveModel("", color, label=label, is_parametric=True,
+                                   x_param_expr=x_expr, y_param_expr=y_expr)
+                self.curves.append(curve)
+                self.listbox_curves.insert(tk.END, f"  [P] {label}")
+                self.listbox_curves.itemconfig(tk.END, fg=color)
+                self._update_param_inputs()
+        else:
+            expr = self.entry_expr.get().strip()
+            if expr:
+                if not any(not c.is_parametric and c.expression == expr for c in self.curves):
+                    self._add_curve(expr)
         self._plot_all()
 
     def _on_apply_range(self):

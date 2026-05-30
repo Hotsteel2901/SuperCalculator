@@ -331,8 +331,11 @@ class CalcEngine:
             Y = np.fft.rfft(y_arr)
             freqs = np.fft.rfftfreq(n, d=(b - a) / n)
             amps = np.abs(Y) * (2.0 / n)
-            # Fix DC component scaling
-            amps[0] = amps[0] / 2.0 if len(amps) > 0 else amps[0]
+            # Fix DC component scaling (and Nyquist for even n)
+            if len(amps) > 0:
+                amps[0] = amps[0] / 2.0
+            if n % 2 == 0 and len(amps) > 1:
+                amps[-1] = amps[-1] / 2.0
             phases = np.angle(Y)
             return {
                 'freqs': freqs.tolist(),
