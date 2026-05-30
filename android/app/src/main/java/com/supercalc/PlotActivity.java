@@ -342,6 +342,11 @@ public class PlotActivity extends AppCompatActivity {
             return;
         }
         
+        if (yMin >= yMax) {
+            toast("Y min must be less than Y max");
+            return;
+        }
+        
         allEntries.clear();
         // Limit points to avoid TransactionTooLargeException (1MB limit)
         // Each point is ~8 bytes (float pair), 300 points * 10 curves = ~24KB safe
@@ -500,6 +505,9 @@ public class PlotActivity extends AppCompatActivity {
             intent.putExtra("y_min", yMin);
             intent.putExtra("y_max", yMax);
         } catch (NumberFormatException e) {
+            intent.putExtra("expressions", expressions);
+            intent.putExtra("entries_data", entriesData);
+            intent.putExtra("colors", colors);
             intent.putExtra("x_min", -10f);
             intent.putExtra("x_max", 10f);
             intent.putExtra("y_min", -10f);
