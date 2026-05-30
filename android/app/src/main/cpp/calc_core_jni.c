@@ -18,6 +18,9 @@ double solve_bisection(const char* expr, double a, double b,
                        double tol, int max_iter);
 double find_minimum(const char* expr, double a, double b, double tol, int max_iter);
 double find_maximum(const char* expr, double a, double b, double tol, int max_iter);
+double limit_left(const char* expr, double a, int max_level);
+double limit_right(const char* expr, double a, int max_level);
+double limit(const char* expr, double a, double tol, int max_level);
 void evaluate_array(const char* expr, const double* xs, double* out, int n);
 void evaluate_xy_array(const char* expr, const double* xs, const double* ys, double* out, int n);
 const char* get_last_error(void);
@@ -198,6 +201,36 @@ Java_com_supercalc_CalcEngine_solveBisection(JNIEnv* env, jclass clazz,
     const char* str = (*env)->GetStringUTFChars(env, expr, NULL);
     if (!str) return NAN;
     double result = solve_bisection(str, a, b, 1e-8, 200);
+    (*env)->ReleaseStringUTFChars(env, expr, str);
+    return result;
+}
+
+JNIEXPORT jdouble JNICALL
+Java_com_supercalc_CalcEngine_limitLeft(JNIEnv* env, jclass clazz,
+                                         jstring expr, jdouble a) {
+    const char* str = (*env)->GetStringUTFChars(env, expr, NULL);
+    if (!str) return NAN;
+    double result = limit_left(str, a, 10);
+    (*env)->ReleaseStringUTFChars(env, expr, str);
+    return result;
+}
+
+JNIEXPORT jdouble JNICALL
+Java_com_supercalc_CalcEngine_limitRight(JNIEnv* env, jclass clazz,
+                                          jstring expr, jdouble a) {
+    const char* str = (*env)->GetStringUTFChars(env, expr, NULL);
+    if (!str) return NAN;
+    double result = limit_right(str, a, 10);
+    (*env)->ReleaseStringUTFChars(env, expr, str);
+    return result;
+}
+
+JNIEXPORT jdouble JNICALL
+Java_com_supercalc_CalcEngine_limit(JNIEnv* env, jclass clazz,
+                                     jstring expr, jdouble a) {
+    const char* str = (*env)->GetStringUTFChars(env, expr, NULL);
+    if (!str) return NAN;
+    double result = limit(str, a, 1e-8, 10);
     (*env)->ReleaseStringUTFChars(env, expr, str);
     return result;
 }
