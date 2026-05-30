@@ -271,6 +271,42 @@ class CalcEngine:
             return None
 
     @staticmethod
+    def evaluate_parametric(expr_x: str, expr_y: str, t_min: float,
+                            t_max: float, n: int = 500):
+        """Evaluate parametric curve x(t), y(t) over [t_min, t_max].
+
+        Returns a dict with keys:
+            'xs' : list of x-values
+            'ys' : list of y-values
+            'ts' : list of t-values
+        Returns None on error.
+
+        Note: internally substitutes t -> x for the C core engine.
+        """
+        if t_min >= t_max or n < 2:
+            return None
+        try:
+            ts = [t_min + (t_max - t_min) * i / (n - 1) for i in range(n)]
+            # C core only supports 'x' and 'y' as variables.
+            # Replace 't' with 'x' in parametric expressions for evaluation.
+            import re as _re
+            x_expr_sub = _re.sub(r'\bt\b', 'x', expr_x)
+            y_expr_sub = _re.sub(r'\bt\b', 'x', expr_y)
+            xs = CalcEngine.evaluate_array(x_expr_sub, ts)
+            ys = CalcEngine.evaluate_array(y_expr_sub, ts)
+            valid_xs = []
+            valid_ys = []
+            valid_ts = []
+            for i in range(n):
+                if xs[i] is not None and ys[i] is not None:
+                    valid_xs.append(xs[i])
+                    valid_ys.append(ys[i])
+                    valid_ts.append(ts[i])
+            return {'xs': valid_xs, 'ys': valid_ys, 'ts': valid_ts}
+        except Exception:
+            return None
+
+    @staticmethod
     def fft_spectrum(expr: str, a: float, b: float, n: int = 1024):
         """Compute FFT amplitude and phase spectrum for f(x) over [a,b].
 

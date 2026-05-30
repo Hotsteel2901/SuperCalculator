@@ -82,15 +82,6 @@ public class PlotActivity extends AppCompatActivity {
         curveColors = new ArrayList<>();
         markedPoints = new ArrayList<>();
         
-        // Restore state after configuration change
-        if (savedInstanceState != null) {
-            ArrayList<String> savedExprs = savedInstanceState.getStringArrayList("expressions");
-            if (savedExprs != null) allExpressions = savedExprs;
-            ArrayList<Integer> savedColors = savedInstanceState.getIntegerArrayList("colors");
-            if (savedColors != null) curveColors = savedColors;
-            // Note: entries need to be recalculated from expressions
-        }
-        
         btnAddCurve.setOnClickListener(v -> onAddCurve());
         btnPlot.setOnClickListener(v -> onPlotAll());
         btnRemoveCurve.setOnClickListener(v -> onRemoveCurve());
@@ -106,6 +97,87 @@ public class PlotActivity extends AppCompatActivity {
         
         setupChart();
         setupGestureListener();
+        
+        // Handle parametric curve from intent
+        Intent intent = getIntent();
+        if (intent != null && intent.getBooleanExtra("is_parametric", false)) {
+            String xExpr = intent.getStringExtra("parametric_x");
+            String yExpr = intent.getStringExtra("parametric_y");
+            double tMin = intent.getDoubleExtra("t_min", 0);
+            double tMax = intent.getDoubleExtra("t_max", 6.2832);
+            if (xExpr != null && yExpr != null) {
+                plotParametricCurve(xExpr, yExpr, tMin, tMax);
+            }
+        }
+    }
+    
+    private void plotParametricCurve(String xExpr, String yExpr, double tMin, double tMax) {
+        int n = 500;
+        double step = (tMax - tMin) / (n - 1);
+        double[] ts = new double[n];
+        for (int i = 0; i < n; i++) {
+            ts[i] = tMin + i * step;
+        }
+        
+        // C core only supports x/y variables; replace t -> x for evaluation
+        String xExprSub = xExpr.replaceAll("\\bt\\b", "x");
+        String yExprSub = yExpr.replaceAll("\\bt\\b", "x");
+        double[] xs = CalcEngine.evaluateArray(xExprSub, ts);
+        double[] ys = CalcEngine.evaluateArray(yExprSub, ts);
+        if (xs == null || ys == null) {
+            toast("Error: " + CalcEngine.getLastError());
+            return;
+        }
+        
+        ArrayList<Entry> entries = new ArrayList<>();
+        double xMin = Double.MAX_VALUE, xMax = Double.MIN_VALUE;
+        double yMin = Double.MAX_VALUE, yMax = Double.MIN_VALUE;
+        for (int i = 0; i < n; i++) {
+            if (!Double.isNaN(xs[i]) && !Double.isNaN(ys[i]) &&
+                !Double.isInfinite(xs[i]) && !Double.isInfinite(ys[i])) {
+                entries.add(new Entry((float) xs[i], (float) ys[i]));
+                if (xs[i] < xMin) xMin = xs[i];
+                if (xs[i] > xMax) xMax = xs[i];
+                if (ys[i] < yMin) yMin = ys[i];
+                if (ys[i] > yMax) yMax = ys[i];
+            }
+        }
+        
+        if (entries.isEmpty()) {
+            toast("No valid points to plot");
+            return;
+        }
+        
+        // Set range with padding
+        double xPad = (xMax - xMin) * 0.1;
+        double yPad = (yMax - yMin) * 0.1;
+        xMinInput.setText(String.valueOf(xMin - xPad));
+        xMaxInput.setText(String.valueOf(xMax + xPad));
+        yMinInput.setText(String.valueOf(yMin - yPad));
+        yMaxInput.setText(String.valueOf(yMax + yPad));
+        
+        allEntries.clear();
+        allExpressions.clear();
+        curveColors.clear();
+        allEntries.add(entries);
+        String label = "P: x(t)=" + xExpr + ", y(t)=" + yExpr;
+        allExpressions.add(label);
+        curveColors.add(getNextColor());
+        
+        List<ILineDataSet> dataSets = new ArrayList<>();
+        LineDataSet dataSet = new LineDataSet(entries, label);
+        dataSet.setColor(curveColors.get(0));
+        dataSet.setLineWidth(2f);
+        dataSet.setDrawCircles(false);
+        dataSet.setDrawValues(false);
+        dataSets.add(dataSet);
+        
+        if (!dataSets.isEmpty()) {
+            LineData lineData = new LineData(dataSets);
+            lineChart.setData(lineData);
+            lineChart.invalidate();
+        }
+        toast("Parametric curve plotted");
     }
     
     private void setupGestureListener() {

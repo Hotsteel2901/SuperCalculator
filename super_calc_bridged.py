@@ -85,6 +85,19 @@ PRESET_FUNCTIONS = {
     "FFT: sin(5*x) + cos(10*x)": "sin(5*x)+cos(10*x)",
 }
 
+PARAMETRIC_PRESETS = {
+    "Circle":              ("cos(t)", "sin(t)", "0", "2*pi"),
+    "Ellipse":             ("2*cos(t)", "sin(t)", "0", "2*pi"),
+    "Lissajous (3:2)":     ("sin(3*t)", "cos(2*t)", "0", "2*pi"),
+    "Lissajous (5:4)":     ("sin(5*t)", "cos(4*t)", "0", "2*pi"),
+    "Spiral":              ("t*cos(t)", "t*sin(t)", "0", "6*pi"),
+    "Cardioid":            ("2*(1-cos(t))*cos(t)", "2*(1-cos(t))*sin(t)", "0", "2*pi"),
+    "Trefoil Knot":        ("sin(2*t)+2*sin(4*t)", "cos(2*t)-2*cos(4*t)", "0", "2*pi"),
+    "Butterfly Curve":     ("sin(t)*(exp(cos(t))-2*cos(4*t)-sin(t/12)^5)", "cos(t)*(exp(cos(t))-2*cos(4*t)-sin(t/12)^5)", "0", "12*pi"),
+    "Heart":               ("16*sin(t)^3", "13*cos(t)-5*cos(2*t)-2*cos(3*t)-cos(4*t)", "0", "2*pi"),
+    "Star (5-pointed)":    ("cos(t)+0.5*cos(3*t)+0.3*cos(5*t)", "sin(t)+0.5*sin(3*t)+0.3*sin(5*t)", "0", "2*pi"),
+}
+
 DEFAULT_COLORS = [
     "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728",
     "#9467bd", "#8c564b", "#e377c2", "#7f7f7f",
@@ -123,17 +136,26 @@ def _detect_parameters_static(expr: str) -> list:
 class CurveModel:
     """Holds the configuration for a single plotted curve."""
     __slots__ = ("expression", "color", "linewidth", "linestyle",
-                 "visible", "label", "is_3d", "parameters")
+                 "visible", "label", "is_3d", "parameters",
+                 "is_parametric", "x_param_expr", "y_param_expr")
 
-    def __init__(self, expr, color, label="", lw=2, ls="-"):
-        self.expression = expr
+    def __init__(self, expr, color, label="", lw=2, ls="-",
+                 is_parametric=False, x_param_expr="", y_param_expr=""):
+        self.is_parametric = is_parametric
+        self.x_param_expr = x_param_expr
+        self.y_param_expr = y_param_expr
+        if is_parametric:
+            self.expression = f"x(t)={x_param_expr}, y(t)={y_param_expr}"
+            self.is_3d = False
+        else:
+            self.expression = expr
+            self.is_3d = self._detect_3d(expr)
         self.color = color
         self.linewidth = lw
         self.linestyle = ls
         self.visible = True
-        self.label = label or expr
-        self.is_3d = self._detect_3d(expr)
-        self.parameters = self._detect_parameters(expr)
+        self.label = label or self.expression
+        self.parameters = self._detect_parameters(expr if not is_parametric else x_param_expr + " " + y_param_expr)
 
     def _detect_3d(self, expr: str) -> bool:
         has_x = 'x' in expr.lower()
@@ -273,6 +295,57 @@ class SuperCalcApp:
                    command=self._on_plot).pack(side=tk.LEFT, padx=2)
         ttk.Button(btn_row, text="Clear All",
                    command=self._on_clear_all).pack(side=tk.LEFT, padx=4)
+
+        # --- Parametric Mode ---
+        self._var_parametric = tk.BooleanVar(value=False)
+        frm_param = ttk.LabelFrame(scroll_frame, text="Parametric Mode x(t), y(t)",
+                                   style="Dark.TLabelframe")
+        frm_param.pack(fill=tk.X, padx=8, pady=4)
+
+        ptog = ttk.Frame(frm_param, style="Dark.TFrame")
+        ptog.pack(fill=tk.X, padx=6, pady=(4, 2))
+        ttk.Checkbutton(ptog, text="Enable parametric curve",
+                        variable=self._var_parametric,
+                        command=self._on_parametric_toggle).pack(side=tk.LEFT)
+
+        self._frame_param_inputs = ttk.Frame(frm_param, style="Dark.TFrame")
+        self._frame_param_inputs.pack(fill=tk.X, padx=6, pady=2)
+
+        pr1 = ttk.Frame(self._frame_param_inputs, style="Dark.TFrame")
+        pr1.pack(fill=tk.X, pady=2)
+        ttk.Label(pr1, text="x(t) =", style="Dark.TLabel", width=6).pack(side=tk.LEFT)
+        self._var_x_param = tk.StringVar(value="cos(t)")
+        ttk.Entry(pr1, textvariable=self._var_x_param, width=22).pack(side=tk.LEFT, padx=2)
+
+        pr2 = ttk.Frame(self._frame_param_inputs, style="Dark.TFrame")
+        pr2.pack(fill=tk.X, pady=2)
+        ttk.Label(pr2, text="y(t) =", style="Dark.TLabel", width=6).pack(side=tk.LEFT)
+        self._var_y_param = tk.StringVar(value="sin(t)")
+        ttk.Entry(pr2, textvariable=self._var_y_param, width=22).pack(side=tk.LEFT, padx=2)
+
+        pr3 = ttk.Frame(self._frame_param_inputs, style="Dark.TFrame")
+        pr3.pack(fill=tk.X, pady=2)
+        ttk.Label(pr3, text="t range:", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_t_min = tk.StringVar(value="0")
+        ttk.Entry(pr3, textvariable=self._var_t_min, width=8).pack(side=tk.LEFT, padx=2)
+        ttk.Label(pr3, text="to", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_t_max = tk.StringVar(value="2*pi")
+        ttk.Entry(pr3, textvariable=self._var_t_max, width=8).pack(side=tk.LEFT, padx=2)
+
+        # Parametric presets
+        pr4 = ttk.Frame(self._frame_param_inputs, style="Dark.TFrame")
+        pr4.pack(fill=tk.X, pady=(4, 2))
+        ttk.Label(pr4, text="Preset:", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_param_preset = tk.StringVar()
+        param_combo = ttk.Combobox(pr4, textvariable=self._var_param_preset,
+                                   values=list(PARAMETRIC_PRESETS.keys()),
+                                   state="readonly", font=("Consolas", 10), width=18)
+        param_combo.pack(side=tk.LEFT, padx=4)
+        param_combo.bind("<<ComboboxSelected>>",
+                         lambda e: self._on_parametric_preset(self._var_param_preset.get()))
+
+        # Initially hide parametric inputs
+        self._on_parametric_toggle()
 
         # --- Parameter Inputs ---
         self.frm_params = ttk.LabelFrame(scroll_frame, text="Parameters",
@@ -758,6 +831,34 @@ class SuperCalcApp:
             except ValueError:
                 self.param_values[param] = 1.0
 
+    def _on_parametric_toggle(self):
+        """Show or hide parametric input fields."""
+        if self._var_parametric.get():
+            for child in self._frame_param_inputs.winfo_children():
+                child.pack()
+        else:
+            for child in self._frame_param_inputs.winfo_children():
+                child.pack_forget()
+
+    def _on_parametric_preset(self, name: str):
+        """Load a parametric preset into the input fields."""
+        preset = PARAMETRIC_PRESETS.get(name)
+        if preset:
+            x_expr, y_expr, t_min, t_max = preset
+            self._var_x_param.set(x_expr)
+            self._var_y_param.set(y_expr)
+            self._var_t_min.set(t_min)
+            self._var_t_max.set(t_max)
+            self._var_parametric.set(True)
+            self._on_parametric_toggle()
+
+    def _resolve_t_range(self, expr: str) -> str:
+        """Resolve 'pi' references in t-range expressions."""
+        import math
+        result = expr.strip()
+        result = result.replace("pi", str(math.pi))
+        return result
+
     def _substitute_params(self, expr: str) -> str:
         result = expr
         for param, value in self.param_values.items():
@@ -777,12 +878,28 @@ class SuperCalcApp:
         self._update_param_inputs()
 
     def _on_add_curve(self):
-        expr = self.entry_expr.get().strip()
-        if not expr:
-            messagebox.showwarning("Input Error", "Please enter an expression.")
-            return
-        self._add_curve(expr)
-        self._plot_all()
+        if self._var_parametric.get():
+            x_expr = self._var_x_param.get().strip()
+            y_expr = self._var_y_param.get().strip()
+            if not x_expr or not y_expr:
+                messagebox.showwarning("Input Error", "Please enter both x(t) and y(t) expressions.")
+                return
+            color = DEFAULT_COLORS[self.color_index % len(DEFAULT_COLORS)]
+            self.color_index += 1
+            label = f"x(t)={x_expr}, y(t)={y_expr}"
+            curve = CurveModel("", color, label=label, is_parametric=True,
+                               x_param_expr=x_expr, y_param_expr=y_expr)
+            self.curves.append(curve)
+            self.listbox_curves.insert(tk.END, f"  [P] {label}")
+            self.listbox_curves.itemconfig(tk.END, fg=color)
+            self._plot_all()
+        else:
+            expr = self.entry_expr.get().strip()
+            if not expr:
+                messagebox.showwarning("Input Error", "Please enter an expression.")
+                return
+            self._add_curve(expr)
+            self._plot_all()
 
     def _on_remove_curve(self):
         sel = self.listbox_curves.curselection()
@@ -895,7 +1012,7 @@ class SuperCalcApp:
             self.status_var.set("No curves to plot.")
             return
 
-        has_2d = any(not c.is_3d and c.visible for c in self.curves)
+        has_2d = any((not c.is_3d and c.visible) or (c.is_parametric and c.visible) for c in self.curves)
         has_3d = any(c.is_3d and c.visible for c in self.curves)
         
         if has_2d:
@@ -932,12 +1049,34 @@ class SuperCalcApp:
         for curve in self.curves:
             if not curve.visible or curve.is_3d:
                 continue
-            expr = self._substitute_params(curve.expression)
-            ys = CalcEngine.evaluate_array(expr, xs_list)
-            ys_clean = np.array([y if y is not None else np.nan for y in ys])
-            self.ax_2d.plot(xs_np, ys_clean, color=curve.color,
-                         linewidth=curve.linewidth, linestyle=curve.linestyle,
-                         label=curve.label, alpha=0.9)
+            if curve.is_parametric:
+                try:
+                    t_min = float(self._resolve_t_range(self._var_t_min.get()))
+                    t_max = float(self._resolve_t_range(self._var_t_max.get()))
+                except ValueError:
+                    t_min = 0.0
+                    t_max = 6.283185307179586
+                t_np = np.linspace(t_min, t_max, n_pts)
+                t_list = t_np.tolist()
+                x_expr = self._substitute_params(curve.x_param_expr)
+                y_expr = self._substitute_params(curve.y_param_expr)
+                # C core only supports x/y variables; replace t -> x for evaluation
+                x_expr_sub = re.sub(r'\bt\b', 'x', x_expr)
+                y_expr_sub = re.sub(r'\bt\b', 'x', y_expr)
+                xs_param = CalcEngine.evaluate_array(x_expr_sub, t_list)
+                ys_param = CalcEngine.evaluate_array(y_expr_sub, t_list)
+                x_arr = np.array([x if x is not None else np.nan for x in xs_param])
+                y_arr = np.array([y if y is not None else np.nan for y in ys_param])
+                self.ax_2d.plot(x_arr, y_arr, color=curve.color,
+                             linewidth=curve.linewidth, linestyle=curve.linestyle,
+                             label=curve.label, alpha=0.9)
+            else:
+                expr = self._substitute_params(curve.expression)
+                ys = CalcEngine.evaluate_array(expr, xs_list)
+                ys_clean = np.array([y if y is not None else np.nan for y in ys])
+                self.ax_2d.plot(xs_np, ys_clean, color=curve.color,
+                             linewidth=curve.linewidth, linestyle=curve.linestyle,
+                             label=curve.label, alpha=0.9)
 
         for point in self.marked_points:
             self.ax_2d.plot(point[0], point[1], 'ro', markersize=8)
@@ -1270,6 +1409,9 @@ class SuperCalcApp:
 
     def _find_intersections(self, curve_a, curve_b):
         """Find intersections of two 2D curves within the current X range."""
+        if curve_a.is_parametric or curve_b.is_parametric:
+            self.intersection_marks = []
+            return []
         if self.x_min >= self.x_max or self.step_size <= 0:
             self.intersection_marks = []
             return []
@@ -1429,9 +1571,16 @@ class SuperCalcApp:
     def _get_active_expression(self) -> Optional[str]:
         sel = self.listbox_curves.curselection()
         if sel:
-            return self.curves[sel[0]].expression
-        if self.curves:
-            return self.curves[-1].expression
+            curve = self.curves[sel[0]]
+            if curve.is_parametric:
+                messagebox.showwarning("Parametric Curve",
+                    "Calculus operations are not available for parametric curves.\n"
+                    "Select a regular (non-parametric) curve.")
+                return None
+            return curve.expression
+        for c in reversed(self.curves):
+            if not c.is_parametric:
+                return c.expression
         expr = self.entry_expr.get().strip()
         if expr:
             return expr
