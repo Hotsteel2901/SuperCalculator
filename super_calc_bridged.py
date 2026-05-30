@@ -449,6 +449,19 @@ class SuperCalcApp:
         ttk.Button(row2, text="Integrate",
                    command=self._on_integrate).pack(side=tk.LEFT, padx=8)
 
+        row_limit = ttk.Frame(frm_calc, style="Dark.TFrame")
+        row_limit.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(row_limit, text="Limit x→", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_limit_a = tk.StringVar(value="0")
+        ttk.Entry(row_limit, textvariable=self._var_limit_a, width=8).pack(
+            side=tk.LEFT, padx=4)
+        ttk.Button(row_limit, text="lim f(x)",
+                   command=lambda: self._on_limit(two_sided=True)).pack(side=tk.LEFT, padx=2)
+        ttk.Button(row_limit, text="Left lim",
+                   command=lambda: self._on_limit(two_sided=False, side="left")).pack(side=tk.LEFT, padx=2)
+        ttk.Button(row_limit, text="Right lim",
+                   command=lambda: self._on_limit(two_sided=False, side="right")).pack(side=tk.LEFT, padx=2)
+
         # --- Equation Solver ---
         frm_solve = ttk.LabelFrame(scroll_frame, text="Equation Solver f(x)=0",
                                    style="Dark.TLabelframe")
@@ -1692,6 +1705,69 @@ class SuperCalcApp:
             f"f(x) = {expr}\n"
             f"Arc length from {a} to {b} = {result:.10g}")
         self.status_var.set(f"Arc length [{a},{b}] = {result:.10g}")
+
+    def _on_limit(self, two_sided=True, side=None):
+        expr = self._get_active_expression()
+        if not expr:
+            return
+        try:
+            a = float(self._var_limit_a.get())
+        except ValueError:
+            messagebox.showerror("Error", "Invalid limit point.")
+            return
+        expr_sub = self._substitute_params(expr)
+
+        if two_sided:
+            left  = CalcEngine.limit_left(expr_sub, a)
+            right = CalcEngine.limit_right(expr_sub, a)
+            if left is None and right is None:
+                err = CalcEngine.get_last_error()
+                messagebox.showerror("Limit Error", f"Could not compute limit.\n{err}")
+                return
+            if left is not None and right is not None and abs(left - right) < 1e-8:
+                val = (left + right) / 2.0
+                messagebox.showinfo(
+                    "Limit Result",
+                    f"f(x) = {expr}\n"
+                    f"lim(x→{a}) f(x) = {val:.10g}\n"
+                    f"Left:  {left:.10g}\n"
+                    f"Right: {right:.10g}")
+                self.status_var.set(f"lim(x→{a}) = {val:.10g}")
+            else:
+                msg = f"f(x) = {expr}\n\n"
+                if left is not None:
+                    msg += f"lim(x→{a}⁻) = {left:.10g}\n"
+                else:
+                    msg += f"lim(x→{a}⁻) = DNE (undefined)\n"
+                if right is not None:
+                    msg += f"lim(x→{a}⁺) = {right:.10g}\n"
+                else:
+                    msg += f"lim(x→{a}⁺) = DNE (undefined)\n"
+                msg += "\nTwo-sided limit does not exist."
+                messagebox.showwarning("Limit Does Not Exist", msg)
+                self.status_var.set(f"lim(x→{a}) does not exist")
+        elif side == "left":
+            result = CalcEngine.limit_left(expr_sub, a)
+            if result is None:
+                err = CalcEngine.get_last_error()
+                messagebox.showerror("Limit Error", f"Could not compute left limit.\n{err}")
+                return
+            messagebox.showinfo(
+                "Left Limit Result",
+                f"f(x) = {expr}\n"
+                f"lim(x→{a}⁻) f(x) = {result:.10g}")
+            self.status_var.set(f"lim(x→{a}⁻) = {result:.10g}")
+        else:
+            result = CalcEngine.limit_right(expr_sub, a)
+            if result is None:
+                err = CalcEngine.get_last_error()
+                messagebox.showerror("Limit Error", f"Could not compute right limit.\n{err}")
+                return
+            messagebox.showinfo(
+                "Right Limit Result",
+                f"f(x) = {expr}\n"
+                f"lim(x→{a}⁺) f(x) = {result:.10g}")
+            self.status_var.set(f"lim(x→{a}⁺) = {result:.10g}")
 
     def _on_fft_compute(self):
         expr = self._get_active_expression()

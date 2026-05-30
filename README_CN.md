@@ -39,6 +39,7 @@
 - **数值积分** — 定积分计算，采用自适应 Simpson 复合法则
 - **方程求解** — Newton-Raphson 法（二分法回退）+ 纯二分法
 - **极值查找** — 黄金分割搜索法，在指定区间内寻找局部最小值与最大值
+- **极限计算** — 左极限、右极限与双侧极限，采用 Richardson 外推法提高精度
  - **零点自动扫描** — 在指定区间内自动扫描函数的所有零点，符号变化检测 + 二分法精确定位
  - **曲线交点查找** — 在任意两条 2D 曲线之间查找所有交点，符号变化检测 + 二分法精确定位，结果自动标注在图上
  - **切线与法线绘制** — 在 2D 曲线任意点处一键绘制切线与法线，以虚线形式直观标注在图上，便于分析函数局部特征
@@ -141,6 +142,7 @@ SuperCalculator/
 
 ## 更新日志
 
+- **极限计算** — 支持左极限、右极限与双侧极限计算，采用 Richardson 外推法提高精度。桌面端（Python）与 Android 端（JNI）均已同步。
 - **参数曲线绘图** — 支持以 x(t) 和 y(t) 定义的参数曲线，内置 10 种预设（圆、椭圆、李萨如图形、螺旋线、心形线、蝴蝶曲线等）。桌面端（Python）与 Android 端（JNI）均已同步。
 - **傅里叶变换与频谱分析** — 支持 FFT 幅度谱与相位谱计算，自动识别主频分量，支持 CSV 导出。桌面端（Python）与 Android 端（DFT 实现）均已同步。
 - **21 个预设函数** — 新增 FFT 演示表达式，一键体验频谱分析功能。
@@ -185,6 +187,11 @@ CalcEngine.solve("x^2 - 4", guess=1, xmin=0, xmax=3)  # -> 2.0
 CalcEngine.find_minimum("x^2", -5, 5)   # -> ~0.0
 CalcEngine.find_maximum("sin(x)", 0, 6) # -> ~1.571
 
+# 极限计算
+CalcEngine.limit("sin(x)/x", 0)          # -> ~1.0
+CalcEngine.limit_left("1/x", 0)          # -> -inf
+CalcEngine.limit_right("1/x", 0)         # -> +inf
+
 # 曲线交点（构造差值表达式后求解）
 # 示例：求 sin(x) 与 cos(x) 在 [0, pi] 区间的交点
 CalcEngine.solve_bisection("(sin(x))-(cos(x))", 0, 3.14)  # -> ~0.785
@@ -214,6 +221,7 @@ spec = CalcEngine.fft_spectrum("sin(2*pi*x)+0.5*sin(6*pi*x)", 0, 2, 1024)
 | 定积分     | 自适应 Simpson 复合法则             | O(h⁴)    |
 | 方程求根   | Newton-Raphson + 二分法回退         | —        |
 | 极值查找   | 黄金分割搜索法                       | 线性收敛  |
+| 极限计算   | Richardson 外推法                    | O(h²ᵏ)   |
 
 ## 设计说明
 

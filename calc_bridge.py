@@ -112,6 +112,15 @@ _lib.find_maximum.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_double,
                                ctypes.c_double, ctypes.c_int]
 _lib.find_maximum.restype = ctypes.c_double
 
+_lib.limit_left.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_int]
+_lib.limit_left.restype = ctypes.c_double
+
+_lib.limit_right.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_int]
+_lib.limit_right.restype = ctypes.c_double
+
+_lib.limit.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_double, ctypes.c_int]
+_lib.limit.restype = ctypes.c_double
+
 _lib.get_last_error.argtypes = []
 _lib.get_last_error.restype = ctypes.c_char_p
 
@@ -230,6 +239,29 @@ class CalcEngine:
                      max_iter: int = 200) -> Optional[float]:
         """Find a local maximum of f(x) on [a, b] using golden-section search."""
         result = _lib.find_maximum(expr.encode("utf-8"), a, b, tol, max_iter)
+        return None if _is_invalid(result) else result
+
+    @staticmethod
+    def limit_left(expr: str, a: float, max_level: int = 10) -> Optional[float]:
+        """Compute left-hand limit: lim(x→a⁻) f(x) using Richardson extrapolation."""
+        result = _lib.limit_left(expr.encode("utf-8"), a, max_level)
+        return None if _is_invalid(result) else result
+
+    @staticmethod
+    def limit_right(expr: str, a: float, max_level: int = 10) -> Optional[float]:
+        """Compute right-hand limit: lim(x→a⁺) f(x) using Richardson extrapolation."""
+        result = _lib.limit_right(expr.encode("utf-8"), a, max_level)
+        return None if _is_invalid(result) else result
+
+    @staticmethod
+    def limit(expr: str, a: float, tol: float = 1e-8,
+              max_level: int = 10) -> Optional[float]:
+        """Compute two-sided limit: lim(x→a) f(x).
+
+        Returns the limit if left and right limits agree within tol.
+        Returns None if the limit does not exist.
+        """
+        result = _lib.limit(expr.encode("utf-8"), a, tol, max_level)
         return None if _is_invalid(result) else result
 
     @staticmethod

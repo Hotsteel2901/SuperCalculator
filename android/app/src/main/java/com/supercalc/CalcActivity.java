@@ -63,6 +63,9 @@ public class CalcActivity extends AppCompatActivity {
         MaterialButton btnNormal = findViewById(R.id.btn_normal);
         MaterialButton btnArcLength = findViewById(R.id.btn_arc_length);
         MaterialButton btnFFT = findViewById(R.id.btn_fft);
+        MaterialButton btnLimit = findViewById(R.id.btn_limit);
+        MaterialButton btnLimitLeft = findViewById(R.id.btn_limit_left);
+        MaterialButton btnLimitRight = findViewById(R.id.btn_limit_right);
 
         btnEval  .setOnClickListener(v -> onEvaluate());
         btnDeriv .setOnClickListener(v -> onDerivative());
@@ -80,6 +83,9 @@ public class CalcActivity extends AppCompatActivity {
         btnNormal.setOnClickListener(v -> onTangentNormal(false));
         btnArcLength.setOnClickListener(v -> onArcLength());
         btnFFT.setOnClickListener(v -> onFFT());
+        btnLimit.setOnClickListener(v -> onLimit());
+        btnLimitLeft.setOnClickListener(v -> onLimitSide(true));
+        btnLimitRight.setOnClickListener(v -> onLimitSide(false));
 
         // Parametric plotting
         MaterialButton btnPlotParametric = findViewById(R.id.btn_plot_parametric);
@@ -411,6 +417,59 @@ public class CalcActivity extends AppCompatActivity {
             .show();
 
         resultView.append("FFT: dominant f=" + fmt(freqs[peakIdx]) + " A=" + fmt(amps[peakIdx]) + "\n");
+    }
+
+    private void onLimit() {
+        String e = getExpr();
+        if (e.isEmpty()) { toast("Enter an expression"); return; }
+        double a = getX();
+
+        double left  = CalcEngine.limitLeft(e, a);
+        double right = CalcEngine.limitRight(e, a);
+
+        if (Double.isNaN(left) && Double.isNaN(right)) {
+            resultView.append("lim(x→" + fmt(a) + "): Error: " + CalcEngine.getLastError() + "\n");
+            return;
+        }
+
+        if (!Double.isNaN(left) && !Double.isNaN(right) && Math.abs(left - right) < 1e-8) {
+            double val = (left + right) / 2.0;
+            resultView.append("lim(x→" + fmt(a) + ") = " + fmt(val) + "\n");
+            resultView.append("  Left:  " + fmt(left) + "\n");
+            resultView.append("  Right: " + fmt(right) + "\n");
+        } else {
+            if (!Double.isNaN(left)) {
+                resultView.append("lim(x→" + fmt(a) + "⁻) = " + fmt(left) + "\n");
+            } else {
+                resultView.append("lim(x→" + fmt(a) + "⁻) = DNE\n");
+            }
+            if (!Double.isNaN(right)) {
+                resultView.append("lim(x→" + fmt(a) + "⁺) = " + fmt(right) + "\n");
+            } else {
+                resultView.append("lim(x→" + fmt(a) + "⁺) = DNE\n");
+            }
+            resultView.append("Two-sided limit does not exist.\n");
+        }
+    }
+
+    private void onLimitSide(boolean left) {
+        String e = getExpr();
+        if (e.isEmpty()) { toast("Enter an expression"); return; }
+        double a = getX();
+        double result;
+        String label;
+        if (left) {
+            result = CalcEngine.limitLeft(e, a);
+            label = "lim(x→" + fmt(a) + "⁻)";
+        } else {
+            result = CalcEngine.limitRight(e, a);
+            label = "lim(x→" + fmt(a) + "⁺)";
+        }
+        if (Double.isNaN(result)) {
+            resultView.append(label + ": Error: " + CalcEngine.getLastError() + "\n");
+        } else {
+            resultView.append(label + " = " + fmt(result) + "\n");
+        }
     }
 
     private void onPlotParametric() {

@@ -579,6 +579,64 @@ EXPORT double find_minimum(const char* expr, double a, double b, double tol, int
     return golden_section_min(expr, a, b, tol, max_iter);
 }
 
+/* --------------------------------------------------------------------------
+ *  Limit computation (left-hand, right-hand, two-sided)
+ *  Uses Richardson extrapolation for improved accuracy.
+ * -------------------------------------------------------------------------- */
+
+static double richardson_limit(const char* expr, double a, double dir, int max_level) {
+    double h0 = 0.1;
+    double table[16][16];
+    int n = max_level < 16 ? max_level : 16;
+
+    for (int i = 0; i < n; i++) {
+        double h = h0 * pow(0.5, i);
+        double fv;
+        if (parse_and_eval(expr, a + dir * h, 0.0, &fv) != 0) return NAN;
+        if (isnan(fv)) return NAN;
+        table[i][0] = fv;
+    }
+
+    for (int j = 1; j < n; j++) {
+        for (int i = 0; i < n - j; i++) {
+            double num = table[i+1][j-1] * pow(2.0, j) - table[i][j-1];
+            double den = pow(2.0, j) - 1.0;
+            table[i][j] = num / den;
+        }
+    }
+
+    return table[0][n-1];
+}
+
+EXPORT double limit_left(const char* expr, double a, int max_level) {
+    if (max_level <= 0) max_level = 10;
+    return richardson_limit(expr, a, -1.0, max_level);
+}
+
+EXPORT double limit_right(const char* expr, double a, int max_level) {
+    if (max_level <= 0) max_level = 10;
+    return richardson_limit(expr, a, 1.0, max_level);
+}
+
+EXPORT double limit(const char* expr, double a, double tol, int max_level) {
+    if (max_level <= 0) max_level = 10;
+    if (tol <= 0.0) tol = 1e-8;
+
+    double left  = richardson_limit(expr, a, -1.0, max_level);
+    double right = richardson_limit(expr, a,  1.0, max_level);
+
+    if (isnan(left) && isnan(right)) return NAN;
+    if (isnan(left))  return right;
+    if (isnan(right)) return left;
+
+    if (fabs(left - right) < tol) {
+        return (left + right) / 2.0;
+    }
+
+    set_error("Left and right limits differ (limit does not exist)");
+    return NAN;
+}
+
 EXPORT double find_maximum(const char* expr, double a, double b, double tol, int max_iter) {
     if (a >= b) { set_error("Invalid interval: a must be < b"); return NAN; }
     const double resphi = GOLDEN_RATIO_RES;

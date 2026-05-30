@@ -37,6 +37,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
 - **Numerical Integration** — adaptive Simpson's rule for definite integrals
 - **Equation Solving** — Newton-Raphson (with bisection fallback) and pure bisection
 - **Extremum Finder** — golden-section search for local minima and maxima on an interval
+- **Limit Computation** — left-hand, right-hand, and two-sided limits via Richardson extrapolation
  - **Auto Root Scanner** — automatically scan an interval for all roots of f(x)=0, sign-change detection plus bisection refinement
  - **Curve Intersection Finder** — find all intersection points between any two 2D curves with sign-change detection and bisection refinement, results annotated on the plot
  - **Tangent & Normal Lines** — draw tangent and normal lines at any point on a 2D curve, visualized with dashed lines and labeled on the plot
@@ -139,6 +140,7 @@ SuperCalculator/
 
 ## What's New
 
+- **Limit Computation** — compute left-hand, right-hand, and two-sided limits using Richardson extrapolation for high accuracy. Available on both desktop (Python) and Android (JNI).
 - **Parametric Curve Plotting** — plot curves defined as x(t) and y(t) with 10 built-in presets (circle, ellipse, Lissajous, spiral, cardioid, heart, trefoil knot, butterfly curve, star). Available on both desktop (Python) and Android (JNI).
 - **Fourier Transform & Spectrum Analysis** — FFT amplitude and phase spectrum computation with dominant-frequency detection and CSV export. Available on both desktop (Python) and Android (DFT implementation).
 - **21 Preset Functions** — now includes dedicated FFT demonstration expressions for instant spectrum analysis.
@@ -183,6 +185,11 @@ CalcEngine.solve("x^2 - 4", guess=1, xmin=0, xmax=3)  # -> 2.0
 CalcEngine.find_minimum("x^2", -5, 5)   # -> ~0.0
 CalcEngine.find_maximum("sin(x)", 0, 6) # -> ~1.571
 
+# Limit computation
+CalcEngine.limit("sin(x)/x", 0)          # -> ~1.0
+CalcEngine.limit_left("1/x", 0)          # -> -inf
+CalcEngine.limit_right("1/x", 0)         # -> +inf
+
 # Curve intersection (compute difference and solve)
 # Example: intersection of sin(x) and cos(x) in [0, pi]
 # Use solve_bisection on the difference expression
@@ -213,3 +220,4 @@ spec = CalcEngine.fft_spectrum("sin(2*pi*x)+0.5*sin(6*pi*x)", 0, 2, 1024)
 | Integration         | Adaptive composite Simpson's rule              | O(h^4)    |
 | Root Finding        | Newton-Raphson with bisection fallback         | —         |
 | Extremum Finder     | Golden-section search                          | Linear    |
+| Limit               | Richardson extrapolation                       | O(h^2k)   |

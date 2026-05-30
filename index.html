@@ -1392,6 +1392,21 @@
                 </div>
                 <div class="card glass reveal">
                     <div class="card-icon">
+                        <!-- Limit arrow approaching point -->
+                        <svg viewBox="0 0 24 24">
+                            <line x1="2" y1="20" x2="22" y2="20"/>
+                            <line x1="4" y1="2" x2="4" y2="22"/>
+                            <path d="M4 16c2-2 4-4 6-4s2 2 4 0"/>
+                            <circle cx="14" cy="12" r="2" fill="none" stroke-dasharray="2 1"/>
+                            <line x1="14" y1="20" x2="14" y2="14" stroke-dasharray="2 2"/>
+                            <path d="M8 18l6-6" stroke-dasharray="3 2"/>
+                        </svg>
+                    </div>
+                    <h3 class="card-title">极限计算</h3>
+                    <p class="card-text">支持左极限、右极限与双侧极限计算，采用 Richardson 外推法提高精度，自动判断极限是否存在</p>
+                </div>
+                <div class="card glass reveal">
+                    <div class="card-icon">
                         <!-- Spectrum / waveform bars -->
                         <svg viewBox="0 0 24 24">
                             <line x1="2" y1="20" x2="22" y2="20"/>
@@ -1733,6 +1748,12 @@
                     <h3 class="card-title">弧长计算</h3>
                     <div class="code-block">
                         <code>CalcEngine.arc_length("sin(x)", 0, 3.141592653589793)<br># -> ~3.820</code>
+                    </div>
+                </div>
+                <div class="card glass reveal">
+                    <h3 class="card-title">极限计算</h3>
+                    <div class="code-block">
+                        <code>CalcEngine.limit("sin(x)/x", 0)<br># -> ~1.0<br><br>CalcEngine.limit_left("1/x", 0)<br># -> -inf<br><br>CalcEngine.limit_right("1/x", 0)<br># -> +inf</code>
                     </div>
                 </div>
                 <div class="card glass reveal">

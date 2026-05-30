@@ -41,6 +41,15 @@ public class CalcEngine {
     /** Find root using bisection method (requires sign change on [a,b]). */
     public static native double solveBisection(String expr, double a, double b);
 
+    /** Left-hand limit: lim(x→a⁻) f(x). */
+    public static native double limitLeft(String expr, double a);
+
+    /** Right-hand limit: lim(x→a⁺) f(x). */
+    public static native double limitRight(String expr, double a);
+
+    /** Two-sided limit: lim(x→a) f(x). Returns NaN if limit does not exist. */
+    public static native double limit(String expr, double a);
+
     /** Last error message from the C core. */
     public static native String getLastError();
 }
