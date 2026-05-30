@@ -24,6 +24,6 @@ jobs:
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         with:
-          model: opencode-go/kimi-k2.6
+          model: opencode/mimo-v2.5-free
           prompt: |
             你是一位严谨的程序员。全面查看仓库的代码以及目前的功能，适当为其添加一项新功能，注意处理各项依赖以及兼容性，添加完成后记得检查一次bug再提交，且记得更新两份README，以及网页（网页需要注意兼容桌面移动两端，性能和优化以及修复bug）。不要删除以前的功能（记得为安卓版同步）。
