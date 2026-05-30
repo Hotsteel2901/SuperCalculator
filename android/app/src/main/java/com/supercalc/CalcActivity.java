@@ -22,6 +22,7 @@ import java.util.List;
 public class CalcActivity extends AppCompatActivity {
 
     private EditText exprInput, xInput, aInput, bInput, guessInput;
+    private EditText xParamInput, yParamInput, tMinInput, tMaxInput;
     private TextView resultView;
     private LineChart lineChart;
     private MaterialCardView graphCard;
@@ -36,6 +37,10 @@ public class CalcActivity extends AppCompatActivity {
         aInput     = findViewById(R.id.a_input);
         bInput     = findViewById(R.id.b_input);
         guessInput = findViewById(R.id.guess_input);
+        xParamInput = findViewById(R.id.x_param_input);
+        yParamInput = findViewById(R.id.y_param_input);
+        tMinInput  = findViewById(R.id.t_min_input);
+        tMaxInput  = findViewById(R.id.t_max_input);
         resultView = findViewById(R.id.result_view);
         resultView.setMovementMethod(new ScrollingMovementMethod());
         lineChart  = findViewById(R.id.line_chart);
@@ -75,6 +80,25 @@ public class CalcActivity extends AppCompatActivity {
         btnNormal.setOnClickListener(v -> onTangentNormal(false));
         btnArcLength.setOnClickListener(v -> onArcLength());
         btnFFT.setOnClickListener(v -> onFFT());
+
+        // Parametric plotting
+        MaterialButton btnPlotParametric = findViewById(R.id.btn_plot_parametric);
+        Chip chipCircle = findViewById(R.id.chip_circle);
+        Chip chipLissajous = findViewById(R.id.chip_lissajous);
+
+        btnPlotParametric.setOnClickListener(v -> onPlotParametric());
+        chipCircle.setOnClickListener(v -> {
+            xParamInput.setText("cos(t)");
+            yParamInput.setText("sin(t)");
+            tMinInput.setText("0");
+            tMaxInput.setText("6.2832");
+        });
+        chipLissajous.setOnClickListener(v -> {
+            xParamInput.setText("sin(3*t)");
+            yParamInput.setText("cos(2*t)");
+            tMinInput.setText("0");
+            tMaxInput.setText("6.2832");
+        });
 
         // Preset chips — set expression text and auto-evaluate
         Chip chipSin = findViewById(R.id.chip_sin);
@@ -387,6 +411,53 @@ public class CalcActivity extends AppCompatActivity {
             .show();
 
         resultView.append("FFT: dominant f=" + fmt(freqs[peakIdx]) + " A=" + fmt(amps[peakIdx]) + "\n");
+    }
+
+    private void onPlotParametric() {
+        String xExpr = xParamInput.getText().toString().trim();
+        String yExpr = yParamInput.getText().toString().trim();
+        if (xExpr.isEmpty() || yExpr.isEmpty()) {
+            toast("Enter both x(t) and y(t) expressions");
+            return;
+        }
+
+        double tMin, tMax;
+        try {
+            tMin = Double.parseDouble(tMinInput.getText().toString().trim());
+            tMax = Double.parseDouble(tMaxInput.getText().toString().trim());
+        } catch (NumberFormatException ex) {
+            toast("Invalid t range");
+            return;
+        }
+        if (tMin >= tMax) {
+            toast("t min must be less than t max");
+            return;
+        }
+
+        int n = 500;
+        double step = (tMax - tMin) / (n - 1);
+        double[] ts = new double[n];
+        for (int i = 0; i < n; i++) {
+            ts[i] = tMin + i * step;
+        }
+
+        // C core only supports x/y variables; replace t -> x for evaluation
+        String xExprSub = xExpr.replaceAll("\\bt\\b", "x");
+        String yExprSub = yExpr.replaceAll("\\bt\\b", "x");
+        double[] xs = CalcEngine.evaluateArray(xExprSub, ts);
+        double[] ys = CalcEngine.evaluateArray(yExprSub, ts);
+        if (xs == null || ys == null) {
+            resultView.append("Parametric: Error: " + CalcEngine.getLastError() + "\n");
+            return;
+        }
+
+        Intent intent = new Intent(this, PlotActivity.class);
+        intent.putExtra("parametric_x", xExpr);
+        intent.putExtra("parametric_y", yExpr);
+        intent.putExtra("t_min", tMin);
+        intent.putExtra("t_max", tMax);
+        intent.putExtra("is_parametric", true);
+        startActivity(intent);
     }
 
     private void onGenerateTable() {

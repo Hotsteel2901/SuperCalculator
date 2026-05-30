@@ -1310,6 +1310,18 @@
                 </div>
                 <div class="card glass reveal">
                     <div class="card-icon">
+                        <!-- Parametric curve (circle and spiral) -->
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="6" fill="none" stroke-dasharray="3 2"/>
+                            <path d="M12 6c3.3 0 6 2.7 6 6s-2.7 6-6 6"/>
+                            <circle cx="18" cy="12" r="1.5" fill="white" stroke="none"/>
+                        </svg>
+                    </div>
+                    <h3 class="card-title">参数曲线绘图</h3>
+                    <p class="card-text">支持以 x(t) 和 y(t) 定义的参数曲线，内置圆、椭圆、李萨如图形、螺旋线、心形线等 10 种预设</p>
+                </div>
+                <div class="card glass reveal">
+                    <div class="card-icon">
                         <!-- Magnifying glass over wave -->
                         <svg viewBox="0 0 24 24">
                             <path d="M4 14c2-3 4 1 6-2s3 2 5-1"/>
@@ -1721,6 +1733,12 @@
                     <h3 class="card-title">弧长计算</h3>
                     <div class="code-block">
                         <code>CalcEngine.arc_length("sin(x)", 0, 3.141592653589793)<br># -> ~3.820</code>
+                    </div>
+                </div>
+                <div class="card glass reveal">
+                    <h3 class="card-title">参数曲线求值</h3>
+                    <div class="code-block">
+                        <code>CalcEngine.evaluate_parametric("cos(t)", "sin(t)", 0, 2*pi, 500)<br># -> {'xs': [...], 'ys': [...], 'ts': [...]}</code>
                     </div>
                 </div>
                 <div class="card glass reveal">

@@ -31,6 +31,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
 
 - **Function Plotting** — plot arbitrary mathematical expressions with `x`
 - **3D Function Plotting** — plot surfaces for expressions with both `x` and `y`
+- **Parametric Curve Plotting** — plot curves defined as x(t) and y(t), with 10 built-in presets (circle, ellipse, Lissajous, spiral, cardioid, heart, etc.)
 - **Multi-Curve Overlay** — plot multiple functions simultaneously with different colors
 - **Numerical Derivatives** — first and second derivative via central difference
 - **Numerical Integration** — adaptive Simpson's rule for definite integrals
@@ -41,7 +42,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
  - **Tangent & Normal Lines** — draw tangent and normal lines at any point on a 2D curve, visualized with dashed lines and labeled on the plot
  - **Arc Length** — approximate the arc length of a curve over any interval using adaptive chord summation
   - **Fourier Transform & Spectrum Analysis** — FFT amplitude and phase spectrum for any function, with dominant-frequency detection and CSV export
-  - **Preset Functions** — quick-select from 21 common functions (including 3D and FFT presets)
+  - **Preset Functions** — quick-select from 21 common functions (including 3D and FFT presets) plus 10 parametric presets
   - **Parameter System** — auto-detects extra parameters (e.g., `a`, `b`) and provides live input fields
   - **Coordinate Marking** — left-click to mark points, right-click to delete the nearest marked point, or enter an x value to auto-locate
  - **Quick Input Panel** — popup keypad for fast insertion of operators, functions, and constants
@@ -51,7 +52,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
   - **Function Table & CSV Export** — generate a data table of x and f(x) over any interval, then export to CSV or copy to clipboard
   - **FFT Spectrum Export** — export frequency, amplitude and phase data to CSV for external analysis
  - **Windows EXE** — standalone executable, no Python installation required
- - **Android App** — standalone APK with Material Design 3 UI and JNI bridge, now including 3D surface plotting with touch rotation
+ - **Android App** — standalone APK with Material Design 3 UI and JNI bridge, now including 3D surface plotting with touch rotation and parametric curve support
 
 ## Pre-compiled Binaries
 
@@ -138,6 +139,7 @@ SuperCalculator/
 
 ## What's New
 
+- **Parametric Curve Plotting** — plot curves defined as x(t) and y(t) with 10 built-in presets (circle, ellipse, Lissajous, spiral, cardioid, heart, trefoil knot, butterfly curve, star). Available on both desktop (Python) and Android (JNI).
 - **Fourier Transform & Spectrum Analysis** — FFT amplitude and phase spectrum computation with dominant-frequency detection and CSV export. Available on both desktop (Python) and Android (DFT implementation).
 - **21 Preset Functions** — now includes dedicated FFT demonstration expressions for instant spectrum analysis.
 
@@ -188,6 +190,12 @@ CalcEngine.solve_bisection("(sin(x))-(cos(x))", 0, 3.14)  # -> ~0.785
 
 # Arc length
 CalcEngine.arc_length("sin(x)", 0, 3.141592653589793)  # -> ~3.820
+
+# Parametric curve evaluation
+spec = CalcEngine.evaluate_parametric("cos(t)", "sin(t)", 0, 2*pi, 500)
+# spec['xs'] -> list of x-values
+# spec['ys'] -> list of y-values
+# spec['ts'] -> list of t-values
 
 # FFT Spectrum
 spec = CalcEngine.fft_spectrum("sin(2*pi*x)+0.5*sin(6*pi*x)", 0, 2, 1024)
