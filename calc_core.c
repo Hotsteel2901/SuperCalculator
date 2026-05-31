@@ -545,7 +545,7 @@ EXPORT double integrate_adaptive(const char* expr, double a, double b, double to
  *  Extremum finding (golden-section search)
  * -------------------------------------------------------------------------- */
 
-#define GOLDEN_RATIO_RES ((3.0 - sqrt(5.0)) / 2.0)
+static const double GOLDEN_RATIO_RES = (3.0 - sqrt(5.0)) / 2.0;
 
 static double golden_section_min(const char* expr, double a, double b, double tol, int max_iter) {
     const double resphi = GOLDEN_RATIO_RES;

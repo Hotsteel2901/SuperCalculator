@@ -573,10 +573,18 @@ public class CalcActivity extends AppCompatActivity {
         double a = getX();
         int order = getTaylorOrder();
 
-        // Evaluate the Taylor polynomial over the [a, b] range for plotting
         double rangeA = getA();
         double rangeB = getB();
         if (rangeA >= rangeB) { toast("Set a < b for plot range"); return; }
+
+        // Precompute Taylor coefficients once (avoids O(n*order) redundant derivative calls)
+        double[] coeffs = new double[order + 1];
+        double factorial = 1.0;
+        for (int k = 0; k <= order; k++) {
+            if (k > 0) factorial *= k;
+            double dk = CalcEngine.nthDerivative(e, a, k, 1e-5);
+            coeffs[k] = Double.isNaN(dk) ? 0.0 : dk / factorial;
+        }
 
         int n = 500;
         double step = (rangeB - rangeA) / (n - 1);
@@ -586,28 +594,19 @@ public class CalcActivity extends AppCompatActivity {
 
         for (int i = 0; i < n; i++) {
             xs[i] = rangeA + i * step;
-            // Original function
             double yOrig = CalcEngine.evaluate(e, xs[i]);
             ysOrig[i] = Double.isNaN(yOrig) ? 0.0 : yOrig;
 
-            // Taylor polynomial evaluation
             double dx = xs[i] - a;
             double taylorVal = 0.0;
             double dxPower = 1.0;
             for (int k = 0; k <= order; k++) {
-                double coeff = CalcEngine.nthDerivative(e, a, k, 1e-5);
-                if (!Double.isNaN(coeff)) {
-                    // c_k = f^(k)(a) / k!
-                    double factorial = 1.0;
-                    for (int j = 2; j <= k; j++) factorial *= j;
-                    taylorVal += (coeff / factorial) * dxPower;
-                }
+                taylorVal += coeffs[k] * dxPower;
                 dxPower *= dx;
             }
             ysTaylor[i] = taylorVal;
         }
 
-        // Plot using PlotActivity with both curves
         Intent intent = new Intent(this, PlotActivity.class);
         intent.putExtra("initial_expr", e);
         intent.putExtra("x_min", rangeA);
