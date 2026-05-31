@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <meta name="theme-color" content="#0a0a14" media="(prefers-color-scheme: dark)">
     <meta name="theme-color" content="#f0f4f8" media="(prefers-color-scheme: light)">
-    <meta name="description" content="SuperCalculator - 基于桥接模式的高性能函数计算与可视化工具，支持函数绘图、3D曲面、数值微积分、方程求解与极值查找">
+    <meta name="description" content="SuperCalculator - 基于桥接模式的高性能函数计算与可视化工具，支持函数绘图、3D曲面、参数曲线、极坐标绘图、数值微积分、方程求解与极值查找">
     <title>SuperCalculator - 超级函数绘图计算器</title>
     <script>
         (function(){try{var t=localStorage.getItem('theme');if(t){document.documentElement.setAttribute('data-theme',t)}else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches){document.documentElement.setAttribute('data-theme','light')}}catch(e){}})();
@@ -1319,6 +1319,19 @@
                     </div>
                     <h3 class="card-title">参数曲线绘图</h3>
                     <p class="card-text">支持以 x(t) 和 y(t) 定义的参数曲线，内置圆、椭圆、李萨如图形、螺旋线、心形线等 10 种预设</p>
+                </div>
+                <div class="card glass reveal">
+                    <div class="card-icon">
+                        <!-- Polar coordinate curve (rose) -->
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="8" fill="none" stroke-dasharray="2 2"/>
+                            <path d="M12 4c0 0 4 4 4 8s-4 8-4 8"/>
+                            <path d="M12 4c0 0-4 4-4 8s4 8 4 8"/>
+                            <circle cx="12" cy="12" r="1.5" fill="white" stroke="none"/>
+                        </svg>
+                    </div>
+                    <h3 class="card-title">极坐标绘图</h3>
+                    <p class="card-text">支持以 r(theta) 定义的极坐标曲线，内置心形线、玫瑰线、螺旋线、三叶草等 12 种预设</p>
                 </div>
                 <div class="card glass reveal">
                     <div class="card-icon">

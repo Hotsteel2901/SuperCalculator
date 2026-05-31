@@ -23,6 +23,7 @@ public class CalcActivity extends AppCompatActivity {
 
     private EditText exprInput, xInput, aInput, bInput, guessInput;
     private EditText xParamInput, yParamInput, tMinInput, tMaxInput;
+    private EditText rPolarInput, thetaMinInput, thetaMaxInput;
     private TextView resultView;
     private LineChart lineChart;
     private MaterialCardView graphCard;
@@ -41,6 +42,9 @@ public class CalcActivity extends AppCompatActivity {
         yParamInput = findViewById(R.id.y_param_input);
         tMinInput  = findViewById(R.id.t_min_input);
         tMaxInput  = findViewById(R.id.t_max_input);
+        rPolarInput = findViewById(R.id.r_polar_input);
+        thetaMinInput = findViewById(R.id.theta_min_input);
+        thetaMaxInput = findViewById(R.id.theta_max_input);
         resultView = findViewById(R.id.result_view);
         resultView.setMovementMethod(new ScrollingMovementMethod());
         lineChart  = findViewById(R.id.line_chart);
@@ -104,6 +108,23 @@ public class CalcActivity extends AppCompatActivity {
             yParamInput.setText("cos(2*t)");
             tMinInput.setText("0");
             tMaxInput.setText("6.2832");
+        });
+
+        // Polar plotting
+        MaterialButton btnPlotPolar = findViewById(R.id.btn_plot_polar);
+        Chip chipCardioid = findViewById(R.id.chip_cardioid);
+        Chip chipClover = findViewById(R.id.chip_clover);
+
+        btnPlotPolar.setOnClickListener(v -> onPlotPolar());
+        chipCardioid.setOnClickListener(v -> {
+            rPolarInput.setText("1+cos(theta)");
+            thetaMinInput.setText("0");
+            thetaMaxInput.setText("6.2832");
+        });
+        chipClover.setOnClickListener(v -> {
+            rPolarInput.setText("sin(3*theta)");
+            thetaMinInput.setText("0");
+            thetaMaxInput.setText("6.2832");
         });
 
         // Preset chips — set expression text and auto-evaluate
@@ -516,6 +537,62 @@ public class CalcActivity extends AppCompatActivity {
         intent.putExtra("t_min", tMin);
         intent.putExtra("t_max", tMax);
         intent.putExtra("is_parametric", true);
+        startActivity(intent);
+    }
+
+    private void onPlotPolar() {
+        String rExpr = rPolarInput.getText().toString().trim();
+        if (rExpr.isEmpty()) {
+            toast("Enter an r(theta) expression");
+            return;
+        }
+
+        double thetaMin, thetaMax;
+        try {
+            thetaMin = Double.parseDouble(thetaMinInput.getText().toString().trim());
+            thetaMax = Double.parseDouble(thetaMaxInput.getText().toString().trim());
+        } catch (NumberFormatException ex) {
+            toast("Invalid theta range");
+            return;
+        }
+        if (thetaMin >= thetaMax) {
+            toast("theta min must be less than theta max");
+            return;
+        }
+
+        int n = 500;
+        double step = (thetaMax - thetaMin) / (n - 1);
+        double[] thetas = new double[n];
+        for (int i = 0; i < n; i++) {
+            thetas[i] = thetaMin + i * step;
+        }
+
+        // C core only supports x/y variables; replace theta -> x for evaluation
+        String rExprSub = rExpr.replaceAll("\\btheta\\b", "x");
+        double[] rs = CalcEngine.evaluateArray(rExprSub, thetas);
+        if (rs == null) {
+            resultView.append("Polar: Error: " + CalcEngine.getLastError() + "\n");
+            return;
+        }
+
+        // Convert polar to Cartesian coordinates for plotting
+        double[] xs = new double[n];
+        double[] ys = new double[n];
+        for (int i = 0; i < n; i++) {
+            if (Double.isNaN(rs[i])) {
+                xs[i] = Double.NaN;
+                ys[i] = Double.NaN;
+            } else {
+                xs[i] = rs[i] * Math.cos(thetas[i]);
+                ys[i] = rs[i] * Math.sin(thetas[i]);
+            }
+        }
+
+        Intent intent = new Intent(this, PlotActivity.class);
+        intent.putExtra("parametric_x", rExpr);
+        intent.putExtra("is_polar", true);
+        intent.putExtra("t_min", thetaMin);
+        intent.putExtra("t_max", thetaMax);
         startActivity(intent);
     }
 

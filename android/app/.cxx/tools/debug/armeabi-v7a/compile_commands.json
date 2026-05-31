@@ -1,0 +1,12 @@
+[
+{
+  "directory": "/home/runner/work/SuperCalculator/SuperCalculator/android/app/.cxx/Debug/2v666jt6/armeabi-v7a",
+  "command": "/usr/local/lib/android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=armv7-none-linux-androideabi26 --sysroot=/usr/local/lib/android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/linux-x86_64/sysroot -Dcalc_core_EXPORTS -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -Wall -Wextra -O2 -Wno-unused-parameter -o CMakeFiles/calc_core.dir/home/runner/work/SuperCalculator/SuperCalculator/calc_core.c.o -c /home/runner/work/SuperCalculator/SuperCalculator/calc_core.c",
+  "file": "/home/runner/work/SuperCalculator/SuperCalculator/calc_core.c"
+},
+{
+  "directory": "/home/runner/work/SuperCalculator/SuperCalculator/android/app/.cxx/Debug/2v666jt6/armeabi-v7a",
+  "command": "/usr/local/lib/android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=armv7-none-linux-androideabi26 --sysroot=/usr/local/lib/android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/linux-x86_64/sysroot -Dcalc_core_EXPORTS -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -Wall -Wextra -O2 -Wno-unused-parameter -o CMakeFiles/calc_core.dir/calc_core_jni.c.o -c /home/runner/work/SuperCalculator/SuperCalculator/android/app/src/main/cpp/calc_core_jni.c",
+  "file": "/home/runner/work/SuperCalculator/SuperCalculator/android/app/src/main/cpp/calc_core_jni.c"
+}
+]

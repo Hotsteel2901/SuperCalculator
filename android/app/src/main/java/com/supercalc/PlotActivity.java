@@ -109,6 +109,16 @@ public class PlotActivity extends AppCompatActivity {
                 plotParametricCurve(xExpr, yExpr, tMin, tMax);
             }
         }
+        
+        // Handle polar curve from intent
+        if (intent != null && intent.getBooleanExtra("is_polar", false)) {
+            String rExpr = intent.getStringExtra("parametric_x");
+            double thetaMin = intent.getDoubleExtra("t_min", 0);
+            double thetaMax = intent.getDoubleExtra("t_max", 6.2832);
+            if (rExpr != null) {
+                plotPolarCurve(rExpr, thetaMin, thetaMax);
+            }
+        }
     }
     
     private void plotParametricCurve(String xExpr, String yExpr, double tMin, double tMax) {
@@ -178,6 +188,75 @@ public class PlotActivity extends AppCompatActivity {
             lineChart.invalidate();
         }
         toast("Parametric curve plotted");
+    }
+    
+    private void plotPolarCurve(String rExpr, double thetaMin, double thetaMax) {
+        int n = 500;
+        double step = (thetaMax - thetaMin) / (n - 1);
+        double[] thetas = new double[n];
+        for (int i = 0; i < n; i++) {
+            thetas[i] = thetaMin + i * step;
+        }
+        
+        // C core only supports x/y variables; replace theta -> x for evaluation
+        String rExprSub = rExpr.replaceAll("\\btheta\\b", "x");
+        double[] rs = CalcEngine.evaluateArray(rExprSub, thetas);
+        if (rs == null) {
+            toast("Error: " + CalcEngine.getLastError());
+            return;
+        }
+        
+        // Convert polar to Cartesian coordinates
+        ArrayList<Entry> entries = new ArrayList<>();
+        double xMin = Double.MAX_VALUE, xMax = Double.MIN_VALUE;
+        double yMin = Double.MAX_VALUE, yMax = Double.MIN_VALUE;
+        for (int i = 0; i < n; i++) {
+            if (!Double.isNaN(rs[i]) && !Double.isInfinite(rs[i])) {
+                double x = rs[i] * Math.cos(thetas[i]);
+                double y = rs[i] * Math.sin(thetas[i]);
+                entries.add(new Entry((float) x, (float) y));
+                if (x < xMin) xMin = x;
+                if (x > xMax) xMax = x;
+                if (y < yMin) yMin = y;
+                if (y > yMax) yMax = y;
+            }
+        }
+        
+        if (entries.isEmpty()) {
+            toast("No valid points to plot");
+            return;
+        }
+        
+        // Set range with padding
+        double xPad = (xMax - xMin) * 0.1;
+        double yPad = (yMax - yMin) * 0.1;
+        xMinInput.setText(String.valueOf(xMin - xPad));
+        xMaxInput.setText(String.valueOf(xMax + xPad));
+        yMinInput.setText(String.valueOf(yMin - yPad));
+        yMaxInput.setText(String.valueOf(yMax + yPad));
+        
+        allEntries.clear();
+        allExpressions.clear();
+        curveColors.clear();
+        allEntries.add(entries);
+        String label = "Pol: r(theta)=" + rExpr;
+        allExpressions.add(label);
+        curveColors.add(getNextColor());
+        
+        List<ILineDataSet> dataSets = new ArrayList<>();
+        LineDataSet dataSet = new LineDataSet(entries, label);
+        dataSet.setColor(curveColors.get(0));
+        dataSet.setLineWidth(2f);
+        dataSet.setDrawCircles(false);
+        dataSet.setDrawValues(false);
+        dataSets.add(dataSet);
+        
+        if (!dataSets.isEmpty()) {
+            LineData lineData = new LineData(dataSets);
+            lineChart.setData(lineData);
+            lineChart.invalidate();
+        }
+        toast("Polar curve plotted");
     }
     
     private void setupGestureListener() {
