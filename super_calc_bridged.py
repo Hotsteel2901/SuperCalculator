@@ -17,6 +17,7 @@ Features:
   - Parameter detection and dynamic input
   - Input panel with quick buttons (all C-core supported operations)
   - Coordinate marking on click and by x input
+  - Polar coordinate plotting r(theta) with preset library
 """
 
 import sys
@@ -98,6 +99,21 @@ PARAMETRIC_PRESETS = {
     "Star (5-pointed)":    ("cos(t)+0.5*cos(3*t)+0.3*cos(5*t)", "sin(t)+0.5*sin(3*t)+0.3*sin(5*t)", "0", "2*pi"),
 }
 
+POLAR_PRESETS = {
+    "Circle (r=1)":              ("1", "0", "2*pi"),
+    "Circle (r=2)":              ("2", "0", "2*pi"),
+    "Cardioid":                  ("1+cos(theta)", "0", "2*pi"),
+    "Lemniscate":                ("sqrt(2*cos(2*theta))", "0", "2*pi"),
+    "Three-leaf Clover":         ("sin(3*theta)", "0", "2*pi"),
+    "Four-leaf Clover":          ("sin(2*theta)", "0", "2*pi"),
+    "Rose (5 petals)":           ("cos(5*theta)", "0", "2*pi"),
+    "Rose (3 petals)":           ("cos(3*theta)", "0", "2*pi"),
+    "Archimedean Spiral":        ("theta", "0", "6*pi"),
+    "Logarithmic Spiral":        ("exp(0.2*theta)", "0", "4*pi"),
+    "Limaçon":                   ("1+2*cos(theta)", "0", "2*pi"),
+    "Butterfly":                 ("sin(theta)*(exp(cos(theta))-2*cos(4*theta))", "0", "2*pi"),
+}
+
 DEFAULT_COLORS = [
     "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728",
     "#9467bd", "#8c564b", "#e377c2", "#7f7f7f",
@@ -137,15 +153,22 @@ class CurveModel:
     """Holds the configuration for a single plotted curve."""
     __slots__ = ("expression", "color", "linewidth", "linestyle",
                  "visible", "label", "is_3d", "parameters",
-                 "is_parametric", "x_param_expr", "y_param_expr")
+                 "is_parametric", "x_param_expr", "y_param_expr",
+                 "is_polar", "r_param_expr")
 
     def __init__(self, expr, color, label="", lw=2, ls="-",
-                 is_parametric=False, x_param_expr="", y_param_expr=""):
+                 is_parametric=False, x_param_expr="", y_param_expr="",
+                 is_polar=False, r_param_expr=""):
         self.is_parametric = is_parametric
         self.x_param_expr = x_param_expr
         self.y_param_expr = y_param_expr
+        self.is_polar = is_polar
+        self.r_param_expr = r_param_expr
         if is_parametric:
             self.expression = f"x(t)={x_param_expr}, y(t)={y_param_expr}"
+            self.is_3d = False
+        elif is_polar:
+            self.expression = f"r(theta)={r_param_expr}"
             self.is_3d = False
         else:
             self.expression = expr
@@ -155,7 +178,9 @@ class CurveModel:
         self.linestyle = ls
         self.visible = True
         self.label = label or self.expression
-        self.parameters = self._detect_parameters(expr if not is_parametric else x_param_expr + " " + y_param_expr)
+        self.parameters = self._detect_parameters(
+            expr if not is_parametric and not is_polar else
+            (x_param_expr + " " + y_param_expr if is_parametric else r_param_expr))
 
     def _detect_3d(self, expr: str) -> bool:
         has_x = 'x' in expr.lower()
@@ -346,6 +371,51 @@ class SuperCalcApp:
 
         # Initially hide parametric inputs
         self._on_parametric_toggle()
+
+        # --- Polar Mode ---
+        self._var_polar = tk.BooleanVar(value=False)
+        frm_polar = ttk.LabelFrame(scroll_frame, text="Polar Mode r(theta)",
+                                   style="Dark.TLabelframe")
+        frm_polar.pack(fill=tk.X, padx=8, pady=4)
+
+        ptog2 = ttk.Frame(frm_polar, style="Dark.TFrame")
+        ptog2.pack(fill=tk.X, padx=6, pady=(4, 2))
+        ttk.Checkbutton(ptog2, text="Enable polar curve",
+                        variable=self._var_polar,
+                        command=self._on_polar_toggle).pack(side=tk.LEFT)
+
+        self._frame_polar_inputs = ttk.Frame(frm_polar, style="Dark.TFrame")
+        self._frame_polar_inputs.pack(fill=tk.X, padx=6, pady=2)
+
+        pr1p = ttk.Frame(self._frame_polar_inputs, style="Dark.TFrame")
+        pr1p.pack(fill=tk.X, pady=2)
+        ttk.Label(pr1p, text="r(theta) =", style="Dark.TLabel", width=8).pack(side=tk.LEFT)
+        self._var_r_param = tk.StringVar(value="1")
+        ttk.Entry(pr1p, textvariable=self._var_r_param, width=22).pack(side=tk.LEFT, padx=2)
+
+        pr3p = ttk.Frame(self._frame_polar_inputs, style="Dark.TFrame")
+        pr3p.pack(fill=tk.X, pady=2)
+        ttk.Label(pr3p, text="theta range:", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_theta_min = tk.StringVar(value="0")
+        ttk.Entry(pr3p, textvariable=self._var_theta_min, width=8).pack(side=tk.LEFT, padx=2)
+        ttk.Label(pr3p, text="to", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_theta_max = tk.StringVar(value="2*pi")
+        ttk.Entry(pr3p, textvariable=self._var_theta_max, width=8).pack(side=tk.LEFT, padx=2)
+
+        # Polar presets
+        pr4p = ttk.Frame(self._frame_polar_inputs, style="Dark.TFrame")
+        pr4p.pack(fill=tk.X, pady=(4, 2))
+        ttk.Label(pr4p, text="Preset:", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_polar_preset = tk.StringVar()
+        polar_combo = ttk.Combobox(pr4p, textvariable=self._var_polar_preset,
+                                   values=list(POLAR_PRESETS.keys()),
+                                   state="readonly", font=("Consolas", 10), width=18)
+        polar_combo.pack(side=tk.LEFT, padx=4)
+        polar_combo.bind("<<ComboboxSelected>>",
+                         lambda e: self._on_polar_preset(self._var_polar_preset.get()))
+
+        # Initially hide polar inputs
+        self._on_polar_toggle()
 
         # --- Parameter Inputs ---
         self.frm_params = ttk.LabelFrame(scroll_frame, text="Parameters",
@@ -865,6 +935,26 @@ class SuperCalcApp:
             self._var_parametric.set(True)
             self._on_parametric_toggle()
 
+    def _on_polar_toggle(self):
+        """Show or hide polar input fields."""
+        if self._var_polar.get():
+            for child in self._frame_polar_inputs.winfo_children():
+                child.pack()
+        else:
+            for child in self._frame_polar_inputs.winfo_children():
+                child.pack_forget()
+
+    def _on_polar_preset(self, name: str):
+        """Load a polar preset into the input fields."""
+        preset = POLAR_PRESETS.get(name)
+        if preset:
+            r_expr, theta_min, theta_max = preset
+            self._var_r_param.set(r_expr)
+            self._var_theta_min.set(theta_min)
+            self._var_theta_max.set(theta_max)
+            self._var_polar.set(True)
+            self._on_polar_toggle()
+
     def _resolve_t_range(self, expr: str) -> str:
         """Resolve 'pi' references in t-range expressions."""
         import math
@@ -904,6 +994,20 @@ class SuperCalcApp:
                                x_param_expr=x_expr, y_param_expr=y_expr)
             self.curves.append(curve)
             self.listbox_curves.insert(tk.END, f"  [P] {label}")
+            self.listbox_curves.itemconfig(tk.END, fg=color)
+            self._plot_all()
+        elif self._var_polar.get():
+            r_expr = self._var_r_param.get().strip()
+            if not r_expr:
+                messagebox.showwarning("Input Error", "Please enter an r(theta) expression.")
+                return
+            color = DEFAULT_COLORS[self.color_index % len(DEFAULT_COLORS)]
+            self.color_index += 1
+            label = f"r(theta)={r_expr}"
+            curve = CurveModel("", color, label=label, is_polar=True,
+                               r_param_expr=r_expr)
+            self.curves.append(curve)
+            self.listbox_curves.insert(tk.END, f"  [Pol] {label}")
             self.listbox_curves.itemconfig(tk.END, fg=color)
             self._plot_all()
         else:
@@ -973,10 +1077,25 @@ class SuperCalcApp:
                 self.listbox_curves.insert(tk.END, f"  [P] {label}")
                 self.listbox_curves.itemconfig(tk.END, fg=color)
                 self._update_param_inputs()
+        elif self._var_polar.get():
+            r_expr = self._var_r_param.get().strip()
+            if not r_expr:
+                messagebox.showwarning("Input Error", "Please enter an r(theta) expression.")
+                return
+            label = f"r(theta)={r_expr}"
+            if not any(c.is_polar and c.label == label for c in self.curves):
+                color = DEFAULT_COLORS[self.color_index % len(DEFAULT_COLORS)]
+                self.color_index += 1
+                curve = CurveModel("", color, label=label, is_polar=True,
+                                   r_param_expr=r_expr)
+                self.curves.append(curve)
+                self.listbox_curves.insert(tk.END, f"  [Pol] {label}")
+                self.listbox_curves.itemconfig(tk.END, fg=color)
+                self._update_param_inputs()
         else:
             expr = self.entry_expr.get().strip()
             if expr:
-                if not any(not c.is_parametric and c.expression == expr for c in self.curves):
+                if not any(not c.is_parametric and not c.is_polar and c.expression == expr for c in self.curves):
                     self._add_curve(expr)
         self._plot_all()
 
@@ -1043,7 +1162,9 @@ class SuperCalcApp:
             self.status_var.set("No curves to plot.")
             return
 
-        has_2d = any((not c.is_3d and c.visible) or (c.is_parametric and c.visible) for c in self.curves)
+        has_2d = any((not c.is_3d and not c.is_polar and c.visible) or 
+                     (c.is_parametric and c.visible) or 
+                     (c.is_polar and c.visible) for c in self.curves)
         has_3d = any(c.is_3d and c.visible for c in self.curves)
         
         if has_2d:
@@ -1098,6 +1219,27 @@ class SuperCalcApp:
                 ys_param = CalcEngine.evaluate_array(y_expr_sub, t_list)
                 x_arr = np.array([x if x is not None else np.nan for x in xs_param])
                 y_arr = np.array([y if y is not None else np.nan for y in ys_param])
+                self.ax_2d.plot(x_arr, y_arr, color=curve.color,
+                             linewidth=curve.linewidth, linestyle=curve.linestyle,
+                             label=curve.label, alpha=0.9)
+            elif curve.is_polar:
+                try:
+                    theta_min = float(self._resolve_t_range(self._var_theta_min.get()))
+                    theta_max = float(self._resolve_t_range(self._var_theta_max.get()))
+                except ValueError:
+                    theta_min = 0.0
+                    theta_max = 6.283185307179586
+                theta_np = np.linspace(theta_min, theta_max, n_pts)
+                theta_list = theta_np.tolist()
+                r_expr = self._substitute_params(curve.r_param_expr)
+                # C core only supports x/y variables; replace theta -> x for evaluation
+                r_expr_sub = re.sub(r'\btheta\b', 'x', r_expr)
+                rs = CalcEngine.evaluate_array(r_expr_sub, theta_list)
+                # Convert polar to Cartesian coordinates
+                x_arr = np.array([r * math.cos(t) if r is not None else np.nan 
+                                  for r, t in zip(rs, theta_list)])
+                y_arr = np.array([r * math.sin(t) if r is not None else np.nan 
+                                  for r, t in zip(rs, theta_list)])
                 self.ax_2d.plot(x_arr, y_arr, color=curve.color,
                              linewidth=curve.linewidth, linestyle=curve.linestyle,
                              label=curve.label, alpha=0.9)

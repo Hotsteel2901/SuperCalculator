@@ -1,0 +1,27 @@
+{
+  "buildFiles": [
+    "/home/runner/work/SuperCalculator/SuperCalculator/android/app/src/main/cpp/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/usr/local/lib/android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/home/runner/work/SuperCalculator/SuperCalculator/android/app/.cxx/Debug/2v666jt6/x86",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/usr/local/lib/android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/home/runner/work/SuperCalculator/SuperCalculator/android/app/.cxx/Debug/2v666jt6/x86",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "calc_core::@6890427a1f51a3e7e1df": {
+      "artifactName": "calc_core",
+      "abi": "x86",
+      "output": "/home/runner/work/SuperCalculator/SuperCalculator/android/app/build/intermediates/cxx/Debug/2v666jt6/obj/x86/libcalc_core.so",
+      "runtimeFiles": []
+    }
+  }
+}
