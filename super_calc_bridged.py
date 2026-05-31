@@ -687,6 +687,29 @@ class SuperCalcApp:
         ttk.Button(fft_row2, text="Export Spectrum CSV",
                    command=self._on_export_fft_csv).pack(side=tk.LEFT, padx=2)
 
+        # --- Taylor Series Expansion ---
+        frm_taylor = ttk.LabelFrame(scroll_frame, text="Taylor Series Expansion",
+                                    style="Dark.TLabelframe")
+        frm_taylor.pack(fill=tk.X, padx=8, pady=4)
+
+        trow1 = ttk.Frame(frm_taylor, style="Dark.TFrame")
+        trow1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(trow1, text="Expand at a =", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_taylor_a = tk.StringVar(value="0")
+        ttk.Entry(trow1, textvariable=self._var_taylor_a, width=8).pack(
+            side=tk.LEFT, padx=4)
+        ttk.Label(trow1, text="Order:", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_taylor_order = tk.StringVar(value="5")
+        ttk.Entry(trow1, textvariable=self._var_taylor_order, width=5).pack(
+            side=tk.LEFT, padx=4)
+
+        trow2 = ttk.Frame(frm_taylor, style="Dark.TFrame")
+        trow2.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Button(trow2, text="Expand Taylor",
+                   command=self._on_taylor_expand).pack(side=tk.LEFT, padx=2)
+        ttk.Button(trow2, text="Plot Taylor + Original",
+                   command=self._on_taylor_plot).pack(side=tk.LEFT, padx=2)
+
         # --- Status ---
         self.status_var = tk.StringVar(value="Ready.")
         status_bar = ttk.Label(scroll_frame, textvariable=self.status_var,
@@ -2010,6 +2033,119 @@ class SuperCalcApp:
             self.status_var.set(f"Exported FFT to {os.path.basename(path)}")
         except Exception as e:
             messagebox.showerror("Export Error", str(e))
+
+    # ------------------------------------------------------------------
+    #  Taylor Series Expansion
+    # ------------------------------------------------------------------
+    def _on_taylor_expand(self):
+        expr = self._get_active_expression()
+        if not expr:
+            return
+        try:
+            a = float(self._var_taylor_a.get())
+            order = int(self._var_taylor_order.get())
+        except ValueError:
+            messagebox.showerror("Error", "Invalid Taylor parameters.")
+            return
+        if order < 1 or order > 20:
+            messagebox.showerror("Error", "Order must be between 1 and 20.")
+            return
+
+        expr_sub = self._substitute_params(expr)
+        coeffs = CalcEngine.taylor_coefficients(expr_sub, a, order)
+        if coeffs is None:
+            err = CalcEngine.get_last_error()
+            messagebox.showerror("Taylor Error", f"Could not compute Taylor expansion.\n{err}")
+            return
+
+        terms = []
+        for k, c in enumerate(coeffs):
+            if c is None or abs(c) < 1e-15:
+                continue
+            if k == 0:
+                terms.append(f"{c:.10g}")
+            elif k == 1:
+                terms.append(f"{c:.10g}·(x-{a:.10g})")
+            else:
+                terms.append(f"{c:.10g}·(x-{a:.10g})^{k}")
+
+        poly_str = " + ".join(terms) if terms else "0"
+
+        coeff_lines = []
+        for k, c in enumerate(coeffs):
+            if c is not None:
+                coeff_lines.append(f"  c_{k} = {c:.12g}")
+            else:
+                coeff_lines.append(f"  c_{k} = N/A")
+        coeff_str = "\n".join(coeff_lines)
+
+        result_msg = (
+            f"f(x) = {expr}\n"
+            f"Taylor expansion at a = {a}, order = {order}:\n\n"
+            f"T(x) = {poly_str}\n\n"
+            f"Coefficients (c_k = f^(k)(a)/k!):\n{coeff_str}"
+        )
+        messagebox.showinfo("Taylor Series", result_msg)
+        self.status_var.set(f"Taylor series at a={a}, order={order}")
+
+    def _on_taylor_plot(self):
+        expr = self._get_active_expression()
+        if not expr:
+            return
+        try:
+            a = float(self._var_taylor_a.get())
+            order = int(self._var_taylor_order.get())
+        except ValueError:
+            messagebox.showerror("Error", "Invalid Taylor parameters.")
+            return
+        if order < 1 or order > 20:
+            messagebox.showerror("Error", "Order must be between 1 and 20.")
+            return
+
+        expr_sub = self._substitute_params(expr)
+        coeffs = CalcEngine.taylor_coefficients(expr_sub, a, order)
+        if coeffs is None:
+            err = CalcEngine.get_last_error()
+            messagebox.showerror("Taylor Error", f"Could not compute Taylor expansion.\n{err}")
+            return
+
+        n_pts = max(MIN_PLOT_POINTS, min(MAX_PLOT_POINTS, int((self.x_max - self.x_min) / self.step_size)))
+        xs_np = np.linspace(self.x_min, self.x_max, n_pts)
+        xs_list = xs_np.tolist()
+
+        # Original function
+        ys_orig = CalcEngine.evaluate_array(expr_sub, xs_list)
+        ys_orig_np = np.array([y if y is not None else np.nan for y in ys_orig])
+
+        # Taylor polynomial
+        dx_arr = xs_np - a
+        ys_taylor = np.zeros(n_pts)
+        dx_power = np.ones(n_pts)
+        for k, c in enumerate(coeffs):
+            if c is not None:
+                ys_taylor += c * dx_power
+            dx_power *= dx_arr
+
+        self._ensure_2d_window()
+        self.ax_2d.clear()
+        self._setup_axes(self.ax_2d, is_3d=False)
+
+        self.ax_2d.plot(xs_np, ys_orig_np, color="#1f77b4", linewidth=2,
+                        label=f"Original: {expr}", alpha=0.9)
+        self.ax_2d.plot(xs_np, ys_taylor, color="#ff7f0e", linewidth=2, linestyle="--",
+                        label=f"Taylor (order {order})", alpha=0.9)
+
+        # Mark expansion point
+        y_at_a = CalcEngine.evaluate(expr_sub, a)
+        if y_at_a is not None:
+            self.ax_2d.plot(a, y_at_a, 'go', markersize=8)
+            self.ax_2d.annotate(f"a={a:.3g}", xy=(a, y_at_a), xytext=(10, 10),
+                                textcoords='offset points', color='#a6e3a1', fontsize=9)
+
+        self.ax_2d.legend(loc="upper right", facecolor="#313244",
+                          edgecolor="#585b70", labelcolor="#cdd6f4", fontsize=9)
+        self.canvas_2d.draw()
+        self.status_var.set(f"Taylor plot at a={a}, order={order}")
 
     # ------------------------------------------------------------------
     #  Equation Solver

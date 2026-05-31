@@ -50,6 +50,12 @@ public class CalcEngine {
     /** Two-sided limit: lim(x→a) f(x). Returns NaN if limit does not exist. */
     public static native double limit(String expr, double a);
 
+    /** nth-order derivative f^(n)(x) at x with step h. */
+    public static native double nthDerivative(String expr, double x, int n, double h);
+
+    /** Compute Taylor series coefficients c_k = f^(k)(a)/k! for k=0..order. Returns double[order+1] or null on error. */
+    public static native double[] taylorCoefficients(String expr, double a, int order);
+
     /** Last error message from the C core. */
     public static native String getLastError();
 }

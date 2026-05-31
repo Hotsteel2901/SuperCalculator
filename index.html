@@ -1435,6 +1435,19 @@
                 </div>
                 <div class="card glass reveal">
                     <div class="card-icon">
+                        <!-- Taylor series / polynomial expansion -->
+                        <svg viewBox="0 0 24 24">
+                            <path d="M4 20h16"/>
+                            <path d="M4 4v16"/>
+                            <path d="M6 16c2-4 4 0 6-3s3 1 5-2 3 0 4-1" stroke-width="1.5"/>
+                            <path d="M6 14c1.5-0.5 3 0.5 4.5-0.5s3 0.5 4.5-0.5" stroke-width="1.5" opacity="0.5" stroke-dasharray="2,2"/>
+                        </svg>
+                    </div>
+                    <h3 class="card-title">泰勒级数展开</h3>
+                    <p class="card-text">将任意函数在指定点展开为泰勒多项式，支持自定义阶数，展示系数与多项式表达式，并可绘制泰勒近似与原函数对比图</p>
+                </div>
+                <div class="card glass reveal">
+                    <div class="card-icon">
                         <!-- Adjustable sliders -->
                         <svg viewBox="0 0 24 24">
                             <line x1="4" y1="6" x2="20" y2="6"/>
@@ -1779,6 +1792,12 @@
                     <h3 class="card-title">傅里叶变换频谱</h3>
                     <div class="code-block">
                         <code>CalcEngine.fft_spectrum("sin(2*pi*x)+0.5*sin(6*pi*x)", 0, 2, 1024)<br># -> {'freqs': [...], 'amps': [...], 'phases': [...]}</code>
+                    </div>
+                </div>
+                <div class="card glass reveal">
+                    <h3 class="card-title">泰勒级数展开</h3>
+                    <div class="code-block">
+                        <code>CalcEngine.taylor_coefficients("sin(x)", 0, 6)<br># -> [0, 1, 0, -0.1667, 0, 0.00833, 0]<br><br>CalcEngine.taylor_evaluate("sin(x)", 0, 0.5, 8)<br># -> ~0.4794 (Taylor polynomial at x=0.5)</code>
                     </div>
                 </div>
             </div>

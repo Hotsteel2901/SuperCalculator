@@ -23,6 +23,8 @@ double limit_right(const char* expr, double a, int max_level);
 double limit(const char* expr, double a, double tol, int max_level);
 void evaluate_array(const char* expr, const double* xs, double* out, int n);
 void evaluate_xy_array(const char* expr, const double* xs, const double* ys, double* out, int n);
+double nth_derivative(const char* expr, double x, int n, double h);
+int taylor_coefficients(const char* expr, double a, int order, double* out_coeffs, int max_out);
 const char* get_last_error(void);
 
 /* Helper: extract UTF-8 string from jstring, call fn, release, return */
@@ -233,4 +235,44 @@ Java_com_supercalc_CalcEngine_limit(JNIEnv* env, jclass clazz,
     double result = limit(str, a, 1e-8, 10);
     (*env)->ReleaseStringUTFChars(env, expr, str);
     return result;
+}
+
+JNIEXPORT jdouble JNICALL
+Java_com_supercalc_CalcEngine_nthDerivative(JNIEnv* env, jclass clazz,
+                                             jstring expr, jdouble x,
+                                             jint n, jdouble h) {
+    const char* str = (*env)->GetStringUTFChars(env, expr, NULL);
+    if (!str) return NAN;
+    double result = nth_derivative(str, x, n, h);
+    (*env)->ReleaseStringUTFChars(env, expr, str);
+    return result;
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_supercalc_CalcEngine_taylorCoefficients(JNIEnv* env, jclass clazz,
+                                                  jstring expr, jdouble a,
+                                                  jint order) {
+    const char* str = (*env)->GetStringUTFChars(env, expr, NULL);
+    if (!str) return NULL;
+
+    int max_coeffs = order + 1;
+    double* coeffs = malloc(max_coeffs * sizeof(double));
+    if (!coeffs) {
+        (*env)->ReleaseStringUTFChars(env, expr, str);
+        return NULL;
+    }
+
+    int count = taylor_coefficients(str, a, order, coeffs, max_coeffs);
+
+    jdoubleArray result_array = NULL;
+    if (count > 0) {
+        result_array = (*env)->NewDoubleArray(env, count);
+        if (result_array) {
+            (*env)->SetDoubleArrayRegion(env, result_array, 0, count, coeffs);
+        }
+    }
+
+    free(coeffs);
+    (*env)->ReleaseStringUTFChars(env, expr, str);
+    return result_array;
 }
