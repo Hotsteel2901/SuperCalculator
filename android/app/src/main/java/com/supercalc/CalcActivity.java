@@ -24,6 +24,7 @@ public class CalcActivity extends AppCompatActivity {
     private EditText exprInput, xInput, aInput, bInput, guessInput;
     private EditText xParamInput, yParamInput, tMinInput, tMaxInput;
     private EditText rPolarInput, thetaMinInput, thetaMaxInput;
+    private EditText taylorOrderInput;
     private TextView resultView;
     private LineChart lineChart;
     private MaterialCardView graphCard;
@@ -45,6 +46,7 @@ public class CalcActivity extends AppCompatActivity {
         rPolarInput = findViewById(R.id.r_polar_input);
         thetaMinInput = findViewById(R.id.theta_min_input);
         thetaMaxInput = findViewById(R.id.theta_max_input);
+        taylorOrderInput = findViewById(R.id.taylor_order_input);
         resultView = findViewById(R.id.result_view);
         resultView.setMovementMethod(new ScrollingMovementMethod());
         lineChart  = findViewById(R.id.line_chart);
@@ -90,6 +92,11 @@ public class CalcActivity extends AppCompatActivity {
         btnLimit.setOnClickListener(v -> onLimit());
         btnLimitLeft.setOnClickListener(v -> onLimitSide(true));
         btnLimitRight.setOnClickListener(v -> onLimitSide(false));
+
+        MaterialButton btnTaylor = findViewById(R.id.btn_taylor);
+        MaterialButton btnTaylorPlot = findViewById(R.id.btn_taylor_plot);
+        btnTaylor.setOnClickListener(v -> onTaylor());
+        btnTaylorPlot.setOnClickListener(v -> onTaylorPlot());
 
         // Parametric plotting
         MaterialButton btnPlotParametric = findViewById(R.id.btn_plot_parametric);
@@ -491,6 +498,124 @@ public class CalcActivity extends AppCompatActivity {
         } else {
             resultView.append(label + " = " + fmt(result) + "\n");
         }
+    }
+
+    private int getTaylorOrder() {
+        try {
+            int order = Integer.parseInt(taylorOrderInput.getText().toString().trim());
+            if (order < 1) return 5;
+            if (order > 20) return 20;
+            return order;
+        } catch (NumberFormatException e) {
+            return 5;
+        }
+    }
+
+    private void onTaylor() {
+        String e = getExpr();
+        if (e.isEmpty()) { toast("Enter an expression"); return; }
+        double a = getX();
+        int order = getTaylorOrder();
+
+        double[] coeffs = CalcEngine.taylorCoefficients(e, a, order);
+        if (coeffs == null) {
+            resultView.append("Taylor: Error: " + CalcEngine.getLastError() + "\n");
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Taylor series at a=").append(fmt(a)).append(" (order ").append(order).append(")\n\n");
+
+        // Build human-readable Taylor polynomial
+        for (int k = 0; k < coeffs.length; k++) {
+            if (Double.isNaN(coeffs[k])) continue;
+            double c = coeffs[k];
+            if (Math.abs(c) < 1e-15) continue;
+
+            String cStr = fmt(c);
+            if (k == 0) {
+                sb.append(cStr);
+            } else if (k == 1) {
+                sb.append(" + ").append(cStr).append("*(x-").append(fmt(a)).append(")");
+            } else {
+                sb.append(" + ").append(cStr).append("*(x-").append(fmt(a)).append(")^").append(k);
+            }
+        }
+        sb.append("\n\nCoefficients (c_k = f^(k)(a)/k!):\n");
+        for (int k = 0; k < coeffs.length; k++) {
+            sb.append("c").append(k).append(" = ").append(fmt(coeffs[k])).append("\n");
+        }
+
+        // Show in dialog
+        android.widget.TextView tv = new android.widget.TextView(this);
+        tv.setText(sb.toString());
+        tv.setTypeface(android.graphics.Typeface.MONOSPACE);
+        tv.setTextSize(13);
+        tv.setPadding(40, 24, 40, 24);
+        tv.setTextColor(android.graphics.Color.parseColor("#cdd6f4"));
+        tv.setBackgroundColor(android.graphics.Color.parseColor("#181825"));
+
+        android.widget.ScrollView sv = new android.widget.ScrollView(this);
+        sv.addView(tv);
+
+        new androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert)
+            .setTitle("Taylor Series Expansion")
+            .setView(sv)
+            .setPositiveButton("Close", null)
+            .show();
+
+        resultView.append("Taylor at a=" + fmt(a) + " (order " + order + ")\n");
+    }
+
+    private void onTaylorPlot() {
+        String e = getExpr();
+        if (e.isEmpty()) { toast("Enter an expression"); return; }
+        double a = getX();
+        int order = getTaylorOrder();
+
+        // Evaluate the Taylor polynomial over the [a, b] range for plotting
+        double rangeA = getA();
+        double rangeB = getB();
+        if (rangeA >= rangeB) { toast("Set a < b for plot range"); return; }
+
+        int n = 500;
+        double step = (rangeB - rangeA) / (n - 1);
+        double[] xs = new double[n];
+        double[] ysOrig = new double[n];
+        double[] ysTaylor = new double[n];
+
+        for (int i = 0; i < n; i++) {
+            xs[i] = rangeA + i * step;
+            // Original function
+            double yOrig = CalcEngine.evaluate(e, xs[i]);
+            ysOrig[i] = Double.isNaN(yOrig) ? 0.0 : yOrig;
+
+            // Taylor polynomial evaluation
+            double dx = xs[i] - a;
+            double taylorVal = 0.0;
+            double dxPower = 1.0;
+            for (int k = 0; k <= order; k++) {
+                double coeff = CalcEngine.nthDerivative(e, a, k, 1e-5);
+                if (!Double.isNaN(coeff)) {
+                    // c_k = f^(k)(a) / k!
+                    double factorial = 1.0;
+                    for (int j = 2; j <= k; j++) factorial *= j;
+                    taylorVal += (coeff / factorial) * dxPower;
+                }
+                dxPower *= dx;
+            }
+            ysTaylor[i] = taylorVal;
+        }
+
+        // Plot using PlotActivity with both curves
+        Intent intent = new Intent(this, PlotActivity.class);
+        intent.putExtra("initial_expr", e);
+        intent.putExtra("x_min", rangeA);
+        intent.putExtra("x_max", rangeB);
+        intent.putExtra("taylor_order", order);
+        intent.putExtra("taylor_a", a);
+        intent.putExtra("is_taylor", true);
+        startActivity(intent);
     }
 
     private void onPlotParametric() {

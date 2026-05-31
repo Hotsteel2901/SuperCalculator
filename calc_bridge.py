@@ -124,6 +124,13 @@ _lib.limit.restype = ctypes.c_double
 _lib.get_last_error.argtypes = []
 _lib.get_last_error.restype = ctypes.c_char_p
 
+_lib.nth_derivative.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_int, ctypes.c_double]
+_lib.nth_derivative.restype = ctypes.c_double
+
+_lib.taylor_coefficients.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_int,
+                                      ctypes.POINTER(ctypes.c_double), ctypes.c_int]
+_lib.taylor_coefficients.restype = ctypes.c_int
+
 
 def _is_invalid(x: float) -> bool:
     try:
@@ -269,6 +276,43 @@ class CalcEngine:
         """Return the last error message from the C core."""
         raw = _lib.get_last_error()
         return raw.decode("utf-8") if raw else ""
+
+    @staticmethod
+    def nth_derivative(expr: str, x: float, n: int, h: float = 1e-5) -> Optional[float]:
+        """Compute the nth-order derivative of f(x) at x using central differences."""
+        result = _lib.nth_derivative(expr.encode("utf-8"), x, n, h)
+        return None if _is_invalid(result) else result
+
+    @staticmethod
+    def taylor_coefficients(expr: str, a: float, order: int) -> Optional[List[float]]:
+        """Compute Taylor series coefficients c_k = f^(k)(a)/k! for k=0..order.
+
+        Returns a list of (order+1) coefficients, or None on error.
+        """
+        if order < 0 or order > 20:
+            return None
+        n = order + 1
+        arr = (ctypes.c_double * n)()
+        count = _lib.taylor_coefficients(expr.encode("utf-8"), a, order, arr, n)
+        if count <= 0:
+            return None
+        return [None if _is_invalid(arr[i]) else arr[i] for i in range(count)]
+
+    @staticmethod
+    def taylor_evaluate(expr: str, a: float, x: float, order: int) -> Optional[float]:
+        """Evaluate the Taylor polynomial of f(x) expanded at point a, evaluated at x."""
+        coeffs = CalcEngine.taylor_coefficients(expr, a, order)
+        if coeffs is None:
+            return None
+        dx = x - a
+        result = 0.0
+        dx_power = 1.0
+        for c in coeffs:
+            if c is None:
+                return None
+            result += c * dx_power
+            dx_power *= dx
+        return result
 
     @staticmethod
     def diff(expr: str, x: float, h: float = 1e-6) -> Optional[float]:

@@ -637,6 +637,73 @@ EXPORT double limit(const char* expr, double a, double tol, int max_level) {
     return NAN;
 }
 
+/* --------------------------------------------------------------------------
+ *  nth-order derivative via recursive central differences
+ *  Uses f^(n)(x) = (f^(n-1)(x+h) - f^(n-1)(x-h)) / (2h)
+ *  with adaptive step size for numerical stability.
+ * -------------------------------------------------------------------------- */
+
+static double _eval_or_nan(const char* expr, double x) {
+    double r;
+    if (parse_and_eval(expr, x, 0.0, &r) != 0) return NAN;
+    return r;
+}
+
+static double _central_diff_nth(const char* expr, double x, int n, double h) {
+    if (n == 0) return _eval_or_nan(expr, x);
+    if (n == 1) {
+        double fp = _eval_or_nan(expr, x + h);
+        double fm = _eval_or_nan(expr, x - h);
+        if (isnan(fp) || isnan(fm)) return NAN;
+        return (fp - fm) / (2.0 * h);
+    }
+    double fp = _central_diff_nth(expr, x + h, n - 1, h);
+    double fm = _central_diff_nth(expr, x - h, n - 1, h);
+    if (isnan(fp) || isnan(fm)) return NAN;
+    return (fp - fm) / (2.0 * h);
+}
+
+EXPORT double nth_derivative(const char* expr, double x, int n, double h) {
+    if (n < 0) { set_error("Derivative order must be non-negative"); return NAN; }
+    if (n == 0) {
+        double r;
+        if (parse_and_eval(expr, x, 0.0, &r) != 0) return NAN;
+        return r;
+    }
+    if (h <= 0.0) h = 1e-5;
+
+    /* Adaptive step: for higher orders, use larger h to avoid catastrophic cancellation */
+    double eps = 1e-16;
+    double h_opt = pow(eps, 1.0 / (n + 2));
+    if (h < h_opt) h = h_opt;
+    if (h > 0.1) h = 0.1;
+
+    return _central_diff_nth(expr, x, n, h);
+}
+
+/* --------------------------------------------------------------------------
+ *  Taylor series coefficients at expansion point a
+ *  Computes c_k = f^(k)(a) / k! for k = 0..order
+ *  Returns the number of coefficients computed, or -1 on error.
+ *  out_coeffs must have space for (order+1) doubles.
+ * -------------------------------------------------------------------------- */
+
+EXPORT int taylor_coefficients(const char* expr, double a, int order, double* out_coeffs, int max_out) {
+    if (order < 0) { set_error("Order must be non-negative"); return -1; }
+    if (!out_coeffs || max_out < order + 1) { set_error("Output buffer too small"); return -1; }
+
+    double h = 1e-5;
+    double factorial = 1.0;
+
+    for (int k = 0; k <= order; k++) {
+        if (k > 0) factorial *= k;
+        double dk = nth_derivative(expr, a, k, h);
+        if (isnan(dk)) return -1;
+        out_coeffs[k] = dk / factorial;
+    }
+    return order + 1;
+}
+
 EXPORT double find_maximum(const char* expr, double a, double b, double tol, int max_iter) {
     if (a >= b) { set_error("Invalid interval: a must be < b"); return NAN; }
     const double resphi = GOLDEN_RATIO_RES;

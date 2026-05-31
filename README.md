@@ -44,6 +44,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
  - **Tangent & Normal Lines** — draw tangent and normal lines at any point on a 2D curve, visualized with dashed lines and labeled on the plot
  - **Arc Length** — approximate the arc length of a curve over any interval using adaptive chord summation
   - **Fourier Transform & Spectrum Analysis** — FFT amplitude and phase spectrum for any function, with dominant-frequency detection and CSV export
+  - **Taylor Series Expansion** — expand any function into a Taylor polynomial at an arbitrary point, with configurable order, coefficient display, and comparison plot of Taylor vs. original
   - **Preset Functions** — quick-select from 21 common functions (including 3D and FFT presets) plus 10 parametric presets
   - **Parameter System** — auto-detects extra parameters (e.g., `a`, `b`) and provides live input fields
   - **Coordinate Marking** — left-click to mark points, right-click to delete the nearest marked point, or enter an x value to auto-locate
@@ -141,6 +142,7 @@ SuperCalculator/
 
 ## What's New
 
+- **Taylor Series Expansion** — expand any function into a Taylor polynomial at an arbitrary expansion point with configurable order. Displays coefficients, the polynomial expression, and a comparison plot of Taylor vs. original function. Available on both desktop (Python) and Android (JNI).
 - **Limit Computation** — compute left-hand, right-hand, and two-sided limits using Richardson extrapolation for high accuracy. Available on both desktop (Python) and Android (JNI).
 - **Parametric Curve Plotting** — plot curves defined as x(t) and y(t) with 10 built-in presets (circle, ellipse, Lissajous, spiral, cardioid, heart, trefoil knot, butterfly curve, star). Available on both desktop (Python) and Android (JNI).
 - **Fourier Transform & Spectrum Analysis** — FFT amplitude and phase spectrum computation with dominant-frequency detection and CSV export. Available on both desktop (Python) and Android (DFT implementation).
@@ -210,6 +212,16 @@ spec = CalcEngine.fft_spectrum("sin(2*pi*x)+0.5*sin(6*pi*x)", 0, 2, 1024)
 # spec['freqs'] -> list of frequencies
 # spec['amps']  -> list of amplitudes
 # spec['phases']-> list of phases (radians)
+
+# Taylor Series
+coeffs = CalcEngine.taylor_coefficients("sin(x)", 0, 6)  # c_k = f^(k)(0)/k!
+# coeffs -> [0, 1, 0, -0.1667, 0, 0.00833, 0]
+
+# Evaluate Taylor polynomial at a point
+taylor_val = CalcEngine.taylor_evaluate("sin(x)", 0, 0.5, 8)  # ~0.4794
+
+# nth-order derivative
+d5 = CalcEngine.nth_derivative("sin(x)", 1.0, 5)  # 5th derivative of sin at x=1
 ```
 
 ## Numerical Methods
@@ -218,6 +230,8 @@ spec = CalcEngine.fft_spectrum("sin(2*pi*x)+0.5*sin(6*pi*x)", 0, 2, 1024)
 |---------------------|------------------------------------------------|-----------|
 | Derivative          | Central difference: (f(x+h)-f(x-h)) / 2h       | O(h^2)    |
 | 2nd Derivative      | Central difference: (f(x+h)-2f(x)+f(x-h)) / h^2 | O(h^2)  |
+| nth Derivative      | Recursive central differences                   | O(h^2)    |
+| Taylor Coefficients | nth derivative / k! via recursive central diff  | O(h^2)    |
 | Integration         | Adaptive composite Simpson's rule              | O(h^4)    |
 | Root Finding        | Newton-Raphson with bisection fallback         | —         |
 | Extremum Finder     | Golden-section search                          | Linear    |
