@@ -458,12 +458,12 @@ EXPORT double solve_equation(const char* expr, double guess,
                               double xmin, double xmax,
                               double tol, int max_iter) {
     if (xmin >= xmax) { set_error("Invalid interval: xmin must be < xmax"); return NAN; }
-    double x = guess, fp, fm;
+    double x = guess;
     if (x < xmin) x = xmin + 0.1*(xmax-xmin);
     if (x > xmax) x = xmax - 0.1*(xmax-xmin);
 
     for (int iter = 0; iter < max_iter; iter++) {
-        double f, df;
+        double f, fp, fm, df;
         if (parse_and_eval(expr, x, 0.0, &f) != 0) return NAN;
         if (isnan(f)) { set_error("Function returned NaN at current point"); return NAN; }
         if (fabs(f) < tol) return x;

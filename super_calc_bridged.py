@@ -964,8 +964,15 @@ class SuperCalcApp:
 
     def _substitute_params(self, expr: str) -> str:
         result = expr
+        skip_words = KNOWN_FUNCTIONS | KNOWN_CONSTANTS | INDEPENDENT_VARS
         for param, value in self.param_values.items():
-            result = re.sub(r'\b' + param + r'\b', str(value), result, flags=re.IGNORECASE)
+            def _replace_if_not_func(match):
+                word = match.group(0)
+                if word.lower() in skip_words or param.lower() in skip_words:
+                    return word
+                return str(value)
+            result = re.sub(r'\b' + re.escape(param) + r'\b', _replace_if_not_func,
+                            result, flags=re.IGNORECASE)
         return result
 
     # ------------------------------------------------------------------
@@ -1146,8 +1153,12 @@ class SuperCalcApp:
             self.step_size = float(self._var_step.get())
             self.n_pts_3d = max(MIN_3D_POINTS, min(MAX_3D_POINTS, int(self._var_3d_res.get())))
             self.grid_on = self._var_grid.get()
+            if self.x_min >= self.x_max or self.y_min >= self.y_max or self.z_min >= self.z_max or self.step_size <= 0:
+                self.status_var.set("Invalid range or step values; using previous settings.")
+                return
         except ValueError:
-            pass
+            self.status_var.set("Invalid numeric values; using previous settings.")
+            return
 
         if not self.curves:
             # Clear both plot windows when no curves remain
