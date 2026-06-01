@@ -28,6 +28,7 @@ import math
 import re
 import csv
 import os
+import statistics
 
 try:
     import matplotlib
@@ -772,6 +773,32 @@ class SuperCalcApp:
                         lambda e: self._on_ode_preset(self._var_ode_preset.get()))
 
         self._ode_data = None  # last ODE solution dict
+
+        # --- Statistics Calculator ---
+        frm_stats = ttk.LabelFrame(scroll_frame, text="Statistics Calculator",
+                                    style="Dark.TLabelframe")
+        frm_stats.pack(fill=tk.X, padx=8, pady=4)
+
+        stats_row1 = ttk.Frame(frm_stats, style="Dark.TFrame")
+        stats_row1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(stats_row1, text="Data (comma/space separated):",
+                  style="Dark.TLabel").pack(anchor=tk.W, padx=2)
+
+        self._var_stats_data = tk.StringVar(value="1, 2, 3, 4, 5, 6, 7, 8, 9, 10")
+        stats_entry = ttk.Entry(stats_row1, textvariable=self._var_stats_data, width=36,
+                                font=("Consolas", 10))
+        stats_entry.pack(fill=tk.X, padx=2, pady=(0, 4))
+
+        stats_row2 = ttk.Frame(frm_stats, style="Dark.TFrame")
+        stats_row2.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Button(stats_row2, text="Compute Stats",
+                   command=self._on_stats_compute).pack(side=tk.LEFT, padx=2)
+        ttk.Button(stats_row2, text="Sort Data",
+                   command=self._on_stats_sort).pack(side=tk.LEFT, padx=2)
+        ttk.Button(stats_row2, text="Plot Histogram",
+                   command=self._on_stats_histogram).pack(side=tk.LEFT, padx=2)
+        ttk.Button(stats_row2, text="Export CSV",
+                   command=self._on_stats_export_csv).pack(side=tk.LEFT, padx=2)
 
         # --- Status ---
         self.status_var = tk.StringVar(value="Ready.")
@@ -2444,6 +2471,146 @@ class SuperCalcApp:
         else:
             messagebox.showinfo("Root Scan Results", "No roots found in the interval.")
             self.status_var.set("No roots found")
+
+    # ------------------------------------------------------------------
+    #  Statistics Calculator
+    # ------------------------------------------------------------------
+    def _parse_stats_data(self):
+        """Parse comma/space/semicolon separated data from input."""
+        raw = self._var_stats_data.get().strip()
+        if not raw:
+            return None
+        import re as _re
+        tokens = _re.split(r'[,;\s]+', raw)
+        values = []
+        for t in tokens:
+            t = t.strip()
+            if not t:
+                continue
+            try:
+                values.append(float(t))
+            except ValueError:
+                messagebox.showerror("Input Error", f"Invalid number: '{t}'")
+                return None
+        if not values:
+            messagebox.showerror("Input Error", "No valid numbers entered.")
+            return None
+        return values
+
+    def _on_stats_compute(self):
+        values = self._parse_stats_data()
+        if values is None:
+            return
+        import statistics as _stats
+
+        n = len(values)
+        data_sorted = sorted(values)
+        data_sum = sum(values)
+        data_mean = _stats.mean(values)
+        data_median = _stats.median(values)
+
+        try:
+            data_mode = _stats.mode(values)
+        except _stats.StatisticsError:
+            data_mode = None
+
+        data_min = min(values)
+        data_max = max(values)
+        data_range = data_max - data_min
+
+        data_var_pop = _stats.pvariance(values)
+        data_var_sam = _stats.variance(values)
+        data_std_pop = _stats.pstdev(values)
+        data_std_sam = _stats.stdev(values) if n > 1 else None
+
+        q1_idx = n // 4
+        q3_idx = 3 * n // 4
+        data_q1 = data_sorted[q1_idx]
+        data_q3 = data_sorted[min(q3_idx, n - 1)]
+        data_iqr = data_q3 - data_q1
+
+        lines = [
+            f"Statistics for {n} data points:",
+            f"  Sum       = {data_sum:.10g}",
+            f"  Mean      = {data_mean:.10g}",
+            f"  Median    = {data_median:.10g}",
+            f"  Mode      = {data_mode if data_mode is not None else 'N/A (all unique)'}",
+            f"  Min       = {data_min:.10g}",
+            f"  Max       = {data_max:.10g}",
+            f"  Range     = {data_range:.10g}",
+            f"  Q1 (25%)  = {data_q1:.10g}",
+            f"  Q3 (75%)  = {data_q3:.10g}",
+            f"  IQR       = {data_iqr:.10g}",
+            f"  Var (pop) = {data_var_pop:.10g}",
+            f"  Var (sam) = {data_var_sam:.10g}" if n > 1 else "",
+            f"  Std (pop) = {data_std_pop:.10g}",
+            f"  Std (sam) = {data_std_sam:.10g}" if data_std_sam is not None else "",
+            f"",
+            f"Sorted: {[f'{v:.6g}' for v in data_sorted[:20]]}" +
+            (f" ... ({n} total)" if n > 20 else ""),
+        ]
+
+        msg = "\n".join(line for line in lines if line)
+        messagebox.showinfo("Statistics Results", msg)
+        self.status_var.set(f"Stats: n={n}, mean={data_mean:.6g}, std={data_std_pop:.6g}")
+
+    def _on_stats_sort(self):
+        values = self._parse_stats_data()
+        if values is None:
+            return
+        sorted_vals = sorted(values)
+        self._var_stats_data.set(", ".join(f"{v:g}" for v in sorted_vals))
+        self.status_var.set(f"Data sorted ({len(values)} values)")
+
+    def _on_stats_histogram(self):
+        values = self._parse_stats_data()
+        if values is None:
+            return
+        self._ensure_2d_window()
+        self.ax_2d.clear()
+        self._setup_axes(self.ax_2d, is_3d=False)
+
+        import statistics as _stats
+        n_bins = max(5, min(20, int(len(values) ** 0.5) + 1))
+        self.ax_2d.hist(values, bins=n_bins, color="#89b4fa", edgecolor="#313244",
+                        alpha=0.85, linewidth=1.2)
+
+        data_mean = _stats.mean(values)
+        data_median = _stats.median(values)
+        self.ax_2d.axvline(data_mean, color="#f38ba8", linestyle="--", linewidth=2,
+                           label=f"Mean = {data_mean:.4g}")
+        self.ax_2d.axvline(data_median, color="#a6e3a1", linestyle=":", linewidth=2,
+                           label=f"Median = {data_median:.4g}")
+
+        self.ax_2d.legend(loc="upper right", facecolor="#313244",
+                          edgecolor="#585b70", labelcolor="#cdd6f4", fontsize=9)
+        self.ax_2d.set_title("Histogram", color="#cdd6f4", fontsize=12)
+        self.ax_2d.set_xlabel("Value", color="#cdd6f4")
+        self.ax_2d.set_ylabel("Frequency", color="#cdd6f4")
+
+        self.canvas_2d.draw()
+        self.status_var.set(f"Histogram plotted ({len(values)} values, {n_bins} bins)")
+
+    def _on_stats_export_csv(self):
+        values = self._parse_stats_data()
+        if values is None:
+            return
+        import csv as _csv
+        path = filedialog.asksaveasfilename(
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+            title="Export Statistics Data")
+        if not path:
+            return
+        try:
+            with open(path, 'w', newline='') as f:
+                writer = _csv.writer(f)
+                writer.writerow(["index", "value"])
+                for i, v in enumerate(values):
+                    writer.writerow([i + 1, v])
+            self.status_var.set(f"Exported {len(values)} values to {os.path.basename(path)}")
+        except Exception as e:
+            messagebox.showerror("Export Error", f"Could not export: {e}")
 
 
 # ---------------------------------------------------------------------------
