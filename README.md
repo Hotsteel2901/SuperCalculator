@@ -46,6 +46,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
   - **Fourier Transform & Spectrum Analysis** — FFT amplitude and phase spectrum for any function, with dominant-frequency detection and CSV export
   - **Taylor Series Expansion** — expand any function into a Taylor polynomial at an arbitrary point, with configurable order, coefficient display, and comparison plot of Taylor vs. original
   - **ODE Solver (RK4)** — solve first-order ODEs dy/dx = f(x,y) with initial conditions using 4th-order Runge-Kutta method, with solution plotting
+  - **Statistics Calculator** — compute mean, median, mode, variance, standard deviation, quartiles (Q1/Q3/IQR), min, max, range; supports data sorting, histogram visualization, and CSV export
   - **Preset Functions** — quick-select from 21 common functions (including 3D and FFT presets) plus 10 parametric presets
   - **Parameter System** — auto-detects extra parameters (e.g., `a`, `b`) and provides live input fields
   - **Coordinate Marking** — left-click to mark points, right-click to delete the nearest marked point, or enter an x value to auto-locate

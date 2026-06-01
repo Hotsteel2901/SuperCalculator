@@ -27,6 +27,7 @@ public class CalcActivity extends AppCompatActivity {
     private EditText rPolarInput, thetaMinInput, thetaMaxInput;
     private EditText taylorOrderInput;
     private EditText odeExprInput, odeX0Input, odeY0Input, odeXEndInput, odeStepsInput;
+    private EditText statsDataInput;
     private TextView resultView;
     private LineChart lineChart;
     private MaterialCardView graphCard;
@@ -109,6 +110,15 @@ public class CalcActivity extends AppCompatActivity {
         MaterialButton btnOdePlot = findViewById(R.id.btn_ode_plot);
         btnOdeSolve.setOnClickListener(v -> onOdeSolve());
         btnOdePlot.setOnClickListener(v -> onOdePlot());
+
+        // Statistics
+        statsDataInput = findViewById(R.id.stats_data_input);
+        MaterialButton btnStatsCompute = findViewById(R.id.btn_stats_compute);
+        MaterialButton btnStatsSort = findViewById(R.id.btn_stats_sort);
+        MaterialButton btnStatsHistogram = findViewById(R.id.btn_stats_histogram);
+        btnStatsCompute.setOnClickListener(v -> onStatsCompute());
+        btnStatsSort.setOnClickListener(v -> onStatsSort());
+        btnStatsHistogram.setOnClickListener(v -> onStatsHistogram());
 
         // Parametric plotting
         MaterialButton btnPlotParametric = findViewById(R.id.btn_plot_parametric);
@@ -723,6 +733,192 @@ public class CalcActivity extends AppCompatActivity {
         intent.putExtra("taylor_a", a);
         intent.putExtra("is_taylor", true);
         startActivity(intent);
+    }
+
+    private double[] parseStatsData() {
+        String raw = statsDataInput.getText().toString().trim();
+        if (raw.isEmpty()) { toast("Enter data points"); return null; }
+        String[] tokens = raw.split("[,;\\s]+");
+        java.util.ArrayList<Double> values = new java.util.ArrayList<>();
+        for (String t : tokens) {
+            t = t.trim();
+            if (t.isEmpty()) continue;
+            try {
+                values.add(Double.parseDouble(t));
+            } catch (NumberFormatException e) {
+                toast("Invalid number: " + t);
+                return null;
+            }
+        }
+        if (values.isEmpty()) { toast("No valid numbers entered"); return null; }
+        double[] result = new double[values.size()];
+        for (int i = 0; i < values.size(); i++) result[i] = values.get(i);
+        return result;
+    }
+
+    private void onStatsCompute() {
+        double[] data = parseStatsData();
+        if (data == null) return;
+        int n = data.length;
+
+        double sum = 0;
+        for (double v : data) sum += v;
+        double mean = sum / n;
+
+        java.util.Arrays.sort(data);
+        double median;
+        if (n % 2 == 0) {
+            median = (data[n / 2 - 1] + data[n / 2]) / 2.0;
+        } else {
+            median = data[n / 2];
+        }
+
+        double min = data[0];
+        double max = data[n - 1];
+        double range = max - min;
+
+        // Population variance & std
+        double varPop = 0;
+        for (double v : data) varPop += (v - mean) * (v - mean);
+        varPop /= n;
+        double stdPop = Math.sqrt(varPop);
+
+        // Sample variance & std
+        double varSam = 0;
+        if (n > 1) {
+            for (double v : data) varSam += (v - mean) * (v - mean);
+            varSam /= (n - 1);
+        }
+        double stdSam = Math.sqrt(varSam);
+
+        // Quartiles
+        double q1 = data[n / 4];
+        double q3 = data[Math.min(3 * n / 4, n - 1)];
+        double iqr = q3 - q1;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Statistics for ").append(n).append(" data points:\n\n");
+        sb.append(String.format("  Sum       = %.10g\n", sum));
+        sb.append(String.format("  Mean      = %.10g\n", mean));
+        sb.append(String.format("  Median    = %.10g\n", median));
+        sb.append(String.format("  Min       = %.10g\n", min));
+        sb.append(String.format("  Max       = %.10g\n", max));
+        sb.append(String.format("  Range     = %.10g\n", range));
+        sb.append(String.format("  Q1 (25%%)  = %.10g\n", q1));
+        sb.append(String.format("  Q3 (75%%)  = %.10g\n", q3));
+        sb.append(String.format("  IQR       = %.10g\n", iqr));
+        sb.append(String.format("  Var (pop) = %.10g\n", varPop));
+        if (n > 1) sb.append(String.format("  Var (sam) = %.10g\n", varSam));
+        sb.append(String.format("  Std (pop) = %.10g\n", stdPop));
+        if (n > 1) sb.append(String.format("  Std (sam) = %.10g\n", stdSam));
+        sb.append("\nSorted: ");
+        int show = Math.min(n, 20);
+        for (int i = 0; i < show; i++) {
+            if (i > 0) sb.append(", ");
+            sb.append(fmt(data[i]));
+        }
+        if (n > show) sb.append(" ... (").append(n).append(" total)");
+
+        android.widget.TextView tv = new android.widget.TextView(this);
+        tv.setText(sb.toString());
+        tv.setTypeface(android.graphics.Typeface.MONOSPACE);
+        tv.setTextSize(13);
+        tv.setPadding(40, 24, 40, 24);
+        tv.setTextColor(android.graphics.Color.parseColor("#cdd6f4"));
+        tv.setBackgroundColor(android.graphics.Color.parseColor("#181825"));
+
+        android.widget.ScrollView sv = new android.widget.ScrollView(this);
+        sv.addView(tv);
+
+        new androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert)
+            .setTitle("Statistics Results")
+            .setView(sv)
+            .setPositiveButton("Close", null)
+            .show();
+
+        resultView.append("Stats: n=" + n + ", mean=" + fmt(mean) + ", std=" + fmt(stdPop) + "\n");
+    }
+
+    private void onStatsSort() {
+        double[] data = parseStatsData();
+        if (data == null) return;
+        java.util.Arrays.sort(data);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < data.length; i++) {
+            if (i > 0) sb.append(", ");
+            sb.append(fmt(data[i]));
+        }
+        statsDataInput.setText(sb.toString());
+        toast("Data sorted (" + data.length + " values)");
+    }
+
+    private void onStatsHistogram() {
+        double[] data = parseStatsData();
+        if (data == null) return;
+        int n = data.length;
+
+        // Calculate basic stats for text display
+        double sum = 0;
+        for (double v : data) sum += v;
+        double mean = sum / n;
+
+        java.util.Arrays.sort(data);
+        double median;
+        if (n % 2 == 0) {
+            median = (data[n / 2 - 1] + data[n / 2]) / 2.0;
+        } else {
+            median = data[n / 2];
+        }
+
+        // Create histogram as text-based bar chart
+        int nBins = Math.max(5, Math.min(15, (int) Math.sqrt(n) + 1));
+        double min = data[0];
+        double max = data[n - 1];
+        double binWidth = (max - min) / nBins;
+        if (binWidth == 0) binWidth = 1;
+
+        int[] counts = new int[nBins];
+        for (double v : data) {
+            int bin = (int) ((v - min) / binWidth);
+            if (bin >= nBins) bin = nBins - 1;
+            counts[bin]++;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Histogram (").append(nBins).append(" bins)\n");
+        sb.append("Mean=").append(fmt(mean)).append(" Median=").append(fmt(median)).append("\n\n");
+
+        int maxCount = 0;
+        for (int c : counts) if (c > maxCount) maxCount = c;
+        int barMaxLen = 30;
+
+        for (int i = 0; i < nBins; i++) {
+            double lo = min + i * binWidth;
+            double hi = lo + binWidth;
+            int barLen = maxCount > 0 ? (counts[i] * barMaxLen / maxCount) : 0;
+            StringBuilder bar = new StringBuilder();
+            for (int j = 0; j < barLen; j++) bar.append("\u2588");
+            sb.append(String.format("[%6.3g,%6.3g) %3d |%s\n", lo, hi, counts[i], bar.toString()));
+        }
+
+        android.widget.TextView tv = new android.widget.TextView(this);
+        tv.setText(sb.toString());
+        tv.setTypeface(android.graphics.Typeface.MONOSPACE);
+        tv.setTextSize(13);
+        tv.setPadding(40, 24, 40, 24);
+        tv.setTextColor(android.graphics.Color.parseColor("#cdd6f4"));
+        tv.setBackgroundColor(android.graphics.Color.parseColor("#181825"));
+
+        android.widget.ScrollView sv = new android.widget.ScrollView(this);
+        sv.addView(tv);
+
+        new androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert)
+            .setTitle("Histogram")
+            .setView(sv)
+            .setPositiveButton("Close", null)
+            .show();
+
+        resultView.append("Histogram: " + nBins + " bins, mean=" + fmt(mean) + "\n");
     }
 
     private void onPlotParametric() {
