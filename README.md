@@ -45,6 +45,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
  - **Arc Length** — approximate the arc length of a curve over any interval using adaptive chord summation
   - **Fourier Transform & Spectrum Analysis** — FFT amplitude and phase spectrum for any function, with dominant-frequency detection and CSV export
   - **Taylor Series Expansion** — expand any function into a Taylor polynomial at an arbitrary point, with configurable order, coefficient display, and comparison plot of Taylor vs. original
+  - **ODE Solver (RK4)** — solve first-order ODEs dy/dx = f(x,y) with initial conditions using 4th-order Runge-Kutta method, with solution plotting
   - **Preset Functions** — quick-select from 21 common functions (including 3D and FFT presets) plus 10 parametric presets
   - **Parameter System** — auto-detects extra parameters (e.g., `a`, `b`) and provides live input fields
   - **Coordinate Marking** — left-click to mark points, right-click to delete the nearest marked point, or enter an x value to auto-locate
@@ -142,6 +143,7 @@ SuperCalculator/
 
 ## What's New
 
+- **ODE Solver (RK4)** — solve first-order ODEs dy/dx = f(x,y) with initial conditions using 4th-order Runge-Kutta method. Supports custom step count, solution data output, and plotting. Available on both desktop (Python) and Android (JNI).
 - **Taylor Series Expansion** — expand any function into a Taylor polynomial at an arbitrary expansion point with configurable order. Displays coefficients, the polynomial expression, and a comparison plot of Taylor vs. original function. Available on both desktop (Python) and Android (JNI).
 - **Limit Computation** — compute left-hand, right-hand, and two-sided limits using Richardson extrapolation for high accuracy. Available on both desktop (Python) and Android (JNI).
 - **Parametric Curve Plotting** — plot curves defined as x(t) and y(t) with 10 built-in presets (circle, ellipse, Lissajous, spiral, cardioid, heart, trefoil knot, butterfly curve, star). Available on both desktop (Python) and Android (JNI).
@@ -222,6 +224,11 @@ taylor_val = CalcEngine.taylor_evaluate("sin(x)", 0, 0.5, 8)  # ~0.4794
 
 # nth-order derivative
 d5 = CalcEngine.nth_derivative("sin(x)", 1.0, 5)  # 5th derivative of sin at x=1
+
+# ODE Solver (RK4)
+result = CalcEngine.ode_solve_rk4("-y", x0=0, y0=1, x_end=5, n_steps=200)
+# result['xs'] -> list of x values
+# result['ys'] -> list of y values
 ```
 
 ## Numerical Methods
@@ -236,3 +243,4 @@ d5 = CalcEngine.nth_derivative("sin(x)", 1.0, 5)  # 5th derivative of sin at x=1
 | Root Finding        | Newton-Raphson with bisection fallback         | —         |
 | Extremum Finder     | Golden-section search                          | Linear    |
 | Limit               | Richardson extrapolation                       | O(h^2k)   |
+| ODE Solver          | 4th-order Runge-Kutta (RK4)                    | O(h^4)    |
