@@ -119,6 +119,16 @@ public class PlotActivity extends AppCompatActivity {
                 plotPolarCurve(rExpr, thetaMin, thetaMax);
             }
         }
+        
+        // Handle ODE solution plot from intent
+        if (intent != null && intent.getBooleanExtra("is_ode", false)) {
+            double[] odeXs = intent.getDoubleArrayExtra("ode_xs");
+            double[] odeYs = intent.getDoubleArrayExtra("ode_ys");
+            String odeExpr = intent.getStringExtra("ode_expr");
+            if (odeXs != null && odeYs != null) {
+                plotOdeSolution(odeXs, odeYs, odeExpr != null ? odeExpr : "dy/dx");
+            }
+        }
     }
     
     private void plotParametricCurve(String xExpr, String yExpr, double tMin, double tMax) {
@@ -257,6 +267,58 @@ public class PlotActivity extends AppCompatActivity {
             lineChart.invalidate();
         }
         toast("Polar curve plotted");
+    }
+    
+    private void plotOdeSolution(double[] xs, double[] ys, String expr) {
+        ArrayList<Entry> entries = new ArrayList<>();
+        double xMin = Double.MAX_VALUE, xMax = Double.MIN_VALUE;
+        double yMin = Double.MAX_VALUE, yMax = Double.MIN_VALUE;
+        for (int i = 0; i < xs.length; i++) {
+            if (!Double.isNaN(xs[i]) && !Double.isNaN(ys[i]) &&
+                !Double.isInfinite(xs[i]) && !Double.isInfinite(ys[i])) {
+                entries.add(new Entry((float) xs[i], (float) ys[i]));
+                if (xs[i] < xMin) xMin = xs[i];
+                if (xs[i] > xMax) xMax = xs[i];
+                if (ys[i] < yMin) yMin = ys[i];
+                if (ys[i] > yMax) yMax = ys[i];
+            }
+        }
+        
+        if (entries.isEmpty()) {
+            toast("No valid ODE points to plot");
+            return;
+        }
+        
+        // Set range with padding
+        double xPad = (xMax - xMin) * 0.1;
+        double yPad = (yMax - yMin) * 0.1;
+        xMinInput.setText(String.valueOf(xMin - xPad));
+        xMaxInput.setText(String.valueOf(xMax + xPad));
+        yMinInput.setText(String.valueOf(yMin - yPad));
+        yMaxInput.setText(String.valueOf(yMax + yPad));
+        
+        allEntries.clear();
+        allExpressions.clear();
+        curveColors.clear();
+        allEntries.add(entries);
+        String label = "ODE: " + expr;
+        allExpressions.add(label);
+        curveColors.add(Color.parseColor("#00e5c9"));
+        
+        List<ILineDataSet> dataSets = new ArrayList<>();
+        LineDataSet dataSet = new LineDataSet(entries, label);
+        dataSet.setColor(Color.parseColor("#00e5c9"));
+        dataSet.setLineWidth(2f);
+        dataSet.setDrawCircles(false);
+        dataSet.setDrawValues(false);
+        dataSets.add(dataSet);
+        
+        if (!dataSets.isEmpty()) {
+            LineData lineData = new LineData(dataSets);
+            lineChart.setData(lineData);
+            lineChart.invalidate();
+        }
+        toast("ODE solution plotted");
     }
     
     private void setupGestureListener() {

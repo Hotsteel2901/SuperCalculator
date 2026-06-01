@@ -17,6 +17,7 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class CalcActivity extends AppCompatActivity {
@@ -25,6 +26,7 @@ public class CalcActivity extends AppCompatActivity {
     private EditText xParamInput, yParamInput, tMinInput, tMaxInput;
     private EditText rPolarInput, thetaMinInput, thetaMaxInput;
     private EditText taylorOrderInput;
+    private EditText odeExprInput, odeX0Input, odeY0Input, odeXEndInput, odeStepsInput;
     private TextView resultView;
     private LineChart lineChart;
     private MaterialCardView graphCard;
@@ -47,6 +49,11 @@ public class CalcActivity extends AppCompatActivity {
         thetaMinInput = findViewById(R.id.theta_min_input);
         thetaMaxInput = findViewById(R.id.theta_max_input);
         taylorOrderInput = findViewById(R.id.taylor_order_input);
+        odeExprInput = findViewById(R.id.ode_expr_input);
+        odeX0Input = findViewById(R.id.ode_x0_input);
+        odeY0Input = findViewById(R.id.ode_y0_input);
+        odeXEndInput = findViewById(R.id.ode_xend_input);
+        odeStepsInput = findViewById(R.id.ode_steps_input);
         resultView = findViewById(R.id.result_view);
         resultView.setMovementMethod(new ScrollingMovementMethod());
         lineChart  = findViewById(R.id.line_chart);
@@ -97,6 +104,11 @@ public class CalcActivity extends AppCompatActivity {
         MaterialButton btnTaylorPlot = findViewById(R.id.btn_taylor_plot);
         btnTaylor.setOnClickListener(v -> onTaylor());
         btnTaylorPlot.setOnClickListener(v -> onTaylorPlot());
+
+        MaterialButton btnOdeSolve = findViewById(R.id.btn_ode_solve);
+        MaterialButton btnOdePlot = findViewById(R.id.btn_ode_plot);
+        btnOdeSolve.setOnClickListener(v -> onOdeSolve());
+        btnOdePlot.setOnClickListener(v -> onOdePlot());
 
         // Parametric plotting
         MaterialButton btnPlotParametric = findViewById(R.id.btn_plot_parametric);
@@ -565,6 +577,102 @@ public class CalcActivity extends AppCompatActivity {
             .show();
 
         resultView.append("Taylor at a=" + fmt(a) + " (order " + order + ")\n");
+    }
+
+    private void onOdeSolve() {
+        String expr = odeExprInput.getText().toString().trim();
+        if (expr.isEmpty()) { toast("Enter ODE expression dy/dx = f(x,y)"); return; }
+        double x0, y0, xEnd;
+        int steps;
+        try {
+            x0 = Double.parseDouble(odeX0Input.getText().toString().trim());
+            y0 = Double.parseDouble(odeY0Input.getText().toString().trim());
+            xEnd = Double.parseDouble(odeXEndInput.getText().toString().trim());
+            steps = Integer.parseInt(odeStepsInput.getText().toString().trim());
+        } catch (NumberFormatException ex) {
+            toast("Invalid ODE parameters");
+            return;
+        }
+        if (steps < 1 || steps > 100000) { toast("Steps must be 1-100000"); return; }
+        if (x0 == xEnd) { toast("x0 must not equal x end"); return; }
+
+        HashMap<String, Object> result = CalcEngine.odeSolveRk4(expr, x0, y0, xEnd, steps);
+        if (result == null) {
+            resultView.append("ODE Error: " + CalcEngine.getLastError() + "\n");
+            return;
+        }
+
+        double[] xs = (double[]) result.get("xs");
+        double[] ys = (double[]) result.get("ys");
+        int count = (int) result.get("count");
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("dy/dx = ").append(expr).append(", y(").append(fmt(x0)).append(") = ").append(fmt(y0)).append("\n");
+        sb.append("Solved over [").append(fmt(x0)).append(", ").append(fmt(xEnd)).append("] with ").append(steps).append(" steps (RK4)\n\n");
+        sb.append(String.format("%14s  %14s\n", "x", "y(x)"));
+        sb.append("--------------------------------\n");
+        int show = Math.min(count, 30);
+        int step = count > show ? count / show : 1;
+        for (int i = 0; i < count; i += step) {
+            String yStr = Double.isNaN(ys[i]) ? "N/A" : fmt(ys[i]);
+            sb.append(String.format("%14s  %14s\n", fmt(xs[i]), yStr));
+        }
+        if (count > show) sb.append("  ... (").append(count).append(" total points)\n");
+
+        android.widget.TextView tv = new android.widget.TextView(this);
+        tv.setText(sb.toString());
+        tv.setTypeface(android.graphics.Typeface.MONOSPACE);
+        tv.setTextSize(13);
+        tv.setPadding(40, 24, 40, 24);
+        tv.setTextColor(android.graphics.Color.parseColor("#cdd6f4"));
+        tv.setBackgroundColor(android.graphics.Color.parseColor("#181825"));
+
+        android.widget.ScrollView sv = new android.widget.ScrollView(this);
+        sv.addView(tv);
+
+        new androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert)
+            .setTitle("ODE Solution (RK4)")
+            .setView(sv)
+            .setPositiveButton("Close", null)
+            .show();
+
+        resultView.append("ODE solved: " + count + " points\n");
+    }
+
+    private void onOdePlot() {
+        String expr = odeExprInput.getText().toString().trim();
+        if (expr.isEmpty()) { toast("Enter ODE expression dy/dx = f(x,y)"); return; }
+        double x0, y0, xEnd;
+        int steps;
+        try {
+            x0 = Double.parseDouble(odeX0Input.getText().toString().trim());
+            y0 = Double.parseDouble(odeY0Input.getText().toString().trim());
+            xEnd = Double.parseDouble(odeXEndInput.getText().toString().trim());
+            steps = Integer.parseInt(odeStepsInput.getText().toString().trim());
+        } catch (NumberFormatException ex) {
+            toast("Invalid ODE parameters");
+            return;
+        }
+        if (steps < 1 || steps > 100000) { toast("Steps must be 1-100000"); return; }
+        if (x0 == xEnd) { toast("x0 must not equal x end"); return; }
+
+        HashMap<String, Object> result = CalcEngine.odeSolveRk4(expr, x0, y0, xEnd, steps);
+        if (result == null) {
+            resultView.append("ODE Error: " + CalcEngine.getLastError() + "\n");
+            return;
+        }
+
+        double[] xs = (double[]) result.get("xs");
+        double[] ys = (double[]) result.get("ys");
+
+        Intent intent = new Intent(this, PlotActivity.class);
+        intent.putExtra("is_ode", true);
+        intent.putExtra("ode_xs", xs);
+        intent.putExtra("ode_ys", ys);
+        intent.putExtra("ode_expr", expr);
+        intent.putExtra("x_min", x0);
+        intent.putExtra("x_max", xEnd);
+        startActivity(intent);
     }
 
     private void onTaylorPlot() {

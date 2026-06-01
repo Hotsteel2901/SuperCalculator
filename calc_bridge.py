@@ -128,8 +128,14 @@ _lib.nth_derivative.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_int, 
 _lib.nth_derivative.restype = ctypes.c_double
 
 _lib.taylor_coefficients.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_int,
-                                      ctypes.POINTER(ctypes.c_double), ctypes.c_int]
+                                       ctypes.POINTER(ctypes.c_double), ctypes.c_int]
 _lib.taylor_coefficients.restype = ctypes.c_int
+
+_lib.ode_solve_rk4.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_double,
+                                ctypes.c_double, ctypes.c_int,
+                                ctypes.POINTER(ctypes.c_double),
+                                ctypes.POINTER(ctypes.c_double), ctypes.c_int]
+_lib.ode_solve_rk4.restype = ctypes.c_int
 
 
 def _is_invalid(x: float) -> bool:
@@ -313,6 +319,33 @@ class CalcEngine:
             result += c * dx_power
             dx_power *= dx
         return result
+
+    @staticmethod
+    def ode_solve_rk4(expr: str, x0: float, y0: float, x_end: float,
+                       n_steps: int = 1000):
+        """Solve ODE dy/dx = f(x, y) with initial condition y(x0) = y0
+        using 4th-order Runge-Kutta method over [x0, x_end].
+
+        Returns a dict with keys:
+            'xs' : list of x values
+            'ys' : list of y values
+            'n_steps' : number of steps used
+        Returns None on error.
+        """
+        if n_steps < 1:
+            return None
+        max_out = n_steps + 1
+        arr_x = (ctypes.c_double * max_out)()
+        arr_y = (ctypes.c_double * max_out)()
+        count = _lib.ode_solve_rk4(expr.encode("utf-8"), x0, y0, x_end,
+                                    n_steps, arr_x, arr_y, max_out)
+        if count <= 0:
+            return None
+        return {
+            'xs': [arr_x[i] for i in range(count)],
+            'ys': [None if _is_invalid(arr_y[i]) else arr_y[i] for i in range(count)],
+            'n_steps': n_steps,
+        }
 
     @staticmethod
     def diff(expr: str, x: float, h: float = 1e-6) -> Optional[float]:

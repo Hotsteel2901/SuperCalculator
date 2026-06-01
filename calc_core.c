@@ -574,10 +574,57 @@ static double golden_section_min(const char* expr, double a, double b, double to
     return (b + a) / 2.0;
 }
 
-EXPORT double find_minimum(const char* expr, double a, double b, double tol, int max_iter) {
-    if (a >= b) { set_error("Invalid interval: a must be < b"); return NAN; }
-    return golden_section_min(expr, a, b, tol, max_iter);
+/* --------------------------------------------------------------------------
+ *  ODE Solver — 4th-order Runge-Kutta (RK4)
+ *  Solves the initial value problem:  dy/dx = f(x, y),  y(x0) = y0
+ *  over the interval [x0, x_end] with n_steps uniform steps.
+ *  out_x and out_y must have space for at least (n_steps + 1) doubles.
+ *  Returns the number of points stored, or -1 on error.
+ * -------------------------------------------------------------------------- */
+
+EXPORT int ode_solve_rk4(const char* expr, double x0, double y0, double x_end,
+                          int n_steps, double* out_x, double* out_y, int max_out) {
+    if (!expr || !out_x || !out_y) { set_error("NULL pointer argument"); return -1; }
+    if (n_steps < 1) { set_error("n_steps must be >= 1"); return -1; }
+    if (max_out < n_steps + 1) { set_error("Output buffer too small"); return -1; }
+
+    double h = (x_end - x0) / n_steps;
+    double x = x0;
+    double y = y0;
+
+    out_x[0] = x;
+    out_y[0] = y;
+
+    for (int i = 0; i < n_steps; i++) {
+        double k1_val, k2_val, k3_val, k4_val;
+
+        /* k1 = f(x, y) */
+        if (parse_and_eval(expr, x, y, &k1_val) != 0) return -1;
+        if (isnan(k1_val)) { set_error("f(x,y) returned NaN at RK4 k1"); return -1; }
+
+        /* k2 = f(x + h/2, y + h*k1/2) */
+        if (parse_and_eval(expr, x + 0.5 * h, y + 0.5 * h * k1_val, &k2_val) != 0) return -1;
+        if (isnan(k2_val)) { set_error("f(x,y) returned NaN at RK4 k2"); return -1; }
+
+        /* k3 = f(x + h/2, y + h*k2/2) */
+        if (parse_and_eval(expr, x + 0.5 * h, y + 0.5 * h * k2_val, &k3_val) != 0) return -1;
+        if (isnan(k3_val)) { set_error("f(x,y) returned NaN at RK4 k3"); return -1; }
+
+        /* k4 = f(x + h, y + h*k3) */
+        if (parse_and_eval(expr, x + h, y + h * k3_val, &k4_val) != 0) return -1;
+        if (isnan(k4_val)) { set_error("f(x,y) returned NaN at RK4 k4"); return -1; }
+
+        /* y_{n+1} = y_n + h*(k1 + 2*k2 + 2*k3 + k4)/6 */
+        y = y + h * (k1_val + 2.0 * k2_val + 2.0 * k3_val + k4_val) / 6.0;
+        x = x0 + (i + 1) * h;
+
+        out_x[i + 1] = x;
+        out_y[i + 1] = y;
+    }
+
+    return n_steps + 1;
 }
+
 
 /* --------------------------------------------------------------------------
  *  Limit computation (left-hand, right-hand, two-sided)
@@ -730,6 +777,34 @@ EXPORT double find_maximum(const char* expr, double a, double b, double tol, int
             if (parse_and_eval(expr, d, 0.0, &fd) != 0) return NAN;
             if (isnan(fd)) { set_error("Function returned NaN during extremum search"); return NAN; }
             fd = -fd;
+        }
+    }
+    return (b + a) / 2.0;
+}
+
+EXPORT double find_minimum(const char* expr, double a, double b, double tol, int max_iter) {
+    if (a >= b) { set_error("Invalid interval: a must be < b"); return NAN; }
+    const double resphi = GOLDEN_RATIO_RES;
+    double c = a + resphi * (b - a);
+    double d = b - resphi * (b - a);
+    double fc, fd;
+
+    if (parse_and_eval(expr, c, 0.0, &fc) != 0) return NAN;
+    if (isnan(fc)) { set_error("Function returned NaN during extremum search"); return NAN; }
+    if (parse_and_eval(expr, d, 0.0, &fd) != 0) return NAN;
+    if (isnan(fd)) { set_error("Function returned NaN during extremum search"); return NAN; }
+
+    for (int i = 0; i < max_iter && fabs(b - a) > tol; i++) {
+        if (fc < fd) {
+            b = d; d = c; fd = fc;
+            c = a + resphi * (b - a);
+            if (parse_and_eval(expr, c, 0.0, &fc) != 0) return NAN;
+            if (isnan(fc)) { set_error("Function returned NaN during extremum search"); return NAN; }
+        } else {
+            a = c; c = d; fc = fd;
+            d = b - resphi * (b - a);
+            if (parse_and_eval(expr, d, 0.0, &fd) != 0) return NAN;
+            if (isnan(fd)) { set_error("Function returned NaN during extremum search"); return NAN; }
         }
     }
     return (b + a) / 2.0;

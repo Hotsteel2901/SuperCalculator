@@ -1,5 +1,7 @@
 package com.supercalc;
 
+import java.util.HashMap;
+
 /**
  * JNI bridge to the C core (libcalc_core.so).
  * All methods are static — no instance needed.
@@ -55,6 +57,9 @@ public class CalcEngine {
 
     /** Compute Taylor series coefficients c_k = f^(k)(a)/k! for k=0..order. Returns double[order+1] or null on error. */
     public static native double[] taylorCoefficients(String expr, double a, int order);
+
+    /** Solve ODE dy/dx = f(x,y) with y(x0)=y0 using RK4. Returns HashMap with "xs", "ys", "count" keys, or null on error. */
+    public static native HashMap<String, Object> odeSolveRk4(String expr, double x0, double y0, double xEnd, int nSteps);
 
     /** Last error message from the C core. */
     public static native String getLastError();

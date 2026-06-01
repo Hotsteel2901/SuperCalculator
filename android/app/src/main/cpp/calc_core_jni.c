@@ -25,6 +25,8 @@ void evaluate_array(const char* expr, const double* xs, double* out, int n);
 void evaluate_xy_array(const char* expr, const double* xs, const double* ys, double* out, int n);
 double nth_derivative(const char* expr, double x, int n, double h);
 int taylor_coefficients(const char* expr, double a, int order, double* out_coeffs, int max_out);
+int ode_solve_rk4(const char* expr, double x0, double y0, double x_end,
+                   int n_steps, double* out_x, double* out_y, int max_out);
 const char* get_last_error(void);
 
 /* Helper: extract UTF-8 string from jstring, call fn, release, return */
@@ -275,4 +277,70 @@ Java_com_supercalc_CalcEngine_taylorCoefficients(JNIEnv* env, jclass clazz,
     free(coeffs);
     (*env)->ReleaseStringUTFChars(env, expr, str);
     return result_array;
+}
+
+JNIEXPORT jobject JNICALL
+Java_com_supercalc_CalcEngine_odeSolveRk4(JNIEnv* env, jclass clazz,
+                                           jstring expr, jdouble x0,
+                                           jdouble y0, jdouble x_end,
+                                           jint n_steps) {
+    const char* str = (*env)->GetStringUTFChars(env, expr, NULL);
+    if (!str) return NULL;
+
+    int max_out = n_steps + 1;
+    double* out_x = malloc(max_out * sizeof(double));
+    double* out_y = malloc(max_out * sizeof(double));
+    if (!out_x || !out_y) {
+        free(out_x);
+        free(out_y);
+        (*env)->ReleaseStringUTFChars(env, expr, str);
+        return NULL;
+    }
+
+    int count = ode_solve_rk4(str, x0, y0, x_end, n_steps, out_x, out_y, max_out);
+
+    jobject result = NULL;
+    if (count > 0) {
+        /* Create double arrays for xs and ys */
+        jdoubleArray xs_array = (*env)->NewDoubleArray(env, count);
+        jdoubleArray ys_array = (*env)->NewDoubleArray(env, count);
+        if (xs_array && ys_array) {
+            (*env)->SetDoubleArrayRegion(env, xs_array, 0, count, out_x);
+            (*env)->SetDoubleArrayRegion(env, ys_array, 0, count, out_y);
+
+            /* Create HashMap result: {"xs": [...], "ys": [...], "count": n} */
+            jclass hashMapClass = (*env)->FindClass(env, "java/util/HashMap");
+            jmethodID hashMapInit = (*env)->GetMethodID(env, hashMapClass, "<init>", "(I)V");
+            jmethodID putMethod = (*env)->GetMethodID(env, hashMapClass, "put",
+                "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+
+            result = (*env)->NewObject(env, hashMapClass, hashMapInit, (jint)3);
+
+            jstring xsKey = (*env)->NewStringUTF(env, "xs");
+            jstring ysKey = (*env)->NewStringUTF(env, "ys");
+            jstring countKey = (*env)->NewStringUTF(env, "count");
+
+            (*env)->CallObjectMethod(env, result, putMethod, xsKey, xs_array);
+            (*env)->CallObjectMethod(env, result, putMethod, ysKey, ys_array);
+
+            /* Put count as Integer */
+            jclass integerClass = (*env)->FindClass(env, "java/lang/Integer");
+            jmethodID valueOfMethod = (*env)->GetStaticMethodID(env, integerClass, "valueOf", "(I)Ljava/lang/Integer;");
+            jobject countObj = (*env)->CallStaticObjectMethod(env, integerClass, valueOfMethod, (jint)count);
+            (*env)->CallObjectMethod(env, result, putMethod, countKey, countObj);
+
+            (*env)->DeleteLocalRef(env, xsKey);
+            (*env)->DeleteLocalRef(env, ysKey);
+            (*env)->DeleteLocalRef(env, countKey);
+            (*env)->DeleteLocalRef(env, xs_array);
+            (*env)->DeleteLocalRef(env, ys_array);
+            (*env)->DeleteLocalRef(env, countObj);
+            (*env)->DeleteLocalRef(env, hashMapClass);
+        }
+    }
+
+    free(out_x);
+    free(out_y);
+    (*env)->ReleaseStringUTFChars(env, expr, str);
+    return result;
 }

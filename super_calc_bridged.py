@@ -114,6 +114,17 @@ POLAR_PRESETS = {
     "Butterfly":                 ("sin(theta)*(exp(cos(theta))-2*cos(4*theta))", "0", "2*pi"),
 }
 
+ODE_PRESETS = {
+    "Exponential decay (-y)":           ("-y", "0", "1", "5", "200"),
+    "Simple harmonic (-y)":             ("-y", "0", "0", "6.2832", "500"),
+    "Damped oscillator (-0.1*y-sin(x))": ("-0.1*y-sin(x)", "0", "1", "30", "1000"),
+    "Logistic growth (y*(1-y))":        ("y*(1-y)", "0", "0.01", "10", "500"),
+    "Newton cooling (-0.5*(y-20))":     ("-0.5*(y-20)", "0", "100", "20", "500"),
+    "Autonomous (y-y^2)":              ("y-y^2", "0", "0.5", "10", "500"),
+    "Van der Pol mu=1":                 ("y-((y^3)/3)+x", "0", "0.5", "20", "2000"),
+    "Predator-prey (-x*y+0.5*x)":      ("-x*y+0.5*x", "0", "4", "20", "1000"),
+}
+
 DEFAULT_COLORS = [
     "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728",
     "#9467bd", "#8c564b", "#e377c2", "#7f7f7f",
@@ -709,6 +720,58 @@ class SuperCalcApp:
                    command=self._on_taylor_expand).pack(side=tk.LEFT, padx=2)
         ttk.Button(trow2, text="Plot Taylor + Original",
                    command=self._on_taylor_plot).pack(side=tk.LEFT, padx=2)
+
+        # --- ODE Solver (RK4) ---
+        frm_ode = ttk.LabelFrame(scroll_frame, text="ODE Solver (dy/dx = f(x,y))",
+                                  style="Dark.TLabelframe")
+        frm_ode.pack(fill=tk.X, padx=8, pady=4)
+
+        ode_row1 = ttk.Frame(frm_ode, style="Dark.TFrame")
+        ode_row1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(ode_row1, text="dy/dx =", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_ode_expr = tk.StringVar(value="-y")
+        ttk.Entry(ode_row1, textvariable=self._var_ode_expr, width=22).pack(
+            side=tk.LEFT, padx=4)
+
+        ode_row2 = ttk.Frame(frm_ode, style="Dark.TFrame")
+        ode_row2.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(ode_row2, text="x0:", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_ode_x0 = tk.StringVar(value="0")
+        ttk.Entry(ode_row2, textvariable=self._var_ode_x0, width=6).pack(
+            side=tk.LEFT, padx=2)
+        ttk.Label(ode_row2, text="y0:", style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
+        self._var_ode_y0 = tk.StringVar(value="1")
+        ttk.Entry(ode_row2, textvariable=self._var_ode_y0, width=6).pack(
+            side=tk.LEFT, padx=2)
+        ttk.Label(ode_row2, text="x_end:", style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
+        self._var_ode_xend = tk.StringVar(value="5")
+        ttk.Entry(ode_row2, textvariable=self._var_ode_xend, width=6).pack(
+            side=tk.LEFT, padx=2)
+        ttk.Label(ode_row2, text="Steps:", style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
+        self._var_ode_steps = tk.StringVar(value="200")
+        ttk.Entry(ode_row2, textvariable=self._var_ode_steps, width=6).pack(
+            side=tk.LEFT, padx=2)
+
+        ode_row3 = ttk.Frame(frm_ode, style="Dark.TFrame")
+        ode_row3.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Button(ode_row3, text="Solve ODE",
+                   command=self._on_ode_solve).pack(side=tk.LEFT, padx=2)
+        ttk.Button(ode_row3, text="Plot Solution",
+                   command=self._on_ode_plot).pack(side=tk.LEFT, padx=2)
+
+        # ODE presets
+        ode_row4 = ttk.Frame(frm_ode, style="Dark.TFrame")
+        ode_row4.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Label(ode_row4, text="Preset:", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_ode_preset = tk.StringVar()
+        ode_combo = ttk.Combobox(ode_row4, textvariable=self._var_ode_preset,
+                                  values=list(ODE_PRESETS.keys()),
+                                  state="readonly", font=("Consolas", 10), width=24)
+        ode_combo.pack(side=tk.LEFT, padx=4)
+        ode_combo.bind("<<ComboboxSelected>>",
+                        lambda e: self._on_ode_preset(self._var_ode_preset.get()))
+
+        self._ode_data = None  # last ODE solution dict
 
         # --- Status ---
         self.status_var = tk.StringVar(value="Ready.")
@@ -2146,6 +2209,89 @@ class SuperCalcApp:
                           edgecolor="#585b70", labelcolor="#cdd6f4", fontsize=9)
         self.canvas_2d.draw()
         self.status_var.set(f"Taylor plot at a={a}, order={order}")
+
+    # ------------------------------------------------------------------
+    #  ODE Solver (RK4)
+    # ------------------------------------------------------------------
+    def _on_ode_solve(self):
+        expr = self._var_ode_expr.get().strip()
+        if not expr:
+            messagebox.showwarning("Input Error", "Please enter an ODE expression dy/dx = f(x,y).")
+            return
+        try:
+            x0 = float(self._var_ode_x0.get())
+            y0 = float(self._var_ode_y0.get())
+            x_end = float(self._var_ode_xend.get())
+            n_steps = int(self._var_ode_steps.get())
+        except ValueError:
+            messagebox.showerror("Error", "Invalid ODE parameters.")
+            return
+        if n_steps < 1 or n_steps > 100000:
+            messagebox.showerror("Error", "Steps must be between 1 and 100000.")
+            return
+        if x0 == x_end:
+            messagebox.showerror("Error", "x0 must not equal x_end.")
+            return
+
+        result = CalcEngine.ode_solve_rk4(expr, x0, y0, x_end, n_steps)
+        if result is None:
+            err = CalcEngine.get_last_error()
+            messagebox.showerror("ODE Error", f"Could not solve ODE.\n{err}")
+            return
+        self._ode_data = result
+
+        lines = [f"dy/dx = {expr},  y({x0}) = {y0}"]
+        lines.append(f"Solved over [{x0}, {x_end}] with {n_steps} steps (RK4)\n")
+        lines.append(f"{'x':>14s}  {'y(x)':>14s}")
+        lines.append("-" * 30)
+        n_show = min(len(result['xs']), 50)
+        step = max(1, len(result['xs']) // n_show) if len(result['xs']) > n_show else 1
+        for i in range(0, len(result['xs']), step):
+            xi = result['xs'][i]
+            yi = result['ys'][i]
+            y_str = f"{yi:.10g}" if yi is not None else "N/A"
+            lines.append(f"{xi:14.10g}  {y_str:>14s}")
+        if len(result['xs']) > n_show:
+            lines.append(f"  ... ({len(result['xs'])} total points)")
+
+        msg = "\n".join(lines)
+        messagebox.showinfo("ODE Solution", msg)
+        self.status_var.set(f"ODE solved: {len(result['xs'])} points")
+
+    def _on_ode_plot(self):
+        if self._ode_data is None:
+            messagebox.showinfo("Info", "Solve an ODE first.")
+            return
+        self._ensure_2d_window()
+        self.ax_2d.clear()
+        self._setup_axes(self.ax_2d, is_3d=False)
+
+        xs = np.array(self._ode_data['xs'])
+        ys = np.array([y if y is not None else np.nan for y in self._ode_data['ys']])
+
+        expr = self._var_ode_expr.get().strip()
+        x0 = self._var_ode_x0.get()
+        y0 = self._var_ode_y0.get()
+        self.ax_2d.plot(xs, ys, color="#00e5c9", linewidth=2,
+                        label=f"RK4: dy/dx={expr}", alpha=0.9)
+        self.ax_2d.plot(xs[0], ys[0], 'go', markersize=8,
+                        label=f"y({x0})={y0}")
+
+        self.ax_2d.legend(loc="upper right", facecolor="#313244",
+                          edgecolor="#585b70", labelcolor="#cdd6f4", fontsize=9)
+        self.canvas_2d.draw()
+        self.status_var.set(f"ODE solution plotted ({len(xs)} points)")
+
+    def _on_ode_preset(self, name: str):
+        """Load an ODE preset into the input fields."""
+        preset = ODE_PRESETS.get(name)
+        if preset:
+            expr, x0, y0, x_end, steps = preset
+            self._var_ode_expr.set(expr)
+            self._var_ode_x0.set(x0)
+            self._var_ode_y0.set(y0)
+            self._var_ode_xend.set(x_end)
+            self._var_ode_steps.set(steps)
 
     # ------------------------------------------------------------------
     #  Equation Solver
