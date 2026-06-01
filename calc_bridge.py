@@ -302,6 +302,7 @@ class CalcEngine:
         count = _lib.taylor_coefficients(expr.encode("utf-8"), a, order, arr, n)
         if count <= 0:
             return None
+        count = min(count, n)
         return [None if _is_invalid(arr[i]) else arr[i] for i in range(count)]
 
     @staticmethod
@@ -338,9 +339,10 @@ class CalcEngine:
         arr_x = (ctypes.c_double * max_out)()
         arr_y = (ctypes.c_double * max_out)()
         count = _lib.ode_solve_rk4(expr.encode("utf-8"), x0, y0, x_end,
-                                    n_steps, arr_x, arr_y, max_out)
+                                     n_steps, arr_x, arr_y, max_out)
         if count <= 0:
             return None
+        count = min(count, max_out)
         return {
             'xs': [arr_x[i] for i in range(count)],
             'ys': [None if _is_invalid(arr_y[i]) else arr_y[i] for i in range(count)],

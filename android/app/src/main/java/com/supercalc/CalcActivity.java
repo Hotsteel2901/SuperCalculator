@@ -672,8 +672,34 @@ public class CalcActivity extends AppCompatActivity {
             return;
         }
 
-        double[] xs = (double[]) result.get("xs");
-        double[] ys = (double[]) result.get("ys");
+        double[] xsFull = (double[]) result.get("xs");
+        double[] ysFull = (double[]) result.get("ys");
+
+        // Downsample to avoid TransactionTooLargeException (~1MB Intent limit)
+        int maxPoints = 2000;
+        double[] xs, ys;
+        if (xsFull.length > maxPoints) {
+            int step = Math.max(1, xsFull.length / maxPoints);
+            xs = new double[xsFull.length / step + 1];
+            ys = new double[ysFull.length / step + 1];
+            int idx = 0;
+            for (int i = 0; i < xsFull.length; i += step) {
+                xs[idx] = xsFull[i];
+                ys[idx] = ysFull[i];
+                idx++;
+            }
+            // Always include the last point
+            if ((xsFull.length - 1) % step != 0) {
+                xs[idx] = xsFull[xsFull.length - 1];
+                ys[idx] = ysFull[ysFull.length - 1];
+                idx++;
+            }
+            xs = java.util.Arrays.copyOf(xs, idx);
+            ys = java.util.Arrays.copyOf(ys, idx);
+        } else {
+            xs = xsFull;
+            ys = ysFull;
+        }
 
         Intent intent = new Intent(this, PlotActivity.class);
         intent.putExtra("is_ode", true);
@@ -726,12 +752,15 @@ public class CalcActivity extends AppCompatActivity {
         }
 
         Intent intent = new Intent(this, PlotActivity.class);
-        intent.putExtra("initial_expr", e);
+        intent.putExtra("is_taylor", true);
+        intent.putExtra("taylor_expr", e);
+        intent.putExtra("taylor_a", a);
+        intent.putExtra("taylor_order", order);
+        intent.putExtra("taylor_xs", xs);
+        intent.putExtra("taylor_ys_orig", ysOrig);
+        intent.putExtra("taylor_ys_taylor", ysTaylor);
         intent.putExtra("x_min", rangeA);
         intent.putExtra("x_max", rangeB);
-        intent.putExtra("taylor_order", order);
-        intent.putExtra("taylor_a", a);
-        intent.putExtra("is_taylor", true);
         startActivity(intent);
     }
 

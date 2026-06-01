@@ -195,8 +195,9 @@ class CurveModel:
             (x_param_expr + " " + y_param_expr if is_parametric else r_param_expr))
 
     def _detect_3d(self, expr: str) -> bool:
-        has_x = 'x' in expr.lower()
-        has_y = 'y' in expr.lower()
+        expr_lower = expr.lower()
+        has_x = bool(re.search(r'\bx\b', expr_lower))
+        has_y = bool(re.search(r'\by\b', expr_lower))
         return has_x and has_y
 
     def _detect_parameters(self, expr: str) -> list:
@@ -1069,10 +1070,10 @@ class SuperCalcApp:
             self._on_polar_toggle()
 
     def _resolve_t_range(self, expr: str) -> str:
-        """Resolve 'pi' references in t-range expressions."""
-        import math
+        """Resolve 'pi' and 'e' references in t-range expressions."""
         result = expr.strip()
-        result = result.replace("pi", str(math.pi))
+        result = re.sub(r'\bpi\b', str(math.pi), result)
+        result = re.sub(r'\be\b', str(math.e), result)
         return result
 
     def _substitute_params(self, expr: str) -> str:
@@ -1159,14 +1160,20 @@ class SuperCalcApp:
         self.normal_data.clear()
         self._var_mark_x.set("")
         self._fft_data = {}
-        if self.ax_2d is not None:
+        if self.ax_2d is not None and self.canvas_2d is not None:
             self.ax_2d.clear()
             self._setup_axes(self.ax_2d, is_3d=False)
             self.canvas_2d.draw()
-        if self.ax_3d is not None:
+        if self.ax_3d is not None and self.canvas_3d is not None:
             self.ax_3d.clear()
             self._setup_axes(self.ax_3d, is_3d=True)
             self.canvas_3d.draw()
+        if self.ax_fft_amp is not None and self.canvas_fft is not None:
+            self.ax_fft_amp.clear()
+            self.ax_fft_phase.clear()
+            self._setup_axes(self.ax_fft_amp, is_3d=False)
+            self._setup_axes(self.ax_fft_phase, is_3d=False)
+            self.canvas_fft.draw()
         self.status_var.set("Cleared all curves.")
 
     def _on_preset(self, name: str):
@@ -1706,7 +1713,7 @@ class SuperCalcApp:
 
     def _find_intersections(self, curve_a, curve_b):
         """Find intersections of two 2D curves within the current X range."""
-        if curve_a.is_parametric or curve_b.is_parametric:
+        if curve_a.is_parametric or curve_b.is_parametric or curve_a.is_polar or curve_b.is_polar:
             self.intersection_marks = []
             return []
         if self.x_min >= self.x_max or self.step_size <= 0:
@@ -1874,9 +1881,14 @@ class SuperCalcApp:
                     "Calculus operations are not available for parametric curves.\n"
                     "Select a regular (non-parametric) curve.")
                 return None
+            if curve.is_polar:
+                messagebox.showwarning("Polar Curve",
+                    "Calculus operations are not available for polar curves.\n"
+                    "Select a regular (non-polar, non-parametric) curve.")
+                return None
             return curve.expression
         for c in reversed(self.curves):
-            if not c.is_parametric:
+            if not c.is_parametric and not c.is_polar:
                 return c.expression
         expr = self.entry_expr.get().strip()
         if expr:
@@ -2603,7 +2615,7 @@ class SuperCalcApp:
         if not path:
             return
         try:
-            with open(path, 'w', newline='') as f:
+            with open(path, 'w', newline='', encoding='utf-8') as f:
                 writer = _csv.writer(f)
                 writer.writerow(["index", "value"])
                 for i, v in enumerate(values):
