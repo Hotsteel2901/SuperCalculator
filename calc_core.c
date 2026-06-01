@@ -208,6 +208,13 @@ static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
                 if (sp >= MAX_STACK) { set_error("Expression too deeply nested"); return -1; }
                 stack[sp++] = t;
                 prev_was_op_or_lp = 0;
+            } else if (t.op == '~') {
+                /* Unary prefix: push without popping — it binds to the next
+                   operand, not to whatever is already on the operator stack.
+                   This prevents 2^-3 from incorrectly popping '^'. */
+                if (sp >= MAX_STACK) { set_error("Expression too deeply nested"); return -1; }
+                stack[sp++] = t;
+                prev_was_op_or_lp = 1;
             } else {
                 int prec = precedence(t.op);
                 int ra   = is_right_assoc(t.op);
