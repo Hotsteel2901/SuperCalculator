@@ -129,6 +129,19 @@ public class PlotActivity extends AppCompatActivity {
                 plotOdeSolution(odeXs, odeYs, odeExpr != null ? odeExpr : "dy/dx");
             }
         }
+        
+        // Handle Taylor series plot from intent
+        if (intent != null && intent.getBooleanExtra("is_taylor", false)) {
+            String taylorExpr = intent.getStringExtra("taylor_expr");
+            double taylorA = intent.getDoubleExtra("taylor_a", 0);
+            int taylorOrder = intent.getIntExtra("taylor_order", 5);
+            double[] taylorXs = intent.getDoubleArrayExtra("taylor_xs");
+            double[] taylorYsOrig = intent.getDoubleArrayExtra("taylor_ys_orig");
+            double[] taylorYsTaylor = intent.getDoubleArrayExtra("taylor_ys_taylor");
+            if (taylorXs != null && taylorYsOrig != null && taylorYsTaylor != null) {
+                plotTaylorSeries(taylorExpr, taylorA, taylorOrder, taylorXs, taylorYsOrig, taylorYsTaylor);
+            }
+        }
     }
     
     private void plotParametricCurve(String xExpr, String yExpr, double tMin, double tMax) {
@@ -321,6 +334,95 @@ public class PlotActivity extends AppCompatActivity {
         toast("ODE solution plotted");
     }
     
+    private void plotTaylorSeries(String expr, double a, int order, double[] xs, double[] ysOrig, double[] ysTaylor) {
+        // Plot original function
+        ArrayList<Entry> entriesOrig = new ArrayList<>();
+        for (int i = 0; i < xs.length; i++) {
+            if (!Double.isNaN(ysOrig[i]) && !Double.isInfinite(ysOrig[i])) {
+                entriesOrig.add(new Entry((float) xs[i], (float) ysOrig[i]));
+            }
+        }
+        
+        // Plot Taylor approximation
+        ArrayList<Entry> entriesTaylor = new ArrayList<>();
+        for (int i = 0; i < xs.length; i++) {
+            if (!Double.isNaN(ysTaylor[i]) && !Double.isInfinite(ysTaylor[i])) {
+                entriesTaylor.add(new Entry((float) xs[i], (float) ysTaylor[i]));
+            }
+        }
+        
+        if (entriesOrig.isEmpty() && entriesTaylor.isEmpty()) {
+            toast("No valid points to plot");
+            return;
+        }
+        
+        allEntries.clear();
+        allExpressions.clear();
+        curveColors.clear();
+        
+        List<ILineDataSet> dataSets = new ArrayList<>();
+        
+        // Original function (blue)
+        if (!entriesOrig.isEmpty()) {
+            allEntries.add(entriesOrig);
+            String origLabel = "Original: " + expr;
+            allExpressions.add(origLabel);
+            int origColor = getNextColor();
+            curveColors.add(origColor);
+            LineDataSet dsOrig = new LineDataSet(entriesOrig, origLabel);
+            dsOrig.setColor(origColor);
+            dsOrig.setLineWidth(2f);
+            dsOrig.setDrawCircles(false);
+            dsOrig.setDrawValues(false);
+            dataSets.add(dsOrig);
+        }
+        
+        // Taylor approximation (orange)
+        if (!entriesTaylor.isEmpty()) {
+            allEntries.add(entriesTaylor);
+            String taylorLabel = "Taylor (order " + order + ") at a=" + String.format("%.4g", a);
+            allExpressions.add(taylorLabel);
+            int taylorColor = getNextColor();
+            curveColors.add(taylorColor);
+            LineDataSet dsTaylor = new LineDataSet(entriesTaylor, taylorLabel);
+            dsTaylor.setColor(taylorColor);
+            dsTaylor.setLineWidth(2f);
+            dsTaylor.setDrawCircles(false);
+            dsTaylor.setDrawValues(false);
+            dataSets.add(dsTaylor);
+        }
+        
+        if (!dataSets.isEmpty()) {
+            LineData lineData = new LineData(dataSets);
+            lineChart.setData(lineData);
+            
+            // Set axis ranges based on original function data
+            if (!entriesOrig.isEmpty()) {
+                float xMin = Float.MAX_VALUE, xMax = Float.MIN_VALUE;
+                float yMin = Float.MAX_VALUE, yMax = Float.MIN_VALUE;
+                for (Entry e : entriesOrig) {
+                    if (e.getX() < xMin) xMin = e.getX();
+                    if (e.getX() > xMax) xMax = e.getX();
+                    if (e.getY() < yMin) yMin = e.getY();
+                    if (e.getY() > yMax) yMax = e.getY();
+                }
+                float xPad = (xMax - xMin) * 0.1f;
+                float yPad = (yMax - yMin) * 0.1f;
+                xMinInput.setText(String.valueOf(xMin - xPad));
+                xMaxInput.setText(String.valueOf(xMax + xPad));
+                yMinInput.setText(String.valueOf(yMin - yPad));
+                yMaxInput.setText(String.valueOf(yMax + yPad));
+                
+                YAxis yAxisLeft = lineChart.getAxisLeft();
+                yAxisLeft.setAxisMinimum(yMin - yPad);
+                yAxisLeft.setAxisMaximum(yMax + yPad);
+            }
+            
+            lineChart.invalidate();
+        }
+        toast("Taylor series (order " + order + ") plotted at a=" + String.format("%.4g", a));
+    }
+    
     private void setupGestureListener() {
         lineChart.setOnChartGestureListener(new OnChartGestureListener() {
             @Override
@@ -441,6 +543,8 @@ public class PlotActivity extends AppCompatActivity {
         }
         allExpressions.add(expr);
         curveColors.add(getNextColor());
+        // Clear plotted entries since the curve list changed
+        allEntries.clear();
         toast("Added curve: " + expr);
         exprInput.setText("");
     }
@@ -600,13 +704,14 @@ public class PlotActivity extends AppCompatActivity {
         }
         
         String[] entriesData;
-        if (totalPoints > maxTotalPoints) {
+        if (totalPoints > maxTotalPoints && !allEntries.isEmpty()) {
             // Downsample
             entriesData = new String[allEntries.size()];
+            int pointsPerCurve = Math.max(1, maxTotalPoints / allEntries.size());
             for (int i = 0; i < allEntries.size(); i++) {
                 StringBuilder sb = new StringBuilder();
                 ArrayList<Entry> entries = allEntries.get(i);
-                int step = Math.max(1, entries.size() / (maxTotalPoints / allEntries.size()));
+                int step = Math.max(1, entries.size() / pointsPerCurve);
                 for (int j = 0; j < entries.size(); j += step) {
                     Entry e = entries.get(j);
                     if (sb.length() > 0) sb.append(";");

@@ -197,7 +197,9 @@ public class Surface3DView extends View {
 
                 // Perspective projection
                 float distance = 2.5f;
-                float persp = distance / (distance - zr2);
+                float denom = distance - zr2;
+                if (Math.abs(denom) < 0.01f) denom = (denom >= 0) ? 0.01f : -0.01f;
+                float persp = distance / denom;
                 projX[i][j] = cx + xr * baseScale * persp;
                 projY[i][j] = cy + yr * baseScale * persp;
             }
@@ -262,7 +264,9 @@ public class Surface3DView extends View {
         float yr = y * cosX - zr * sinX;
         float zr2 = y * sinX + zr * cosX;
         float distance = 2.5f;
-        float persp = distance / (distance - zr2);
+        float denom = distance - zr2;
+        if (Math.abs(denom) < 0.01f) denom = (denom >= 0) ? 0.01f : -0.01f;
+        float persp = distance / denom;
         return new float[]{cx + xr * baseScale * persp, cy + yr * baseScale * persp};
     }
 
