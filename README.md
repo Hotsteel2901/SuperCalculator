@@ -47,6 +47,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
   - **Taylor Series Expansion** — expand any function into a Taylor polynomial at an arbitrary point, with configurable order, coefficient display, and comparison plot of Taylor vs. original
   - **ODE Solver (RK4)** — solve first-order ODEs dy/dx = f(x,y) with initial conditions using 4th-order Runge-Kutta method, with solution plotting
   - **Statistics Calculator** — compute mean, median, mode, variance, standard deviation, quartiles (Q1/Q3/IQR), min, max, range; supports data sorting, histogram visualization, and CSV export
+  - **Matrix Operations (Linear Algebra)** — perform matrix addition, subtraction, multiplication, determinant, inverse, transpose, rank, RREF, and eigenvalue computation on matrices up to any size; input format: rows separated by `;`, columns by `,` (e.g., `1,2;3,4` for a 2×2 matrix)
   - **Preset Functions** — quick-select from 21 common functions (including 3D and FFT presets) plus 10 parametric presets
   - **Parameter System** — auto-detects extra parameters (e.g., `a`, `b`) and provides live input fields
   - **Coordinate Marking** — left-click to mark points, right-click to delete the nearest marked point, or enter an x value to auto-locate
@@ -144,6 +145,7 @@ SuperCalculator/
 
 ## What's New
 
+- **Matrix Operations (Linear Algebra)** — perform matrix addition, subtraction, multiplication, determinant, inverse, transpose, rank, RREF, and eigenvalue computation. Input format: rows separated by `;`, columns by `,` (e.g., `1,2;3,4`). Available on both desktop (Python/numpy) and Android (Java).
 - **ODE Solver (RK4)** — solve first-order ODEs dy/dx = f(x,y) with initial conditions using 4th-order Runge-Kutta method. Supports custom step count, solution data output, and plotting. Available on both desktop (Python) and Android (JNI).
 - **Taylor Series Expansion** — expand any function into a Taylor polynomial at an arbitrary expansion point with configurable order. Displays coefficients, the polynomial expression, and a comparison plot of Taylor vs. original function. Available on both desktop (Python) and Android (JNI).
 - **Limit Computation** — compute left-hand, right-hand, and two-sided limits using Richardson extrapolation for high accuracy. Available on both desktop (Python) and Android (JNI).
@@ -230,6 +232,19 @@ d5 = CalcEngine.nth_derivative("sin(x)", 1.0, 5)  # 5th derivative of sin at x=1
 result = CalcEngine.ode_solve_rk4("-y", x0=0, y0=1, x_end=5, n_steps=200)
 # result['xs'] -> list of x values
 # result['ys'] -> list of y values
+
+# Matrix Operations (using numpy directly)
+import numpy as np
+A = np.array([[1, 2], [3, 4]])
+B = np.array([[5, 6], [7, 8]])
+A + B              # Matrix addition
+A - B              # Matrix subtraction
+A @ B              # Matrix multiplication
+np.linalg.det(A)   # Determinant
+np.linalg.inv(A)   # Inverse
+A.T                # Transpose
+np.linalg.matrix_rank(A)  # Rank
+np.linalg.eig(A)   # Eigenvalues and eigenvectors
 ```
 
 ## Numerical Methods

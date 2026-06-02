@@ -271,6 +271,37 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="16dp">
+                    <TextView android:text="Matrix Operations" android:textSize="12sp" android:textColor="@color/spectral_evaluate" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.SuperCalc.TextInput" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Matrix A (rows: ;, cols: ,)" app:hintTextColor="@color/m3_outline">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/matrix_a_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="1,2;3,4" android:textColor="@color/m3_on_surface" android:textSize="14sp" android:fontFamily="@font/jetbrains_mono" android:singleLine="true" android:inputType="text" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.SuperCalc.TextInput" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Matrix B (for binary ops)" app:hintTextColor="@color/m3_outline" android:layout_marginTop="4dp">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/matrix_b_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="5,6;7,8" android:textColor="@color/m3_on_surface" android:textSize="14sp" android:fontFamily="@font/jetbrains_mono" android:singleLine="true" android:inputType="text" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp" android:layout_marginBottom="4dp">
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_mat_add" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="A+B" android:fontFamily="@font/jetbrains_mono" android:textSize="12sp" app:cornerRadius="10dp" android:layout_marginEnd="4dp" app:strokeColor="@color/spectral_evaluate" app:strokeWidth="1dp" />
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_mat_sub" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="A-B" android:fontFamily="@font/jetbrains_mono" android:textSize="12sp" app:cornerRadius="10dp" android:layout_marginEnd="4dp" app:strokeColor="@color/spectral_derivative" app:strokeWidth="1dp" />
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_mat_mul" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="A*B" android:fontFamily="@font/jetbrains_mono" android:textSize="12sp" app:cornerRadius="10dp" android:layout_marginEnd="4dp" app:strokeColor="@color/spectral_integrate" app:strokeWidth="1dp" />
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_mat_det" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="det(A)" android:fontFamily="@font/jetbrains_mono" android:textSize="12sp" app:cornerRadius="10dp" app:strokeColor="@color/spectral_solve" app:strokeWidth="1dp" />
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_mat_inv" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="inv(A)" android:fontFamily="@font/jetbrains_mono" android:textSize="12sp" app:cornerRadius="10dp" android:layout_marginEnd="4dp" app:strokeColor="@color/spectral_evaluate" app:strokeWidth="1dp" />
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_mat_trans" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="A^T" android:fontFamily="@font/jetbrains_mono" android:textSize="12sp" app:cornerRadius="10dp" android:layout_marginEnd="4dp" app:strokeColor="@color/spectral_derivative" app:strokeWidth="1dp" />
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_mat_rank" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="rank(A)" android:fontFamily="@font/jetbrains_mono" android:textSize="12sp" app:cornerRadius="10dp" android:layout_marginEnd="4dp" app:strokeColor="@color/spectral_integrate" app:strokeWidth="1dp" />
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_mat_eigen" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="eig(A)" android:fontFamily="@font/jetbrains_mono" android:textSize="12sp" app:cornerRadius="10dp" app:strokeColor="@color/spectral_solve" app:strokeWidth="1dp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.SuperCalc.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
                     <TextView android:text="Results" android:textSize="12sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
                     <TextView android:id="@+id/result_view" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="200dp" android:background="@color/result_bg" android:padding="14dp" android:textSize="13sp" android:textColor="@color/result_text" android:fontFamily="@font/jetbrains_mono" android:lineSpacingExtra="4dp" android:scrollbars="vertical" android:text="Ready. Enter expression and press an operation." />
                 </LinearLayout>

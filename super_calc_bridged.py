@@ -801,6 +801,48 @@ class SuperCalcApp:
         ttk.Button(stats_row2, text="Export CSV",
                    command=self._on_stats_export_csv).pack(side=tk.LEFT, padx=2)
 
+        # --- Matrix Operations ---
+        frm_matrix = ttk.LabelFrame(scroll_frame, text="Matrix Operations (Linear Algebra)",
+                                    style="Dark.TLabelframe")
+        frm_matrix.pack(fill=tk.X, padx=8, pady=4)
+
+        mrow1 = ttk.Frame(frm_matrix, style="Dark.TFrame")
+        mrow1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(mrow1, text="Matrix A (rows separated by ;, cols by ,):",
+                  style="Dark.TLabel").pack(anchor=tk.W, padx=2)
+        self._var_matrix_a = tk.StringVar(value="1,2;3,4")
+        ttk.Entry(mrow1, textvariable=self._var_matrix_a, width=36,
+                  font=("Consolas", 10)).pack(fill=tk.X, padx=2, pady=(0, 4))
+
+        mrow2 = ttk.Frame(frm_matrix, style="Dark.TFrame")
+        mrow2.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(mrow2, text="Matrix B (for binary operations):",
+                  style="Dark.TLabel").pack(anchor=tk.W, padx=2)
+        self._var_matrix_b = tk.StringVar(value="5,6;7,8")
+        ttk.Entry(mrow2, textvariable=self._var_matrix_b, width=36,
+                  font=("Consolas", 10)).pack(fill=tk.X, padx=2, pady=(0, 4))
+
+        mrow3 = ttk.Frame(frm_matrix, style="Dark.TFrame")
+        mrow3.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Button(mrow3, text="A + B", command=self._on_matrix_add).pack(side=tk.LEFT, padx=2)
+        ttk.Button(mrow3, text="A - B", command=self._on_matrix_sub).pack(side=tk.LEFT, padx=2)
+        ttk.Button(mrow3, text="A * B", command=self._on_matrix_mul).pack(side=tk.LEFT, padx=2)
+        ttk.Button(mrow3, text="det(A)", command=self._on_matrix_det).pack(side=tk.LEFT, padx=2)
+
+        mrow4 = ttk.Frame(frm_matrix, style="Dark.TFrame")
+        mrow4.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Button(mrow4, text="inv(A)", command=self._on_matrix_inv).pack(side=tk.LEFT, padx=2)
+        ttk.Button(mrow4, text="A^T", command=self._on_matrix_transpose).pack(side=tk.LEFT, padx=2)
+        ttk.Button(mrow4, text="rank(A)", command=self._on_matrix_rank).pack(side=tk.LEFT, padx=2)
+        ttk.Button(mrow4, text="rref(A)", command=self._on_matrix_rref).pack(side=tk.LEFT, padx=2)
+
+        mrow5 = ttk.Frame(frm_matrix, style="Dark.TFrame")
+        mrow5.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Button(mrow5, text="eig(A)", command=self._on_matrix_eigen).pack(side=tk.LEFT, padx=2)
+        ttk.Button(mrow5, text="Clear", command=self._on_matrix_clear).pack(side=tk.RIGHT, padx=2)
+
+        self._matrix_result = None
+
         # --- Status ---
         self.status_var = tk.StringVar(value="Ready.")
         status_bar = ttk.Label(scroll_frame, textvariable=self.status_var,
@@ -2623,6 +2665,217 @@ class SuperCalcApp:
             self.status_var.set(f"Exported {len(values)} values to {os.path.basename(path)}")
         except Exception as e:
             messagebox.showerror("Export Error", f"Could not export: {e}")
+
+    # ------------------------------------------------------------------
+    #  Matrix Operations
+    # ------------------------------------------------------------------
+    def _parse_matrix(self, text: str):
+        """Parse matrix from text format: rows separated by ';', cols by ','."""
+        text = text.strip()
+        if not text:
+            return None
+        rows = text.split(';')
+        matrix = []
+        for row in rows:
+            row = row.strip()
+            if not row:
+                continue
+            cols = row.split(',')
+            vals = []
+            for c in cols:
+                c = c.strip()
+                if not c:
+                    continue
+                try:
+                    vals.append(float(c))
+                except ValueError:
+                    messagebox.showerror("Matrix Error", f"Invalid number: '{c}'")
+                    return None
+            if vals:
+                matrix.append(vals)
+        if not matrix:
+            return None
+        ncols = len(matrix[0])
+        for row in matrix:
+            if len(row) != ncols:
+                messagebox.showerror("Matrix Error", "All rows must have the same number of columns.")
+                return None
+        return matrix
+
+    def _format_matrix(self, mat) -> str:
+        """Format a numpy matrix or list of lists as a readable string."""
+        if hasattr(mat, 'tolist'):
+            mat = mat.tolist()
+        lines = []
+        for row in mat:
+            lines.append("  " + "  ".join(f"{v:12.6g}" for v in row))
+        return "\n".join(lines)
+
+    def _show_matrix_result(self, title: str, result_str: str):
+        """Show matrix result in a dialog."""
+        win = tk.Toplevel(self.root)
+        win.title(title)
+        win.geometry("450x350")
+        win.configure(bg="#1e1e2e")
+        win.minsize(300, 200)
+        ttk.Label(win, text=title, style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(10, 4))
+        text = tk.Text(win, height=15, bg="#313244", fg="#cdd6f4",
+                       font=("Consolas", 11), wrap=tk.WORD)
+        text.pack(fill=tk.BOTH, expand=True, padx=10, pady=4)
+        text.insert("1.0", result_str)
+        text.configure(state=tk.DISABLED)
+        ttk.Button(win, text="Close", command=win.destroy).pack(pady=(0, 10))
+
+    def _on_matrix_add(self):
+        a = self._parse_matrix(self._var_matrix_a.get())
+        b = self._parse_matrix(self._var_matrix_b.get())
+        if a is None or b is None:
+            return
+        try:
+            result = np.array(a) + np.array(b)
+            self._show_matrix_result("A + B", self._format_matrix(result))
+            self.status_var.set("Matrix A + B computed")
+        except Exception as e:
+            messagebox.showerror("Matrix Error", f"Addition failed: {e}")
+
+    def _on_matrix_sub(self):
+        a = self._parse_matrix(self._var_matrix_a.get())
+        b = self._parse_matrix(self._var_matrix_b.get())
+        if a is None or b is None:
+            return
+        try:
+            result = np.array(a) - np.array(b)
+            self._show_matrix_result("A - B", self._format_matrix(result))
+            self.status_var.set("Matrix A - B computed")
+        except Exception as e:
+            messagebox.showerror("Matrix Error", f"Subtraction failed: {e}")
+
+    def _on_matrix_mul(self):
+        a = self._parse_matrix(self._var_matrix_a.get())
+        b = self._parse_matrix(self._var_matrix_b.get())
+        if a is None or b is None:
+            return
+        try:
+            result = np.array(a) @ np.array(b)
+            self._show_matrix_result("A * B", self._format_matrix(result))
+            self.status_var.set("Matrix A * B computed")
+        except Exception as e:
+            messagebox.showerror("Matrix Error", f"Multiplication failed: {e}")
+
+    def _on_matrix_det(self):
+        a = self._parse_matrix(self._var_matrix_a.get())
+        if a is None:
+            return
+        try:
+            arr = np.array(a)
+            if arr.shape[0] != arr.shape[1]:
+                messagebox.showerror("Matrix Error", "Determinant requires a square matrix.")
+                return
+            det = np.linalg.det(arr)
+            self._show_matrix_result("det(A)", f"det(A) = {det:.10g}")
+            self.status_var.set(f"det(A) = {det:.10g}")
+        except Exception as e:
+            messagebox.showerror("Matrix Error", f"Determinant failed: {e}")
+
+    def _on_matrix_inv(self):
+        a = self._parse_matrix(self._var_matrix_a.get())
+        if a is None:
+            return
+        try:
+            arr = np.array(a)
+            if arr.shape[0] != arr.shape[1]:
+                messagebox.showerror("Matrix Error", "Inverse requires a square matrix.")
+                return
+            result = np.linalg.inv(arr)
+            self._show_matrix_result("inv(A)", self._format_matrix(result))
+            self.status_var.set("Matrix inverse computed")
+        except np.linalg.LinAlgError:
+            messagebox.showerror("Matrix Error", "Matrix is singular, inverse does not exist.")
+        except Exception as e:
+            messagebox.showerror("Matrix Error", f"Inverse failed: {e}")
+
+    def _on_matrix_transpose(self):
+        a = self._parse_matrix(self._var_matrix_a.get())
+        if a is None:
+            return
+        try:
+            result = np.array(a).T
+            self._show_matrix_result("A^T (Transpose)", self._format_matrix(result))
+            self.status_var.set("Matrix transpose computed")
+        except Exception as e:
+            messagebox.showerror("Matrix Error", f"Transpose failed: {e}")
+
+    def _on_matrix_rank(self):
+        a = self._parse_matrix(self._var_matrix_a.get())
+        if a is None:
+            return
+        try:
+            arr = np.array(a)
+            rank = np.linalg.matrix_rank(arr)
+            self._show_matrix_result("rank(A)", f"rank(A) = {rank}")
+            self.status_var.set(f"rank(A) = {rank}")
+        except Exception as e:
+            messagebox.showerror("Matrix Error", f"Rank computation failed: {e}")
+
+    def _on_matrix_rref(self):
+        a = self._parse_matrix(self._var_matrix_a.get())
+        if a is None:
+            return
+        try:
+            arr = np.array(a, dtype=float)
+            m, n = arr.shape
+            pivot_row = 0
+            pivot_cols = []
+            for col in range(n):
+                if pivot_row >= m:
+                    break
+                max_row = pivot_row
+                for row in range(pivot_row + 1, m):
+                    if abs(arr[row, col]) > abs(arr[max_row, col]):
+                        max_row = row
+                if abs(arr[max_row, col]) < 1e-10:
+                    continue
+                arr[[pivot_row, max_row]] = arr[[max_row, pivot_row]]
+                arr[pivot_row] = arr[pivot_row] / arr[pivot_row, col]
+                for row in range(m):
+                    if row != pivot_row and abs(arr[row, col]) > 1e-10:
+                        arr[row] = arr[row] - arr[row, col] * arr[pivot_row]
+                pivot_cols.append(col)
+                pivot_row += 1
+            result_str = self._format_matrix(arr.tolist())
+            info = f"Rank = {len(pivot_cols)}\n\n{result_str}"
+            self._show_matrix_result("RREF(A)", info)
+            self.status_var.set(f"RREF computed, rank = {len(pivot_cols)}")
+        except Exception as e:
+            messagebox.showerror("Matrix Error", f"RREF failed: {e}")
+
+    def _on_matrix_eigen(self):
+        a = self._parse_matrix(self._var_matrix_a.get())
+        if a is None:
+            return
+        try:
+            arr = np.array(a)
+            if arr.shape[0] != arr.shape[1]:
+                messagebox.showerror("Matrix Error", "Eigenvalues require a square matrix.")
+                return
+            eigenvalues, eigenvectors = np.linalg.eig(arr)
+            lines = ["Eigenvalues:"]
+            for i, val in enumerate(eigenvalues):
+                lines.append(f"  λ{i+1} = {val:.10g}")
+            lines.append("")
+            lines.append("Eigenvectors (columns):")
+            lines.append(self._format_matrix(eigenvectors))
+            self._show_matrix_result("Eigenvalues & Eigenvectors", "\n".join(lines))
+            self.status_var.set(f"Eigenvalues: {[f'{v:.6g}' for v in eigenvalues]}")
+        except np.linalg.LinAlgError:
+            messagebox.showerror("Matrix Error", "Eigenvalue computation failed.")
+        except Exception as e:
+            messagebox.showerror("Matrix Error", f"Eigenvalue failed: {e}")
+
+    def _on_matrix_clear(self):
+        self._var_matrix_a.set("")
+        self._var_matrix_b.set("")
+        self.status_var.set("Matrix inputs cleared.")
 
 
 # ---------------------------------------------------------------------------
