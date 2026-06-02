@@ -132,10 +132,92 @@ _lib.taylor_coefficients.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_
 _lib.taylor_coefficients.restype = ctypes.c_int
 
 _lib.ode_solve_rk4.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_double,
-                                ctypes.c_double, ctypes.c_int,
-                                ctypes.POINTER(ctypes.c_double),
-                                ctypes.POINTER(ctypes.c_double), ctypes.c_int]
+                                 ctypes.c_double, ctypes.c_int,
+                                 ctypes.POINTER(ctypes.c_double),
+                                 ctypes.POINTER(ctypes.c_double), ctypes.c_int]
 _lib.ode_solve_rk4.restype = ctypes.c_int
+
+# Complex number functions
+_lib.complex_evaluate.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_double,
+                                   ctypes.POINTER(ctypes.c_double),
+                                   ctypes.POINTER(ctypes.c_double)]
+_lib.complex_evaluate.restype = None
+
+_lib.complex_add_values.argtypes = [ctypes.c_double, ctypes.c_double,
+                                     ctypes.c_double, ctypes.c_double,
+                                     ctypes.POINTER(ctypes.c_double),
+                                     ctypes.POINTER(ctypes.c_double)]
+_lib.complex_add_values.restype = None
+
+_lib.complex_sub_values.argtypes = [ctypes.c_double, ctypes.c_double,
+                                     ctypes.c_double, ctypes.c_double,
+                                     ctypes.POINTER(ctypes.c_double),
+                                     ctypes.POINTER(ctypes.c_double)]
+_lib.complex_sub_values.restype = None
+
+_lib.complex_mul_values.argtypes = [ctypes.c_double, ctypes.c_double,
+                                     ctypes.c_double, ctypes.c_double,
+                                     ctypes.POINTER(ctypes.c_double),
+                                     ctypes.POINTER(ctypes.c_double)]
+_lib.complex_mul_values.restype = None
+
+_lib.complex_div_values.argtypes = [ctypes.c_double, ctypes.c_double,
+                                     ctypes.c_double, ctypes.c_double,
+                                     ctypes.POINTER(ctypes.c_double),
+                                     ctypes.POINTER(ctypes.c_double)]
+_lib.complex_div_values.restype = None
+
+_lib.complex_pow_values.argtypes = [ctypes.c_double, ctypes.c_double,
+                                     ctypes.c_double, ctypes.c_double,
+                                     ctypes.POINTER(ctypes.c_double),
+                                     ctypes.POINTER(ctypes.c_double)]
+_lib.complex_pow_values.restype = None
+
+_lib.complex_sin_value.argtypes = [ctypes.c_double, ctypes.c_double,
+                                    ctypes.POINTER(ctypes.c_double),
+                                    ctypes.POINTER(ctypes.c_double)]
+_lib.complex_sin_value.restype = None
+
+_lib.complex_cos_value.argtypes = [ctypes.c_double, ctypes.c_double,
+                                    ctypes.POINTER(ctypes.c_double),
+                                    ctypes.POINTER(ctypes.c_double)]
+_lib.complex_cos_value.restype = None
+
+_lib.complex_tan_value.argtypes = [ctypes.c_double, ctypes.c_double,
+                                    ctypes.POINTER(ctypes.c_double),
+                                    ctypes.POINTER(ctypes.c_double)]
+_lib.complex_tan_value.restype = None
+
+_lib.complex_exp_value.argtypes = [ctypes.c_double, ctypes.c_double,
+                                    ctypes.POINTER(ctypes.c_double),
+                                    ctypes.POINTER(ctypes.c_double)]
+_lib.complex_exp_value.restype = None
+
+_lib.complex_ln_value.argtypes = [ctypes.c_double, ctypes.c_double,
+                                   ctypes.POINTER(ctypes.c_double),
+                                   ctypes.POINTER(ctypes.c_double)]
+_lib.complex_ln_value.restype = None
+
+_lib.complex_sqrt_value.argtypes = [ctypes.c_double, ctypes.c_double,
+                                     ctypes.POINTER(ctypes.c_double),
+                                     ctypes.POINTER(ctypes.c_double)]
+_lib.complex_sqrt_value.restype = None
+
+_lib.complex_abs_value.argtypes = [ctypes.c_double, ctypes.c_double]
+_lib.complex_abs_value.restype = ctypes.c_double
+
+_lib.complex_conj_value.argtypes = [ctypes.c_double, ctypes.c_double,
+                                     ctypes.POINTER(ctypes.c_double),
+                                     ctypes.POINTER(ctypes.c_double)]
+_lib.complex_conj_value.restype = None
+
+_lib.complex_array_evaluate.argtypes = [ctypes.c_char_p,
+                                         ctypes.POINTER(ctypes.c_double),
+                                         ctypes.POINTER(ctypes.c_double),
+                                         ctypes.POINTER(ctypes.c_double),
+                                         ctypes.POINTER(ctypes.c_double),
+                                         ctypes.c_int]
+_lib.complex_array_evaluate.restype = None
 
 
 def _is_invalid(x: float) -> bool:
@@ -358,6 +440,153 @@ class CalcEngine:
                  n: int = 1000) -> Optional[float]:
         """Definite integral over [a,b] using Simpson's rule (alias for integrate)."""
         return CalcEngine.integrate(expr, a, b, n)
+
+    # Complex number methods
+    @staticmethod
+    def complex_evaluate(expr: str, x: float, y: float = 0.0):
+        """Evaluate expression at complex point x+iy.
+        
+        Returns a complex number or None on error.
+        """
+        out_re = ctypes.c_double()
+        out_im = ctypes.c_double()
+        _lib.complex_evaluate(expr.encode("utf-8"), x, y,
+                              ctypes.byref(out_re), ctypes.byref(out_im))
+        re_val = out_re.value
+        im_val = out_im.value
+        if _is_invalid(re_val) or _is_invalid(im_val):
+            return None
+        return complex(re_val, im_val)
+
+    @staticmethod
+    def complex_add(z1: complex, z2: complex) -> complex:
+        """Add two complex numbers."""
+        out_re = ctypes.c_double()
+        out_im = ctypes.c_double()
+        _lib.complex_add_values(z1.real, z1.imag, z2.real, z2.imag,
+                                ctypes.byref(out_re), ctypes.byref(out_im))
+        return complex(out_re.value, out_im.value)
+
+    @staticmethod
+    def complex_sub(z1: complex, z2: complex) -> complex:
+        """Subtract two complex numbers."""
+        out_re = ctypes.c_double()
+        out_im = ctypes.c_double()
+        _lib.complex_sub_values(z1.real, z1.imag, z2.real, z2.imag,
+                                ctypes.byref(out_re), ctypes.byref(out_im))
+        return complex(out_re.value, out_im.value)
+
+    @staticmethod
+    def complex_mul(z1: complex, z2: complex) -> complex:
+        """Multiply two complex numbers."""
+        out_re = ctypes.c_double()
+        out_im = ctypes.c_double()
+        _lib.complex_mul_values(z1.real, z1.imag, z2.real, z2.imag,
+                                ctypes.byref(out_re), ctypes.byref(out_im))
+        return complex(out_re.value, out_im.value)
+
+    @staticmethod
+    def complex_div(z1: complex, z2: complex) -> complex:
+        """Divide two complex numbers."""
+        out_re = ctypes.c_double()
+        out_im = ctypes.c_double()
+        _lib.complex_div_values(z1.real, z1.imag, z2.real, z2.imag,
+                                ctypes.byref(out_re), ctypes.byref(out_im))
+        return complex(out_re.value, out_im.value)
+
+    @staticmethod
+    def complex_pow(z1: complex, z2: complex) -> complex:
+        """Raise a complex number to a power."""
+        out_re = ctypes.c_double()
+        out_im = ctypes.c_double()
+        _lib.complex_pow_values(z1.real, z1.imag, z2.real, z2.imag,
+                                ctypes.byref(out_re), ctypes.byref(out_im))
+        return complex(out_re.value, out_im.value)
+
+    @staticmethod
+    def complex_sin(z: complex) -> complex:
+        """Compute sine of a complex number."""
+        out_re = ctypes.c_double()
+        out_im = ctypes.c_double()
+        _lib.complex_sin_value(z.real, z.imag,
+                               ctypes.byref(out_re), ctypes.byref(out_im))
+        return complex(out_re.value, out_im.value)
+
+    @staticmethod
+    def complex_cos(z: complex) -> complex:
+        """Compute cosine of a complex number."""
+        out_re = ctypes.c_double()
+        out_im = ctypes.c_double()
+        _lib.complex_cos_value(z.real, z.imag,
+                               ctypes.byref(out_re), ctypes.byref(out_im))
+        return complex(out_re.value, out_im.value)
+
+    @staticmethod
+    def complex_tan(z: complex) -> complex:
+        """Compute tangent of a complex number."""
+        out_re = ctypes.c_double()
+        out_im = ctypes.c_double()
+        _lib.complex_tan_value(z.real, z.imag,
+                               ctypes.byref(out_re), ctypes.byref(out_im))
+        return complex(out_re.value, out_im.value)
+
+    @staticmethod
+    def complex_exp(z: complex) -> complex:
+        """Compute exponential of a complex number."""
+        out_re = ctypes.c_double()
+        out_im = ctypes.c_double()
+        _lib.complex_exp_value(z.real, z.imag,
+                               ctypes.byref(out_re), ctypes.byref(out_im))
+        return complex(out_re.value, out_im.value)
+
+    @staticmethod
+    def complex_ln(z: complex) -> complex:
+        """Compute natural logarithm of a complex number."""
+        out_re = ctypes.c_double()
+        out_im = ctypes.c_double()
+        _lib.complex_ln_value(z.real, z.imag,
+                              ctypes.byref(out_re), ctypes.byref(out_im))
+        return complex(out_re.value, out_im.value)
+
+    @staticmethod
+    def complex_sqrt(z: complex) -> complex:
+        """Compute square root of a complex number."""
+        out_re = ctypes.c_double()
+        out_im = ctypes.c_double()
+        _lib.complex_sqrt_value(z.real, z.imag,
+                                ctypes.byref(out_re), ctypes.byref(out_im))
+        return complex(out_re.value, out_im.value)
+
+    @staticmethod
+    def complex_abs(z: complex) -> float:
+        """Compute absolute value (modulus) of a complex number."""
+        return _lib.complex_abs_value(z.real, z.imag)
+
+    @staticmethod
+    def complex_conj(z: complex) -> complex:
+        """Compute complex conjugate."""
+        out_re = ctypes.c_double()
+        out_im = ctypes.c_double()
+        _lib.complex_conj_value(z.real, z.imag,
+                                ctypes.byref(out_re), ctypes.byref(out_im))
+        return complex(out_re.value, out_im.value)
+
+    @staticmethod
+    def complex_array_evaluate(expr: str, zs: List[complex]):
+        """Evaluate expression at multiple complex points.
+        
+        Returns a list of complex numbers.
+        """
+        n = len(zs)
+        if n == 0:
+            return []
+        arr_x = (ctypes.c_double * n)(*[z.real for z in zs])
+        arr_y = (ctypes.c_double * n)(*[z.imag for z in zs])
+        arr_re = (ctypes.c_double * n)()
+        arr_im = (ctypes.c_double * n)()
+        _lib.complex_array_evaluate(expr.encode("utf-8"), arr_x, arr_y,
+                                    arr_re, arr_im, n)
+        return [complex(arr_re[i], arr_im[i]) for i in range(n)]
 
     @staticmethod
     def arc_length(expr: str, a: float, b: float, n: int = 5000) -> Optional[float]:

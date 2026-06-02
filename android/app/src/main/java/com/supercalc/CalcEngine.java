@@ -63,4 +63,44 @@ public class CalcEngine {
 
     /** Last error message from the C core. */
     public static native String getLastError();
+
+    // Complex number methods
+    /** Add two complex numbers: z1 + z2. Returns double[2] = {real, imag}. */
+    public static native double[] complexAdd(double re1, double im1, double re2, double im2);
+
+    /** Subtract two complex numbers: z1 - z2. Returns double[2] = {real, imag}. */
+    public static native double[] complexSub(double re1, double im1, double re2, double im2);
+
+    /** Multiply two complex numbers: z1 * z2. Returns double[2] = {real, imag}. */
+    public static native double[] complexMul(double re1, double im1, double re2, double im2);
+
+    /** Divide two complex numbers: z1 / z2. Returns double[2] = {real, imag}. */
+    public static native double[] complexDiv(double re1, double im1, double re2, double im2);
+
+    /** Raise complex number to power: z1 ^ z2. Returns double[2] = {real, imag}. */
+    public static native double[] complexPow(double re1, double im1, double re2, double im2);
+
+    /** Compute sin of complex number. Returns double[2] = {real, imag}. */
+    public static native double[] complexSin(double re, double im);
+
+    /** Compute cos of complex number. Returns double[2] = {real, imag}. */
+    public static native double[] complexCos(double re, double im);
+
+    /** Compute tan of complex number. Returns double[2] = {real, imag}. */
+    public static native double[] complexTan(double re, double im);
+
+    /** Compute exp of complex number. Returns double[2] = {real, imag}. */
+    public static native double[] complexExp(double re, double im);
+
+    /** Compute ln of complex number. Returns double[2] = {real, imag}. */
+    public static native double[] complexLn(double re, double im);
+
+    /** Compute sqrt of complex number. Returns double[2] = {real, imag}. */
+    public static native double[] complexSqrt(double re, double im);
+
+    /** Compute absolute value (modulus) of complex number. */
+    public static native double complexAbs(double re, double im);
+
+    /** Compute complex conjugate. Returns double[2] = {real, imag}. */
+    public static native double[] complexConj(double re, double im);
 }

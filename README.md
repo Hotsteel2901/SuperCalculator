@@ -57,6 +57,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
  - **Interactive Plot** — Matplotlib toolbar for zoom, pan, and export
   - **Function Table & CSV Export** — generate a data table of x and f(x) over any interval, then export to CSV or copy to clipboard
   - **FFT Spectrum Export** — export frequency, amplitude and phase data to CSV for external analysis
+ - **Complex Number Calculator** — perform complex arithmetic (+, -, *, /, ^), trigonometric functions (sin, cos, tan), exponential, logarithm, square root, absolute value, and conjugate. Available on both desktop (Python) and Android (JNI).
  - **Windows EXE** — standalone executable, no Python installation required
  - **Android App** — standalone APK with Material Design 3 UI and JNI bridge, now including 3D surface plotting with touch rotation and parametric curve support
 
@@ -126,6 +127,7 @@ gcc -shared -O2 -fPIC -o calc_core.dylib calc_core.c -lm
 | Roots/Abs    | `sqrt` `abs`                      | `sqrt(x)` `abs(x)` |
 | Factorial    | `!` (postfix)                      | `x!` `5!`          |
 | Constants    | `pi` `e`                          | `sin(pi*x)`        |
+| Complex      | `i` (imaginary unit)              | `1+2i`, `3-4i`     |
 
 ## File Structure
 
@@ -145,6 +147,7 @@ SuperCalculator/
 
 ## What's New
 
+- **Complex Number Calculator** — perform complex arithmetic (+, -, *, /, ^), trigonometric functions (sin, cos, tan), exponential, logarithm, square root, absolute value, and conjugate. Input format: `a+bi` (e.g., `1+2i`, `3-4i`). Available on both desktop (Python) and Android (JNI).
 - **Matrix Operations (Linear Algebra)** — perform matrix addition, subtraction, multiplication, determinant, inverse, transpose, rank, RREF, and eigenvalue computation. Input format: rows separated by `;`, columns by `,` (e.g., `1,2;3,4`). Available on both desktop (Python/numpy) and Android (Java).
 - **ODE Solver (RK4)** — solve first-order ODEs dy/dx = f(x,y) with initial conditions using 4th-order Runge-Kutta method. Supports custom step count, solution data output, and plotting. Available on both desktop (Python) and Android (JNI).
 - **Taylor Series Expansion** — expand any function into a Taylor polynomial at an arbitrary expansion point with configurable order. Displays coefficients, the polynomial expression, and a comparison plot of Taylor vs. original function. Available on both desktop (Python) and Android (JNI).
@@ -232,6 +235,16 @@ d5 = CalcEngine.nth_derivative("sin(x)", 1.0, 5)  # 5th derivative of sin at x=1
 result = CalcEngine.ode_solve_rk4("-y", x0=0, y0=1, x_end=5, n_steps=200)
 # result['xs'] -> list of x values
 # result['ys'] -> list of y values
+
+# Complex Number Operations
+z1 = complex(1, 2)  # 1+2i
+z2 = complex(3, 4)  # 3+4i
+result = CalcEngine.complex_add(z1, z2)  # (4+6j)
+result = CalcEngine.complex_mul(z1, z2)  # (-5+10j)
+result = CalcEngine.complex_sin(z1)      # sin(1+2i)
+result = CalcEngine.complex_exp(z1)      # exp(1+2i)
+result = CalcEngine.complex_abs(z1)      # |1+2i| = 2.236...
+result = CalcEngine.complex_conj(z1)     # conj(1+2i) = (1-2j)
 
 # Matrix Operations (using numpy directly)
 import numpy as np
