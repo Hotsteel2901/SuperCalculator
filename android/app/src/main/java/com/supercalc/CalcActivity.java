@@ -970,13 +970,11 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private double[][] getMatrixA() {
-        EditText aInput = findViewById(R.id.matrix_a_input);
-        return parseMatrix(aInput.getText().toString());
+        return parseMatrix(matrixAInput.getText().toString());
     }
 
     private double[][] getMatrixB() {
-        EditText bInput = findViewById(R.id.matrix_b_input);
-        return parseMatrix(bInput.getText().toString());
+        return parseMatrix(matrixBInput.getText().toString());
     }
 
     private void onMatrixAdd() {

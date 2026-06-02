@@ -34,6 +34,16 @@ public class PlotActivity extends AppCompatActivity {
     private ArrayList<ArrayList<Entry>> allEntries;
     private ArrayList<String> allExpressions;
     private ArrayList<Integer> curveColors;
+    // Track curve type: "regular", "parametric", "polar", "ode", "taylor"
+    private ArrayList<String> curveTypes;
+    // Store parametric/polar parameters for re-plotting
+    private ArrayList<String> parametricXExprs;
+    private ArrayList<String> parametricYExprs;
+    private ArrayList<Double> parametricTMin;
+    private ArrayList<Double> parametricTMax;
+    private ArrayList<String> polarExprs;
+    private ArrayList<Double> polarThetaMin;
+    private ArrayList<Double> polarThetaMax;
     
     // Marked points for coordinate marking
     private ArrayList<Entry> markedPoints;
@@ -80,6 +90,14 @@ public class PlotActivity extends AppCompatActivity {
         allEntries = new ArrayList<>();
         allExpressions = new ArrayList<>();
         curveColors = new ArrayList<>();
+        curveTypes = new ArrayList<>();
+        parametricXExprs = new ArrayList<>();
+        parametricYExprs = new ArrayList<>();
+        parametricTMin = new ArrayList<>();
+        parametricTMax = new ArrayList<>();
+        polarExprs = new ArrayList<>();
+        polarThetaMin = new ArrayList<>();
+        polarThetaMax = new ArrayList<>();
         markedPoints = new ArrayList<>();
         
         btnAddCurve.setOnClickListener(v -> onAddCurve());
@@ -192,10 +210,23 @@ public class PlotActivity extends AppCompatActivity {
         allEntries.clear();
         allExpressions.clear();
         curveColors.clear();
+        curveTypes.clear();
+        parametricXExprs.clear();
+        parametricYExprs.clear();
+        parametricTMin.clear();
+        parametricTMax.clear();
+        polarExprs.clear();
+        polarThetaMin.clear();
+        polarThetaMax.clear();
         allEntries.add(entries);
         String label = "P: x(t)=" + xExpr + ", y(t)=" + yExpr;
         allExpressions.add(label);
         curveColors.add(getNextColor());
+        curveTypes.add("parametric");
+        parametricXExprs.add(xExpr);
+        parametricYExprs.add(yExpr);
+        parametricTMin.add(tMin);
+        parametricTMax.add(tMax);
         
         List<ILineDataSet> dataSets = new ArrayList<>();
         LineDataSet dataSet = new LineDataSet(entries, label);
@@ -261,10 +292,22 @@ public class PlotActivity extends AppCompatActivity {
         allEntries.clear();
         allExpressions.clear();
         curveColors.clear();
+        curveTypes.clear();
+        parametricXExprs.clear();
+        parametricYExprs.clear();
+        parametricTMin.clear();
+        parametricTMax.clear();
+        polarExprs.clear();
+        polarThetaMin.clear();
+        polarThetaMax.clear();
         allEntries.add(entries);
         String label = "Pol: r(theta)=" + rExpr;
         allExpressions.add(label);
         curveColors.add(getNextColor());
+        curveTypes.add("polar");
+        polarExprs.add(rExpr);
+        polarThetaMin.add(thetaMin);
+        polarThetaMax.add(thetaMax);
         
         List<ILineDataSet> dataSets = new ArrayList<>();
         LineDataSet dataSet = new LineDataSet(entries, label);
@@ -313,10 +356,19 @@ public class PlotActivity extends AppCompatActivity {
         allEntries.clear();
         allExpressions.clear();
         curveColors.clear();
+        curveTypes.clear();
+        parametricXExprs.clear();
+        parametricYExprs.clear();
+        parametricTMin.clear();
+        parametricTMax.clear();
+        polarExprs.clear();
+        polarThetaMin.clear();
+        polarThetaMax.clear();
         allEntries.add(entries);
         String label = "ODE: " + expr;
         allExpressions.add(label);
         curveColors.add(Color.parseColor("#00e5c9"));
+        curveTypes.add("ode");
         
         List<ILineDataSet> dataSets = new ArrayList<>();
         LineDataSet dataSet = new LineDataSet(entries, label);
@@ -359,6 +411,14 @@ public class PlotActivity extends AppCompatActivity {
         allEntries.clear();
         allExpressions.clear();
         curveColors.clear();
+        curveTypes.clear();
+        parametricXExprs.clear();
+        parametricYExprs.clear();
+        parametricTMin.clear();
+        parametricTMax.clear();
+        polarExprs.clear();
+        polarThetaMin.clear();
+        polarThetaMax.clear();
         
         List<ILineDataSet> dataSets = new ArrayList<>();
         
@@ -369,6 +429,7 @@ public class PlotActivity extends AppCompatActivity {
             allExpressions.add(origLabel);
             int origColor = getNextColor();
             curveColors.add(origColor);
+            curveTypes.add("regular");
             LineDataSet dsOrig = new LineDataSet(entriesOrig, origLabel);
             dsOrig.setColor(origColor);
             dsOrig.setLineWidth(2f);
@@ -384,6 +445,7 @@ public class PlotActivity extends AppCompatActivity {
             allExpressions.add(taylorLabel);
             int taylorColor = getNextColor();
             curveColors.add(taylorColor);
+            curveTypes.add("taylor");
             LineDataSet dsTaylor = new LineDataSet(entriesTaylor, taylorLabel);
             dsTaylor.setColor(taylorColor);
             dsTaylor.setLineWidth(2f);
@@ -523,6 +585,9 @@ public class PlotActivity extends AppCompatActivity {
         super.onSaveInstanceState(outState);
         outState.putStringArrayList("expressions", allExpressions);
         outState.putIntegerArrayList("colors", curveColors);
+        outState.putStringArrayList("curve_types", curveTypes);
+        outState.putStringArrayList("param_x_exprs", parametricXExprs);
+        outState.putStringArrayList("param_y_exprs", parametricYExprs);
         outState.putString("x_min", xMinInput.getText().toString());
         outState.putString("x_max", xMaxInput.getText().toString());
         outState.putString("y_min", yMinInput.getText().toString());
@@ -543,6 +608,7 @@ public class PlotActivity extends AppCompatActivity {
         }
         allExpressions.add(expr);
         curveColors.add(getNextColor());
+        curveTypes.add("regular");
         // Clear plotted entries since the curve list changed
         allEntries.clear();
         toast("Added curve: " + expr);
@@ -558,6 +624,24 @@ public class PlotActivity extends AppCompatActivity {
         allExpressions.remove(idx);
         if (idx < curveColors.size()) {
             curveColors.remove(idx);
+        }
+        if (idx < curveTypes.size()) {
+            String type = curveTypes.remove(idx);
+            // Clean up parametric/polar data if applicable
+            if ("parametric".equals(type)) {
+                if (idx < parametricXExprs.size()) {
+                    parametricXExprs.remove(idx);
+                    parametricYExprs.remove(idx);
+                    parametricTMin.remove(idx);
+                    parametricTMax.remove(idx);
+                }
+            } else if ("polar".equals(type)) {
+                if (idx < polarExprs.size()) {
+                    polarExprs.remove(idx);
+                    polarThetaMin.remove(idx);
+                    polarThetaMax.remove(idx);
+                }
+            }
         }
         if (idx < allEntries.size()) {
             allEntries.remove(idx);
@@ -598,29 +682,100 @@ public class PlotActivity extends AppCompatActivity {
         int numPoints = Math.min(300, (int)((xMax - xMin) / 0.1));
         numPoints = Math.max(50, Math.min(500, numPoints));
         
+        int paramIdx = 0;  // index into parametric lists
+        int polarIdx = 0;  // index into polar lists
+        
         for (int curveIdx = 0; curveIdx < allExpressions.size(); curveIdx++) {
-            String expr = allExpressions.get(curveIdx);
-            double[] xs = new double[numPoints];
-            for (int i = 0; i < numPoints; i++) {
-                xs[i] = xMin + (xMax - xMin) * i / (numPoints - 1);
-            }
+            String type = curveIdx < curveTypes.size() ? curveTypes.get(curveIdx) : "regular";
             
-            double[] ys = CalcEngine.evaluateArray(expr, xs);
-            if (ys == null) {
-                toast("Error in " + expr + ": " + CalcEngine.getLastError());
-                continue;
-            }
-            
-            ArrayList<Entry> entries = new ArrayList<>();
-            for (int i = 0; i < numPoints; i++) {
-                if (!Double.isNaN(ys[i]) && !Double.isInfinite(ys[i])) {
-                    float y = (float) ys[i];
-                    if (y >= yMin && y <= yMax) {
-                        entries.add(new Entry((float) xs[i], y));
+            if ("parametric".equals(type) && paramIdx < parametricXExprs.size()) {
+                // Re-evaluate parametric curve
+                double tMin = parametricTMin.get(paramIdx);
+                double tMax = parametricTMax.get(paramIdx);
+                String xExpr = parametricXExprs.get(paramIdx);
+                String yExpr = parametricYExprs.get(paramIdx);
+                int n = numPoints;
+                double step = (tMax - tMin) / (n - 1);
+                double[] ts = new double[n];
+                for (int i = 0; i < n; i++) ts[i] = tMin + i * step;
+                String xExprSub = xExpr.replaceAll("\\bt\\b", "x");
+                String yExprSub = yExpr.replaceAll("\\bt\\b", "x");
+                double[] xs = CalcEngine.evaluateArray(xExprSub, ts);
+                double[] ys = CalcEngine.evaluateArray(yExprSub, ts);
+                if (xs != null && ys != null) {
+                    ArrayList<Entry> entries = new ArrayList<>();
+                    for (int i = 0; i < n; i++) {
+                        if (!Double.isNaN(xs[i]) && !Double.isNaN(ys[i]) &&
+                            !Double.isInfinite(xs[i]) && !Double.isInfinite(ys[i])) {
+                            entries.add(new Entry((float) xs[i], (float) ys[i]));
+                        }
+                    }
+                    allEntries.add(entries);
+                } else {
+                    allEntries.add(new ArrayList<Entry>());
+                    toast("Error in parametric: " + CalcEngine.getLastError());
+                }
+                paramIdx++;
+            } else if ("polar".equals(type) && polarIdx < polarExprs.size()) {
+                // Re-evaluate polar curve
+                double thetaMin = polarThetaMin.get(polarIdx);
+                double thetaMax = polarThetaMax.get(polarIdx);
+                String rExpr = polarExprs.get(polarIdx);
+                int n = numPoints;
+                double step = (thetaMax - thetaMin) / (n - 1);
+                double[] thetas = new double[n];
+                for (int i = 0; i < n; i++) thetas[i] = thetaMin + i * step;
+                String rExprSub = rExpr.replaceAll("\\btheta\\b", "x");
+                double[] rs = CalcEngine.evaluateArray(rExprSub, thetas);
+                if (rs != null) {
+                    ArrayList<Entry> entries = new ArrayList<>();
+                    for (int i = 0; i < n; i++) {
+                        if (!Double.isNaN(rs[i]) && !Double.isInfinite(rs[i])) {
+                            double x = rs[i] * Math.cos(thetas[i]);
+                            double y = rs[i] * Math.sin(thetas[i]);
+                            entries.add(new Entry((float) x, (float) y));
+                        }
+                    }
+                    allEntries.add(entries);
+                } else {
+                    allEntries.add(new ArrayList<Entry>());
+                    toast("Error in polar: " + CalcEngine.getLastError());
+                }
+                polarIdx++;
+            } else if ("ode".equals(type) || "taylor".equals(type)) {
+                // ODE and Taylor curves already have pre-computed entries, skip re-evaluation
+                // They were already in allEntries from the intent data
+                if (curveIdx < allEntries.size() && !allEntries.get(curveIdx).isEmpty()) {
+                    // Already has data, keep it
+                } else {
+                    allEntries.add(new ArrayList<Entry>());
+                }
+            } else {
+                // Regular expression curve
+                String expr = allExpressions.get(curveIdx);
+                double[] xs = new double[numPoints];
+                for (int i = 0; i < numPoints; i++) {
+                    xs[i] = xMin + (xMax - xMin) * i / (numPoints - 1);
+                }
+                
+                double[] ys = CalcEngine.evaluateArray(expr, xs);
+                if (ys == null) {
+                    toast("Error in " + expr + ": " + CalcEngine.getLastError());
+                    allEntries.add(new ArrayList<Entry>());
+                    continue;
+                }
+                
+                ArrayList<Entry> entries = new ArrayList<>();
+                for (int i = 0; i < numPoints; i++) {
+                    if (!Double.isNaN(ys[i]) && !Double.isInfinite(ys[i])) {
+                        float y = (float) ys[i];
+                        if (y >= yMin && y <= yMax) {
+                            entries.add(new Entry((float) xs[i], y));
+                        }
                     }
                 }
+                allEntries.add(entries);
             }
-            allEntries.add(entries);
         }
         
         if (allEntries.isEmpty()) {
