@@ -181,8 +181,8 @@ public class PlotActivity extends AppCompatActivity {
         }
         
         ArrayList<Entry> entries = new ArrayList<>();
-        double xMin = Double.MAX_VALUE, xMax = Double.MIN_VALUE;
-        double yMin = Double.MAX_VALUE, yMax = Double.MIN_VALUE;
+        double xMin = Double.POSITIVE_INFINITY, xMax = Double.NEGATIVE_INFINITY;
+        double yMin = Double.POSITIVE_INFINITY, yMax = Double.NEGATIVE_INFINITY;
         for (int i = 0; i < n; i++) {
             if (!Double.isNaN(xs[i]) && !Double.isNaN(ys[i]) &&
                 !Double.isInfinite(xs[i]) && !Double.isInfinite(ys[i])) {
@@ -262,8 +262,8 @@ public class PlotActivity extends AppCompatActivity {
         
         // Convert polar to Cartesian coordinates
         ArrayList<Entry> entries = new ArrayList<>();
-        double xMin = Double.MAX_VALUE, xMax = Double.MIN_VALUE;
-        double yMin = Double.MAX_VALUE, yMax = Double.MIN_VALUE;
+        double xMin = Double.POSITIVE_INFINITY, xMax = Double.NEGATIVE_INFINITY;
+        double yMin = Double.POSITIVE_INFINITY, yMax = Double.NEGATIVE_INFINITY;
         for (int i = 0; i < n; i++) {
             if (!Double.isNaN(rs[i]) && !Double.isInfinite(rs[i])) {
                 double x = rs[i] * Math.cos(thetas[i]);
@@ -327,8 +327,8 @@ public class PlotActivity extends AppCompatActivity {
     
     private void plotOdeSolution(double[] xs, double[] ys, String expr) {
         ArrayList<Entry> entries = new ArrayList<>();
-        double xMin = Double.MAX_VALUE, xMax = Double.MIN_VALUE;
-        double yMin = Double.MAX_VALUE, yMax = Double.MIN_VALUE;
+        double xMin = Double.POSITIVE_INFINITY, xMax = Double.NEGATIVE_INFINITY;
+        double yMin = Double.POSITIVE_INFINITY, yMax = Double.NEGATIVE_INFINITY;
         for (int i = 0; i < xs.length; i++) {
             if (!Double.isNaN(xs[i]) && !Double.isNaN(ys[i]) &&
                 !Double.isInfinite(xs[i]) && !Double.isInfinite(ys[i])) {
@@ -460,8 +460,8 @@ public class PlotActivity extends AppCompatActivity {
             
             // Set axis ranges based on original function data
             if (!entriesOrig.isEmpty()) {
-                float xMin = Float.MAX_VALUE, xMax = Float.MIN_VALUE;
-                float yMin = Float.MAX_VALUE, yMax = Float.MIN_VALUE;
+                float xMin = Float.POSITIVE_INFINITY, xMax = Float.NEGATIVE_INFINITY;
+                float yMin = Float.POSITIVE_INFINITY, yMax = Float.NEGATIVE_INFINITY;
                 for (Entry e : entriesOrig) {
                     if (e.getX() < xMin) xMin = e.getX();
                     if (e.getX() > xMax) xMax = e.getX();
@@ -676,6 +676,17 @@ public class PlotActivity extends AppCompatActivity {
             return;
         }
         
+        // Save ODE/Taylor entries before clearing (they have pre-computed data)
+        ArrayList<ArrayList<Entry>> savedOdeTaylorEntries = new ArrayList<>();
+        for (int i = 0; i < allEntries.size(); i++) {
+            String type = i < curveTypes.size() ? curveTypes.get(i) : "regular";
+            if ("ode".equals(type) || "taylor".equals(type)) {
+                savedOdeTaylorEntries.add(new ArrayList<>(allEntries.get(i)));
+            } else {
+                savedOdeTaylorEntries.add(null);
+            }
+        }
+        
         allEntries.clear();
         // Limit points to avoid TransactionTooLargeException (1MB limit)
         // Each point is ~8 bytes (float pair), 300 points * 10 curves = ~24KB safe
@@ -743,10 +754,9 @@ public class PlotActivity extends AppCompatActivity {
                 }
                 polarIdx++;
             } else if ("ode".equals(type) || "taylor".equals(type)) {
-                // ODE and Taylor curves already have pre-computed entries, skip re-evaluation
-                // They were already in allEntries from the intent data
-                if (curveIdx < allEntries.size() && !allEntries.get(curveIdx).isEmpty()) {
-                    // Already has data, keep it
+                // ODE and Taylor curves have pre-computed entries, restore them
+                if (curveIdx < savedOdeTaylorEntries.size() && savedOdeTaylorEntries.get(curveIdx) != null) {
+                    allEntries.add(savedOdeTaylorEntries.get(curveIdx));
                 } else {
                     allEntries.add(new ArrayList<Entry>());
                 }
