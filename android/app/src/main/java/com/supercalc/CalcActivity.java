@@ -120,6 +120,26 @@ public class CalcActivity extends AppCompatActivity {
         btnStatsSort.setOnClickListener(v -> onStatsSort());
         btnStatsHistogram.setOnClickListener(v -> onStatsHistogram());
 
+        // Matrix Operations
+        matrixAInput = findViewById(R.id.matrix_a_input);
+        matrixBInput = findViewById(R.id.matrix_b_input);
+        MaterialButton btnMatAdd = findViewById(R.id.btn_mat_add);
+        MaterialButton btnMatSub = findViewById(R.id.btn_mat_sub);
+        MaterialButton btnMatMul = findViewById(R.id.btn_mat_mul);
+        MaterialButton btnMatDet = findViewById(R.id.btn_mat_det);
+        MaterialButton btnMatInv = findViewById(R.id.btn_mat_inv);
+        MaterialButton btnMatTrans = findViewById(R.id.btn_mat_trans);
+        MaterialButton btnMatRank = findViewById(R.id.btn_mat_rank);
+        MaterialButton btnMatEigen = findViewById(R.id.btn_mat_eigen);
+        btnMatAdd.setOnClickListener(v -> onMatrixAdd());
+        btnMatSub.setOnClickListener(v -> onMatrixSub());
+        btnMatMul.setOnClickListener(v -> onMatrixMul());
+        btnMatDet.setOnClickListener(v -> onMatrixDet());
+        btnMatInv.setOnClickListener(v -> onMatrixInv());
+        btnMatTrans.setOnClickListener(v -> onMatrixTranspose());
+        btnMatRank.setOnClickListener(v -> onMatrixRank());
+        btnMatEigen.setOnClickListener(v -> onMatrixEigen());
+
         // Parametric plotting
         MaterialButton btnPlotParametric = findViewById(R.id.btn_plot_parametric);
         Chip chipCircle = findViewById(R.id.chip_circle);
@@ -879,6 +899,267 @@ public class CalcActivity extends AppCompatActivity {
         }
         statsDataInput.setText(sb.toString());
         toast("Data sorted (" + data.length + " values)");
+    }
+
+    // --- Matrix Operations ---
+    private EditText matrixAInput, matrixBInput;
+
+    private double[][] parseMatrix(String text) {
+        text = text.trim();
+        if (text.isEmpty()) return null;
+        String[] rows = text.split(";");
+        java.util.ArrayList<double[]> matrix = new java.util.ArrayList<>();
+        int ncols = -1;
+        for (String row : rows) {
+            row = row.trim();
+            if (row.isEmpty()) continue;
+            String[] cols = row.split(",");
+            java.util.ArrayList<Double> vals = new java.util.ArrayList<>();
+            for (String c : cols) {
+                c = c.trim();
+                if (c.isEmpty()) continue;
+                try {
+                    vals.add(Double.parseDouble(c));
+                } catch (NumberFormatException e) {
+                    toast("Invalid number: " + c);
+                    return null;
+                }
+            }
+            if (vals.isEmpty()) continue;
+            if (ncols < 0) ncols = vals.size();
+            else if (vals.size() != ncols) {
+                toast("All rows must have same columns");
+                return null;
+            }
+            double[] rowArr = new double[vals.size()];
+            for (int i = 0; i < vals.size(); i++) rowArr[i] = vals.get(i);
+            matrix.add(rowArr);
+        }
+        if (matrix.isEmpty()) return null;
+        return matrix.toArray(new double[0][]);
+    }
+
+    private String formatMatrix(double[][] mat) {
+        StringBuilder sb = new StringBuilder();
+        for (double[] row : mat) {
+            sb.append("  ");
+            for (int j = 0; j < row.length; j++) {
+                if (j > 0) sb.append("  ");
+                sb.append(String.format("%12.6g", row[j]));
+            }
+            sb.append("\n");
+        }
+        return sb.toString();
+    }
+
+    private void showMatrixResult(String title, String content) {
+        android.widget.TextView tv = new android.widget.TextView(this);
+        tv.setText(content);
+        tv.setTypeface(android.graphics.Typeface.MONOSPACE);
+        tv.setTextSize(13);
+        tv.setPadding(40, 24, 40, 24);
+        tv.setTextColor(android.graphics.Color.parseColor("#cdd6f4"));
+        tv.setBackgroundColor(android.graphics.Color.parseColor("#181825"));
+        android.widget.ScrollView sv = new android.widget.ScrollView(this);
+        sv.addView(tv);
+        new androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert)
+            .setTitle(title)
+            .setView(sv)
+            .setPositiveButton("Close", null)
+            .show();
+    }
+
+    private double[][] getMatrixA() {
+        EditText aInput = findViewById(R.id.matrix_a_input);
+        return parseMatrix(aInput.getText().toString());
+    }
+
+    private double[][] getMatrixB() {
+        EditText bInput = findViewById(R.id.matrix_b_input);
+        return parseMatrix(bInput.getText().toString());
+    }
+
+    private void onMatrixAdd() {
+        double[][] a = getMatrixA(); double[][] b = getMatrixB();
+        if (a == null || b == null) return;
+        if (a.length != b.length || a[0].length != b[0].length) { toast("Dimensions must match"); return; }
+        double[][] r = new double[a.length][a[0].length];
+        for (int i = 0; i < a.length; i++)
+            for (int j = 0; j < a[0].length; j++)
+                r[i][j] = a[i][j] + b[i][j];
+        showMatrixResult("A + B", formatMatrix(r));
+        resultView.append("Matrix A + B computed\n");
+    }
+
+    private void onMatrixSub() {
+        double[][] a = getMatrixA(); double[][] b = getMatrixB();
+        if (a == null || b == null) return;
+        if (a.length != b.length || a[0].length != b[0].length) { toast("Dimensions must match"); return; }
+        double[][] r = new double[a.length][a[0].length];
+        for (int i = 0; i < a.length; i++)
+            for (int j = 0; j < a[0].length; j++)
+                r[i][j] = a[i][j] - b[i][j];
+        showMatrixResult("A - B", formatMatrix(r));
+        resultView.append("Matrix A - B computed\n");
+    }
+
+    private void onMatrixMul() {
+        double[][] a = getMatrixA(); double[][] b = getMatrixB();
+        if (a == null || b == null) return;
+        if (a[0].length != b.length) { toast("Cols of A must equal rows of B"); return; }
+        double[][] r = new double[a.length][b[0].length];
+        for (int i = 0; i < a.length; i++)
+            for (int j = 0; j < b[0].length; j++) {
+                double sum = 0;
+                for (int k = 0; k < a[0].length; k++) sum += a[i][k] * b[k][j];
+                r[i][j] = sum;
+            }
+        showMatrixResult("A * B", formatMatrix(r));
+        resultView.append("Matrix A * B computed\n");
+    }
+
+    private void onMatrixDet() {
+        double[][] a = getMatrixA();
+        if (a == null) return;
+        if (a.length != a[0].length) { toast("Determinant requires square matrix"); return; }
+        double det = det(a);
+        showMatrixResult("det(A)", "det(A) = " + fmt(det));
+        resultView.append("det(A) = " + fmt(det) + "\n");
+    }
+
+    private double det(double[][] m) {
+        int n = m.length;
+        if (n == 1) return m[0][0];
+        if (n == 2) return m[0][0]*m[1][1] - m[0][1]*m[1][0];
+        double d = 0;
+        for (int j = 0; j < n; j++) {
+            double[][] sub = new double[n-1][n-1];
+            for (int i = 1; i < n; i++) {
+                int col = 0;
+                for (int k = 0; k < n; k++) {
+                    if (k == j) continue;
+                    sub[i-1][col++] = m[i][k];
+                }
+            }
+            d += Math.pow(-1, j) * m[0][j] * det(sub);
+        }
+        return d;
+    }
+
+    private void onMatrixInv() {
+        double[][] a = getMatrixA();
+        if (a == null) return;
+        if (a.length != a[0].length) { toast("Inverse requires square matrix"); return; }
+        double detA = det(a);
+        if (Math.abs(detA) < 1e-12) { toast("Matrix is singular"); return; }
+        int n = a.length;
+        double[][] inv = new double[n][n];
+        double[][] adj = new double[n][n];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                double[][] sub = new double[n-1][n-1];
+                int si = 0;
+                for (int ii = 0; ii < n; ii++) {
+                    if (ii == i) continue;
+                    int sj = 0;
+                    for (int jj = 0; jj < n; jj++) {
+                        if (jj == j) continue;
+                        sub[si][sj++] = a[ii][jj];
+                    }
+                    si++;
+                }
+                adj[j][i] = Math.pow(-1, i+j) * det(sub);
+                inv[i][j] = adj[j][i] / detA;
+            }
+        }
+        showMatrixResult("inv(A)", formatMatrix(inv));
+        resultView.append("Matrix inverse computed\n");
+    }
+
+    private void onMatrixTranspose() {
+        double[][] a = getMatrixA();
+        if (a == null) return;
+        int m = a.length, n = a[0].length;
+        double[][] t = new double[n][m];
+        for (int i = 0; i < m; i++)
+            for (int j = 0; j < n; j++)
+                t[j][i] = a[i][j];
+        showMatrixResult("A^T (Transpose)", formatMatrix(t));
+        resultView.append("Matrix transpose computed\n");
+    }
+
+    private void onMatrixRank() {
+        double[][] a = getMatrixA();
+        if (a == null) return;
+        int m = a.length, n = a[0].length;
+        double[][] rref = a.clone();
+        for (int i = 0; i < m; i++) rref[i] = a[i].clone();
+        int rank = 0;
+        int pivotRow = 0;
+        for (int col = 0; col < n && pivotRow < m; col++) {
+            int maxRow = pivotRow;
+            for (int row = pivotRow + 1; row < m; row++) {
+                if (Math.abs(rref[row][col]) > Math.abs(rref[maxRow][col])) maxRow = row;
+            }
+            if (Math.abs(rref[maxRow][col]) < 1e-10) continue;
+            double[] tmp = rref[pivotRow]; rref[pivotRow] = rref[maxRow]; rref[maxRow] = tmp;
+            double piv = rref[pivotRow][col];
+            for (int j = 0; j < n; j++) rref[pivotRow][j] /= piv;
+            for (int row = 0; row < m; row++) {
+                if (row == pivotRow) continue;
+                double f = rref[row][col];
+                for (int j = 0; j < n; j++) rref[row][j] -= f * rref[pivotRow][j];
+            }
+            rank++;
+            pivotRow++;
+        }
+        showMatrixResult("rank(A)", "rank(A) = " + rank);
+        resultView.append("rank(A) = " + rank + "\n");
+    }
+
+    private void onMatrixEigen() {
+        double[][] a = getMatrixA();
+        if (a == null) return;
+        if (a.length != a[0].length) { toast("Eigenvalues require square matrix"); return; }
+        // For 2x2: use characteristic equation
+        if (a.length == 2) {
+            double trace = a[0][0] + a[1][1];
+            double detA = a[0][0]*a[1][1] - a[0][1]*a[1][0];
+            double disc = trace*trace - 4*detA;
+            StringBuilder sb = new StringBuilder();
+            sb.append("Eigenvalues for 2x2 matrix:\n\n");
+            if (disc >= 0) {
+                double l1 = (trace + Math.sqrt(disc)) / 2;
+                double l2 = (trace - Math.sqrt(disc)) / 2;
+                sb.append("  lambda1 = ").append(fmt(l1)).append("\n");
+                sb.append("  lambda2 = ").append(fmt(l2)).append("\n");
+            } else {
+                double real = trace / 2;
+                double imag = Math.sqrt(-disc) / 2;
+                sb.append("  lambda1 = ").append(fmt(real)).append(" + ").append(fmt(imag)).append("i\n");
+                sb.append("  lambda2 = ").append(fmt(real)).append(" - ").append(fmt(imag)).append("i\n");
+            }
+            showMatrixResult("Eigenvalues", sb.toString());
+        } else {
+            // For larger matrices: iterative power method approximation
+            // Simple eigenvalue estimation using Gershgorin circles
+            StringBuilder sb = new StringBuilder();
+            sb.append("Gershgorin circle eigenvalue bounds:\n\n");
+            for (int i = 0; i < a.length; i++) {
+                double center = a[i][i];
+                double radius = 0;
+                for (int j = 0; j < a[0].length; j++) {
+                    if (i != j) radius += Math.abs(a[i][j]);
+                }
+                sb.append("  Circle ").append(i+1).append(": center=")
+                  .append(fmt(center)).append(", radius=").append(fmt(radius))
+                  .append("\n");
+                sb.append("    eigenvalue in [").append(fmt(center - radius))
+                  .append(", ").append(fmt(center + radius)).append("]\n");
+            }
+            showMatrixResult("Eigenvalue Bounds", sb.toString());
+        }
+        resultView.append("Eigenvalue computation done\n");
     }
 
     private void onStatsHistogram() {
