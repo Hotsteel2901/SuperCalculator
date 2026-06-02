@@ -843,6 +843,60 @@ class SuperCalcApp:
 
         self._matrix_result = None
 
+        # --- Complex Number Calculator ---
+        frm_complex = ttk.LabelFrame(scroll_frame, text="Complex Number Calculator",
+                                     style="Dark.TLabelframe")
+        frm_complex.pack(fill=tk.X, padx=8, pady=4)
+
+        crow1 = ttk.Frame(frm_complex, style="Dark.TFrame")
+        crow1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(crow1, text="z1 (a+bi):", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_complex_z1 = tk.StringVar(value="1+2i")
+        ttk.Entry(crow1, textvariable=self._var_complex_z1, width=15,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+        ttk.Label(crow1, text="z2 (c+di):", style="Dark.TLabel").pack(side=tk.LEFT, padx=(8, 0))
+        self._var_complex_z2 = tk.StringVar(value="3+4i")
+        ttk.Entry(crow1, textvariable=self._var_complex_z2, width=15,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+
+        crow2 = ttk.Frame(frm_complex, style="Dark.TFrame")
+        crow2.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Button(crow2, text="z1 + z2", command=self._on_complex_add).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow2, text="z1 - z2", command=self._on_complex_sub).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow2, text="z1 * z2", command=self._on_complex_mul).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow2, text="z1 / z2", command=self._on_complex_div).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow2, text="z1 ^ z2", command=self._on_complex_pow).pack(side=tk.LEFT, padx=2)
+
+        crow3 = ttk.Frame(frm_complex, style="Dark.TFrame")
+        crow3.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(crow3, text="Single z:", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_complex_z = tk.StringVar(value="1+1i")
+        ttk.Entry(crow3, textvariable=self._var_complex_z, width=15,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+
+        crow4 = ttk.Frame(frm_complex, style="Dark.TFrame")
+        crow4.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Button(crow4, text="sin(z)", command=self._on_complex_sin).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow4, text="cos(z)", command=self._on_complex_cos).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow4, text="tan(z)", command=self._on_complex_tan).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow4, text="exp(z)", command=self._on_complex_exp).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow4, text="ln(z)", command=self._on_complex_ln).pack(side=tk.LEFT, padx=2)
+
+        crow5 = ttk.Frame(frm_complex, style="Dark.TFrame")
+        crow5.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Button(crow5, text="sqrt(z)", command=self._on_complex_sqrt).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow5, text="|z|", command=self._on_complex_abs).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow5, text="conj(z)", command=self._on_complex_conj).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow5, text="Re(z)", command=self._on_complex_real).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow5, text="Im(z)", command=self._on_complex_imag).pack(side=tk.LEFT, padx=2)
+
+        crow6 = ttk.Frame(frm_complex, style="Dark.TFrame")
+        crow6.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Label(crow6, text="Result:", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_complex_result = tk.StringVar(value="")
+        ttk.Entry(crow6, textvariable=self._var_complex_result, width=30,
+                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+
         # --- Status ---
         self.status_var = tk.StringVar(value="Ready.")
         status_bar = ttk.Label(scroll_frame, textvariable=self.status_var,
@@ -2876,6 +2930,160 @@ class SuperCalcApp:
         self._var_matrix_a.set("")
         self._var_matrix_b.set("")
         self.status_var.set("Matrix inputs cleared.")
+
+    # ------------------------------------------------------------------
+    #  Complex Number Operations
+    # ------------------------------------------------------------------
+    def _parse_complex(self, s: str):
+        """Parse a complex number from string (a+bi format)."""
+        s = s.strip().replace(' ', '')
+        if not s:
+            return None
+        try:
+            # Handle 'i' at the end
+            if s.endswith('i') or s.endswith('I'):
+                s = s[:-1]
+                if not s or s == '+':
+                    return complex(0, 1)
+                elif s == '-':
+                    return complex(0, -1)
+                # Try to parse as complex
+                return complex(s + 'j')
+            else:
+                return complex(float(s), 0)
+        except:
+            try:
+                return complex(s)
+            except:
+                messagebox.showerror("Complex Error", f"Invalid complex number: {s}")
+                return None
+
+    def _format_complex(self, z: complex) -> str:
+        """Format complex number for display."""
+        if z.imag == 0:
+            return f"{z.real:.10g}"
+        elif z.real == 0:
+            if z.imag == 1:
+                return "i"
+            elif z.imag == -1:
+                return "-i"
+            else:
+                return f"{z.imag:.10g}i"
+        else:
+            if z.imag > 0:
+                if z.imag == 1:
+                    return f"{z.real:.10g} + i"
+                else:
+                    return f"{z.real:.10g} + {z.imag:.10g}i"
+            else:
+                if z.imag == -1:
+                    return f"{z.real:.10g} - i"
+                else:
+                    return f"{z.real:.10g} - {abs(z.imag):.10g}i"
+
+    def _show_complex_result(self, result: str):
+        """Display complex result in the result field."""
+        self._var_complex_result.set(result)
+        self.status_var.set(f"Result: {result}")
+
+    def _on_complex_add(self):
+        z1 = self._parse_complex(self._var_complex_z1.get())
+        z2 = self._parse_complex(self._var_complex_z2.get())
+        if z1 is not None and z2 is not None:
+            result = CalcEngine.complex_add(z1, z2)
+            self._show_complex_result(self._format_complex(result))
+
+    def _on_complex_sub(self):
+        z1 = self._parse_complex(self._var_complex_z1.get())
+        z2 = self._parse_complex(self._var_complex_z2.get())
+        if z1 is not None and z2 is not None:
+            result = CalcEngine.complex_sub(z1, z2)
+            self._show_complex_result(self._format_complex(result))
+
+    def _on_complex_mul(self):
+        z1 = self._parse_complex(self._var_complex_z1.get())
+        z2 = self._parse_complex(self._var_complex_z2.get())
+        if z1 is not None and z2 is not None:
+            result = CalcEngine.complex_mul(z1, z2)
+            self._show_complex_result(self._format_complex(result))
+
+    def _on_complex_div(self):
+        z1 = self._parse_complex(self._var_complex_z1.get())
+        z2 = self._parse_complex(self._var_complex_z2.get())
+        if z1 is not None and z2 is not None:
+            if z2 == 0:
+                messagebox.showerror("Complex Error", "Division by zero")
+                return
+            result = CalcEngine.complex_div(z1, z2)
+            self._show_complex_result(self._format_complex(result))
+
+    def _on_complex_pow(self):
+        z1 = self._parse_complex(self._var_complex_z1.get())
+        z2 = self._parse_complex(self._var_complex_z2.get())
+        if z1 is not None and z2 is not None:
+            result = CalcEngine.complex_pow(z1, z2)
+            self._show_complex_result(self._format_complex(result))
+
+    def _on_complex_sin(self):
+        z = self._parse_complex(self._var_complex_z.get())
+        if z is not None:
+            result = CalcEngine.complex_sin(z)
+            self._show_complex_result(self._format_complex(result))
+
+    def _on_complex_cos(self):
+        z = self._parse_complex(self._var_complex_z.get())
+        if z is not None:
+            result = CalcEngine.complex_cos(z)
+            self._show_complex_result(self._format_complex(result))
+
+    def _on_complex_tan(self):
+        z = self._parse_complex(self._var_complex_z.get())
+        if z is not None:
+            result = CalcEngine.complex_tan(z)
+            self._show_complex_result(self._format_complex(result))
+
+    def _on_complex_exp(self):
+        z = self._parse_complex(self._var_complex_z.get())
+        if z is not None:
+            result = CalcEngine.complex_exp(z)
+            self._show_complex_result(self._format_complex(result))
+
+    def _on_complex_ln(self):
+        z = self._parse_complex(self._var_complex_z.get())
+        if z is not None:
+            if abs(z) == 0:
+                messagebox.showerror("Complex Error", "ln(0) is undefined")
+                return
+            result = CalcEngine.complex_ln(z)
+            self._show_complex_result(self._format_complex(result))
+
+    def _on_complex_sqrt(self):
+        z = self._parse_complex(self._var_complex_z.get())
+        if z is not None:
+            result = CalcEngine.complex_sqrt(z)
+            self._show_complex_result(self._format_complex(result))
+
+    def _on_complex_abs(self):
+        z = self._parse_complex(self._var_complex_z.get())
+        if z is not None:
+            result = CalcEngine.complex_abs(z)
+            self._show_complex_result(f"|z| = {result:.10g}")
+
+    def _on_complex_conj(self):
+        z = self._parse_complex(self._var_complex_z.get())
+        if z is not None:
+            result = CalcEngine.complex_conj(z)
+            self._show_complex_result(f"conj(z) = {self._format_complex(result)}")
+
+    def _on_complex_real(self):
+        z = self._parse_complex(self._var_complex_z.get())
+        if z is not None:
+            self._show_complex_result(f"Re(z) = {z.real:.10g}")
+
+    def _on_complex_imag(self):
+        z = self._parse_complex(self._var_complex_z.get())
+        if z is not None:
+            self._show_complex_result(f"Im(z) = {z.imag:.10g}")
 
 
 # ---------------------------------------------------------------------------

@@ -29,6 +29,26 @@ int ode_solve_rk4(const char* expr, double x0, double y0, double x_end,
                    int n_steps, double* out_x, double* out_y, int max_out);
 const char* get_last_error(void);
 
+/* Complex number functions */
+void complex_add_values(double re1, double im1, double re2, double im2,
+                        double* out_re, double* out_im);
+void complex_sub_values(double re1, double im1, double re2, double im2,
+                        double* out_re, double* out_im);
+void complex_mul_values(double re1, double im1, double re2, double im2,
+                        double* out_re, double* out_im);
+void complex_div_values(double re1, double im1, double re2, double im2,
+                        double* out_re, double* out_im);
+void complex_pow_values(double re1, double im1, double re2, double im2,
+                        double* out_re, double* out_im);
+void complex_sin_value(double re, double im, double* out_re, double* out_im);
+void complex_cos_value(double re, double im, double* out_re, double* out_im);
+void complex_tan_value(double re, double im, double* out_re, double* out_im);
+void complex_exp_value(double re, double im, double* out_re, double* out_im);
+void complex_ln_value(double re, double im, double* out_re, double* out_im);
+void complex_sqrt_value(double re, double im, double* out_re, double* out_im);
+double complex_abs_value(double re, double im);
+void complex_conj_value(double re, double im, double* out_re, double* out_im);
+
 /* Helper: extract UTF-8 string from jstring, call fn, release, return */
 static jdouble call_with_expr(JNIEnv* env, jstring expr, double x,
                               double (*fn)(const char*, double)) {
@@ -342,5 +362,185 @@ Java_com_supercalc_CalcEngine_odeSolveRk4(JNIEnv* env, jclass clazz,
     free(out_x);
     free(out_y);
     (*env)->ReleaseStringUTFChars(env, expr, str);
+    return result;
+}
+
+/* Complex number JNI functions */
+JNIEXPORT jdoubleArray JNICALL
+Java_com_supercalc_CalcEngine_complexAdd(JNIEnv* env, jclass clazz,
+                                          jdouble re1, jdouble im1,
+                                          jdouble re2, jdouble im2) {
+    double out_re, out_im;
+    complex_add_values(re1, im1, re2, im2, &out_re, &out_im);
+    
+    jdoubleArray result = (*env)->NewDoubleArray(env, 2);
+    if (result) {
+        jdouble values[2] = {out_re, out_im};
+        (*env)->SetDoubleArrayRegion(env, result, 0, 2, values);
+    }
+    return result;
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_supercalc_CalcEngine_complexSub(JNIEnv* env, jclass clazz,
+                                          jdouble re1, jdouble im1,
+                                          jdouble re2, jdouble im2) {
+    double out_re, out_im;
+    complex_sub_values(re1, im1, re2, im2, &out_re, &out_im);
+    
+    jdoubleArray result = (*env)->NewDoubleArray(env, 2);
+    if (result) {
+        jdouble values[2] = {out_re, out_im};
+        (*env)->SetDoubleArrayRegion(env, result, 0, 2, values);
+    }
+    return result;
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_supercalc_CalcEngine_complexMul(JNIEnv* env, jclass clazz,
+                                          jdouble re1, jdouble im1,
+                                          jdouble re2, jdouble im2) {
+    double out_re, out_im;
+    complex_mul_values(re1, im1, re2, im2, &out_re, &out_im);
+    
+    jdoubleArray result = (*env)->NewDoubleArray(env, 2);
+    if (result) {
+        jdouble values[2] = {out_re, out_im};
+        (*env)->SetDoubleArrayRegion(env, result, 0, 2, values);
+    }
+    return result;
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_supercalc_CalcEngine_complexDiv(JNIEnv* env, jclass clazz,
+                                          jdouble re1, jdouble im1,
+                                          jdouble re2, jdouble im2) {
+    double out_re, out_im;
+    complex_div_values(re1, im1, re2, im2, &out_re, &out_im);
+    
+    jdoubleArray result = (*env)->NewDoubleArray(env, 2);
+    if (result) {
+        jdouble values[2] = {out_re, out_im};
+        (*env)->SetDoubleArrayRegion(env, result, 0, 2, values);
+    }
+    return result;
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_supercalc_CalcEngine_complexPow(JNIEnv* env, jclass clazz,
+                                          jdouble re1, jdouble im1,
+                                          jdouble re2, jdouble im2) {
+    double out_re, out_im;
+    complex_pow_values(re1, im1, re2, im2, &out_re, &out_im);
+    
+    jdoubleArray result = (*env)->NewDoubleArray(env, 2);
+    if (result) {
+        jdouble values[2] = {out_re, out_im};
+        (*env)->SetDoubleArrayRegion(env, result, 0, 2, values);
+    }
+    return result;
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_supercalc_CalcEngine_complexSin(JNIEnv* env, jclass clazz,
+                                          jdouble re, jdouble im) {
+    double out_re, out_im;
+    complex_sin_value(re, im, &out_re, &out_im);
+    
+    jdoubleArray result = (*env)->NewDoubleArray(env, 2);
+    if (result) {
+        jdouble values[2] = {out_re, out_im};
+        (*env)->SetDoubleArrayRegion(env, result, 0, 2, values);
+    }
+    return result;
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_supercalc_CalcEngine_complexCos(JNIEnv* env, jclass clazz,
+                                          jdouble re, jdouble im) {
+    double out_re, out_im;
+    complex_cos_value(re, im, &out_re, &out_im);
+    
+    jdoubleArray result = (*env)->NewDoubleArray(env, 2);
+    if (result) {
+        jdouble values[2] = {out_re, out_im};
+        (*env)->SetDoubleArrayRegion(env, result, 0, 2, values);
+    }
+    return result;
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_supercalc_CalcEngine_complexTan(JNIEnv* env, jclass clazz,
+                                          jdouble re, jdouble im) {
+    double out_re, out_im;
+    complex_tan_value(re, im, &out_re, &out_im);
+    
+    jdoubleArray result = (*env)->NewDoubleArray(env, 2);
+    if (result) {
+        jdouble values[2] = {out_re, out_im};
+        (*env)->SetDoubleArrayRegion(env, result, 0, 2, values);
+    }
+    return result;
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_supercalc_CalcEngine_complexExp(JNIEnv* env, jclass clazz,
+                                          jdouble re, jdouble im) {
+    double out_re, out_im;
+    complex_exp_value(re, im, &out_re, &out_im);
+    
+    jdoubleArray result = (*env)->NewDoubleArray(env, 2);
+    if (result) {
+        jdouble values[2] = {out_re, out_im};
+        (*env)->SetDoubleArrayRegion(env, result, 0, 2, values);
+    }
+    return result;
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_supercalc_CalcEngine_complexLn(JNIEnv* env, jclass clazz,
+                                         jdouble re, jdouble im) {
+    double out_re, out_im;
+    complex_ln_value(re, im, &out_re, &out_im);
+    
+    jdoubleArray result = (*env)->NewDoubleArray(env, 2);
+    if (result) {
+        jdouble values[2] = {out_re, out_im};
+        (*env)->SetDoubleArrayRegion(env, result, 0, 2, values);
+    }
+    return result;
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_supercalc_CalcEngine_complexSqrt(JNIEnv* env, jclass clazz,
+                                           jdouble re, jdouble im) {
+    double out_re, out_im;
+    complex_sqrt_value(re, im, &out_re, &out_im);
+    
+    jdoubleArray result = (*env)->NewDoubleArray(env, 2);
+    if (result) {
+        jdouble values[2] = {out_re, out_im};
+        (*env)->SetDoubleArrayRegion(env, result, 0, 2, values);
+    }
+    return result;
+}
+
+JNIEXPORT jdouble JNICALL
+Java_com_supercalc_CalcEngine_complexAbs(JNIEnv* env, jclass clazz,
+                                          jdouble re, jdouble im) {
+    return complex_abs_value(re, im);
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_supercalc_CalcEngine_complexConj(JNIEnv* env, jclass clazz,
+                                           jdouble re, jdouble im) {
+    double out_re, out_im;
+    complex_conj_value(re, im, &out_re, &out_im);
+    
+    jdoubleArray result = (*env)->NewDoubleArray(env, 2);
+    if (result) {
+        jdouble values[2] = {out_re, out_im};
+        (*env)->SetDoubleArrayRegion(env, result, 0, 2, values);
+    }
     return result;
 }

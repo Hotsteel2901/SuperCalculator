@@ -853,3 +853,304 @@ EXPORT double find_minimum(const char* expr, double a, double b, double tol, int
     }
     return (b + a) / 2.0;
 }
+
+/* --------------------------------------------------------------------------
+ *  Complex Number Support
+ *  Provides complex arithmetic, trigonometric, logarithmic, and exponential
+ *  functions for complex-valued expressions.
+ * -------------------------------------------------------------------------- */
+
+typedef struct {
+    double re;  /* Real part */
+    double im;  /* Imaginary part */
+} Complex;
+
+static Complex complex_make(double re, double im) {
+    Complex z;
+    z.re = re;
+    z.im = im;
+    return z;
+}
+
+static Complex complex_add(Complex a, Complex b) {
+    return complex_make(a.re + b.re, a.im + b.im);
+}
+
+static Complex complex_sub(Complex a, Complex b) {
+    return complex_make(a.re - b.re, a.im - b.im);
+}
+
+static Complex complex_mul(Complex a, Complex b) {
+    return complex_make(a.re * b.re - a.im * b.im,
+                        a.re * b.im + a.im * b.re);
+}
+
+static Complex complex_div(Complex a, Complex b) {
+    double denom = b.re * b.re + b.im * b.im;
+    if (denom == 0.0) {
+        set_error("Complex division by zero");
+        return complex_make(NAN, NAN);
+    }
+    return complex_make((a.re * b.re + a.im * b.im) / denom,
+                        (a.im * b.re - a.re * b.im) / denom);
+}
+
+static Complex complex_neg(Complex a) {
+    return complex_make(-a.re, -a.im);
+}
+
+static Complex complex_conj(Complex a) {
+    return complex_make(a.re, -a.im);
+}
+
+static double complex_abs(Complex a) {
+    return sqrt(a.re * a.re + a.im * a.im);
+}
+
+static Complex complex_sqrt(Complex a) {
+    double r = complex_abs(a);
+    if (r == 0.0) return complex_make(0.0, 0.0);
+    double re = sqrt((r + a.re) / 2.0);
+    double im = (a.im >= 0 ? 1.0 : -1.0) * sqrt((r - a.re) / 2.0);
+    return complex_make(re, im);
+}
+
+static Complex complex_exp(Complex a) {
+    double er = exp(a.re);
+    return complex_make(er * cos(a.im), er * sin(a.im));
+}
+
+static Complex complex_ln(Complex a) {
+    double r = complex_abs(a);
+    if (r <= 0.0) {
+        set_error("ln() domain error: |z| must be > 0");
+        return complex_make(NAN, NAN);
+    }
+    return complex_make(log(r), atan2(a.im, a.re));
+}
+
+static Complex complex_pow(Complex base, Complex exp) {
+    if (exp.im == 0.0 && exp.re == 0.0) {
+        return complex_make(1.0, 0.0);
+    }
+    if (base.im == 0.0 && base.re == 0.0) {
+        return complex_make(0.0, 0.0);
+    }
+    Complex log_base = complex_ln(base);
+    Complex product = complex_mul(exp, log_base);
+    return complex_exp(product);
+}
+
+static Complex complex_sin(Complex a) {
+    return complex_make(sin(a.re) * cosh(a.im),
+                        cos(a.re) * sinh(a.im));
+}
+
+static Complex complex_cos(Complex a) {
+    return complex_make(cos(a.re) * cosh(a.im),
+                        -sin(a.re) * sinh(a.im));
+}
+
+static Complex complex_tan(Complex a) {
+    Complex s = complex_sin(a);
+    Complex c = complex_cos(a);
+    return complex_div(s, c);
+}
+
+static Complex complex_log10(Complex a) {
+    Complex ln_a = complex_ln(a);
+    Complex ln_10 = complex_make(log(10.0), 0.0);
+    return complex_div(ln_a, ln_10);
+}
+
+static Complex complex_abs_complex(Complex a) {
+    double abs_val = complex_abs(a);
+    return complex_make(abs_val, 0.0);
+}
+
+/* Parse a complex number from string: "a+bi", "a-bi", "a", "bi" */
+static int parse_complex(const char* s, Complex* result) {
+    if (!s || !result) return -1;
+    
+    char* end;
+    double re = strtod(s, &end);
+    
+    if (end == s) {
+        /* No real part, check for pure imaginary */
+        if (*s == 'i' || *s == 'I') {
+            result->re = 0.0;
+            result->im = 1.0;
+            return 0;
+        }
+        return -1;
+    }
+    
+    result->re = re;
+    
+    /* Check for imaginary part */
+    if (*end == '+' || *end == '-') {
+        char sign = *end;
+        end++;
+        if (*end == 'i' || *end == 'I') {
+            result->im = (sign == '+') ? 1.0 : -1.0;
+            return 0;
+        }
+        double im = strtod(end, &end);
+        if (*end == 'i' || *end == 'I') {
+            result->im = (sign == '+') ? im : -im;
+            return 0;
+        }
+    } else if (*end == 'i' || *end == 'I') {
+        result->re = 0.0;
+        result->im = re;
+        return 0;
+    }
+    
+    /* Pure real number */
+    result->im = 0.0;
+    return 0;
+}
+
+EXPORT void complex_evaluate(const char* expr, double x, double y,
+                             double* out_re, double* out_im) {
+    if (!expr || !out_re || !out_im) return;
+    clear_error();
+    
+    /* For now, use real evaluation and treat result as complex with zero imaginary part */
+    double result;
+    if (parse_and_eval(expr, x, y, &result) != 0) {
+        *out_re = NAN;
+        *out_im = NAN;
+        return;
+    }
+    *out_re = result;
+    *out_im = 0.0;
+}
+
+EXPORT void complex_add_values(double re1, double im1, double re2, double im2,
+                               double* out_re, double* out_im) {
+    if (!out_re || !out_im) return;
+    Complex a = complex_make(re1, im1);
+    Complex b = complex_make(re2, im2);
+    Complex result = complex_add(a, b);
+    *out_re = result.re;
+    *out_im = result.im;
+}
+
+EXPORT void complex_sub_values(double re1, double im1, double re2, double im2,
+                               double* out_re, double* out_im) {
+    if (!out_re || !out_im) return;
+    Complex a = complex_make(re1, im1);
+    Complex b = complex_make(re2, im2);
+    Complex result = complex_sub(a, b);
+    *out_re = result.re;
+    *out_im = result.im;
+}
+
+EXPORT void complex_mul_values(double re1, double im1, double re2, double im2,
+                               double* out_re, double* out_im) {
+    if (!out_re || !out_im) return;
+    Complex a = complex_make(re1, im1);
+    Complex b = complex_make(re2, im2);
+    Complex result = complex_mul(a, b);
+    *out_re = result.re;
+    *out_im = result.im;
+}
+
+EXPORT void complex_div_values(double re1, double im1, double re2, double im2,
+                               double* out_re, double* out_im) {
+    if (!out_re || !out_im) return;
+    Complex a = complex_make(re1, im1);
+    Complex b = complex_make(re2, im2);
+    Complex result = complex_div(a, b);
+    *out_re = result.re;
+    *out_im = result.im;
+}
+
+EXPORT void complex_pow_values(double re1, double im1, double re2, double im2,
+                               double* out_re, double* out_im) {
+    if (!out_re || !out_im) return;
+    Complex base = complex_make(re1, im1);
+    Complex exp = complex_make(re2, im2);
+    Complex result = complex_pow(base, exp);
+    *out_re = result.re;
+    *out_im = result.im;
+}
+
+EXPORT void complex_sin_value(double re, double im, double* out_re, double* out_im) {
+    if (!out_re || !out_im) return;
+    Complex z = complex_make(re, im);
+    Complex result = complex_sin(z);
+    *out_re = result.re;
+    *out_im = result.im;
+}
+
+EXPORT void complex_cos_value(double re, double im, double* out_re, double* out_im) {
+    if (!out_re || !out_im) return;
+    Complex z = complex_make(re, im);
+    Complex result = complex_cos(z);
+    *out_re = result.re;
+    *out_im = result.im;
+}
+
+EXPORT void complex_tan_value(double re, double im, double* out_re, double* out_im) {
+    if (!out_re || !out_im) return;
+    Complex z = complex_make(re, im);
+    Complex result = complex_tan(z);
+    *out_re = result.re;
+    *out_im = result.im;
+}
+
+EXPORT void complex_exp_value(double re, double im, double* out_re, double* out_im) {
+    if (!out_re || !out_im) return;
+    Complex z = complex_make(re, im);
+    Complex result = complex_exp(z);
+    *out_re = result.re;
+    *out_im = result.im;
+}
+
+EXPORT void complex_ln_value(double re, double im, double* out_re, double* out_im) {
+    if (!out_re || !out_im) return;
+    Complex z = complex_make(re, im);
+    Complex result = complex_ln(z);
+    *out_re = result.re;
+    *out_im = result.im;
+}
+
+EXPORT void complex_sqrt_value(double re, double im, double* out_re, double* out_im) {
+    if (!out_re || !out_im) return;
+    Complex z = complex_make(re, im);
+    Complex result = complex_sqrt(z);
+    *out_re = result.re;
+    *out_im = result.im;
+}
+
+EXPORT double complex_abs_value(double re, double im) {
+    Complex z = complex_make(re, im);
+    return complex_abs(z);
+}
+
+EXPORT void complex_conj_value(double re, double im, double* out_re, double* out_im) {
+    if (!out_re || !out_im) return;
+    Complex z = complex_make(re, im);
+    Complex result = complex_conj(z);
+    *out_re = result.re;
+    *out_im = result.im;
+}
+
+EXPORT void complex_array_evaluate(const char* expr, const double* xs, const double* ys,
+                                   double* out_re, double* out_im, int n) {
+    if (!expr || !xs || !out_re || !out_im || n <= 0) return;
+    clear_error();
+    
+    for (int i = 0; i < n; i++) {
+        double result;
+        if (parse_and_eval(expr, xs[i], ys ? ys[i] : 0.0, &result) != 0) {
+            out_re[i] = NAN;
+            out_im[i] = NAN;
+        } else {
+            out_re[i] = result;
+            out_im[i] = 0.0;
+        }
+    }
+}
