@@ -721,16 +721,33 @@ static double _eval_or_nan(const char* expr, double x) {
 
 static double _central_diff_nth(const char* expr, double x, int n, double h) {
     if (n == 0) return _eval_or_nan(expr, x);
-    if (n == 1) {
-        double fp = _eval_or_nan(expr, x + h);
-        double fm = _eval_or_nan(expr, x - h);
-        if (isnan(fp) || isnan(fm)) return NAN;
-        return (fp - fm) / (2.0 * h);
+
+    /* Iterative nth-order central difference to avoid 2^n stack recursion.
+     * Uses the closed-form formula:
+     *   f^(n)(x) ≈ (1/(2h))^n * Σ_{k=0}^{n} (-1)^{n-k} * C(n,k) * f(x + (2k-n)*h)
+     * Requires n+1 function evaluations instead of 2^n. */
+    int np1 = n + 1;
+    double* fvals = (double*)malloc(np1 * sizeof(double));
+    if (!fvals) return NAN;
+
+    for (int k = 0; k <= n; k++) {
+        fvals[k] = _eval_or_nan(expr, x + (2.0 * k - n) * h);
+        if (isnan(fvals[k])) { free(fvals); return NAN; }
     }
-    double fp = _central_diff_nth(expr, x + h, n - 1, h);
-    double fm = _central_diff_nth(expr, x - h, n - 1, h);
-    if (isnan(fp) || isnan(fm)) return NAN;
-    return (fp - fm) / (2.0 * h);
+
+    /* Compute binomial coefficients C(n, k) iteratively */
+    double coeff = 1.0;  /* C(n, 0) = 1 */
+    double sum = 0.0;
+    for (int k = 0; k <= n; k++) {
+        double sign = ((n - k) & 1) ? -1.0 : 1.0;
+        sum += sign * coeff * fvals[k];
+        /* Update coefficient: C(n, k+1) = C(n, k) * (n - k) / (k + 1) */
+        if (k < n) coeff = coeff * (n - k) / (k + 1);
+    }
+
+    free(fvals);
+    double h2n = pow(2.0 * h, n);
+    return sum / h2n;
 }
 
 EXPORT double nth_derivative(const char* expr, double x, int n, double h) {
