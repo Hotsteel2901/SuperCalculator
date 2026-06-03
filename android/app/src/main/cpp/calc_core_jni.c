@@ -49,6 +49,9 @@ void complex_sqrt_value(double re, double im, double* out_re, double* out_im);
 double complex_abs_value(double re, double im);
 void complex_conj_value(double re, double im, double* out_re, double* out_im);
 
+double area_between_curves(const char* expr_f, const char* expr_g,
+                           double a, double b, double tol);
+
 /* Helper: extract UTF-8 string from jstring, call fn, release, return */
 static jdouble call_with_expr(JNIEnv* env, jstring expr, double x,
                               double (*fn)(const char*, double)) {
@@ -542,5 +545,22 @@ Java_com_supercalc_CalcEngine_complexConj(JNIEnv* env, jclass clazz,
         jdouble values[2] = {out_re, out_im};
         (*env)->SetDoubleArrayRegion(env, result, 0, 2, values);
     }
+    return result;
+}
+
+JNIEXPORT jdouble JNICALL
+Java_com_supercalc_CalcEngine_areaBetweenCurves(JNIEnv* env, jclass clazz,
+                                                 jstring exprF, jstring exprG,
+                                                 jdouble a, jdouble b) {
+    const char* strF = (*env)->GetStringUTFChars(env, exprF, NULL);
+    const char* strG = (*env)->GetStringUTFChars(env, exprG, NULL);
+    if (!strF || !strG) {
+        if (strF) (*env)->ReleaseStringUTFChars(env, exprF, strF);
+        if (strG) (*env)->ReleaseStringUTFChars(env, exprG, strG);
+        return NAN;
+    }
+    double result = area_between_curves(strF, strG, a, b, 1e-8);
+    (*env)->ReleaseStringUTFChars(env, exprF, strF);
+    (*env)->ReleaseStringUTFChars(env, exprG, strG);
     return result;
 }

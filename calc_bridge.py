@@ -212,12 +212,17 @@ _lib.complex_conj_value.argtypes = [ctypes.c_double, ctypes.c_double,
 _lib.complex_conj_value.restype = None
 
 _lib.complex_array_evaluate.argtypes = [ctypes.c_char_p,
-                                         ctypes.POINTER(ctypes.c_double),
-                                         ctypes.POINTER(ctypes.c_double),
-                                         ctypes.POINTER(ctypes.c_double),
-                                         ctypes.POINTER(ctypes.c_double),
-                                         ctypes.c_int]
+                                          ctypes.POINTER(ctypes.c_double),
+                                          ctypes.POINTER(ctypes.c_double),
+                                          ctypes.POINTER(ctypes.c_double),
+                                          ctypes.POINTER(ctypes.c_double),
+                                          ctypes.c_int]
 _lib.complex_array_evaluate.restype = None
+
+_lib.area_between_curves.argtypes = [ctypes.c_char_p, ctypes.c_char_p,
+                                      ctypes.c_double, ctypes.c_double,
+                                      ctypes.c_double]
+_lib.area_between_curves.restype = ctypes.c_double
 
 
 def _is_invalid(x: float) -> bool:
@@ -609,6 +614,18 @@ class CalcEngine:
             return length
         except Exception:
             return None
+
+    @staticmethod
+    def area_between_curves(expr_f: str, expr_g: str, a: float, b: float,
+                            tol: float = 1e-8) -> Optional[float]:
+        """Compute the area between two curves f(x) and g(x) over [a,b].
+
+        Returns integral_a^b |f(x) - g(x)| dx using adaptive Simpson's rule.
+        """
+        result = _lib.area_between_curves(expr_f.encode("utf-8"),
+                                           expr_g.encode("utf-8"),
+                                           a, b, tol)
+        return None if _is_invalid(result) else result
 
     @staticmethod
     def evaluate_parametric(expr_x: str, expr_y: str, t_min: float,
