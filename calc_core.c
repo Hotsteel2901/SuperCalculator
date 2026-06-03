@@ -1130,6 +1130,61 @@ EXPORT double complex_abs_value(double re, double im) {
     return complex_abs(z);
 }
 
+/* --------------------------------------------------------------------------
+ *  Area Between Curves
+ *  Computes integral_a^b |f(x) - g(x)| dx using adaptive Simpson's rule.
+ *  This measures the total area enclosed between two curves over [a,b].
+ * -------------------------------------------------------------------------- */
+
+static double _abs_diff_integrand(const char* expr_f, const char* expr_g,
+                                   double x, double* work) {
+    double fv, gv;
+    if (parse_and_eval(expr_f, x, 0.0, &fv) != 0) return NAN;
+    if (parse_and_eval(expr_g, x, 0.0, &gv) != 0) return NAN;
+    return fabs(fv - gv);
+}
+
+static double _simpson_abs_diff(const char* expr_f, const char* expr_g,
+                                 double a, double b, int n) {
+    if (n < 2 || n % 2 != 0) return NAN;
+    if (a == b) return 0.0;
+    double h = (b - a) / n;
+    double fa = _abs_diff_integrand(expr_f, expr_g, a, NULL);
+    double fb = _abs_diff_integrand(expr_f, expr_g, b, NULL);
+    if (isnan(fa) || isnan(fb)) return NAN;
+    double sum = fa + fb;
+    for (int i = 1; i < n; i++) {
+        double xi = a + i * h;
+        double fi = _abs_diff_integrand(expr_f, expr_g, xi, NULL);
+        if (isnan(fi)) return NAN;
+        sum += (i % 2 == 0 ? 2.0 : 4.0) * fi;
+    }
+    return (h / 3.0) * sum;
+}
+
+EXPORT double area_between_curves(const char* expr_f, const char* expr_g,
+                                   double a, double b, double tol) {
+    if (!expr_f || !expr_g) { set_error("NULL expression"); return NAN; }
+    if (a > b) { set_error("Invalid interval: a must be <= b"); return NAN; }
+    if (a == b) return 0.0;
+    if (tol <= 0.0) tol = 1e-8;
+    clear_error();
+
+    int n = 64;
+    double prev, cur;
+    cur = _simpson_abs_diff(expr_f, expr_g, a, b, n);
+    if (isnan(cur)) return NAN;
+    for (int k = 0; k < 12; k++) {
+        n *= 2;
+        prev = cur;
+        cur = _simpson_abs_diff(expr_f, expr_g, a, b, n);
+        if (isnan(cur)) return NAN;
+        if (fabs(cur - prev) < tol) return cur;
+    }
+    set_error("Adaptive area computation did not converge");
+    return cur;
+}
+
 EXPORT void complex_conj_value(double re, double im, double* out_re, double* out_im) {
     if (!out_re || !out_im) return;
     Complex z = complex_make(re, im);

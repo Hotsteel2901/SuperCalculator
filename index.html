@@ -1406,6 +1406,18 @@
                 </div>
                 <div class="card glass reveal">
                     <div class="card-icon">
+                        <!-- Area between two curves -->
+                        <svg viewBox="0 0 24 24">
+                            <path d="M3 18C6 10 12 6 21 4" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <path d="M3 18C8 14 14 12 21 10" fill="none" stroke="currentColor" stroke-width="2" opacity="0.5"/>
+                            <path d="M3 18C6 10 12 6 21 4L21 10C14 12 8 14 3 18Z" fill="currentColor" opacity="0.2"/>
+                        </svg>
+                    </div>
+                    <h3 class="card-title">曲线间面积</h3>
+                    <p class="card-text">使用自适应辛普森法则计算任意两条曲线 f(x) 和 g(x) 在区间 [a,b] 上的封闭面积</p>
+                </div>
+                <div class="card glass reveal">
+                    <div class="card-icon">
                         <!-- Limit arrow approaching point -->
                         <svg viewBox="0 0 24 24">
                             <line x1="2" y1="20" x2="22" y2="20"/>
@@ -1830,6 +1842,12 @@
                     <h3 class="card-title">弧长计算</h3>
                     <div class="code-block">
                         <code>CalcEngine.arc_length("sin(x)", 0, 3.141592653589793)<br># -> ~3.820</code>
+                    </div>
+                </div>
+                <div class="card glass reveal">
+                    <h3 class="card-title">曲线间面积</h3>
+                    <div class="code-block">
+                        <code>CalcEngine.area_between_curves("sin(x)", "0", 0, 3.141592653589793)<br># -> 2.0<br><br>CalcEngine.area_between_curves("x^2", "x", 0, 1)<br># -> ~0.1667</code>
                     </div>
                 </div>
                 <div class="card glass reveal">

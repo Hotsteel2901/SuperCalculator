@@ -103,4 +103,7 @@ public class CalcEngine {
 
     /** Compute complex conjugate. Returns double[2] = {real, imag}. */
     public static native double[] complexConj(double re, double im);
+
+    /** Compute area between two curves f(x) and g(x) over [a,b]. Returns integral_a^b |f(x)-g(x)| dx. */
+    public static native double areaBetweenCurves(String exprF, String exprG, double a, double b);
 }

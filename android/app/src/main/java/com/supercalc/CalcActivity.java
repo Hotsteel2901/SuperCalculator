@@ -28,6 +28,7 @@ public class CalcActivity extends AppCompatActivity {
     private EditText taylorOrderInput;
     private EditText odeExprInput, odeX0Input, odeY0Input, odeXEndInput, odeStepsInput;
     private EditText statsDataInput;
+    private EditText areaGInput;
     private TextView resultView;
     private LineChart lineChart;
     private MaterialCardView graphCard;
@@ -119,6 +120,11 @@ public class CalcActivity extends AppCompatActivity {
         btnStatsCompute.setOnClickListener(v -> onStatsCompute());
         btnStatsSort.setOnClickListener(v -> onStatsSort());
         btnStatsHistogram.setOnClickListener(v -> onStatsHistogram());
+
+        // Area Between Curves
+        areaGInput = findViewById(R.id.area_g_input);
+        MaterialButton btnAreaBetween = findViewById(R.id.btn_area_between);
+        btnAreaBetween.setOnClickListener(v -> onAreaBetweenCurves());
 
         // Matrix Operations
         matrixAInput = findViewById(R.id.matrix_a_input);
@@ -407,6 +413,24 @@ public class CalcActivity extends AppCompatActivity {
             length += Math.sqrt(dx * dx + dy * dy);
         }
         resultView.append("Arc Length [" + fmt(a) + ", " + fmt(b) + "] = " + fmt(length) + "\n");
+    }
+
+    private void onAreaBetweenCurves() {
+        String eF = getExpr();
+        String eG = areaGInput.getText().toString().trim();
+        if (eF.isEmpty()) { toast("Enter f(x) expression"); return; }
+        if (eG.isEmpty()) { toast("Enter g(x) expression"); return; }
+        double a = getA();
+        double b = getB();
+        if (a >= b) { toast("a must be less than b"); return; }
+
+        double result = CalcEngine.areaBetweenCurves(eF, eG, a, b);
+        if (Double.isNaN(result)) {
+            String err = CalcEngine.getLastError();
+            resultView.append("Area Between Curves: Error: " + (err.isEmpty() ? "computation failed" : err) + "\n");
+            return;
+        }
+        resultView.append("Area between f(x)=" + eF + " and g(x)=" + eG + "\n  [" + fmt(a) + ", " + fmt(b) + "] = " + fmt(result) + "\n");
     }
 
     private void onFFT() {

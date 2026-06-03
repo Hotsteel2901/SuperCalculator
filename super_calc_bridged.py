@@ -650,6 +650,37 @@ class SuperCalcApp:
         ttk.Button(arow, text="Compute Arc Length",
                    command=self._on_arc_length).pack(side=tk.RIGHT, padx=2)
 
+        # --- Area Between Curves ---
+        frm_area = ttk.LabelFrame(scroll_frame, text="Area Between Curves",
+                                  style="Dark.TLabelframe")
+        frm_area.pack(fill=tk.X, padx=8, pady=4)
+
+        area_row1 = ttk.Frame(frm_area, style="Dark.TFrame")
+        area_row1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(area_row1, text="f(x) =", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_area_f = tk.StringVar(value="sin(x)")
+        ttk.Entry(area_row1, textvariable=self._var_area_f, width=18).pack(
+            side=tk.LEFT, padx=4)
+        ttk.Label(area_row1, text="g(x) =", style="Dark.TLabel").pack(
+            side=tk.LEFT, padx=(8, 0))
+        self._var_area_g = tk.StringVar(value="0")
+        ttk.Entry(area_row1, textvariable=self._var_area_g, width=18).pack(
+            side=tk.LEFT, padx=4)
+
+        area_row2 = ttk.Frame(frm_area, style="Dark.TFrame")
+        area_row2.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Label(area_row2, text="Interval [a,b]:",
+                  style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_area_a = tk.StringVar(value="0")
+        ttk.Entry(area_row2, textvariable=self._var_area_a, width=7).pack(
+            side=tk.LEFT, padx=2)
+        ttk.Label(area_row2, text="to", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_area_b = tk.StringVar(value="pi")
+        ttk.Entry(area_row2, textvariable=self._var_area_b, width=7).pack(
+            side=tk.LEFT, padx=2)
+        ttk.Button(area_row2, text="Compute Area",
+                   command=self._on_area_between_curves).pack(side=tk.RIGHT, padx=2)
+
         # --- Function Table ---
         frm_table = ttk.LabelFrame(scroll_frame, text="Function Table & Export",
                                    style="Dark.TLabelframe")
@@ -2079,6 +2110,37 @@ class SuperCalcApp:
             f"f(x) = {expr}\n"
             f"Arc length from {a} to {b} = {result:.10g}")
         self.status_var.set(f"Arc length [{a},{b}] = {result:.10g}")
+
+    def _on_area_between_curves(self):
+        expr_f = self._var_area_f.get().strip()
+        expr_g = self._var_area_g.get().strip()
+        if not expr_f or not expr_g:
+            messagebox.showwarning("Input Error", "Please enter both f(x) and g(x) expressions.")
+            return
+        try:
+            a_str = self._resolve_t_range(self._var_area_a.get())
+            b_str = self._resolve_t_range(self._var_area_b.get())
+            a = float(a_str)
+            b = float(b_str)
+        except ValueError:
+            messagebox.showerror("Error", "Invalid interval bounds.")
+            return
+        if a >= b:
+            messagebox.showerror("Error", "a must be less than b.")
+            return
+        f_sub = self._substitute_params(expr_f)
+        g_sub = self._substitute_params(expr_g)
+        result = CalcEngine.area_between_curves(f_sub, g_sub, a, b)
+        if result is None:
+            err = CalcEngine.get_last_error()
+            messagebox.showerror("Error", f"Could not compute area between curves.\n{err}")
+            return
+        messagebox.showinfo(
+            "Area Between Curves",
+            f"f(x) = {expr_f}\n"
+            f"g(x) = {expr_g}\n"
+            f"Area from {a} to {b} = {result:.10g}")
+        self.status_var.set(f"Area between curves [{a},{b}] = {result:.10g}")
 
     def _on_limit(self, two_sided=True, side=None):
         expr = self._get_active_expression()

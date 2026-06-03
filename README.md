@@ -43,6 +43,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
  - **Curve Intersection Finder** — find all intersection points between any two 2D curves with sign-change detection and bisection refinement, results annotated on the plot
  - **Tangent & Normal Lines** — draw tangent and normal lines at any point on a 2D curve, visualized with dashed lines and labeled on the plot
  - **Arc Length** — approximate the arc length of a curve over any interval using adaptive chord summation
+  - **Area Between Curves** — compute the enclosed area between any two curves f(x) and g(x) over [a,b] using adaptive Simpson's rule
   - **Fourier Transform & Spectrum Analysis** — FFT amplitude and phase spectrum for any function, with dominant-frequency detection and CSV export
   - **Taylor Series Expansion** — expand any function into a Taylor polynomial at an arbitrary point, with configurable order, coefficient display, and comparison plot of Taylor vs. original
   - **ODE Solver (RK4)** — solve first-order ODEs dy/dx = f(x,y) with initial conditions using 4th-order Runge-Kutta method, with solution plotting
@@ -147,6 +148,7 @@ SuperCalculator/
 
 ## What's New
 
+- **Area Between Curves** — compute the enclosed area between any two curves f(x) and g(x) over an interval [a,b] using adaptive Simpson's rule. Available on both desktop (Python) and Android (JNI).
 - **Complex Number Calculator** — perform complex arithmetic (+, -, *, /, ^), trigonometric functions (sin, cos, tan), exponential, logarithm, square root, absolute value, and conjugate. Input format: `a+bi` (e.g., `1+2i`, `3-4i`). Available on both desktop (Python) and Android (JNI).
 - **Matrix Operations (Linear Algebra)** — perform matrix addition, subtraction, multiplication, determinant, inverse, transpose, rank, RREF, and eigenvalue computation. Input format: rows separated by `;`, columns by `,` (e.g., `1,2;3,4`). Available on both desktop (Python/numpy) and Android (Java).
 - **ODE Solver (RK4)** — solve first-order ODEs dy/dx = f(x,y) with initial conditions using 4th-order Runge-Kutta method. Supports custom step count, solution data output, and plotting. Available on both desktop (Python) and Android (JNI).
@@ -208,6 +210,10 @@ CalcEngine.solve_bisection("(sin(x))-(cos(x))", 0, 3.14)  # -> ~0.785
 
 # Arc length
 CalcEngine.arc_length("sin(x)", 0, 3.141592653589793)  # -> ~3.820
+
+# Area between curves
+CalcEngine.area_between_curves("sin(x)", "0", 0, 3.141592653589793)  # -> 2.0
+CalcEngine.area_between_curves("x^2", "x", 0, 1)  # -> ~0.1667
 
 # Parametric curve evaluation
 spec = CalcEngine.evaluate_parametric("cos(t)", "sin(t)", 0, 2*pi, 500)
