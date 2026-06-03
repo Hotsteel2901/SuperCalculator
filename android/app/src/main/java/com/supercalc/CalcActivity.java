@@ -30,6 +30,7 @@ public class CalcActivity extends AppCompatActivity {
     private EditText statsDataInput;
     private EditText areaGInput;
     private EditText sysFInput, sysGInput, sysX0Input, sysY0Input;
+    private EditText matrixAInput, matrixBInput;
     private TextView resultView;
     private LineChart lineChart;
     private MaterialCardView graphCard;
@@ -1016,7 +1017,6 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     // --- Matrix Operations ---
-    private EditText matrixAInput, matrixBInput;
 
     private double[][] parseMatrix(String text) {
         text = text.trim();

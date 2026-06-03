@@ -43,7 +43,14 @@
 #define EXPORT
 #endif
 
+/* Thread-local error buffer for concurrent access safety (Android JNI, etc.) */
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+static _Thread_local char g_error[256] = {0};
+#elif defined(__GNUC__)
+static __thread char g_error[256] = {0};
+#else
 static char g_error[256] = {0};
+#endif
 
 static void set_error(const char* msg) {
     if (!msg) return;
@@ -566,33 +573,6 @@ EXPORT double integrate_adaptive(const char* expr, double a, double b, double to
 
 #define GOLDEN_RATIO_RES ((3.0 - sqrt(5.0)) / 2.0)
 
-static double golden_section_min(const char* expr, double a, double b, double tol, int max_iter) {
-    const double resphi = GOLDEN_RATIO_RES;
-    double c = a + resphi * (b - a);
-    double d = b - resphi * (b - a);
-    double fc, fd;
-
-    if (parse_and_eval(expr, c, 0.0, &fc) != 0) return NAN;
-    if (isnan(fc)) { set_error("Function returned NaN during extremum search"); return NAN; }
-    if (parse_and_eval(expr, d, 0.0, &fd) != 0) return NAN;
-    if (isnan(fd)) { set_error("Function returned NaN during extremum search"); return NAN; }
-
-    for (int i = 0; i < max_iter && fabs(b - a) > tol; i++) {
-        if (fc < fd) {
-            b = d; d = c; fd = fc;
-            c = a + resphi * (b - a);
-            if (parse_and_eval(expr, c, 0.0, &fc) != 0) return NAN;
-            if (isnan(fc)) { set_error("Function returned NaN during extremum search"); return NAN; }
-        } else {
-            a = c; c = d; fc = fd;
-            d = b - resphi * (b - a);
-            if (parse_and_eval(expr, d, 0.0, &fd) != 0) return NAN;
-            if (isnan(fd)) { set_error("Function returned NaN during extremum search"); return NAN; }
-        }
-    }
-    return (b + a) / 2.0;
-}
-
 /* --------------------------------------------------------------------------
  *  ODE Solver — 4th-order Runge-Kutta (RK4)
  *  Solves the initial value problem:  dy/dx = f(x, y),  y(x0) = y0
@@ -934,7 +914,10 @@ static Complex complex_pow(Complex base, Complex exp) {
         return complex_make(1.0, 0.0);
     }
     if (base.im == 0.0 && base.re == 0.0) {
-        return complex_make(0.0, 0.0);
+        if (exp.re > 0.0 || exp.im != 0.0)
+            return complex_make(0.0, 0.0);
+        else
+            return complex_make(INFINITY, INFINITY);
     }
     Complex log_base = complex_ln(base);
     Complex product = complex_mul(exp, log_base);
@@ -955,17 +938,6 @@ static Complex complex_tan(Complex a) {
     Complex s = complex_sin(a);
     Complex c = complex_cos(a);
     return complex_div(s, c);
-}
-
-static Complex complex_log10(Complex a) {
-    Complex ln_a = complex_ln(a);
-    Complex ln_10 = complex_make(log(10.0), 0.0);
-    return complex_div(ln_a, ln_10);
-}
-
-static Complex complex_abs_complex(Complex a) {
-    double abs_val = complex_abs(a);
-    return complex_make(abs_val, 0.0);
 }
 
 /* Parse a complex number from string: "a+bi", "a-bi", "a", "bi" */
@@ -1137,7 +1109,7 @@ EXPORT double complex_abs_value(double re, double im) {
  * -------------------------------------------------------------------------- */
 
 static double _abs_diff_integrand(const char* expr_f, const char* expr_g,
-                                   double x, double* work) {
+                                   double x) {
     double fv, gv;
     if (parse_and_eval(expr_f, x, 0.0, &fv) != 0) return NAN;
     if (parse_and_eval(expr_g, x, 0.0, &gv) != 0) return NAN;
@@ -1146,16 +1118,16 @@ static double _abs_diff_integrand(const char* expr_f, const char* expr_g,
 
 static double _simpson_abs_diff(const char* expr_f, const char* expr_g,
                                  double a, double b, int n) {
-    if (n < 2 || n % 2 != 0) return NAN;
+    if (n < 2 || n % 2 != 0) { set_error("Simpson's rule requires even n >= 2"); return NAN; }
     if (a == b) return 0.0;
     double h = (b - a) / n;
-    double fa = _abs_diff_integrand(expr_f, expr_g, a, NULL);
-    double fb = _abs_diff_integrand(expr_f, expr_g, b, NULL);
+    double fa = _abs_diff_integrand(expr_f, expr_g, a);
+    double fb = _abs_diff_integrand(expr_f, expr_g, b);
     if (isnan(fa) || isnan(fb)) return NAN;
     double sum = fa + fb;
     for (int i = 1; i < n; i++) {
         double xi = a + i * h;
-        double fi = _abs_diff_integrand(expr_f, expr_g, xi, NULL);
+        double fi = _abs_diff_integrand(expr_f, expr_g, xi);
         if (isnan(fi)) return NAN;
         sum += (i % 2 == 0 ? 2.0 : 4.0) * fi;
     }
@@ -1166,7 +1138,7 @@ EXPORT double area_between_curves(const char* expr_f, const char* expr_g,
                                    double a, double b, double tol) {
     if (!expr_f || !expr_g) { set_error("NULL expression"); return NAN; }
     if (a > b) { set_error("Invalid interval: a must be <= b"); return NAN; }
-    if (a == b) return 0.0;
+    if (a == b) { clear_error(); return 0.0; }
     if (tol <= 0.0) tol = 1e-8;
     clear_error();
 
@@ -1267,15 +1239,18 @@ EXPORT void complex_array_evaluate(const char* expr, const double* xs, const dou
                                    double* out_re, double* out_im, int n) {
     if (!expr || !xs || !out_re || !out_im || n <= 0) return;
     clear_error();
+    int any_failed = 0;
     
     for (int i = 0; i < n; i++) {
         double result;
         if (parse_and_eval(expr, xs[i], ys ? ys[i] : 0.0, &result) != 0) {
             out_re[i] = NAN;
             out_im[i] = NAN;
+            any_failed = 1;
         } else {
             out_re[i] = result;
             out_im[i] = 0.0;
         }
     }
+    if (any_failed) set_error("Some evaluations failed in complex_array_evaluate");
 }
