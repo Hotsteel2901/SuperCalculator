@@ -52,6 +52,10 @@ void complex_conj_value(double re, double im, double* out_re, double* out_im);
 double area_between_curves(const char* expr_f, const char* expr_g,
                            double a, double b, double tol);
 
+int solve_system_2d(const char* f_expr, const char* g_expr,
+                    double x0, double y0, double tol, int max_iter,
+                    double* out_x, double* out_y);
+
 /* Helper: extract UTF-8 string from jstring, call fn, release, return */
 static jdouble call_with_expr(JNIEnv* env, jstring expr, double x,
                               double (*fn)(const char*, double)) {
@@ -596,5 +600,64 @@ Java_com_supercalc_CalcEngine_areaBetweenCurves(JNIEnv* env, jclass clazz,
     double result = area_between_curves(strF, strG, a, b, 1e-8);
     (*env)->ReleaseStringUTFChars(env, exprF, strF);
     (*env)->ReleaseStringUTFChars(env, exprG, strG);
+    return result;
+}
+
+JNIEXPORT jobject JNICALL
+Java_com_supercalc_CalcEngine_solveSystem2d(JNIEnv* env, jclass clazz,
+                                             jstring fExpr, jstring gExpr,
+                                             jdouble x0, jdouble y0) {
+    const char* strF = (*env)->GetStringUTFChars(env, fExpr, NULL);
+    const char* strG = (*env)->GetStringUTFChars(env, gExpr, NULL);
+    if (!strF || !strG) {
+        if (strF) (*env)->ReleaseStringUTFChars(env, fExpr, strF);
+        if (strG) (*env)->ReleaseStringUTFChars(env, gExpr, strG);
+        return NULL;
+    }
+
+    double out_x = 0.0, out_y = 0.0;
+    int success = solve_system_2d(strF, strG, x0, y0, 1e-10, 100, &out_x, &out_y);
+
+    (*env)->ReleaseStringUTFChars(env, fExpr, strF);
+    (*env)->ReleaseStringUTFChars(env, gExpr, strG);
+
+    if (!success) return NULL;
+
+    /* Create HashMap result: {"x": ..., "y": ...} */
+    jclass hashMapClass = (*env)->FindClass(env, "java/util/HashMap");
+    if (!hashMapClass) return NULL;
+
+    jmethodID hashMapInit = (*env)->GetMethodID(env, hashMapClass, "<init>", "(I)V");
+    jmethodID putMethod = (*env)->GetMethodID(env, hashMapClass, "put",
+        "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+    if (!hashMapInit || !putMethod) {
+        (*env)->DeleteLocalRef(env, hashMapClass);
+        return NULL;
+    }
+
+    jobject result = (*env)->NewObject(env, hashMapClass, hashMapInit, (jint)2);
+    if (!result) {
+        (*env)->DeleteLocalRef(env, hashMapClass);
+        return NULL;
+    }
+
+    jstring xKey = (*env)->NewStringUTF(env, "x");
+    jstring yKey = (*env)->NewStringUTF(env, "y");
+
+    jclass doubleClass = (*env)->FindClass(env, "java/lang/Double");
+    jmethodID valueOfDouble = (*env)->GetStaticMethodID(env, doubleClass, "valueOf", "(D)Ljava/lang/Double;");
+    jobject xObj = (*env)->CallStaticObjectMethod(env, doubleClass, valueOfDouble, out_x);
+    jobject yObj = (*env)->CallStaticObjectMethod(env, doubleClass, valueOfDouble, out_y);
+
+    (*env)->CallObjectMethod(env, result, putMethod, xKey, xObj);
+    (*env)->CallObjectMethod(env, result, putMethod, yKey, yObj);
+
+    (*env)->DeleteLocalRef(env, xKey);
+    (*env)->DeleteLocalRef(env, yKey);
+    (*env)->DeleteLocalRef(env, xObj);
+    (*env)->DeleteLocalRef(env, yObj);
+    (*env)->DeleteLocalRef(env, doubleClass);
+    (*env)->DeleteLocalRef(env, hashMapClass);
+
     return result;
 }

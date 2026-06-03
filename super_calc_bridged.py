@@ -571,6 +571,36 @@ class SuperCalcApp:
         ttk.Button(srow2, text="Find Root (Bisection)",
                    command=lambda: self._on_solve_bisection()).pack(side=tk.LEFT, padx=2)
 
+        # --- Nonlinear System Solver (2D) ---
+        frm_sys = ttk.LabelFrame(scroll_frame, text="Nonlinear System Solver f(x,y)=0, g(x,y)=0",
+                                 style="Dark.TLabelframe")
+        frm_sys.pack(fill=tk.X, padx=8, pady=4)
+
+        sysrow1 = ttk.Frame(frm_sys, style="Dark.TFrame")
+        sysrow1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(sysrow1, text="f(x,y) =", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_sys_f = tk.StringVar(value="x^2+y^2-1")
+        ttk.Entry(sysrow1, textvariable=self._var_sys_f, width=20).pack(side=tk.LEFT, padx=4)
+        ttk.Label(sysrow1, text="g(x,y) =", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_sys_g = tk.StringVar(value="x-y")
+        ttk.Entry(sysrow1, textvariable=self._var_sys_g, width=20).pack(side=tk.LEFT, padx=4)
+
+        sysrow2 = ttk.Frame(frm_sys, style="Dark.TFrame")
+        sysrow2.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(sysrow2, text="Initial guess:", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_sys_x0 = tk.StringVar(value="0.7")
+        ttk.Entry(sysrow2, textvariable=self._var_sys_x0, width=8).pack(side=tk.LEFT, padx=2)
+        ttk.Label(sysrow2, text=",", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_sys_y0 = tk.StringVar(value="0.7")
+        ttk.Entry(sysrow2, textvariable=self._var_sys_y0, width=8).pack(side=tk.LEFT, padx=2)
+        ttk.Button(sysrow2, text="Solve System",
+                   command=self._on_solve_system_2d).pack(side=tk.LEFT, padx=8)
+
+        sysrow3 = ttk.Frame(frm_sys, style="Dark.TFrame")
+        sysrow3.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Label(sysrow3, text="Solves f(x,y)=0, g(x,y)=0 simultaneously (Newton's method for systems)",
+                  style="Dark.TLabel").pack(side=tk.LEFT)
+
         # --- Extremum Finder ---
         frm_extremum = ttk.LabelFrame(scroll_frame, text="Extremum Finder on [a,b]",
                                       style="Dark.TLabelframe")
@@ -2542,6 +2572,37 @@ class SuperCalcApp:
             f"f(x) = {expr} = 0\n"
             f"Root: x = {result:.12g}")
         self.status_var.set(f"Root: x = {result:.12g}")
+
+    def _on_solve_system_2d(self):
+        f_expr = self._var_sys_f.get().strip()
+        g_expr = self._var_sys_g.get().strip()
+        if not f_expr or not g_expr:
+            messagebox.showerror("Error", "Enter both f(x,y) and g(x,y) expressions.")
+            return
+        try:
+            x0 = float(self._var_sys_x0.get())
+            y0 = float(self._var_sys_y0.get())
+        except ValueError:
+            messagebox.showerror("Error", "Invalid initial guess.")
+            return
+        result = CalcEngine.solve_system_2d(f_expr, g_expr, x0, y0)
+        if result is None:
+            err = CalcEngine.get_last_error()
+            messagebox.showerror("System Solver Error",
+                                 f"Could not solve system.\n{err}")
+            return
+        x_sol = result['x']
+        y_sol = result['y']
+        f_val = CalcEngine.evaluate_xy(f_expr, x_sol, y_sol)
+        g_val = CalcEngine.evaluate_xy(g_expr, x_sol, y_sol)
+        f_str = f"{f_val:.2e}" if f_val is not None else "N/A"
+        g_str = f"{g_val:.2e}" if g_val is not None else "N/A"
+        messagebox.showinfo(
+            "System Solved",
+            f"f(x,y) = {f_expr}\ng(x,y) = {g_expr}\n\n"
+            f"Solution:\n  x = {x_sol:.12g}\n  y = {y_sol:.12g}\n\n"
+            f"Residuals:\n  f(x,y) = {f_str}\n  g(x,y) = {g_str}")
+        self.status_var.set(f"System: x={x_sol:.10g}, y={y_sol:.10g}")
 
     def _on_find_extremum(self, minimum: bool = True):
         expr = self._get_active_expression()

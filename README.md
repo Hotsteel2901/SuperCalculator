@@ -37,6 +37,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
 - **Numerical Derivatives** — first and second derivative via central difference
 - **Numerical Integration** — adaptive Simpson's rule for definite integrals
 - **Equation Solving** — Newton-Raphson (with bisection fallback) and pure bisection
+- **Nonlinear System Solver (2D)** — solve systems of two equations f(x,y)=0, g(x,y)=0 using Newton's method for systems with numerical Jacobian, available on both desktop (Python) and Android (JNI)
 - **Extremum Finder** — golden-section search for local minima and maxima on an interval
 - **Limit Computation** — left-hand, right-hand, and two-sided limits via Richardson extrapolation
  - **Auto Root Scanner** — automatically scan an interval for all roots of f(x)=0, sign-change detection plus bisection refinement
@@ -148,6 +149,7 @@ SuperCalculator/
 
 ## What's New
 
+- **Nonlinear System Solver (2D)** — solve systems of two nonlinear equations f(x,y)=0, g(x,y)=0 using Newton's method for systems with numerical Jacobian via Cramer's rule. Available on both desktop (Python) and Android (JNI).
 - **Area Between Curves** — compute the enclosed area between any two curves f(x) and g(x) over an interval [a,b] using adaptive Simpson's rule. Available on both desktop (Python) and Android (JNI).
 - **Complex Number Calculator** — perform complex arithmetic (+, -, *, /, ^), trigonometric functions (sin, cos, tan), exponential, logarithm, square root, absolute value, and conjugate. Input format: `a+bi` (e.g., `1+2i`, `3-4i`). Available on both desktop (Python) and Android (JNI).
 - **Matrix Operations (Linear Algebra)** — perform matrix addition, subtraction, multiplication, determinant, inverse, transpose, rank, RREF, and eigenvalue computation. Input format: rows separated by `;`, columns by `,` (e.g., `1,2;3,4`). Available on both desktop (Python/numpy) and Android (Java).
@@ -215,6 +217,10 @@ CalcEngine.arc_length("sin(x)", 0, 3.141592653589793)  # -> ~3.820
 CalcEngine.area_between_curves("sin(x)", "0", 0, 3.141592653589793)  # -> 2.0
 CalcEngine.area_between_curves("x^2", "x", 0, 1)  # -> ~0.1667
 
+# Nonlinear system solver (2D)
+result = CalcEngine.solve_system_2d("x^2+y^2-1", "x-y", x0=0.7, y0=0.7)
+# result -> {'x': 0.7071..., 'y': 0.7071...} (intersection of unit circle and y=x)
+
 # Parametric curve evaluation
 spec = CalcEngine.evaluate_parametric("cos(t)", "sin(t)", 0, 2*pi, 500)
 # spec['xs'] -> list of x-values
@@ -276,6 +282,7 @@ np.linalg.eig(A)   # Eigenvalues and eigenvectors
 | Taylor Coefficients | nth derivative / k! via recursive central diff  | O(h^2)    |
 | Integration         | Adaptive composite Simpson's rule              | O(h^4)    |
 | Root Finding        | Newton-Raphson with bisection fallback         | —         |
+| System Solver (2D)  | Newton's method for systems (numerical Jacobian, Cramer's rule) | —  |
 | Extremum Finder     | Golden-section search                          | Linear    |
 | Limit               | Richardson extrapolation                       | O(h^2k)   |
 | ODE Solver          | 4th-order Runge-Kutta (RK4)                    | O(h^4)    |

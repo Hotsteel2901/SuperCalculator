@@ -1193,6 +1193,76 @@ EXPORT void complex_conj_value(double re, double im, double* out_re, double* out
     *out_im = result.im;
 }
 
+EXPORT int solve_system_2d(const char* f_expr, const char* g_expr,
+                           double x0, double y0, double tol, int max_iter,
+                           double* out_x, double* out_y) {
+    if (!f_expr || !g_expr || !out_x || !out_y) {
+        set_error("NULL parameter in solve_system_2d");
+        return 0;
+    }
+    if (tol <= 0.0) tol = 1e-10;
+    if (max_iter <= 0) max_iter = 100;
+    clear_error();
+
+    double x = x0, y = y0;
+    double h = 1e-7;
+
+    for (int iter = 0; iter < max_iter; iter++) {
+        double F_val, G_val;
+        if (parse_and_eval(f_expr, x, y, &F_val) != 0) {
+            set_error("Error evaluating f(x,y)");
+            return 0;
+        }
+        if (parse_and_eval(g_expr, x, y, &G_val) != 0) {
+            set_error("Error evaluating g(x,y)");
+            return 0;
+        }
+
+        if (fabs(F_val) < tol && fabs(G_val) < tol) {
+            *out_x = x;
+            *out_y = y;
+            return 1;
+        }
+
+        /* Numerical Jacobian via central differences */
+        double F_xph, F_xmh, F_yph, F_ymh;
+        double G_xph, G_xmh, G_yph, G_ymh;
+
+        if (parse_and_eval(f_expr, x + h, y, &F_xph) != 0) { set_error("Jacobian evaluation failed"); return 0; }
+        if (parse_and_eval(f_expr, x - h, y, &F_xmh) != 0) { set_error("Jacobian evaluation failed"); return 0; }
+        if (parse_and_eval(f_expr, x, y + h, &F_yph) != 0) { set_error("Jacobian evaluation failed"); return 0; }
+        if (parse_and_eval(f_expr, x, y - h, &F_ymh) != 0) { set_error("Jacobian evaluation failed"); return 0; }
+
+        if (parse_and_eval(g_expr, x + h, y, &G_xph) != 0) { set_error("Jacobian evaluation failed"); return 0; }
+        if (parse_and_eval(g_expr, x - h, y, &G_xmh) != 0) { set_error("Jacobian evaluation failed"); return 0; }
+        if (parse_and_eval(g_expr, x, y + h, &G_yph) != 0) { set_error("Jacobian evaluation failed"); return 0; }
+        if (parse_and_eval(g_expr, x, y - h, &G_ymh) != 0) { set_error("Jacobian evaluation failed"); return 0; }
+
+        double J11 = (F_xph - F_xmh) / (2.0 * h);  /* dF/dx */
+        double J12 = (F_yph - F_ymh) / (2.0 * h);  /* dF/dy */
+        double J21 = (G_xph - G_xmh) / (2.0 * h);  /* dG/dx */
+        double J22 = (G_yph - G_ymh) / (2.0 * h);  /* dG/dy */
+
+        double det = J11 * J22 - J12 * J21;
+        if (fabs(det) < 1e-15) {
+            set_error("Jacobian is singular (det=0). Try a different initial guess.");
+            return 0;
+        }
+
+        /* Cramer's rule: J * delta = -[F, G] */
+        double dx = (-F_val * J22 + G_val * J12) / det;
+        double dy = (-J11 * G_val + J21 * F_val) / det;
+
+        x += dx;
+        y += dy;
+    }
+
+    *out_x = x;
+    *out_y = y;
+    set_error("solve_system_2d did not converge within max_iter iterations");
+    return 0;
+}
+
 EXPORT void complex_array_evaluate(const char* expr, const double* xs, const double* ys,
                                    double* out_re, double* out_im, int n) {
     if (!expr || !xs || !out_re || !out_im || n <= 0) return;
