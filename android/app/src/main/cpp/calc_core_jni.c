@@ -327,39 +327,73 @@ Java_com_supercalc_CalcEngine_odeSolveRk4(JNIEnv* env, jclass clazz,
         /* Create double arrays for xs and ys */
         jdoubleArray xs_array = (*env)->NewDoubleArray(env, count);
         jdoubleArray ys_array = (*env)->NewDoubleArray(env, count);
-        if (xs_array && ys_array) {
-            (*env)->SetDoubleArrayRegion(env, xs_array, 0, count, out_x);
-            (*env)->SetDoubleArrayRegion(env, ys_array, 0, count, out_y);
+        if (!xs_array || !ys_array) {
+            if (xs_array) (*env)->DeleteLocalRef(env, xs_array);
+            if (ys_array) (*env)->DeleteLocalRef(env, ys_array);
+            free(out_x);
+            free(out_y);
+            (*env)->ReleaseStringUTFChars(env, expr, str);
+            return NULL;
+        }
+        
+        (*env)->SetDoubleArrayRegion(env, xs_array, 0, count, out_x);
+        (*env)->SetDoubleArrayRegion(env, ys_array, 0, count, out_y);
 
-            /* Create HashMap result: {"xs": [...], "ys": [...], "count": n} */
-            jclass hashMapClass = (*env)->FindClass(env, "java/util/HashMap");
-            jmethodID hashMapInit = (*env)->GetMethodID(env, hashMapClass, "<init>", "(I)V");
-            jmethodID putMethod = (*env)->GetMethodID(env, hashMapClass, "put",
-                "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
-
-            result = (*env)->NewObject(env, hashMapClass, hashMapInit, (jint)3);
-
-            jstring xsKey = (*env)->NewStringUTF(env, "xs");
-            jstring ysKey = (*env)->NewStringUTF(env, "ys");
-            jstring countKey = (*env)->NewStringUTF(env, "count");
-
-            (*env)->CallObjectMethod(env, result, putMethod, xsKey, xs_array);
-            (*env)->CallObjectMethod(env, result, putMethod, ysKey, ys_array);
-
-            /* Put count as Integer */
-            jclass integerClass = (*env)->FindClass(env, "java/lang/Integer");
-            jmethodID valueOfMethod = (*env)->GetStaticMethodID(env, integerClass, "valueOf", "(I)Ljava/lang/Integer;");
-            jobject countObj = (*env)->CallStaticObjectMethod(env, integerClass, valueOfMethod, (jint)count);
-            (*env)->CallObjectMethod(env, result, putMethod, countKey, countObj);
-
-            (*env)->DeleteLocalRef(env, xsKey);
-            (*env)->DeleteLocalRef(env, ysKey);
-            (*env)->DeleteLocalRef(env, countKey);
+        /* Create HashMap result: {"xs": [...], "ys": [...], "count": n} */
+        jclass hashMapClass = (*env)->FindClass(env, "java/util/HashMap");
+        if (!hashMapClass) {
             (*env)->DeleteLocalRef(env, xs_array);
             (*env)->DeleteLocalRef(env, ys_array);
-            (*env)->DeleteLocalRef(env, countObj);
-            (*env)->DeleteLocalRef(env, hashMapClass);
+            free(out_x);
+            free(out_y);
+            (*env)->ReleaseStringUTFChars(env, expr, str);
+            return NULL;
         }
+        
+        jmethodID hashMapInit = (*env)->GetMethodID(env, hashMapClass, "<init>", "(I)V");
+        jmethodID putMethod = (*env)->GetMethodID(env, hashMapClass, "put",
+            "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+        if (!hashMapInit || !putMethod) {
+            (*env)->DeleteLocalRef(env, hashMapClass);
+            (*env)->DeleteLocalRef(env, xs_array);
+            (*env)->DeleteLocalRef(env, ys_array);
+            free(out_x);
+            free(out_y);
+            (*env)->ReleaseStringUTFChars(env, expr, str);
+            return NULL;
+        }
+
+        result = (*env)->NewObject(env, hashMapClass, hashMapInit, (jint)3);
+        if (!result) {
+            (*env)->DeleteLocalRef(env, hashMapClass);
+            (*env)->DeleteLocalRef(env, xs_array);
+            (*env)->DeleteLocalRef(env, ys_array);
+            free(out_x);
+            free(out_y);
+            (*env)->ReleaseStringUTFChars(env, expr, str);
+            return NULL;
+        }
+
+        jstring xsKey = (*env)->NewStringUTF(env, "xs");
+        jstring ysKey = (*env)->NewStringUTF(env, "ys");
+        jstring countKey = (*env)->NewStringUTF(env, "count");
+
+        (*env)->CallObjectMethod(env, result, putMethod, xsKey, xs_array);
+        (*env)->CallObjectMethod(env, result, putMethod, ysKey, ys_array);
+
+        /* Put count as Integer */
+        jclass integerClass = (*env)->FindClass(env, "java/lang/Integer");
+        jmethodID valueOfMethod = (*env)->GetStaticMethodID(env, integerClass, "valueOf", "(I)Ljava/lang/Integer;");
+        jobject countObj = (*env)->CallStaticObjectMethod(env, integerClass, valueOfMethod, (jint)count);
+        (*env)->CallObjectMethod(env, result, putMethod, countKey, countObj);
+
+        (*env)->DeleteLocalRef(env, xsKey);
+        (*env)->DeleteLocalRef(env, ysKey);
+        (*env)->DeleteLocalRef(env, countKey);
+        (*env)->DeleteLocalRef(env, xs_array);
+        (*env)->DeleteLocalRef(env, ys_array);
+        (*env)->DeleteLocalRef(env, countObj);
+        (*env)->DeleteLocalRef(env, hashMapClass);
     }
 
     free(out_x);

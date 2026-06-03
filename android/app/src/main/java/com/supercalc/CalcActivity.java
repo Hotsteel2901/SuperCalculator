@@ -656,9 +656,17 @@ public class CalcActivity extends AppCompatActivity {
             return;
         }
 
-        double[] xs = (double[]) result.get("xs");
-        double[] ys = (double[]) result.get("ys");
-        int count = (int) result.get("count");
+        Object xsObj = result.get("xs");
+        Object ysObj = result.get("ys");
+        Object countObj = result.get("count");
+        if (xsObj == null || ysObj == null || countObj == null) {
+            resultView.append("ODE Error: Invalid result from solver\n");
+            return;
+        }
+        
+        double[] xs = (double[]) xsObj;
+        double[] ys = (double[]) ysObj;
+        int count = (int) countObj;
 
         StringBuilder sb = new StringBuilder();
         sb.append("dy/dx = ").append(expr).append(", y(").append(fmt(x0)).append(") = ").append(fmt(y0)).append("\n");
@@ -716,8 +724,15 @@ public class CalcActivity extends AppCompatActivity {
             return;
         }
 
-        double[] xsFull = (double[]) result.get("xs");
-        double[] ysFull = (double[]) result.get("ys");
+        Object xsObj = result.get("xs");
+        Object ysObj = result.get("ys");
+        if (xsObj == null || ysObj == null) {
+            resultView.append("ODE Error: Invalid result from solver\n");
+            return;
+        }
+
+        double[] xsFull = (double[]) xsObj;
+        double[] ysFull = (double[]) ysObj;
 
         // Downsample to avoid TransactionTooLargeException (~1MB Intent limit)
         int maxPoints = 2000;
