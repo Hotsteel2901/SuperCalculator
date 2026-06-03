@@ -297,8 +297,12 @@ class CalcEngine:
     @staticmethod
     def integrate(expr: str, a: float, b: float,
                   n: int = 1000) -> Optional[float]:
-        """Definite integral over [a,b] using Simpson's rule (n must be even)."""
-        result = _lib.integrate(expr.encode("utf-8"), a, b, n)
+        """Definite integral over [a,b] using adaptive Simpson's rule.
+
+        Note: n parameter is kept for API compatibility but not used.
+        Uses adaptive integration for better accuracy and consistency with Android.
+        """
+        result = _lib.integrate_adaptive(expr.encode("utf-8"), a, b, 1e-8)
         return None if _is_invalid(result) else result
 
     @staticmethod
@@ -470,7 +474,11 @@ class CalcEngine:
         out_im = ctypes.c_double()
         _lib.complex_add_values(z1.real, z1.imag, z2.real, z2.imag,
                                 ctypes.byref(out_re), ctypes.byref(out_im))
-        return complex(out_re.value, out_im.value)
+        re_val = out_re.value
+        im_val = out_im.value
+        if _is_invalid(re_val) or _is_invalid(im_val):
+            return complex(float('nan'), float('nan'))
+        return complex(re_val, im_val)
 
     @staticmethod
     def complex_sub(z1: complex, z2: complex) -> complex:
@@ -479,7 +487,11 @@ class CalcEngine:
         out_im = ctypes.c_double()
         _lib.complex_sub_values(z1.real, z1.imag, z2.real, z2.imag,
                                 ctypes.byref(out_re), ctypes.byref(out_im))
-        return complex(out_re.value, out_im.value)
+        re_val = out_re.value
+        im_val = out_im.value
+        if _is_invalid(re_val) or _is_invalid(im_val):
+            return complex(float('nan'), float('nan'))
+        return complex(re_val, im_val)
 
     @staticmethod
     def complex_mul(z1: complex, z2: complex) -> complex:
@@ -488,7 +500,11 @@ class CalcEngine:
         out_im = ctypes.c_double()
         _lib.complex_mul_values(z1.real, z1.imag, z2.real, z2.imag,
                                 ctypes.byref(out_re), ctypes.byref(out_im))
-        return complex(out_re.value, out_im.value)
+        re_val = out_re.value
+        im_val = out_im.value
+        if _is_invalid(re_val) or _is_invalid(im_val):
+            return complex(float('nan'), float('nan'))
+        return complex(re_val, im_val)
 
     @staticmethod
     def complex_div(z1: complex, z2: complex) -> complex:
@@ -497,7 +513,11 @@ class CalcEngine:
         out_im = ctypes.c_double()
         _lib.complex_div_values(z1.real, z1.imag, z2.real, z2.imag,
                                 ctypes.byref(out_re), ctypes.byref(out_im))
-        return complex(out_re.value, out_im.value)
+        re_val = out_re.value
+        im_val = out_im.value
+        if _is_invalid(re_val) or _is_invalid(im_val):
+            return complex(float('nan'), float('nan'))
+        return complex(re_val, im_val)
 
     @staticmethod
     def complex_pow(z1: complex, z2: complex) -> complex:
@@ -506,7 +526,11 @@ class CalcEngine:
         out_im = ctypes.c_double()
         _lib.complex_pow_values(z1.real, z1.imag, z2.real, z2.imag,
                                 ctypes.byref(out_re), ctypes.byref(out_im))
-        return complex(out_re.value, out_im.value)
+        re_val = out_re.value
+        im_val = out_im.value
+        if _is_invalid(re_val) or _is_invalid(im_val):
+            return complex(float('nan'), float('nan'))
+        return complex(re_val, im_val)
 
     @staticmethod
     def complex_sin(z: complex) -> complex:
@@ -515,7 +539,11 @@ class CalcEngine:
         out_im = ctypes.c_double()
         _lib.complex_sin_value(z.real, z.imag,
                                ctypes.byref(out_re), ctypes.byref(out_im))
-        return complex(out_re.value, out_im.value)
+        re_val = out_re.value
+        im_val = out_im.value
+        if _is_invalid(re_val) or _is_invalid(im_val):
+            return complex(float('nan'), float('nan'))
+        return complex(re_val, im_val)
 
     @staticmethod
     def complex_cos(z: complex) -> complex:
@@ -524,7 +552,11 @@ class CalcEngine:
         out_im = ctypes.c_double()
         _lib.complex_cos_value(z.real, z.imag,
                                ctypes.byref(out_re), ctypes.byref(out_im))
-        return complex(out_re.value, out_im.value)
+        re_val = out_re.value
+        im_val = out_im.value
+        if _is_invalid(re_val) or _is_invalid(im_val):
+            return complex(float('nan'), float('nan'))
+        return complex(re_val, im_val)
 
     @staticmethod
     def complex_tan(z: complex) -> complex:
@@ -533,7 +565,11 @@ class CalcEngine:
         out_im = ctypes.c_double()
         _lib.complex_tan_value(z.real, z.imag,
                                ctypes.byref(out_re), ctypes.byref(out_im))
-        return complex(out_re.value, out_im.value)
+        re_val = out_re.value
+        im_val = out_im.value
+        if _is_invalid(re_val) or _is_invalid(im_val):
+            return complex(float('nan'), float('nan'))
+        return complex(re_val, im_val)
 
     @staticmethod
     def complex_exp(z: complex) -> complex:
@@ -542,7 +578,11 @@ class CalcEngine:
         out_im = ctypes.c_double()
         _lib.complex_exp_value(z.real, z.imag,
                                ctypes.byref(out_re), ctypes.byref(out_im))
-        return complex(out_re.value, out_im.value)
+        re_val = out_re.value
+        im_val = out_im.value
+        if _is_invalid(re_val) or _is_invalid(im_val):
+            return complex(float('nan'), float('nan'))
+        return complex(re_val, im_val)
 
     @staticmethod
     def complex_ln(z: complex) -> complex:
@@ -551,7 +591,11 @@ class CalcEngine:
         out_im = ctypes.c_double()
         _lib.complex_ln_value(z.real, z.imag,
                               ctypes.byref(out_re), ctypes.byref(out_im))
-        return complex(out_re.value, out_im.value)
+        re_val = out_re.value
+        im_val = out_im.value
+        if _is_invalid(re_val) or _is_invalid(im_val):
+            return complex(float('nan'), float('nan'))
+        return complex(re_val, im_val)
 
     @staticmethod
     def complex_sqrt(z: complex) -> complex:
@@ -560,7 +604,11 @@ class CalcEngine:
         out_im = ctypes.c_double()
         _lib.complex_sqrt_value(z.real, z.imag,
                                 ctypes.byref(out_re), ctypes.byref(out_im))
-        return complex(out_re.value, out_im.value)
+        re_val = out_re.value
+        im_val = out_im.value
+        if _is_invalid(re_val) or _is_invalid(im_val):
+            return complex(float('nan'), float('nan'))
+        return complex(re_val, im_val)
 
     @staticmethod
     def complex_abs(z: complex) -> float:
@@ -574,7 +622,11 @@ class CalcEngine:
         out_im = ctypes.c_double()
         _lib.complex_conj_value(z.real, z.imag,
                                 ctypes.byref(out_re), ctypes.byref(out_im))
-        return complex(out_re.value, out_im.value)
+        re_val = out_re.value
+        im_val = out_im.value
+        if _is_invalid(re_val) or _is_invalid(im_val):
+            return complex(float('nan'), float('nan'))
+        return complex(re_val, im_val)
 
     @staticmethod
     def complex_array_evaluate(expr: str, zs: List[complex]):

@@ -5,7 +5,9 @@ plugins {
 android {
     namespace = "com.supercalc"
     compileSdk = 34
-    ndkVersion = "27.0.12077973"
+    // NDK version - use a flexible approach
+    // If a specific version is needed, uncomment and set:
+    // ndkVersion = "27.0.12077973"
 
     defaultConfig {
         applicationId = "com.supercalc"

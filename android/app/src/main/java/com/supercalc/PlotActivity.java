@@ -609,8 +609,8 @@ public class PlotActivity extends AppCompatActivity {
         allExpressions.add(expr);
         curveColors.add(getNextColor());
         curveTypes.add("regular");
-        // Clear plotted entries since the curve list changed
-        allEntries.clear();
+        // Add empty entries list for the new curve (keep existing ODE/Taylor data)
+        allEntries.add(new ArrayList<Entry>());
         toast("Added curve: " + expr);
         exprInput.setText("");
     }
@@ -646,7 +646,7 @@ public class PlotActivity extends AppCompatActivity {
         if (idx < allEntries.size()) {
             allEntries.remove(idx);
         }
-        toast("Removed last curve");
+        toast("Removed curve: " + (idx < allExpressions.size() ? allExpressions.get(idx) : "last"));
     }
     
     private void onPlotAll() {
@@ -677,10 +677,11 @@ public class PlotActivity extends AppCompatActivity {
         }
         
         // Save ODE/Taylor entries before clearing (they have pre-computed data)
+        // Use curveTypes.size() as reference since allEntries may be out of sync with allExpressions
         ArrayList<ArrayList<Entry>> savedOdeTaylorEntries = new ArrayList<>();
-        for (int i = 0; i < allEntries.size(); i++) {
-            String type = i < curveTypes.size() ? curveTypes.get(i) : "regular";
-            if ("ode".equals(type) || "taylor".equals(type)) {
+        for (int i = 0; i < curveTypes.size(); i++) {
+            String type = curveTypes.get(i);
+            if (("ode".equals(type) || "taylor".equals(type)) && i < allEntries.size()) {
                 savedOdeTaylorEntries.add(new ArrayList<>(allEntries.get(i)));
             } else {
                 savedOdeTaylorEntries.add(null);
@@ -755,9 +756,11 @@ public class PlotActivity extends AppCompatActivity {
                 polarIdx++;
             } else if ("ode".equals(type) || "taylor".equals(type)) {
                 // ODE and Taylor curves have pre-computed entries, restore them
+                // curveIdx should match savedOdeTaylorEntries index since both are based on curveTypes
                 if (curveIdx < savedOdeTaylorEntries.size() && savedOdeTaylorEntries.get(curveIdx) != null) {
                     allEntries.add(savedOdeTaylorEntries.get(curveIdx));
                 } else {
+                    // Data was lost (e.g., allEntries cleared by onAddCurve), try to preserve what we can
                     allEntries.add(new ArrayList<Entry>());
                 }
             } else {
