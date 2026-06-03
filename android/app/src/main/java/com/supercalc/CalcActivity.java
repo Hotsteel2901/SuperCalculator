@@ -29,6 +29,7 @@ public class CalcActivity extends AppCompatActivity {
     private EditText odeExprInput, odeX0Input, odeY0Input, odeXEndInput, odeStepsInput;
     private EditText statsDataInput;
     private EditText areaGInput;
+    private EditText sysFInput, sysGInput, sysX0Input, sysY0Input;
     private TextView resultView;
     private LineChart lineChart;
     private MaterialCardView graphCard;
@@ -125,6 +126,14 @@ public class CalcActivity extends AppCompatActivity {
         areaGInput = findViewById(R.id.area_g_input);
         MaterialButton btnAreaBetween = findViewById(R.id.btn_area_between);
         btnAreaBetween.setOnClickListener(v -> onAreaBetweenCurves());
+
+        // Nonlinear System Solver (2D)
+        sysFInput = findViewById(R.id.sys_f_input);
+        sysGInput = findViewById(R.id.sys_g_input);
+        sysX0Input = findViewById(R.id.sys_x0_input);
+        sysY0Input = findViewById(R.id.sys_y0_input);
+        MaterialButton btnSolveSystem = findViewById(R.id.btn_solve_system);
+        btnSolveSystem.setOnClickListener(v -> onSolveSystem2d());
 
         // Matrix Operations
         matrixAInput = findViewById(R.id.matrix_a_input);
@@ -431,6 +440,72 @@ public class CalcActivity extends AppCompatActivity {
             return;
         }
         resultView.append("Area between f(x)=" + eF + " and g(x)=" + eG + "\n  [" + fmt(a) + ", " + fmt(b) + "] = " + fmt(result) + "\n");
+    }
+
+    @SuppressWarnings("unchecked")
+    private void onSolveSystem2d() {
+        String fExpr = sysFInput.getText().toString().trim();
+        String gExpr = sysGInput.getText().toString().trim();
+        if (fExpr.isEmpty() || gExpr.isEmpty()) {
+            toast("Enter both f(x,y) and g(x,y) expressions");
+            return;
+        }
+        double x0, y0;
+        try {
+            x0 = Double.parseDouble(sysX0Input.getText().toString().trim());
+            y0 = Double.parseDouble(sysY0Input.getText().toString().trim());
+        } catch (NumberFormatException ex) {
+            toast("Invalid initial guess");
+            return;
+        }
+
+        HashMap<String, Object> result = CalcEngine.solveSystem2d(fExpr, gExpr, x0, y0);
+        if (result == null) {
+            String err = CalcEngine.getLastError();
+            resultView.append("System Solver: Error: " + (err.isEmpty() ? "computation failed" : err) + "\n");
+            return;
+        }
+
+        Object xObj = result.get("x");
+        Object yObj = result.get("y");
+        if (xObj == null || yObj == null) {
+            resultView.append("System Solver: Invalid result\n");
+            return;
+        }
+
+        double xSol = (double) xObj;
+        double ySol = (double) yObj;
+        double fVal = CalcEngine.evaluateXY(fExpr, xSol, ySol);
+        double gVal = CalcEngine.evaluateXY(gExpr, xSol, ySol);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("f(x,y) = ").append(fExpr).append("\n");
+        sb.append("g(x,y) = ").append(gExpr).append("\n\n");
+        sb.append("Solution:\n");
+        sb.append("  x = ").append(fmt(xSol)).append("\n");
+        sb.append("  y = ").append(fmt(ySol)).append("\n\n");
+        sb.append("Residuals:\n");
+        sb.append("  f(x,y) = ").append(Double.isNaN(fVal) ? "N/A" : String.format("%.2e", fVal)).append("\n");
+        sb.append("  g(x,y) = ").append(Double.isNaN(gVal) ? "N/A" : String.format("%.2e", gVal)).append("\n");
+
+        android.widget.TextView tv = new android.widget.TextView(this);
+        tv.setText(sb.toString());
+        tv.setTypeface(android.graphics.Typeface.MONOSPACE);
+        tv.setTextSize(13);
+        tv.setPadding(40, 24, 40, 24);
+        tv.setTextColor(android.graphics.Color.parseColor("#cdd6f4"));
+        tv.setBackgroundColor(android.graphics.Color.parseColor("#181825"));
+
+        android.widget.ScrollView sv = new android.widget.ScrollView(this);
+        sv.addView(tv);
+
+        new androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert)
+            .setTitle("System Solution")
+            .setView(sv)
+            .setPositiveButton("Close", null)
+            .show();
+
+        resultView.append("System solved: x=" + fmt(xSol) + ", y=" + fmt(ySol) + "\n");
     }
 
     private void onFFT() {

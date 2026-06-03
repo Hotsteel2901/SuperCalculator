@@ -224,6 +224,13 @@ _lib.area_between_curves.argtypes = [ctypes.c_char_p, ctypes.c_char_p,
                                       ctypes.c_double]
 _lib.area_between_curves.restype = ctypes.c_double
 
+_lib.solve_system_2d.argtypes = [ctypes.c_char_p, ctypes.c_char_p,
+                                  ctypes.c_double, ctypes.c_double,
+                                  ctypes.c_double, ctypes.c_int,
+                                  ctypes.POINTER(ctypes.c_double),
+                                  ctypes.POINTER(ctypes.c_double)]
+_lib.solve_system_2d.restype = ctypes.c_int
+
 
 def _is_invalid(x: float) -> bool:
     try:
@@ -678,6 +685,40 @@ class CalcEngine:
                                            expr_g.encode("utf-8"),
                                            a, b, tol)
         return None if _is_invalid(result) else result
+
+    @staticmethod
+    def solve_system_2d(f_expr: str, g_expr: str, x0: float = 0.0,
+                        y0: float = 0.0, tol: float = 1e-10,
+                        max_iter: int = 100) -> Optional[dict]:
+        """Solve a system of two nonlinear equations in two unknowns:
+            f(x,y) = 0
+            g(x,y) = 0
+        using Newton's method for systems with numerical Jacobian.
+
+        Args:
+            f_expr: expression for the first equation f(x,y)
+            g_expr: expression for the second equation g(x,y)
+            x0: initial guess for x
+            y0: initial guess for y
+            tol: convergence tolerance
+            max_iter: maximum number of iterations
+
+        Returns:
+            dict with keys 'x' and 'y' on success, None on failure.
+        """
+        out_x = ctypes.c_double()
+        out_y = ctypes.c_double()
+        success = _lib.solve_system_2d(f_expr.encode("utf-8"),
+                                        g_expr.encode("utf-8"),
+                                        x0, y0, tol, max_iter,
+                                        ctypes.byref(out_x), ctypes.byref(out_y))
+        if not success:
+            return None
+        x_val = out_x.value
+        y_val = out_y.value
+        if _is_invalid(x_val) or _is_invalid(y_val):
+            return None
+        return {'x': x_val, 'y': y_val}
 
     @staticmethod
     def evaluate_parametric(expr_x: str, expr_y: str, t_min: float,
