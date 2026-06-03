@@ -137,13 +137,18 @@ public class Surface3DView extends View {
                 }
                 return true;
             case MotionEvent.ACTION_UP:
+                isZooming = false;
+                if (event.getPointerCount() == 1) {
+                    lastTouchX = event.getX();
+                    lastTouchY = event.getY();
+                }
+                break;
             case MotionEvent.ACTION_POINTER_UP:
-                if (event.getPointerCount() <= 1) {
-                    isZooming = false;
-                    if (event.getPointerCount() == 1) {
-                        lastTouchX = event.getX();
-                        lastTouchY = event.getY();
-                    }
+                isZooming = false;
+                int remainingIdx = event.getActionIndex() == 0 ? 1 : 0;
+                if (event.getPointerCount() > remainingIdx) {
+                    lastTouchX = event.getX(remainingIdx);
+                    lastTouchY = event.getY(remainingIdx);
                 }
                 break;
         }

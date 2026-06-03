@@ -381,13 +381,47 @@ Java_com_supercalc_CalcEngine_odeSolveRk4(JNIEnv* env, jclass clazz,
         jstring xsKey = (*env)->NewStringUTF(env, "xs");
         jstring ysKey = (*env)->NewStringUTF(env, "ys");
         jstring countKey = (*env)->NewStringUTF(env, "count");
+        if (!xsKey || !ysKey || !countKey) {
+            if (xsKey) (*env)->DeleteLocalRef(env, xsKey);
+            if (ysKey) (*env)->DeleteLocalRef(env, ysKey);
+            if (countKey) (*env)->DeleteLocalRef(env, countKey);
+            (*env)->DeleteLocalRef(env, result);
+            (*env)->DeleteLocalRef(env, xs_array);
+            (*env)->DeleteLocalRef(env, ys_array);
+            free(out_x); free(out_y);
+            (*env)->ReleaseStringUTFChars(env, expr, str);
+            return NULL;
+        }
 
         (*env)->CallObjectMethod(env, result, putMethod, xsKey, xs_array);
         (*env)->CallObjectMethod(env, result, putMethod, ysKey, ys_array);
 
         /* Put count as Integer */
         jclass integerClass = (*env)->FindClass(env, "java/lang/Integer");
+        if (!integerClass) {
+            (*env)->DeleteLocalRef(env, xsKey);
+            (*env)->DeleteLocalRef(env, ysKey);
+            (*env)->DeleteLocalRef(env, countKey);
+            (*env)->DeleteLocalRef(env, result);
+            (*env)->DeleteLocalRef(env, xs_array);
+            (*env)->DeleteLocalRef(env, ys_array);
+            free(out_x); free(out_y);
+            (*env)->ReleaseStringUTFChars(env, expr, str);
+            return NULL;
+        }
         jmethodID valueOfMethod = (*env)->GetStaticMethodID(env, integerClass, "valueOf", "(I)Ljava/lang/Integer;");
+        if (!valueOfMethod) {
+            (*env)->DeleteLocalRef(env, integerClass);
+            (*env)->DeleteLocalRef(env, xsKey);
+            (*env)->DeleteLocalRef(env, ysKey);
+            (*env)->DeleteLocalRef(env, countKey);
+            (*env)->DeleteLocalRef(env, result);
+            (*env)->DeleteLocalRef(env, xs_array);
+            (*env)->DeleteLocalRef(env, ys_array);
+            free(out_x); free(out_y);
+            (*env)->ReleaseStringUTFChars(env, expr, str);
+            return NULL;
+        }
         jobject countObj = (*env)->CallStaticObjectMethod(env, integerClass, valueOfMethod, (jint)count);
         (*env)->CallObjectMethod(env, result, putMethod, countKey, countObj);
 
@@ -643,9 +677,31 @@ Java_com_supercalc_CalcEngine_solveSystem2d(JNIEnv* env, jclass clazz,
 
     jstring xKey = (*env)->NewStringUTF(env, "x");
     jstring yKey = (*env)->NewStringUTF(env, "y");
+    if (!xKey || !yKey) {
+        if (xKey) (*env)->DeleteLocalRef(env, xKey);
+        if (yKey) (*env)->DeleteLocalRef(env, yKey);
+        (*env)->DeleteLocalRef(env, result);
+        (*env)->DeleteLocalRef(env, hashMapClass);
+        return NULL;
+    }
 
     jclass doubleClass = (*env)->FindClass(env, "java/lang/Double");
+    if (!doubleClass) {
+        (*env)->DeleteLocalRef(env, xKey);
+        (*env)->DeleteLocalRef(env, yKey);
+        (*env)->DeleteLocalRef(env, result);
+        (*env)->DeleteLocalRef(env, hashMapClass);
+        return NULL;
+    }
     jmethodID valueOfDouble = (*env)->GetStaticMethodID(env, doubleClass, "valueOf", "(D)Ljava/lang/Double;");
+    if (!valueOfDouble) {
+        (*env)->DeleteLocalRef(env, doubleClass);
+        (*env)->DeleteLocalRef(env, xKey);
+        (*env)->DeleteLocalRef(env, yKey);
+        (*env)->DeleteLocalRef(env, result);
+        (*env)->DeleteLocalRef(env, hashMapClass);
+        return NULL;
+    }
     jobject xObj = (*env)->CallStaticObjectMethod(env, doubleClass, valueOfDouble, out_x);
     jobject yObj = (*env)->CallStaticObjectMethod(env, doubleClass, valueOfDouble, out_y);
 
