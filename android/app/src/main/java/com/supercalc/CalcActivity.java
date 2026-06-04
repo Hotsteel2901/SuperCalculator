@@ -204,6 +204,9 @@ public class CalcActivity extends AppCompatActivity {
         chipX2 .setOnClickListener(v -> { exprInput.setText("x^2");     onEvaluate(); });
         chipExp.setOnClickListener(v -> { exprInput.setText("exp(-x)"); onEvaluate(); });
         chip3D .setOnClickListener(v -> { exprInput.setText("x^2+y^2"); });
+
+        // Unit Converter
+        setupUnitConverter();
     }
 
     private String getExpr()  { return exprInput.getText().toString().trim(); }
@@ -1575,5 +1578,174 @@ public class CalcActivity extends AppCompatActivity {
 
     private void toast(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+    }
+
+    // Unit Converter
+    private EditText unitCategoryInput, unitFromInput, unitToInput, unitValueInput, unitResultInput;
+
+    private void setupUnitConverter() {
+        unitCategoryInput = findViewById(R.id.unit_category_input);
+        unitFromInput = findViewById(R.id.unit_from_input);
+        unitToInput = findViewById(R.id.unit_to_input);
+        unitValueInput = findViewById(R.id.unit_value_input);
+        unitResultInput = findViewById(R.id.unit_result_input);
+
+        MaterialButton btnUnitConvert = findViewById(R.id.btn_unit_convert);
+        btnUnitConvert.setOnClickListener(v -> onUnitConvert());
+    }
+
+    private static final java.util.Map<String, java.util.Map<String, Double>> UNIT_DATA = new java.util.HashMap<>();
+    static {
+        // Length
+        java.util.Map<String, Double> length = new java.util.HashMap<>();
+        length.put("Meter (m)", 1.0);
+        length.put("Kilometer (km)", 1000.0);
+        length.put("Centimeter (cm)", 0.01);
+        length.put("Millimeter (mm)", 0.001);
+        length.put("Mile (mi)", 1609.344);
+        length.put("Yard (yd)", 0.9144);
+        length.put("Foot (ft)", 0.3048);
+        length.put("Inch (in)", 0.0254);
+        length.put("Nautical Mile (nmi)", 1852.0);
+        UNIT_DATA.put("Length", length);
+
+        // Weight
+        java.util.Map<String, Double> weight = new java.util.HashMap<>();
+        weight.put("Kilogram (kg)", 1.0);
+        weight.put("Gram (g)", 0.001);
+        weight.put("Milligram (mg)", 0.000001);
+        weight.put("Metric Ton (t)", 1000.0);
+        weight.put("Pound (lb)", 0.45359237);
+        weight.put("Ounce (oz)", 0.028349523125);
+        UNIT_DATA.put("Weight", weight);
+
+        // Area
+        java.util.Map<String, Double> area = new java.util.HashMap<>();
+        area.put("Square Meter (m²)", 1.0);
+        area.put("Square Kilometer (km²)", 1000000.0);
+        area.put("Hectare (ha)", 10000.0);
+        area.put("Acre (ac)", 4046.8564224);
+        area.put("Square Foot (ft²)", 0.09290304);
+        area.put("Square Inch (in²)", 0.00064516);
+        area.put("Square Mile (mi²)", 2589988.110336);
+        UNIT_DATA.put("Area", area);
+
+        // Volume
+        java.util.Map<String, Double> volume = new java.util.HashMap<>();
+        volume.put("Liter (L)", 1.0);
+        volume.put("Milliliter (mL)", 0.001);
+        volume.put("Cubic Meter (m³)", 1000.0);
+        volume.put("Gallon (US)", 3.785411784);
+        volume.put("Quart (US)", 0.946352946);
+        volume.put("Pint (US)", 0.473176473);
+        volume.put("Cup (US)", 0.2365882365);
+        volume.put("Fluid Ounce (US)", 0.0295735295625);
+        volume.put("Cubic Centimeter (cm³)", 0.001);
+        UNIT_DATA.put("Volume", volume);
+
+        // Time
+        java.util.Map<String, Double> time = new java.util.HashMap<>();
+        time.put("Second (s)", 1.0);
+        time.put("Minute (min)", 60.0);
+        time.put("Hour (h)", 3600.0);
+        time.put("Day (d)", 86400.0);
+        time.put("Week (wk)", 604800.0);
+        time.put("Month (30 days)", 2592000.0);
+        time.put("Year (365 days)", 31536000.0);
+        UNIT_DATA.put("Time", time);
+
+        // Data Storage
+        java.util.Map<String, Double> data = new java.util.HashMap<>();
+        data.put("Byte (B)", 1.0);
+        data.put("Kilobyte (KB)", 1024.0);
+        data.put("Megabyte (MB)", 1048576.0);
+        data.put("Gigabyte (GB)", 1073741824.0);
+        data.put("Terabyte (TB)", 1099511627776.0);
+        data.put("Bit", 0.125);
+        data.put("Kilobit (Kbit)", 128.0);
+        data.put("Megabit (Mbit)", 131072.0);
+        data.put("Gigabit (Gbit)", 134217728.0);
+        UNIT_DATA.put("Data Storage", data);
+
+        // Speed
+        java.util.Map<String, Double> speed = new java.util.HashMap<>();
+        speed.put("Meter/second (m/s)", 1.0);
+        speed.put("Kilometer/hour (km/h)", 0.2777777778);
+        speed.put("Mile/hour (mph)", 0.44704);
+        speed.put("Knot (kn)", 0.5144444444);
+        speed.put("Foot/second (ft/s)", 0.3048);
+        speed.put("Mach (at sea level)", 340.29);
+        UNIT_DATA.put("Speed", speed);
+
+        // Angle
+        java.util.Map<String, Double> angle = new java.util.HashMap<>();
+        angle.put("Degree (°)", 1.0);
+        angle.put("Radian (rad)", 57.29577951308232);
+        angle.put("Gradian (grad)", 0.9);
+        angle.put("Arcminute (')", 1.0/60.0);
+        angle.put("Arcsecond (\")", 1.0/3600.0);
+        UNIT_DATA.put("Angle", angle);
+    }
+
+    private void onUnitConvert() {
+        String category = unitCategoryInput.getText().toString().trim();
+        String fromUnit = unitFromInput.getText().toString().trim();
+        String toUnit = unitToInput.getText().toString().trim();
+        String valueStr = unitValueInput.getText().toString().trim();
+
+        if (category.isEmpty() || fromUnit.isEmpty() || toUnit.isEmpty()) {
+            toast("Please fill in all fields");
+            return;
+        }
+
+        double value;
+        try {
+            value = Double.parseDouble(valueStr);
+        } catch (NumberFormatException e) {
+            toast("Invalid value");
+            return;
+        }
+
+        java.util.Map<String, Double> units = UNIT_DATA.get(category);
+        if (units == null) {
+            toast("Unknown category: " + category);
+            return;
+        }
+
+        Double fromFactor = units.get(fromUnit);
+        Double toFactor = units.get(toUnit);
+        if (fromFactor == null || toFactor == null) {
+            toast("Invalid unit for this category");
+            return;
+        }
+
+        double result;
+        if ("Temperature".equals(category)) {
+            result = convertTemperature(value, fromUnit, toUnit);
+        } else {
+            result = value * fromFactor / toFactor;
+        }
+
+        unitResultInput.setText(fmt(result));
+        resultView.append(value + " " + fromUnit + " = " + fmt(result) + " " + toUnit + "\n");
+    }
+
+    private double convertTemperature(double value, String from, String to) {
+        if (from.equals(to)) return value;
+        double celsius;
+        if (from.contains("Fahrenheit")) {
+            celsius = (value - 32) * 5.0 / 9.0;
+        } else if (from.contains("Kelvin")) {
+            celsius = value - 273.15;
+        } else {
+            celsius = value;
+        }
+        if (to.contains("Fahrenheit")) {
+            return celsius * 9.0 / 5.0 + 32;
+        } else if (to.contains("Kelvin")) {
+            return celsius + 273.15;
+        } else {
+            return celsius;
+        }
     }
 }

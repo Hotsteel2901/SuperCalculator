@@ -958,6 +958,141 @@ class SuperCalcApp:
         ttk.Entry(crow6, textvariable=self._var_complex_result, width=30,
                   font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
 
+        # --- Unit Converter ---
+        UNIT_CATEGORIES = {
+            "Length": {
+                "Meter (m)": 1.0,
+                "Kilometer (km)": 1000.0,
+                "Centimeter (cm)": 0.01,
+                "Millimeter (mm)": 0.001,
+                "Mile (mi)": 1609.344,
+                "Yard (yd)": 0.9144,
+                "Foot (ft)": 0.3048,
+                "Inch (in)": 0.0254,
+                "Nautical Mile (nmi)": 1852.0,
+            },
+            "Weight": {
+                "Kilogram (kg)": 1.0,
+                "Gram (g)": 0.001,
+                "Milligram (mg)": 0.000001,
+                "Metric Ton (t)": 1000.0,
+                "Pound (lb)": 0.45359237,
+                "Ounce (oz)": 0.028349523125,
+            },
+            "Temperature": {
+                "Celsius (°C)": "C",
+                "Fahrenheit (°F)": "F",
+                "Kelvin (K)": "K",
+            },
+            "Area": {
+                "Square Meter (m²)": 1.0,
+                "Square Kilometer (km²)": 1000000.0,
+                "Hectare (ha)": 10000.0,
+                "Acre (ac)": 4046.8564224,
+                "Square Foot (ft²)": 0.09290304,
+                "Square Inch (in²)": 0.00064516,
+                "Square Mile (mi²)": 2589988.110336,
+            },
+            "Volume": {
+                "Liter (L)": 1.0,
+                "Milliliter (mL)": 0.001,
+                "Cubic Meter (m³)": 1000.0,
+                "Gallon (US)": 3.785411784,
+                "Quart (US)": 0.946352946,
+                "Pint (US)": 0.473176473,
+                "Cup (US)": 0.2365882365,
+                "Fluid Ounce (US)": 0.0295735295625,
+                "Cubic Centimeter (cm³)": 0.001,
+            },
+            "Time": {
+                "Second (s)": 1.0,
+                "Minute (min)": 60.0,
+                "Hour (h)": 3600.0,
+                "Day (d)": 86400.0,
+                "Week (wk)": 604800.0,
+                "Month (30 days)": 2592000.0,
+                "Year (365 days)": 31536000.0,
+            },
+            "Data Storage": {
+                "Byte (B)": 1.0,
+                "Kilobyte (KB)": 1024.0,
+                "Megabyte (MB)": 1048576.0,
+                "Gigabyte (GB)": 1073741824.0,
+                "Terabyte (TB)": 1099511627776.0,
+                "Bit": 0.125,
+                "Kilobit (Kbit)": 128.0,
+                "Megabit (Mbit)": 131072.0,
+                "Gigabit (Gbit)": 134217728.0,
+            },
+            "Speed": {
+                "Meter/second (m/s)": 1.0,
+                "Kilometer/hour (km/h)": 0.2777777778,
+                "Mile/hour (mph)": 0.44704,
+                "Knot (kn)": 0.5144444444,
+                "Foot/second (ft/s)": 0.3048,
+                "Mach (at sea level)": 340.29,
+            },
+            "Angle": {
+                "Degree (°)": 1.0,
+                "Radian (rad)": 57.29577951308232,
+                "Gradian (grad)": 0.9,
+                "Arcminute (')": 1/60.0,
+                "Arcsecond (\")": 1/3600.0,
+            },
+        }
+
+        self._unit_categories = UNIT_CATEGORIES
+
+        frm_unit = ttk.LabelFrame(scroll_frame, text="Unit Converter",
+                                  style="Dark.TLabelframe")
+        frm_unit.pack(fill=tk.X, padx=8, pady=4)
+
+        urow1 = ttk.Frame(frm_unit, style="Dark.TFrame")
+        urow1.pack(fill=tk.X, padx=6, pady=(4, 2))
+        ttk.Label(urow1, text="Category:", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_unit_cat = tk.StringVar(value="Length")
+        self._unit_cat_combo = ttk.Combobox(urow1, textvariable=self._var_unit_cat,
+                                            values=list(UNIT_CATEGORIES.keys()),
+                                            state="readonly", font=("Consolas", 10), width=14)
+        self._unit_cat_combo.pack(side=tk.LEFT, padx=4)
+        self._unit_cat_combo.bind("<<ComboboxSelected>>",
+                                  lambda e: self._on_unit_category_change())
+
+        urow2 = ttk.Frame(frm_unit, style="Dark.TFrame")
+        urow2.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(urow2, text="From:", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_unit_from = tk.StringVar()
+        self._unit_from_combo = ttk.Combobox(urow2, textvariable=self._var_unit_from,
+                                             state="readonly", font=("Consolas", 10), width=20)
+        self._unit_from_combo.pack(side=tk.LEFT, padx=4)
+
+        urow3 = ttk.Frame(frm_unit, style="Dark.TFrame")
+        urow3.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(urow3, text="To:", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_unit_to = tk.StringVar()
+        self._unit_to_combo = ttk.Combobox(urow3, textvariable=self._var_unit_to,
+                                           state="readonly", font=("Consolas", 10), width=20)
+        self._unit_to_combo.pack(side=tk.LEFT, padx=4)
+
+        urow4 = ttk.Frame(frm_unit, style="Dark.TFrame")
+        urow4.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(urow4, text="Value:", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_unit_value = tk.StringVar(value="1")
+        ttk.Entry(urow4, textvariable=self._var_unit_value, width=15,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
+        ttk.Button(urow4, text="Convert",
+                   command=self._on_unit_convert).pack(side=tk.LEFT, padx=8)
+
+        urow5 = ttk.Frame(frm_unit, style="Dark.TFrame")
+        urow5.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Label(urow5, text="Result:", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_unit_result = tk.StringVar(value="")
+        ttk.Entry(urow5, textvariable=self._var_unit_result, width=30,
+                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+
+        # Initialize unit dropdowns
+        self._on_unit_category_change()
+
         # --- Status ---
         self.status_var = tk.StringVar(value="Ready.")
         status_bar = ttk.Label(scroll_frame, textvariable=self.status_var,
@@ -3227,6 +3362,75 @@ class SuperCalcApp:
         z = self._parse_complex(self._var_complex_z.get())
         if z is not None:
             self._show_complex_result(f"Im(z) = {z.imag:.10g}")
+
+    # ------------------------------------------------------------------
+    #  Unit Converter Operations
+    # ------------------------------------------------------------------
+    def _on_unit_category_change(self):
+        cat = self._var_unit_cat.get()
+        if cat in self._unit_categories:
+            units = list(self._unit_categories[cat].keys())
+            self._unit_from_combo["values"] = units
+            self._unit_to_combo["values"] = units
+            if len(units) > 0:
+                self._var_unit_from.set(units[0])
+            if len(units) > 1:
+                self._var_unit_to.set(units[1])
+            self._var_unit_result.set("")
+
+    def _on_unit_convert(self):
+        cat = self._var_unit_cat.get()
+        from_unit = self._var_unit_from.get()
+        to_unit = self._var_unit_to.get()
+        value_str = self._var_unit_value.get()
+
+        if not cat or not from_unit or not to_unit:
+            self.status_var.set("Unit converter: please select category and units.")
+            return
+
+        try:
+            value = float(value_str)
+        except ValueError:
+            messagebox.showerror("Unit Converter", "Invalid value. Please enter a number.")
+            return
+
+        units = self._unit_categories[cat]
+        from_factor = units[from_unit]
+        to_factor = units[to_unit]
+
+        # Handle temperature separately (non-linear conversion)
+        if cat == "Temperature":
+            result = self._convert_temperature(value, from_factor, to_factor)
+        else:
+            # Standard linear conversion: value * from_factor / to_factor
+            result = value * from_factor / to_factor
+
+        # Format result nicely
+        if abs(result) >= 1e10 or (abs(result) < 1e-6 and result != 0):
+            result_str = f"{result:.10e}"
+        else:
+            result_str = f"{result:.10g}"
+
+        self._var_unit_result.set(result_str)
+        self.status_var.set(f"{value} {from_unit} = {result_str} {to_unit}")
+
+    def _convert_temperature(self, value, from_type, to_type):
+        if from_type == to_type:
+            return value
+        # Convert to Celsius first
+        if from_type == "F":
+            celsius = (value - 32) * 5.0 / 9.0
+        elif from_type == "K":
+            celsius = value - 273.15
+        else:
+            celsius = value
+        # Convert from Celsius to target
+        if to_type == "F":
+            return celsius * 9.0 / 5.0 + 32
+        elif to_type == "K":
+            return celsius + 273.15
+        else:
+            return celsius
 
 
 # ---------------------------------------------------------------------------
