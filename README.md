@@ -59,8 +59,9 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
  - **Interactive Plot** — Matplotlib toolbar for zoom, pan, and export
   - **Function Table & CSV Export** — generate a data table of x and f(x) over any interval, then export to CSV or copy to clipboard
   - **FFT Spectrum Export** — export frequency, amplitude and phase data to CSV for external analysis
- - **Complex Number Calculator** — perform complex arithmetic (+, -, *, /, ^), trigonometric functions (sin, cos, tan), exponential, logarithm, square root, absolute value, and conjugate. Available on both desktop (Python) and Android (JNI).
- - **Windows EXE** — standalone executable, no Python installation required
+  - **Complex Number Calculator** — perform complex arithmetic (+, -, *, /, ^), trigonometric functions (sin, cos, tan), exponential, logarithm, square root, absolute value, and conjugate. Available on both desktop (Python) and Android (JNI).
+  - **Unit Converter** — convert between different units of measurement including Length, Weight, Temperature, Area, Volume, Time, Data Storage, Speed, and Angle. Supports 9 unit categories with comprehensive conversion factors.
+  - **Windows EXE** — standalone executable, no Python installation required
  - **Android App** — standalone APK with Material Design 3 UI and JNI bridge, now including 3D surface plotting with touch rotation and parametric curve support
 
 ## Pre-compiled Binaries
