@@ -86,8 +86,8 @@ public class Plot3DActivity extends AppCompatActivity {
 
         // Determine grid size: keep total points reasonable for mobile
         int gridSize = 35;
-        int cols = Math.max(gridSize, 2);
-        int rows = Math.max(gridSize, 2);
+        int cols = gridSize;
+        int rows = gridSize;
 
         float[][] zValues = new float[rows][cols];
         boolean hasValid = false;

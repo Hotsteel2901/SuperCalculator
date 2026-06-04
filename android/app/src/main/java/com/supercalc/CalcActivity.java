@@ -1685,6 +1685,13 @@ public class CalcActivity extends AppCompatActivity {
         angle.put("Arcminute (')", 1.0/60.0);
         angle.put("Arcsecond (\")", 1.0/3600.0);
         UNIT_DATA.put("Angle", angle);
+
+        // Temperature (dummy factors — actual conversion handled by convertTemperature)
+        java.util.Map<String, Double> temperature = new java.util.HashMap<>();
+        temperature.put("Celsius (°C)", 1.0);
+        temperature.put("Fahrenheit (°F)", 1.0);
+        temperature.put("Kelvin (K)", 1.0);
+        UNIT_DATA.put("Temperature", temperature);
     }
 
     private void onUnitConvert() {

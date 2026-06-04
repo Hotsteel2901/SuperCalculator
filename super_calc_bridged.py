@@ -1135,6 +1135,9 @@ class SuperCalcApp:
         self.canvas_2d.mpl_connect('button_press_event', self._on_canvas_click)
 
     def _on_2d_window_close(self):
+        if self.fig_2d is not None:
+            import matplotlib.pyplot as plt
+            plt.close(self.fig_2d)
         if self.window_2d is not None:
             self.window_2d.destroy()
         self.window_2d = None
@@ -1164,6 +1167,9 @@ class SuperCalcApp:
         self.canvas_3d.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
 
     def _on_3d_window_close(self):
+        if self.fig_3d is not None:
+            import matplotlib.pyplot as plt
+            plt.close(self.fig_3d)
         if self.window_3d is not None:
             self.window_3d.destroy()
         self.window_3d = None
@@ -1201,6 +1207,9 @@ class SuperCalcApp:
         self.canvas_fft.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
 
     def _on_fft_window_close(self):
+        if self.fig_fft is not None:
+            import matplotlib.pyplot as plt
+            plt.close(self.fig_fft)
         if self.window_fft is not None:
             self.window_fft.destroy()
         self.window_fft = None
@@ -1452,6 +1461,9 @@ class SuperCalcApp:
         self.normal_data.clear()
         self._var_mark_x.set("")
         self._fft_data = {}
+        self._table_data = []
+        self._table_expr = ""
+        self._ode_data = {}
         if self.ax_2d is not None and self.canvas_2d is not None:
             self.ax_2d.clear()
             self._setup_axes(self.ax_2d, is_3d=False)
@@ -1473,7 +1485,8 @@ class SuperCalcApp:
         if expr:
             self.entry_expr.delete(0, tk.END)
             self.entry_expr.insert(0, expr)
-            self._add_curve(expr)
+            if not any(c.expression == expr for c in self.curves):
+                self._add_curve(expr)
             self._plot_all()
 
     # ------------------------------------------------------------------
@@ -2669,6 +2682,9 @@ class SuperCalcApp:
         except ValueError:
             messagebox.showerror("Error", "Invalid solver parameters.")
             return
+        if a >= b:
+            messagebox.showerror("Error", "Left bound must be less than right bound.")
+            return
         expr_sub = self._substitute_params(expr)
         result = CalcEngine.solve(expr_sub, guess=guess, xmin=a, xmax=b)
         if result is None:
@@ -2695,6 +2711,9 @@ class SuperCalcApp:
         except ValueError:
             messagebox.showerror("Error", "Invalid bounds.")
             return
+        if a >= b:
+            messagebox.showerror("Error", "Left bound must be less than right bound.")
+            return
         expr_sub = self._substitute_params(expr)
         result = CalcEngine.solve_bisection(expr_sub, a, b)
         if result is None:
@@ -2720,7 +2739,9 @@ class SuperCalcApp:
         except ValueError:
             messagebox.showerror("Error", "Invalid initial guess.")
             return
-        result = CalcEngine.solve_system_2d(f_expr, g_expr, x0, y0)
+        f_sub = self._substitute_params(f_expr)
+        g_sub = self._substitute_params(g_expr)
+        result = CalcEngine.solve_system_2d(f_sub, g_sub, x0, y0)
         if result is None:
             err = CalcEngine.get_last_error()
             messagebox.showerror("System Solver Error",
@@ -2728,8 +2749,8 @@ class SuperCalcApp:
             return
         x_sol = result['x']
         y_sol = result['y']
-        f_val = CalcEngine.evaluate_xy(f_expr, x_sol, y_sol)
-        g_val = CalcEngine.evaluate_xy(g_expr, x_sol, y_sol)
+        f_val = CalcEngine.evaluate_xy(f_sub, x_sol, y_sol)
+        g_val = CalcEngine.evaluate_xy(g_sub, x_sol, y_sol)
         f_str = f"{f_val:.2e}" if f_val is not None else "N/A"
         g_str = f"{g_val:.2e}" if g_val is not None else "N/A"
         messagebox.showinfo(
@@ -2748,6 +2769,9 @@ class SuperCalcApp:
             b = float(self._var_ext_b.get())
         except ValueError:
             messagebox.showerror("Error", "Invalid interval bounds.")
+            return
+        if a >= b:
+            messagebox.showerror("Error", "Left bound must be less than right bound.")
             return
         expr_sub = self._substitute_params(expr)
         if minimum:
@@ -3193,48 +3217,58 @@ class SuperCalcApp:
     #  Complex Number Operations
     # ------------------------------------------------------------------
     def _parse_complex(self, s: str):
-        """Parse a complex number from string (a+bi format)."""
+        """Parse a complex number from string (a+bi format).
+
+        Supports: "3+4i", "3-4i", "2i", "-2i", "1+i", "1-i",
+                   "i", "-i", "3", "-2.5", etc.
+        """
         s = s.strip().replace(' ', '')
         if not s:
             return None
-        try:
-            # Handle 'i' at the end
-            if s.endswith('i') or s.endswith('I'):
-                s = s[:-1]
-                if not s or s == '+':
-                    return complex(0, 1)
-                elif s == '-':
-                    return complex(0, -1)
-                # Handle cases like "3+2i" -> "3+2j"
-                # Python's complex() expects 'j' suffix
-                if '+' in s:
-                    parts = s.split('+')
-                    real_part = parts[0]
-                    imag_part = parts[1]
-                    if imag_part:
-                        return complex(float(real_part), float(imag_part))
-                    else:
-                        return complex(float(real_part), 0)
-                elif s.startswith('-') and '-' in s[1:]:
-                    # Handle "-3-2i" -> "-3-2j"
-                    idx = s[1:].index('-') + 1
-                    real_part = s[:idx]
-                    imag_part = s[idx:]
-                    if imag_part:
-                        return complex(float(real_part), float(imag_part))
-                    else:
-                        return complex(float(real_part), 0)
-                else:
-                    # Pure imaginary like "2i" -> "2j"
-                    return complex(float(s), 0) if s else complex(0, 1)
-            else:
-                return complex(float(s), 0)
-        except ValueError:
+        # Strip trailing 'i' or 'I'
+        if s.endswith('i') or s.endswith('I'):
+            s = s[:-1]
+            if not s or s == '+':
+                return complex(0, 1)
+            elif s == '-':
+                return complex(0, -1)
+            # Find the last +/- that separates real and imaginary parts
+            # We scan from right to left, skipping the first char (which may be a sign)
+            split_pos = -1
+            for i in range(len(s) - 1, 0, -1):
+                if s[i] == '+' or s[i] == '-':
+                    split_pos = i
+                    break
+            if split_pos > 0:
+                real_part = s[:split_pos]
+                imag_part = s[split_pos:]
+                if imag_part in ('+', '-'):
+                    imag_part += '1'
+                try:
+                    return complex(float(real_part), float(imag_part))
+                except ValueError:
+                    pass
+            # Pure imaginary (e.g. "2", "-3", "0.5")
             try:
-                return complex(s)
+                return complex(0, float(s))
             except ValueError:
-                messagebox.showerror("Complex Error", f"Invalid complex number: {s}")
+                pass
+            # Fallback: try Python's complex() with 'j' suffix
+            try:
+                return complex(s + 'j')
+            except ValueError:
+                messagebox.showerror("Complex Error", f"Invalid complex number: {s}{'' if s else 'i'}")
                 return None
+        else:
+            # No 'i' suffix — pure real number
+            try:
+                return complex(float(s), 0)
+            except ValueError:
+                try:
+                    return complex(s)
+                except ValueError:
+                    messagebox.showerror("Complex Error", f"Invalid complex number: {s}")
+                    return None
 
     def _format_complex(self, z: complex) -> str:
         """Format complex number for display."""

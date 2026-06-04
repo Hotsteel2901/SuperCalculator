@@ -36,9 +36,9 @@ public class FullScreenPlot3DActivity extends AppCompatActivity {
             return;
         }
 
-        int gridSize = 50;
-        int cols = Math.max(gridSize, 2);
-        int rows = Math.max(gridSize, 2);
+        int gridSize = 35;
+        int cols = gridSize;
+        int rows = gridSize;
 
         float[][] zValues = new float[rows][cols];
         boolean hasValid = false;

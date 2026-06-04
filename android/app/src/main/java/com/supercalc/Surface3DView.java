@@ -18,6 +18,8 @@ public class Surface3DView extends View {
 
     private float[][] zValues;
     private int[][] colors;
+    private float[][] projX;
+    private float[][] projY;
     private float xMin = -10f, xMax = 10f;
     private float yMin = -10f, yMax = 10f;
     private float zMin = -10f, zMax = 10f;
@@ -101,6 +103,17 @@ public class Surface3DView extends View {
             colors = null;
         }
 
+        // Pre-allocate projection buffers for onDraw (avoids per-frame GC pressure)
+        if (zValues != null && zValues.length > 0 && zValues[0].length > 0) {
+            int rows = zValues.length;
+            int cols = zValues[0].length;
+            projX = new float[rows][cols];
+            projY = new float[rows][cols];
+        } else {
+            projX = null;
+            projY = null;
+        }
+
         invalidate();
     }
 
@@ -172,9 +185,7 @@ public class Surface3DView extends View {
         float cy = getHeight() / 2f;
         float baseScale = Math.min(getWidth(), getHeight()) / 3.5f * scale;
 
-        // Precompute projected points
-        float[][] projX = new float[rows][cols];
-        float[][] projY = new float[rows][cols];
+        // Use pre-allocated projection buffers (allocated in setData)
 
         float radX = (float) Math.toRadians(rotX);
         float radY = (float) Math.toRadians(rotY);
