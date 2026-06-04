@@ -37,6 +37,19 @@
 #define M_E  2.71828182845904523536
 #endif
 
+/* signbit compatibility for MSVC and older compilers */
+#ifndef _WIN32
+#include <math.h>  /* signbit is defined here on POSIX systems */
+#else
+/* signbit may not be available on older MSVC; provide a fallback */
+#ifndef signbit
+static inline int signbit(double x) {
+    return (x < 0.0) || (x == 0.0 && 1.0/x < 0.0);
+}
+#define signbit signbit
+#endif
+#endif
+
 #ifdef _WIN32
 #define EXPORT __declspec(dllexport)
 #else

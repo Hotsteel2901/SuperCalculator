@@ -3070,14 +3070,34 @@ class SuperCalcApp:
                     return complex(0, 1)
                 elif s == '-':
                     return complex(0, -1)
-                # Try to parse as complex
-                return complex(s + 'j')
+                # Handle cases like "3+2i" -> "3+2j"
+                # Python's complex() expects 'j' suffix
+                if '+' in s:
+                    parts = s.split('+')
+                    real_part = parts[0]
+                    imag_part = parts[1]
+                    if imag_part:
+                        return complex(float(real_part), float(imag_part))
+                    else:
+                        return complex(float(real_part), 0)
+                elif s.startswith('-') and '-' in s[1:]:
+                    # Handle "-3-2i" -> "-3-2j"
+                    idx = s[1:].index('-') + 1
+                    real_part = s[:idx]
+                    imag_part = s[idx:]
+                    if imag_part:
+                        return complex(float(real_part), float(imag_part))
+                    else:
+                        return complex(float(real_part), 0)
+                else:
+                    # Pure imaginary like "2i" -> "2j"
+                    return complex(float(s), 0) if s else complex(0, 1)
             else:
                 return complex(float(s), 0)
-        except:
+        except ValueError:
             try:
                 return complex(s)
-            except:
+            except ValueError:
                 messagebox.showerror("Complex Error", f"Invalid complex number: {s}")
                 return None
 
