@@ -1162,28 +1162,42 @@ public class CalcActivity extends AppCompatActivity {
         double[][] a = getMatrixA();
         if (a == null) return;
         if (a.length != a[0].length) { toast("Inverse requires square matrix"); return; }
-        double detA = det(a);
-        if (Math.abs(detA) < 1e-12) { toast("Matrix is singular"); return; }
         int n = a.length;
-        double[][] inv = new double[n][n];
-        double[][] adj = new double[n][n];
+        // Use Gauss-Jordan elimination with partial pivoting for better accuracy
+        double[][] aug = new double[n][2 * n];
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
-                double[][] sub = new double[n-1][n-1];
-                int si = 0;
-                for (int ii = 0; ii < n; ii++) {
-                    if (ii == i) continue;
-                    int sj = 0;
-                    for (int jj = 0; jj < n; jj++) {
-                        if (jj == j) continue;
-                        sub[si][sj++] = a[ii][jj];
-                    }
-                    si++;
-                }
-                adj[j][i] = Math.pow(-1, i+j) * det(sub);
-                inv[i][j] = adj[j][i] / detA;
+                aug[i][j] = a[i][j];
+                aug[i][n + j] = (i == j) ? 1.0 : 0.0;
             }
         }
+        for (int col = 0; col < n; col++) {
+            // Find pivot
+            int maxRow = col;
+            double maxVal = Math.abs(aug[col][col]);
+            for (int row = col + 1; row < n; row++) {
+                if (Math.abs(aug[row][col]) > maxVal) {
+                    maxVal = Math.abs(aug[row][col]);
+                    maxRow = row;
+                }
+            }
+            if (maxVal < 1e-12) { toast("Matrix is singular"); return; }
+            // Swap rows
+            double[] tmp = aug[col]; aug[col] = aug[maxRow]; aug[maxRow] = tmp;
+            // Scale pivot row
+            double piv = aug[col][col];
+            for (int j = 0; j < 2 * n; j++) aug[col][j] /= piv;
+            // Eliminate column
+            for (int row = 0; row < n; row++) {
+                if (row == col) continue;
+                double factor = aug[row][col];
+                for (int j = 0; j < 2 * n; j++) aug[row][j] -= factor * aug[col][j];
+            }
+        }
+        double[][] inv = new double[n][n];
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                inv[i][j] = aug[i][n + j];
         showMatrixResult("inv(A)", formatMatrix(inv));
         resultView.append("Matrix inverse computed\n");
     }
@@ -1233,8 +1247,9 @@ public class CalcActivity extends AppCompatActivity {
         double[][] a = getMatrixA();
         if (a == null) return;
         if (a.length != a[0].length) { toast("Eigenvalues require square matrix"); return; }
+        int n = a.length;
         // For 2x2: use characteristic equation
-        if (a.length == 2) {
+        if (n == 2) {
             double trace = a[0][0] + a[1][1];
             double detA = a[0][0]*a[1][1] - a[0][1]*a[1][0];
             double disc = trace*trace - 4*detA;
@@ -1253,23 +1268,56 @@ public class CalcActivity extends AppCompatActivity {
             }
             showMatrixResult("Eigenvalues", sb.toString());
         } else {
-            // For larger matrices: iterative power method approximation
-            // Simple eigenvalue estimation using Gershgorin circles
+            // For larger matrices: use power iteration to find dominant eigenvalue
+            // and deflate to find subsequent ones (QR algorithm simplified)
             StringBuilder sb = new StringBuilder();
-            sb.append("Gershgorin circle eigenvalue bounds:\n\n");
-            for (int i = 0; i < a.length; i++) {
-                double center = a[i][i];
-                double radius = 0;
-                for (int j = 0; j < a[0].length; j++) {
-                    if (i != j) radius += Math.abs(a[i][j]);
+            sb.append("Eigenvalue approximation (power iteration):\n\n");
+            double[][] mat = new double[n][n];
+            for (int i = 0; i < n; i++)
+                for (int j = 0; j < n; j++)
+                    mat[i][j] = a[i][j];
+            double[] eigenvalues = new double[n];
+            for (int e = 0; e < n; e++) {
+                // Power iteration
+                double[] v = new double[n];
+                v[0] = 1.0;  // Initial guess
+                double eigenval = 0;
+                for (int iter = 0; iter < 1000; iter++) {
+                    double[] newV = new double[n];
+                    for (int i = 0; i < n; i++) {
+                        double sum = 0;
+                        for (int j = 0; j < n; j++) sum += mat[i][j] * v[j];
+                        newV[i] = sum;
+                    }
+                    // Normalize
+                    double norm = 0;
+                    for (int i = 0; i < n; i++) norm += newV[i] * newV[i];
+                    norm = Math.sqrt(norm);
+                    if (norm < 1e-15) break;
+                    for (int i = 0; i < n; i++) newV[i] /= norm;
+                    // Estimate eigenvalue (Rayleigh quotient)
+                    double[] Av = new double[n];
+                    for (int i = 0; i < n; i++) {
+                        double sum = 0;
+                        for (int j = 0; j < n; j++) sum += mat[i][j] * newV[j];
+                        Av[i] = sum;
+                    }
+                    double num = 0, den = 0;
+                    for (int i = 0; i < n; i++) {
+                        num += newV[i] * Av[i];
+                        den += newV[i] * newV[i];
+                    }
+                    eigenval = num / den;
+                    v = newV;
                 }
-                sb.append("  Circle ").append(i+1).append(": center=")
-                  .append(fmt(center)).append(", radius=").append(fmt(radius))
-                  .append("\n");
-                sb.append("    eigenvalue in [").append(fmt(center - radius))
-                  .append(", ").append(fmt(center + radius)).append("]\n");
+                eigenvalues[e] = eigenval;
+                sb.append("  lambda").append(e + 1).append(" = ").append(fmt(eigenval)).append("\n");
+                // Deflate: subtract eigenvalue * v * v^T
+                for (int i = 0; i < n; i++)
+                    for (int j = 0; j < n; j++)
+                        mat[i][j] -= eigenval * v[i] * v[j];
             }
-            showMatrixResult("Eigenvalue Bounds", sb.toString());
+            showMatrixResult("Eigenvalues", sb.toString());
         }
         resultView.append("Eigenvalue computation done\n");
     }
