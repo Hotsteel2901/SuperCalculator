@@ -1,4 +1,0 @@
-# ninja log v5
-0	57	1779791403815919626	CMakeFiles/calc_core.dir/calc_core_jni.c.o	27adfd7ca0505bae
-0	178	1779791403936919089	CMakeFiles/calc_core.dir/home/runner/work/SuperCalculator/SuperCalculator/calc_core.c.o	b55e395671e93dc4
-178	191	1779791403949919032	/home/runner/work/SuperCalculator/SuperCalculator/android/app/build/intermediates/cxx/RelWithDebInfo/3e3wzr5m/obj/x86_64/libcalc_core.so	2fc4cac0b632c8cc

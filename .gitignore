@@ -22,3 +22,10 @@ build/
 *~
 .DS_Store
 Thumbs.db
+
+# Android build caches
+android/.gradle/
+android/build/
+android/app/build/
+android/app/.cxx/
+android/local.properties
