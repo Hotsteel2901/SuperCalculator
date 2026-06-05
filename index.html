@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <meta name="theme-color" content="#0a0a14" media="(prefers-color-scheme: dark)">
     <meta name="theme-color" content="#f0f4f8" media="(prefers-color-scheme: light)">
-    <meta name="description" content="SuperCalculator - 基于桥接模式的高性能函数计算与可视化工具，支持函数绘图、3D曲面、参数曲线、极坐标绘图、数值微积分、方程求解与极值查找">
+    <meta name="description" content="SuperCalculator - 基于桥接模式的高性能函数计算与可视化工具，支持函数绘图、3D曲面、参数曲线、极坐标绘图、数值微积分、方程求解、极值查找与曲线拟合">
     <title>SuperCalculator - 超级函数绘图计算器</title>
     <script>
         (function(){try{var t=localStorage.getItem('theme');if(t){document.documentElement.setAttribute('data-theme',t)}else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches){document.documentElement.setAttribute('data-theme','light')}}catch(e){}})();
@@ -1196,7 +1196,7 @@
                 <span>Liquid Glass 设计</span>
             </div>
             <h1 class="hero-title">Super Function Graphing Calculator</h1>
-            <p class="hero-subtitle">基于桥接模式的高性能函数计算与可视化工具，融合 C 与 Python 优势，带来极致流畅的计算体验。支持 2D/3D 绘图、数值微积分、方程求解与极值查找。</p>
+            <p class="hero-subtitle">基于桥接模式的高性能函数计算与可视化工具，融合 C 与 Python 优势，带来极致流畅的计算体验。支持 2D/3D 绘图、数值微积分、方程求解、极值查找与曲线拟合。</p>
             <div class="hero-actions">
                 <a href="#quick-start" class="btn btn-primary">
                     <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -1540,6 +1540,22 @@
                     </div>
                     <h3 class="card-title">单位转换器</h3>
                     <p class="card-text">支持长度、重量、温度、面积、体积、时间、数据存储、速度和角度等 9 个单位类别的全面转换</p>
+                </div>
+                <div class="card glass reveal">
+                    <div class="card-icon">
+                        <!-- Scatter plot with trend line -->
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="5" cy="17" r="1.5"/>
+                            <circle cx="8" cy="11" r="1.5"/>
+                            <circle cx="11" cy="13" r="1.5"/>
+                            <circle cx="14" cy="7" r="1.5"/>
+                            <circle cx="17" cy="9" r="1.5"/>
+                            <circle cx="20" cy="5" r="1.5"/>
+                            <line x1="4" y1="17" x2="21" y2="5" stroke-dasharray="3,2" stroke-width="1.5"/>
+                        </svg>
+                    </div>
+                    <h3 class="card-title">曲线拟合 / 回归分析</h3>
+                    <p class="card-text">支持线性、多项式（可配置阶数）、指数、幂函数和对数拟合模型，显示拟合方程与 R² 拟合优度，支持散点图 + 拟合曲线可视化</p>
                 </div>
                 <div class="card glass reveal">
                     <div class="card-icon">

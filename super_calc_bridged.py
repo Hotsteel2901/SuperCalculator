@@ -862,6 +862,54 @@ class SuperCalcApp:
         ttk.Button(stats_row2, text="Export CSV",
                    command=self._on_stats_export_csv).pack(side=tk.LEFT, padx=2)
 
+        # --- Curve Fitting / Regression ---
+        frm_regression = ttk.LabelFrame(scroll_frame, text="Curve Fitting / Regression",
+                                        style="Dark.TLabelframe")
+        frm_regression.pack(fill=tk.X, padx=8, pady=4)
+
+        reg_row1 = ttk.Frame(frm_regression, style="Dark.TFrame")
+        reg_row1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(reg_row1, text="X data (comma/space separated, optional):",
+                  style="Dark.TLabel").pack(anchor=tk.W, padx=2)
+        self._var_reg_xdata = tk.StringVar(value="")
+        ttk.Entry(reg_row1, textvariable=self._var_reg_xdata, width=36,
+                  font=("Consolas", 10)).pack(fill=tk.X, padx=2, pady=(0, 4))
+
+        reg_row1b = ttk.Frame(frm_regression, style="Dark.TFrame")
+        reg_row1b.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(reg_row1b, text="Y data (uses Statistics data if X is empty):",
+                  style="Dark.TLabel").pack(anchor=tk.W, padx=2)
+        self._var_reg_ydata = tk.StringVar(value="")
+        ttk.Entry(reg_row1b, textvariable=self._var_reg_ydata, width=36,
+                  font=("Consolas", 10)).pack(fill=tk.X, padx=2, pady=(0, 4))
+
+        reg_row2 = ttk.Frame(frm_regression, style="Dark.TFrame")
+        reg_row2.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Button(reg_row2, text="Linear (y=ax+b)",
+                   command=self._on_reg_linear).pack(side=tk.LEFT, padx=2)
+        ttk.Button(reg_row2, text="Quadratic",
+                   command=self._on_reg_quadratic).pack(side=tk.LEFT, padx=2)
+        ttk.Button(reg_row2, text="Polynomial",
+                   command=self._on_reg_polynomial).pack(side=tk.LEFT, padx=2)
+
+        reg_row3 = ttk.Frame(frm_regression, style="Dark.TFrame")
+        reg_row3.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Button(reg_row3, text="Exponential",
+                   command=self._on_reg_exponential).pack(side=tk.LEFT, padx=2)
+        ttk.Button(reg_row3, text="Power",
+                   command=self._on_reg_power).pack(side=tk.LEFT, padx=2)
+        ttk.Button(reg_row3, text="Logarithmic",
+                   command=self._on_reg_logarithmic).pack(side=tk.LEFT, padx=2)
+
+        reg_row4 = ttk.Frame(frm_regression, style="Dark.TFrame")
+        reg_row4.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Label(reg_row4, text="Poly degree:", style="Dark.TLabel").pack(side=tk.LEFT, padx=2)
+        self._var_reg_degree = tk.StringVar(value="3")
+        ttk.Entry(reg_row4, textvariable=self._var_reg_degree, width=5,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+        ttk.Button(reg_row4, text="Plot Fit",
+                   command=self._on_reg_plot).pack(side=tk.LEFT, padx=(8, 2))
+
         # --- Matrix Operations ---
         frm_matrix = ttk.LabelFrame(scroll_frame, text="Matrix Operations (Linear Algebra)",
                                     style="Dark.TLabelframe")
@@ -3001,6 +3049,156 @@ class SuperCalcApp:
             self.status_var.set(f"Exported {len(values)} values to {os.path.basename(path)}")
         except Exception as e:
             messagebox.showerror("Export Error", f"Could not export: {e}")
+
+    # ------------------------------------------------------------------
+    #  Curve Fitting / Regression
+    # ------------------------------------------------------------------
+    def _get_reg_data(self):
+        """Get X and Y data for regression. Falls back to statistics data for Y if X is empty."""
+        x_text = self._var_reg_xdata.get().strip()
+        y_text = self._var_reg_ydata.get().strip()
+        if y_text:
+            ys = self._parse_data_list(y_text)
+        else:
+            ys = self._parse_stats_data()
+        if ys is None or len(ys) < 2:
+            messagebox.showerror("Error", "Need at least 2 Y data points.")
+            return None, None
+        if x_text:
+            xs = self._parse_data_list(x_text)
+            if xs is None or len(xs) != len(ys):
+                messagebox.showerror("Error",
+                    f"X data length ({len(xs) if xs else 0}) must match Y data length ({len(ys)}).")
+                return None, None
+        else:
+            xs = list(range(1, len(ys) + 1))
+        return xs, ys
+
+    def _parse_data_list(self, text: str):
+        """Parse comma/space/semicolon separated numbers."""
+        import re as _re
+        text = text.strip()
+        if not text:
+            return None
+        parts = _re.split(r'[,;\s]+', text)
+        vals = []
+        for p in parts:
+            p = p.strip()
+            if not p:
+                continue
+            try:
+                vals.append(float(p))
+            except ValueError:
+                return None
+        return vals if vals else None
+
+    def _show_reg_result(self, title, result):
+        """Show regression result and optionally store for plotting."""
+        if result is None:
+            messagebox.showerror("Error", "Regression failed. Check your data.")
+            return
+        self._last_reg_result = result
+        lines = [
+            f"{title}",
+            f"Equation: {result['equation']}",
+            f"R² = {result['r_squared']:.8f}",
+        ]
+        msg = "\n".join(lines)
+        messagebox.showinfo(title, msg)
+        self.status_var.set(f"Fit: {result['equation']}  R²={result['r_squared']:.6f}")
+
+    def _on_reg_linear(self):
+        xs, ys = self._get_reg_data()
+        if xs is None:
+            return
+        result = CalcEngine.linear_regression(xs, ys)
+        self._show_reg_result("Linear Regression", result)
+
+    def _on_reg_quadratic(self):
+        xs, ys = self._get_reg_data()
+        if xs is None:
+            return
+        result = CalcEngine.polynomial_regression(xs, ys, degree=2)
+        self._show_reg_result("Quadratic Regression", result)
+
+    def _on_reg_polynomial(self):
+        xs, ys = self._get_reg_data()
+        if xs is None:
+            return
+        try:
+            degree = int(self._var_reg_degree.get())
+            if degree < 1 or degree > 10:
+                messagebox.showerror("Error", "Degree must be between 1 and 10.")
+                return
+        except ValueError:
+            messagebox.showerror("Error", "Invalid degree value.")
+            return
+        result = CalcEngine.polynomial_regression(xs, ys, degree=degree)
+        self._show_reg_result(f"Polynomial Regression (degree {degree})", result)
+
+    def _on_reg_exponential(self):
+        xs, ys = self._get_reg_data()
+        if xs is None:
+            return
+        result = CalcEngine.exponential_regression(xs, ys)
+        self._show_reg_result("Exponential Regression", result)
+
+    def _on_reg_power(self):
+        xs, ys = self._get_reg_data()
+        if xs is None:
+            return
+        result = CalcEngine.power_regression(xs, ys)
+        self._show_reg_result("Power Regression", result)
+
+    def _on_reg_logarithmic(self):
+        xs, ys = self._get_reg_data()
+        if xs is None:
+            return
+        result = CalcEngine.logarithmic_regression(xs, ys)
+        self._show_reg_result("Logarithmic Regression", result)
+
+    def _on_reg_plot(self):
+        """Plot data points and fitted curve."""
+        if not hasattr(self, '_last_reg_result') or self._last_reg_result is None:
+            messagebox.showinfo("Info", "Run a regression first to generate fit data.")
+            return
+        result = self._last_reg_result
+        xs_fit = result.get('xs_fit', [])
+        ys_fit = result.get('ys_fit', [])
+        if not xs_fit or not ys_fit:
+            return
+        self._ensure_2d_window()
+        self.ax_2d.clear()
+        self._setup_axes(self.ax_2d, is_3d=False)
+
+        # Plot original data points
+        x_text = self._var_reg_xdata.get().strip()
+        y_text = self._var_reg_ydata.get().strip()
+        if y_text:
+            ys = self._parse_data_list(y_text)
+        else:
+            ys = self._parse_stats_data()
+        if x_text:
+            xs = self._parse_data_list(x_text)
+        else:
+            xs = list(range(1, len(ys) + 1)) if ys else []
+
+        if xs and ys:
+            self.ax_2d.scatter(xs, ys, color="#f38ba8", s=30, zorder=5,
+                             label="Data", edgecolors="#313244", linewidths=0.5)
+
+        # Plot fitted curve
+        self.ax_2d.plot(xs_fit, ys_fit, color="#89b4fa", linewidth=2,
+                       label=f"Fit: {result['equation']}\nR²={result['r_squared']:.6f}")
+
+        self.ax_2d.legend(loc="best", facecolor="#313244",
+                          edgecolor="#585b70", labelcolor="#cdd6f4", fontsize=9)
+        self.ax_2d.set_title("Curve Fitting", color="#cdd6f4", fontsize=12)
+        self.ax_2d.set_xlabel("X", color="#cdd6f4")
+        self.ax_2d.set_ylabel("Y", color="#cdd6f4")
+
+        self.canvas_2d.draw()
+        self.status_var.set(f"Fit curve plotted: {result['equation']}")
 
     # ------------------------------------------------------------------
     #  Matrix Operations

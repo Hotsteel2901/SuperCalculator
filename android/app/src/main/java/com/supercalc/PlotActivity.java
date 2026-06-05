@@ -160,6 +160,15 @@ public class PlotActivity extends AppCompatActivity {
                 plotTaylorSeries(taylorExpr, taylorA, taylorOrder, taylorXs, taylorYsOrig, taylorYsTaylor);
             }
         }
+        
+        // Handle regression scatter + fit curve from intent
+        if (intent != null && intent.getBooleanExtra("regression", false)) {
+            double[] regXs = intent.getDoubleArrayExtra("regXs");
+            double[] regYs = intent.getDoubleArrayExtra("regYs");
+            if (regXs != null && regYs != null) {
+                plotRegressionData(regXs, regYs);
+            }
+        }
     }
     
     private void plotParametricCurve(String xExpr, String yExpr, double tMin, double tMax) {
@@ -483,6 +492,79 @@ public class PlotActivity extends AppCompatActivity {
             lineChart.invalidate();
         }
         toast("Taylor series (order " + order + ") plotted at a=" + String.format("%.4g", a));
+    }
+    
+    private void plotRegressionData(double[] xs, double[] ys) {
+        // Plot scatter points
+        ArrayList<Entry> scatterEntries = new ArrayList<>();
+        for (int i = 0; i < xs.length; i++) {
+            if (!Double.isNaN(xs[i]) && !Double.isInfinite(xs[i]) &&
+                !Double.isNaN(ys[i]) && !Double.isInfinite(ys[i])) {
+                scatterEntries.add(new Entry((float) xs[i], (float) ys[i]));
+            }
+        }
+        
+        if (scatterEntries.isEmpty()) {
+            toast("No valid data points to plot");
+            return;
+        }
+        
+        allEntries.clear();
+        allExpressions.clear();
+        curveColors.clear();
+        curveTypes.clear();
+        parametricXExprs.clear();
+        parametricYExprs.clear();
+        parametricTMin.clear();
+        parametricTMax.clear();
+        polarExprs.clear();
+        polarThetaMin.clear();
+        polarThetaMax.clear();
+        
+        List<ILineDataSet> dataSets = new ArrayList<>();
+        
+        // Scatter data points (pink)
+        allEntries.add(scatterEntries);
+        String scatterLabel = "Data Points";
+        allExpressions.add(scatterLabel);
+        int scatterColor = Color.parseColor("#f38ba8");
+        curveColors.add(scatterColor);
+        curveTypes.add("regular");
+        LineDataSet dsScatter = new LineDataSet(scatterEntries, scatterLabel);
+        dsScatter.setColor(scatterColor);
+        dsScatter.setLineWidth(0f);
+        dsScatter.setDrawCircles(true);
+        dsScatter.setCircleRadius(4f);
+        dsScatter.setCircleColor(scatterColor);
+        dsScatter.setDrawValues(false);
+        dsScatter.setMode(LineDataSet.Mode.SCATTER);
+        dataSets.add(dsScatter);
+        
+        if (!dataSets.isEmpty()) {
+            LineData lineData = new LineData(dataSets);
+            lineChart.setData(lineData);
+            
+            float xMin = Float.POSITIVE_INFINITY, xMax = Float.NEGATIVE_INFINITY;
+            float yMin = Float.POSITIVE_INFINITY, yMax = Float.NEGATIVE_INFINITY;
+            for (Entry e : scatterEntries) {
+                if (e.getX() < xMin) xMin = e.getX();
+                if (e.getX() > xMax) xMax = e.getX();
+                if (e.getY() < yMin) yMin = e.getY();
+                if (e.getY() > yMax) yMax = e.getY();
+            }
+            float xPad = (xMax - xMin) * 0.1f;
+            float yPad = (yMax - yMin) * 0.1f;
+            xMinInput.setText(String.valueOf(xMin - xPad));
+            xMaxInput.setText(String.valueOf(xMax + xPad));
+            yMinInput.setText(String.valueOf(yMin - yPad));
+            yMaxInput.setText(String.valueOf(yMax + yPad));
+            
+            YAxis yAxisLeft = lineChart.getAxisLeft();
+            yAxisLeft.setAxisMinimum(yMin - yPad);
+            yAxisLeft.setAxisMaximum(yMax + yPad);
+        }
+        lineChart.invalidate();
+        toast("Regression data plotted (" + xs.length + " points)");
     }
     
     private void setupGestureListener() {
