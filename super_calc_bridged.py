@@ -85,6 +85,10 @@ PRESET_FUNCTIONS = {
     "3D: sin(sqrt(x^2+y^2))": "sin(sqrt(x^2+y^2))",
     "FFT: sin(2*pi*x) + 0.5*sin(6*pi*x)": "sin(2*pi*x)+0.5*sin(6*pi*x)",
     "FFT: sin(5*x) + cos(10*x)": "sin(5*x)+cos(10*x)",
+    "floor(x) (staircase)": "floor(x)",
+    "ceil(x) (staircase)": "ceil(x)",
+    "x mod 1 (sawtooth)": "x mod 1",
+    "sin(x) mod 1": "sin(x) mod 1",
 }
 
 PARAMETRIC_PRESETS = {
@@ -138,7 +142,7 @@ CMAP_3D_OPTIONS = [
 ]
 
 PARAM_PATTERN = re.compile(r'\b([a-zA-Z]+)\b')
-KNOWN_FUNCTIONS = {'sin', 'cos', 'tan', 'log', 'ln', 'exp', 'sqrt', 'abs'}
+KNOWN_FUNCTIONS = {'sin', 'cos', 'tan', 'log', 'ln', 'exp', 'sqrt', 'abs', 'floor', 'ceil'}
 KNOWN_CONSTANTS = {'pi', 'e'}
 INDEPENDENT_VARS = {'x', 'y'}  # variables used by the engine, not parameters
 
@@ -1289,6 +1293,7 @@ class SuperCalcApp:
             ]),
             ("Operators", [
                 ("÷", "/"), ("×", "*"), ("^", "^"), ("-", "-"), ("+", "+"),
+                ("mod", " mod "),
             ]),
             ("Log/Exp", [
                 ("ln", "ln("), ("log", "log("), ("eˣ", "exp("), ("e", "e"),
@@ -1296,6 +1301,9 @@ class SuperCalcApp:
             ("Trig", [
                 ("sin", "sin("), ("cos", "cos("), ("tan", "tan("),
                 ("π", "pi"), ("°", "*pi/180"),
+            ]),
+            ("Rounding", [
+                ("floor", "floor("), ("ceil", "ceil("),
             ]),
             ("Special", [
                 ("!", "!"), ("(", "("), (")", ")"), (",", ","),
