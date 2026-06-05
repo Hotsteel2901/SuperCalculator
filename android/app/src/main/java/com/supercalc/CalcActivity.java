@@ -228,6 +228,15 @@ public class CalcActivity extends AppCompatActivity {
         chipExp.setOnClickListener(v -> { exprInput.setText("exp(-x)"); onEvaluate(); });
         chip3D .setOnClickListener(v -> { exprInput.setText("x^2+y^2"); });
 
+        // Rounding & modulo chips
+        Chip chipFloor = findViewById(R.id.chip_floor);
+        Chip chipCeil  = findViewById(R.id.chip_ceil);
+        Chip chipMod   = findViewById(R.id.chip_mod);
+
+        chipFloor.setOnClickListener(v -> { exprInput.setText("floor(x)"); onEvaluate(); });
+        chipCeil.setOnClickListener(v -> { exprInput.setText("ceil(x)"); onEvaluate(); });
+        chipMod.setOnClickListener(v -> { exprInput.setText("x mod 3"); onEvaluate(); });
+
         // Unit Converter
         setupUnitConverter();
     }

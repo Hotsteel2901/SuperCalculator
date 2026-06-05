@@ -90,7 +90,8 @@ typedef enum {
 } TokenKind;
 
 typedef enum {
-    F_SIN, F_COS, F_TAN, F_LOG, F_LN, F_SQRT, F_EXP, F_ABS
+    F_SIN, F_COS, F_TAN, F_LOG, F_LN, F_SQRT, F_EXP, F_ABS,
+    F_FLOOR, F_CEIL
 } FuncId;
 
 typedef struct {
@@ -147,11 +148,14 @@ static int tokenize(const char* s, Token* toks, int max_toks) {
             else if (!strcmp(name, "ln"))   { toks[n].kind=T_FUNC; toks[n].func=F_LN;   n++; continue; }
             else if (!strcmp(name, "sqrt")) { toks[n].kind=T_FUNC; toks[n].func=F_SQRT; n++; continue; }
             else if (!strcmp(name, "exp"))  { toks[n].kind=T_FUNC; toks[n].func=F_EXP;  n++; continue; }
-            else if (!strcmp(name, "abs"))  { toks[n].kind=T_FUNC; toks[n].func=F_ABS;  n++; continue; }
+            else if (!strcmp(name, "abs"))   { toks[n].kind=T_FUNC; toks[n].func=F_ABS;   n++; continue; }
+            else if (!strcmp(name, "floor")) { toks[n].kind=T_FUNC; toks[n].func=F_FLOOR; n++; continue; }
+            else if (!strcmp(name, "ceil"))  { toks[n].kind=T_FUNC; toks[n].func=F_CEIL;  n++; continue; }
+            else if (!strcmp(name, "mod"))   { toks[n].kind=T_OP;   toks[n].op='%';        n++; continue; }
             else { set_error("Unknown function"); return -1; }
         }
         switch (*s) {
-            case '+': case '-': case '*': case '/': case '^':
+            case '+': case '-': case '*': case '/': case '^': case '%':
                 toks[n].kind = T_OP; toks[n].op = *s; s++; n++; break;
             case '(': toks[n++].kind = T_LPAREN; s++; break;
             case ')': toks[n++].kind = T_RPAREN; s++; break;
@@ -167,7 +171,7 @@ static int precedence(char op) {
     if (op == '!' ) return 5;
     if (op == '~' ) return 2;
     if (op == '+' || op == '-') return 1;
-    if (op == '*' || op == '/') return 2;
+    if (op == '*' || op == '/' || op == '%') return 2;
     if (op == '^')              return 3;
     return 0;
 }
@@ -322,6 +326,8 @@ static double apply_func(FuncId f, double v) {
             return sqrt(v);
         case F_EXP:  return exp(v);
         case F_ABS:  return fabs(v);
+        case F_FLOOR: return floor(v);
+        case F_CEIL:  return ceil(v);
         default:     return NAN;
     }
 }
@@ -368,6 +374,7 @@ static int eval_rpn(RPN* rpn, int nrpn, double x, double y, double* result) {
                     case '-': stack[sp++] = a-b; break;
                     case '*': stack[sp++] = a*b; break;
                     case '/': stack[sp++] = b ? a/b : (set_error("Division by zero"),NAN); break;
+                    case '%': stack[sp++] = b ? fmod(a,b) : (set_error("Modulo by zero"),NAN); break;
                     case '^': stack[sp++] = pow(a,b); break;
                     default:  set_error("Unknown operator"); return -1;
                 }

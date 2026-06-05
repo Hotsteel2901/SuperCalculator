@@ -55,6 +55,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
   - **Coordinate Marking** — left-click to mark points, right-click to delete the nearest marked point, or enter an x value to auto-locate
  - **Quick Input Panel** — popup keypad for fast insertion of operators, functions, and constants
  - **Factorial Support** — postfix `!` operator for non-negative integers
+ - **Rounding & Modulo** — `floor(x)`, `ceil(x)` functions and `mod` (or `%`) operator for integer division remainders
  - **Customizable View** — adjustable X/Y/Z ranges, step size, grid toggle
  - **Interactive Plot** — Matplotlib toolbar for zoom, pan, and export
   - **Function Table & CSV Export** — generate a data table of x and f(x) over any interval, then export to CSV or copy to clipboard
@@ -126,6 +127,8 @@ gcc -shared -O2 -fPIC -o calc_core.dylib calc_core.c -lm
 | Category     | Operators / Functions              | Example            |
 |-------------|------------------------------------|--------------------|
 | Arithmetic   | `+` `-` `*` `/` `^` (power)       | `x^2 + 2*x - 1`   |
+| Modulo       | `mod` `%` (remainder)              | `10 mod 3`, `7%2`  |
+| Rounding     | `floor` `ceil`                     | `floor(x)` `ceil(x)` |
 | Trig         | `sin` `cos` `tan`                 | `sin(x) + cos(x)`  |
 | Log/Exp      | `ln` `log` `exp`                  | `ln(x)` `exp(-x)`  |
 | Roots/Abs    | `sqrt` `abs`                      | `sqrt(x)` `abs(x)` |
