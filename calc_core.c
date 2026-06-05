@@ -555,6 +555,8 @@ EXPORT double solve_bisection(const char* expr, double a, double b,
     if (isnan(fb)) { set_error("Function returned NaN at interval endpoint"); return NAN; }
     if (fabs(fa) < tol) return a;
     if (fabs(fb) < tol) return b;
+    if (fa == 0.0) return a;
+    if (fb == 0.0) return b;
     if (signbit(fa) == signbit(fb)) { set_error("f(a) and f(b) must have opposite signs"); return NAN; }
     for (int i = 0; i < max_iter; i++) {
         c = (a+b)/2.0;
@@ -1257,13 +1259,13 @@ EXPORT int solve_system_2d(const char* f_expr, const char* g_expr,
 
 EXPORT void complex_array_evaluate(const char* expr, const double* xs, const double* ys,
                                    double* out_re, double* out_im, int n) {
-    if (!expr || !xs || !out_re || !out_im || n <= 0) return;
+    if (!expr || !xs || !ys || !out_re || !out_im || n <= 0) return;
     clear_error();
     int any_failed = 0;
     
     for (int i = 0; i < n; i++) {
         double result;
-        if (parse_and_eval(expr, xs[i], ys ? ys[i] : 0.0, &result) != 0) {
+        if (parse_and_eval(expr, xs[i], ys[i], &result) != 0) {
             out_re[i] = NAN;
             out_im[i] = NAN;
             any_failed = 1;
@@ -1272,5 +1274,6 @@ EXPORT void complex_array_evaluate(const char* expr, const double* xs, const dou
             out_im[i] = 0.0;
         }
     }
-    if (any_failed) set_error("Some evaluations failed in complex_array_evaluate");
+    if (any_failed && g_error[0] == '\0')
+        set_error("Some evaluations failed in complex_array_evaluate");
 }

@@ -2797,6 +2797,9 @@ class SuperCalcApp:
             return
         f_sub = self._substitute_params(f_expr)
         g_sub = self._substitute_params(g_expr)
+        if not f_sub or not g_sub:
+            messagebox.showerror("Error", "Empty expression after parameter substitution.")
+            return
         result = CalcEngine.solve_system_2d(f_sub, g_sub, x0, y0)
         if result is None:
             err = CalcEngine.get_last_error()
@@ -3529,7 +3532,7 @@ class SuperCalcApp:
         z1 = self._parse_complex(self._var_complex_z1.get())
         z2 = self._parse_complex(self._var_complex_z2.get())
         if z1 is not None and z2 is not None:
-            if z2 == 0:
+            if abs(z2) == 0:
                 messagebox.showerror("Complex Error", "Division by zero")
                 return
             result = CalcEngine.complex_div(z1, z2)
