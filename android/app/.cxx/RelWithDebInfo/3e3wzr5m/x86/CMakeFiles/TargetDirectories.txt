@@ -1,3 +1,0 @@
-/home/runner/work/SuperCalculator/SuperCalculator/android/app/.cxx/RelWithDebInfo/3e3wzr5m/x86/CMakeFiles/calc_core.dir
-/home/runner/work/SuperCalculator/SuperCalculator/android/app/.cxx/RelWithDebInfo/3e3wzr5m/x86/CMakeFiles/edit_cache.dir
-/home/runner/work/SuperCalculator/SuperCalculator/android/app/.cxx/RelWithDebInfo/3e3wzr5m/x86/CMakeFiles/rebuild_cache.dir

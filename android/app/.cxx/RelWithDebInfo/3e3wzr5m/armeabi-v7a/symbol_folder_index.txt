@@ -1,1 +1,0 @@
-/home/runner/work/SuperCalculator/SuperCalculator/android/app/build/intermediates/cxx/RelWithDebInfo/3e3wzr5m/obj/armeabi-v7a
