@@ -61,7 +61,8 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
   - **FFT Spectrum Export** — export frequency, amplitude and phase data to CSV for external analysis
   - **Complex Number Calculator** — perform complex arithmetic (+, -, *, /, ^), trigonometric functions (sin, cos, tan), exponential, logarithm, square root, absolute value, and conjugate. Available on both desktop (Python) and Android (JNI).
   - **Unit Converter** — convert between different units of measurement including Length, Weight, Temperature, Area, Volume, Time, Data Storage, Speed, and Angle. Supports 9 unit categories with comprehensive conversion factors.
-  - **Windows EXE** — standalone executable, no Python installation required
+  - **Curve Fitting / Regression** — fit data to various models: Linear (y=ax+b), Polynomial (configurable degree), Exponential (y=ae^(bx)), Power (y=ax^b), and Logarithmic (y=a+b·ln(x)). Displays equation, R² goodness-of-fit, and scatter + fitted curve plot. Available on both desktop (Python/numpy) and Android (Java).
+   - **Windows EXE** — standalone executable, no Python installation required
  - **Android App** — standalone APK with Material Design 3 UI and JNI bridge, now including 3D surface plotting with touch rotation and parametric curve support
 
 ## Pre-compiled Binaries
@@ -150,6 +151,7 @@ SuperCalculator/
 
 ## What's New
 
+- **Curve Fitting / Regression** — fit data to Linear, Polynomial, Exponential, Power, and Logarithmic models with R² goodness-of-fit. Scatter + curve plot visualization. Available on both desktop (Python/numpy) and Android (Java).
 - **Nonlinear System Solver (2D)** — solve systems of two nonlinear equations f(x,y)=0, g(x,y)=0 using Newton's method for systems with numerical Jacobian via Cramer's rule. Available on both desktop (Python) and Android (JNI).
 - **Area Between Curves** — compute the enclosed area between any two curves f(x) and g(x) over an interval [a,b] using adaptive Simpson's rule. Available on both desktop (Python) and Android (JNI).
 - **Complex Number Calculator** — perform complex arithmetic (+, -, *, /, ^), trigonometric functions (sin, cos, tan), exponential, logarithm, square root, absolute value, and conjugate. Input format: `a+bi` (e.g., `1+2i`, `3-4i`). Available on both desktop (Python) and Android (JNI).
@@ -271,6 +273,22 @@ np.linalg.inv(A)   # Inverse
 A.T                # Transpose
 np.linalg.matrix_rank(A)  # Rank
 np.linalg.eig(A)   # Eigenvalues and eigenvectors
+
+# Curve Fitting / Regression
+result = CalcEngine.linear_regression([1,2,3,4,5], [2,4,5,4,5])
+# result -> {'slope': ..., 'intercept': ..., 'r_squared': ..., 'equation': '...', 'xs_fit': [...], 'ys_fit': [...]}
+
+result = CalcEngine.polynomial_regression(xs, ys, degree=3)
+# result -> {'coeffs': [...], 'r_squared': ..., 'equation': '...', 'xs_fit': [...], 'ys_fit': [...]}
+
+result = CalcEngine.exponential_regression(xs, ys)
+# result -> {'a': ..., 'b': ..., 'r_squared': ..., 'equation': '...', 'xs_fit': [...], 'ys_fit': [...]}
+
+result = CalcEngine.power_regression(xs, ys)
+# result -> {'a': ..., 'b': ..., 'r_squared': ..., 'equation': '...', 'xs_fit': [...], 'ys_fit': [...]}
+
+result = CalcEngine.logarithmic_regression(xs, ys)
+# result -> {'a': ..., 'b': ..., 'r_squared': ..., 'equation': '...', 'xs_fit': [...], 'ys_fit': [...]}
 ```
 
 ## Numerical Methods
@@ -287,3 +305,6 @@ np.linalg.eig(A)   # Eigenvalues and eigenvectors
 | Extremum Finder     | Golden-section search                          | Linear    |
 | Limit               | Richardson extrapolation                       | O(h^2k)   |
 | ODE Solver          | 4th-order Runge-Kutta (RK4)                    | O(h^4)    |
+| Linear Regression   | Least squares (closed-form)                    | —         |
+| Polynomial Regression | Least squares (normal equations / Vandermonde) | —       |
+| Exponential/Power/Log Regression | Linearized least squares       | —         |

@@ -62,8 +62,9 @@
   - **函数数据表与 CSV 导出** — 在任意区间一键生成 x-f(x) 数据表格，支持导出为 CSV 或复制到剪贴板
   - **FFT 频谱导出** — 将频率、幅度与相位数据导出为 CSV，便于外部分析
    - **复数计算器** — 支持复数四则运算（+、-、*、/、^）、三角函数（sin、cos、tan）、指数、对数、平方根、绝对值与共轭运算。桌面端（Python）与 Android 端（JNI）均已同步。
-   - **单位转换器** — 支持不同单位之间的转换，包括长度、重量、温度、面积、体积、时间、数据存储、速度和角度等 9 个单位类别，提供全面的转换因子。
-   - **Windows EXE** — 提供独立 Windows 可执行文件，无需安装 Python
+    - **单位转换器** — 支持不同单位之间的转换，包括长度、重量、温度、面积、体积、时间、数据存储、速度和角度等 9 个单位类别，提供全面的转换因子。
+    - **曲线拟合 / 回归分析** — 支持多种数据拟合模型：线性 (y=ax+b)、多项式（可配置阶数）、指数 (y=ae^(bx))、幂函数 (y=ax^b) 和对数 (y=a+b·ln(x))。显示方程、R² 拟合优度、散点图 + 拟合曲线可视化。桌面端（Python/numpy）与 Android 端（Java）均已同步。
+    - **Windows EXE** — 提供独立 Windows 可执行文件，无需安装 Python
  - **Android 应用** — 独立 APK，Material Design 3 界面 + JNI 桥接，现已支持 3D 曲面绘图与触控旋转及参数曲线绘制
 
 ## 预编译二进制文件
@@ -152,6 +153,7 @@ SuperCalculator/
 
 ## 更新日志
 
+- **曲线拟合 / 回归分析** — 支持线性、多项式、指数、幂函数和对数拟合模型，显示方程与 R² 拟合优度，支持散点图 + 拟合曲线可视化。桌面端（Python/numpy）与 Android 端（Java）均已同步。
 - **非线性方程组求解 (2D)** — 求解两个未知数的非线性方程组 f(x,y)=0, g(x,y)=0，采用 Newton 法配合数值雅可比矩阵与克莱默法则。桌面端（Python）与 Android 端（JNI）均已同步。
 - **曲线间面积** — 使用自适应辛普森法则计算任意两条曲线 f(x) 和 g(x) 在区间 [a,b] 上的封闭面积。桌面端（Python）与 Android 端（JNI）均已同步。
 - **复数计算器** — 支持复数四则运算（+、-、*、/、^）、三角函数（sin、cos、tan）、指数、对数、平方根、绝对值与共轭运算。输入格式：`a+bi`（如 `1+2i`、`3-4i`）。桌面端（Python）与 Android 端（JNI）均已同步。
@@ -272,6 +274,22 @@ np.linalg.inv(A)   # 逆矩阵
 A.T                # 转置
 np.linalg.matrix_rank(A)  # 秩
 np.linalg.eig(A)   # 特征值和特征向量
+
+# 曲线拟合 / 回归分析
+result = CalcEngine.linear_regression([1,2,3,4,5], [2,4,5,4,5])
+# result -> {'slope': ..., 'intercept': ..., 'r_squared': ..., 'equation': '...', 'xs_fit': [...], 'ys_fit': [...]}
+
+result = CalcEngine.polynomial_regression(xs, ys, degree=3)
+# result -> {'coeffs': [...], 'r_squared': ..., 'equation': '...', 'xs_fit': [...], 'ys_fit': [...]}
+
+result = CalcEngine.exponential_regression(xs, ys)
+# result -> {'a': ..., 'b': ..., 'r_squared': ..., 'equation': '...', 'xs_fit': [...], 'ys_fit': [...]}
+
+result = CalcEngine.power_regression(xs, ys)
+# result -> {'a': ..., 'b': ..., 'r_squared': ..., 'equation': '...', 'xs_fit': [...], 'ys_fit': [...]}
+
+result = CalcEngine.logarithmic_regression(xs, ys)
+# result -> {'a': ..., 'b': ..., 'r_squared': ..., 'equation': '...', 'xs_fit': [...], 'ys_fit': [...]}
 ```
 
 ## 数值方法
@@ -288,6 +306,9 @@ np.linalg.eig(A)   # 特征值和特征向量
 | 极值查找   | 黄金分割搜索法                       | 线性收敛  |
 | 极限计算   | Richardson 外推法                    | O(h²ᵏ)   |
 | ODE 求解   | 四阶 Runge-Kutta (RK4)              | O(h⁴)    |
+| 线性回归   | 最小二乘法（闭式解）                   | —        |
+| 多项式回归 | 最小二乘法（正规方程 / Vandermonde）    | —        |
+| 指数/幂/对数回归 | 线性化最小二乘法                   | —        |
 
 ## 设计说明
 

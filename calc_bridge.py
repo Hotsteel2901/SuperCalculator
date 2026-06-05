@@ -793,3 +793,267 @@ class CalcEngine:
             }
         except Exception:
             return None
+
+    @staticmethod
+    def linear_regression(xs: List[float], ys: List[float]):
+        """Compute linear regression y = a*x + b for data points.
+
+        Returns a dict with keys:
+            'slope'     : a (slope)
+            'intercept' : b (y-intercept)
+            'r_squared' : R² (coefficient of determination)
+            'equation'  : formatted equation string
+        Returns None on error.
+        """
+        if len(xs) < 2 or len(xs) != len(ys):
+            return None
+        try:
+            import numpy as np
+            x_arr = np.array(xs, dtype=float)
+            y_arr = np.array(ys, dtype=float)
+            # Remove NaN/Inf
+            mask = np.isfinite(x_arr) & np.isfinite(y_arr)
+            x_arr, y_arr = x_arr[mask], y_arr[mask]
+            if len(x_arr) < 2:
+                return None
+            n = len(x_arr)
+            x_mean = np.mean(x_arr)
+            y_mean = np.mean(y_arr)
+            ss_xy = np.sum((x_arr - x_mean) * (y_arr - y_mean))
+            ss_xx = np.sum((x_arr - x_mean) ** 2)
+            if ss_xx == 0:
+                return None
+            slope = ss_xy / ss_xx
+            intercept = y_mean - slope * x_mean
+            # R² calculation
+            ss_res = np.sum((y_arr - (slope * x_arr + intercept)) ** 2)
+            ss_tot = np.sum((y_arr - y_mean) ** 2)
+            r_squared = 1.0 - ss_res / ss_tot if ss_tot != 0 else 0.0
+            # Format equation
+            sign = "+" if intercept >= 0 else "-"
+            eq = f"y = {slope:.6g}*x {sign} {abs(intercept):.6g}"
+            return {
+                'slope': float(slope),
+                'intercept': float(intercept),
+                'r_squared': float(r_squared),
+                'equation': eq,
+                'xs_fit': x_arr.tolist(),
+                'ys_fit': (slope * x_arr + intercept).tolist(),
+            }
+        except Exception:
+            return None
+
+    @staticmethod
+    def polynomial_regression(xs: List[float], ys: List[float], degree: int = 2):
+        """Compute polynomial regression y = c_n*x^n + ... + c_1*x + c_0.
+
+        Returns a dict with keys:
+            'coeffs'    : list of coefficients [c_n, ..., c_1, c_0] (highest degree first)
+            'r_squared' : R²
+            'equation'  : formatted equation string
+            'xs_fit'    : x values for fitted curve
+            'ys_fit'    : y values for fitted curve
+        Returns None on error.
+        """
+        if len(xs) < degree + 1 or len(xs) != len(ys):
+            return None
+        try:
+            import numpy as np
+            x_arr = np.array(xs, dtype=float)
+            y_arr = np.array(ys, dtype=float)
+            mask = np.isfinite(x_arr) & np.isfinite(y_arr)
+            x_arr, y_arr = x_arr[mask], y_arr[mask]
+            if len(x_arr) < degree + 1:
+                return None
+            coeffs = np.polyfit(x_arr, y_arr, degree)
+            poly = np.poly1d(coeffs)
+            y_fit = poly(x_arr)
+            y_mean = np.mean(y_arr)
+            ss_res = np.sum((y_arr - y_fit) ** 2)
+            ss_tot = np.sum((y_arr - y_mean) ** 2)
+            r_squared = 1.0 - ss_res / ss_tot if ss_tot != 0 else 0.0
+            # Sort x for smooth plotting
+            x_sorted = np.sort(x_arr)
+            y_sorted = poly(x_sorted)
+            # Build equation string
+            terms = []
+            for i, c in enumerate(coeffs):
+                power = degree - i
+                if abs(c) < 1e-12:
+                    continue
+                if power == 0:
+                    terms.append(f"{c:.6g}")
+                elif power == 1:
+                    terms.append(f"{c:.6g}*x")
+                else:
+                    terms.append(f"{c:.6g}*x^{power}")
+            eq = "y = " + " + ".join(terms).replace("+ -", "- ") if terms else "y = 0"
+            return {
+                'coeffs': coeffs.tolist(),
+                'r_squared': float(r_squared),
+                'equation': eq,
+                'xs_fit': x_sorted.tolist(),
+                'ys_fit': y_sorted.tolist(),
+            }
+        except Exception:
+            return None
+
+    @staticmethod
+    def exponential_regression(xs: List[float], ys: List[float]):
+        """Compute exponential fit y = a * e^(b*x) via linearization: ln(y) = ln(a) + b*x.
+
+        Returns a dict with keys:
+            'a'         : coefficient a
+            'b'         : exponent b
+            'r_squared' : R²
+            'equation'  : formatted equation string
+            'xs_fit'    : x values for fitted curve
+            'ys_fit'    : y values for fitted curve
+        Returns None on error.
+        """
+        if len(xs) < 2 or len(xs) != len(ys):
+            return None
+        try:
+            import numpy as np
+            x_arr = np.array(xs, dtype=float)
+            y_arr = np.array(ys, dtype=float)
+            mask = np.isfinite(x_arr) & np.isfinite(y_arr) & (y_arr > 0)
+            x_arr, y_arr = x_arr[mask], y_arr[mask]
+            if len(x_arr) < 2:
+                return None
+            ln_y = np.log(y_arr)
+            n = len(x_arr)
+            x_mean = np.mean(x_arr)
+            ln_mean = np.mean(ln_y)
+            ss_xy = np.sum((x_arr - x_mean) * (ln_y - ln_mean))
+            ss_xx = np.sum((x_arr - x_mean) ** 2)
+            if ss_xx == 0:
+                return None
+            b = ss_xy / ss_xx
+            ln_a = ln_mean - b * x_mean
+            a = np.exp(ln_a)
+            y_fit = a * np.exp(b * x_arr)
+            y_mean = np.mean(y_arr)
+            ss_res = np.sum((y_arr - y_fit) ** 2)
+            ss_tot = np.sum((y_arr - y_mean) ** 2)
+            r_squared = 1.0 - ss_res / ss_tot if ss_tot != 0 else 0.0
+            x_sorted = np.sort(x_arr)
+            y_sorted = a * np.exp(b * x_sorted)
+            sign = "+" if b >= 0 else "-"
+            eq = f"y = {a:.6g} * e^({b:.6g}*x)"
+            return {
+                'a': float(a),
+                'b': float(b),
+                'r_squared': float(r_squared),
+                'equation': eq,
+                'xs_fit': x_sorted.tolist(),
+                'ys_fit': y_sorted.tolist(),
+            }
+        except Exception:
+            return None
+
+    @staticmethod
+    def power_regression(xs: List[float], ys: List[float]):
+        """Compute power fit y = a * x^b via linearization: ln(y) = ln(a) + b*ln(x).
+
+        Returns a dict with keys:
+            'a'         : coefficient a
+            'b'         : exponent b
+            'r_squared' : R²
+            'equation'  : formatted equation string
+            'xs_fit'    : x values for fitted curve
+            'ys_fit'    : y values for fitted curve
+        Returns None on error.
+        """
+        if len(xs) < 2 or len(xs) != len(ys):
+            return None
+        try:
+            import numpy as np
+            x_arr = np.array(xs, dtype=float)
+            y_arr = np.array(ys, dtype=float)
+            mask = np.isfinite(x_arr) & np.isfinite(y_arr) & (x_arr > 0) & (y_arr > 0)
+            x_arr, y_arr = x_arr[mask], y_arr[mask]
+            if len(x_arr) < 2:
+                return None
+            ln_x = np.log(x_arr)
+            ln_y = np.log(y_arr)
+            n = len(x_arr)
+            ln_x_mean = np.mean(ln_x)
+            ln_y_mean = np.mean(ln_y)
+            ss_xy = np.sum((ln_x - ln_x_mean) * (ln_y - ln_y_mean))
+            ss_xx = np.sum((ln_x - ln_x_mean) ** 2)
+            if ss_xx == 0:
+                return None
+            b = ss_xy / ss_xx
+            ln_a = ln_y_mean - b * ln_x_mean
+            a = np.exp(ln_a)
+            y_fit = a * np.power(x_arr, b)
+            y_mean = np.mean(y_arr)
+            ss_res = np.sum((y_arr - y_fit) ** 2)
+            ss_tot = np.sum((y_arr - y_mean) ** 2)
+            r_squared = 1.0 - ss_res / ss_tot if ss_tot != 0 else 0.0
+            x_sorted = np.sort(x_arr)
+            y_sorted = a * np.power(x_sorted, b)
+            eq = f"y = {a:.6g} * x^{b:.6g}"
+            return {
+                'a': float(a),
+                'b': float(b),
+                'r_squared': float(r_squared),
+                'equation': eq,
+                'xs_fit': x_sorted.tolist(),
+                'ys_fit': y_sorted.tolist(),
+            }
+        except Exception:
+            return None
+
+    @staticmethod
+    def logarithmic_regression(xs: List[float], ys: List[float]):
+        """Compute logarithmic fit y = a + b * ln(x).
+
+        Returns a dict with keys:
+            'a'         : constant a
+            'b'         : coefficient b
+            'r_squared' : R²
+            'equation'  : formatted equation string
+            'xs_fit'    : x values for fitted curve
+            'ys_fit'    : y values for fitted curve
+        Returns None on error.
+        """
+        if len(xs) < 2 or len(xs) != len(ys):
+            return None
+        try:
+            import numpy as np
+            x_arr = np.array(xs, dtype=float)
+            y_arr = np.array(ys, dtype=float)
+            mask = np.isfinite(x_arr) & np.isfinite(y_arr) & (x_arr > 0)
+            x_arr, y_arr = x_arr[mask], y_arr[mask]
+            if len(x_arr) < 2:
+                return None
+            ln_x = np.log(x_arr)
+            n = len(x_arr)
+            ln_x_mean = np.mean(ln_x)
+            y_mean = np.mean(y_arr)
+            ss_xy = np.sum((ln_x - ln_x_mean) * (y_arr - y_mean))
+            ss_xx = np.sum((ln_x - ln_x_mean) ** 2)
+            if ss_xx == 0:
+                return None
+            b = ss_xy / ss_xx
+            a = y_mean - b * ln_x_mean
+            y_fit = a + b * ln_x
+            ss_res = np.sum((y_arr - y_fit) ** 2)
+            ss_tot = np.sum((y_arr - y_mean) ** 2)
+            r_squared = 1.0 - ss_res / ss_tot if ss_tot != 0 else 0.0
+            x_sorted = np.sort(x_arr)
+            y_sorted = a + b * np.log(x_sorted)
+            sign = "+" if b >= 0 else "-"
+            eq = f"y = {a:.6g} {sign} {abs(b):.6g} * ln(x)"
+            return {
+                'a': float(a),
+                'b': float(b),
+                'r_squared': float(r_squared),
+                'equation': eq,
+                'xs_fit': x_sorted.tolist(),
+                'ys_fit': y_sorted.tolist(),
+            }
+        except Exception:
+            return None

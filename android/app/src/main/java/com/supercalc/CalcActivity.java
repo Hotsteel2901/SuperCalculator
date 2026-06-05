@@ -123,6 +123,29 @@ public class CalcActivity extends AppCompatActivity {
         btnStatsSort.setOnClickListener(v -> onStatsSort());
         btnStatsHistogram.setOnClickListener(v -> onStatsHistogram());
 
+        // Curve Fitting / Regression
+        EditText regXInput = findViewById(R.id.reg_x_input);
+        EditText regYInput = findViewById(R.id.reg_y_input);
+        EditText regDegreeInput = findViewById(R.id.reg_degree_input);
+        MaterialButton btnRegLinear = findViewById(R.id.btn_reg_linear);
+        MaterialButton btnRegQuad = findViewById(R.id.btn_reg_quad);
+        MaterialButton btnRegPoly = findViewById(R.id.btn_reg_poly);
+        MaterialButton btnRegExp = findViewById(R.id.btn_reg_exp);
+        MaterialButton btnRegPower = findViewById(R.id.btn_reg_power);
+        MaterialButton btnRegLog = findViewById(R.id.btn_reg_log);
+        MaterialButton btnRegPlot = findViewById(R.id.btn_reg_plot);
+        btnRegLinear.setOnClickListener(v -> onRegLinear(regXInput, regYInput));
+        btnRegQuad.setOnClickListener(v -> onRegPoly(regXInput, regYInput, 2));
+        btnRegPoly.setOnClickListener(v -> {
+            int deg = 3;
+            try { deg = Integer.parseInt(regDegreeInput.getText().toString().trim()); } catch (Exception ignored) {}
+            onRegPoly(regXInput, regYInput, deg);
+        });
+        btnRegExp.setOnClickListener(v -> onRegExponential(regXInput, regYInput));
+        btnRegPower.setOnClickListener(v -> onRegPower(regXInput, regYInput));
+        btnRegLog.setOnClickListener(v -> onRegLogarithmic(regXInput, regYInput));
+        btnRegPlot.setOnClickListener(v -> onRegPlot(regXInput, regYInput));
+
         // Area Between Curves
         areaGInput = findViewById(R.id.area_g_input);
         MaterialButton btnAreaBetween = findViewById(R.id.btn_area_between);
@@ -1392,6 +1415,312 @@ public class CalcActivity extends AppCompatActivity {
             .show();
 
         resultView.append("Histogram: " + nBins + " bins, mean=" + fmt(mean) + "\n");
+    }
+
+    // ------------------------------------------------------------------
+    //  Curve Fitting / Regression
+    // ------------------------------------------------------------------
+    private double[] parseRegData(EditText xInput, EditText yInput, boolean useX) {
+        double[] ys;
+        String yRaw = yInput.getText().toString().trim();
+        if (!yRaw.isEmpty()) {
+            ys = parseDataArray(yRaw);
+        } else {
+            ys = parseStatsData();
+        }
+        if (ys == null || ys.length < 2) {
+            toast("Need at least 2 Y data points");
+            return null;
+        }
+        if (useX) {
+            String xRaw = xInput.getText().toString().trim();
+            if (!xRaw.isEmpty()) {
+                return parseDataArray(xRaw);
+            }
+            double[] xs = new double[ys.length];
+            for (int i = 0; i < ys.length; i++) xs[i] = i + 1;
+            return xs;
+        }
+        return ys;
+    }
+
+    private double[] parseDataArray(String raw) {
+        String[] tokens = raw.split("[,;\\s]+");
+        java.util.ArrayList<Double> values = new java.util.ArrayList<>();
+        for (String t : tokens) {
+            t = t.trim();
+            if (t.isEmpty()) continue;
+            try { values.add(Double.parseDouble(t)); } catch (NumberFormatException e) { return null; }
+        }
+        double[] result = new double[values.size()];
+        for (int i = 0; i < values.size(); i++) result[i] = values.get(i);
+        return result;
+    }
+
+    private void showRegResult(String title, String equation, double r2) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(title).append("\n\n");
+        sb.append("Equation: ").append(equation).append("\n");
+        sb.append(String.format("R\u00B2 = %.8f", r2));
+        android.widget.TextView tv = new android.widget.TextView(this);
+        tv.setText(sb.toString());
+        tv.setTypeface(android.graphics.Typeface.MONOSPACE);
+        tv.setTextSize(14);
+        tv.setPadding(40, 24, 40, 24);
+        tv.setTextColor(android.graphics.Color.parseColor("#cdd6f4"));
+        tv.setBackgroundColor(android.graphics.Color.parseColor("#181825"));
+        new androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert)
+            .setTitle(title)
+            .setView(tv)
+            .setPositiveButton("Close", null)
+            .show();
+        resultView.append(String.format("%s: %s (R\u00B2=%.6f)\n", title, equation, r2));
+    }
+
+    private void onRegLinear(EditText xInput, EditText yInput) {
+        double[] xs = parseRegData(xInput, yInput, true);
+        double[] ys = parseRegData(xInput, yInput, false);
+        if (xs == null || ys == null || xs.length != ys.length) return;
+        int n = xs.length;
+        double xMean = 0, yMean = 0;
+        for (int i = 0; i < n; i++) { xMean += xs[i]; yMean += ys[i]; }
+        xMean /= n; yMean /= n;
+        double ssXY = 0, ssXX = 0;
+        for (int i = 0; i < n; i++) {
+            ssXY += (xs[i] - xMean) * (ys[i] - yMean);
+            ssXX += (xs[i] - xMean) * (xs[i] - xMean);
+        }
+        if (ssXX == 0) { toast("X data has zero variance"); return; }
+        double slope = ssXY / ssXX;
+        double intercept = yMean - slope * xMean;
+        double ssRes = 0, ssTot = 0;
+        for (int i = 0; i < n; i++) {
+            double yPred = slope * xs[i] + intercept;
+            ssRes += (ys[i] - yPred) * (ys[i] - yPred);
+            ssTot += (ys[i] - yMean) * (ys[i] - yMean);
+        }
+        double r2 = ssTot != 0 ? 1.0 - ssRes / ssTot : 0;
+        String eq = String.format("y = %.6g*x %s %.6g", slope, intercept >= 0 ? "+" : "-", Math.abs(intercept));
+        showRegResult("Linear Regression", eq, r2);
+    }
+
+    private void onRegPoly(EditText xInput, EditText yInput, int degree) {
+        double[] xs = parseRegData(xInput, yInput, true);
+        double[] ys = parseRegData(xInput, yInput, false);
+        if (xs == null || ys == null || xs.length != ys.length) return;
+        if (xs.length < degree + 1) { toast("Need at least " + (degree + 1) + " data points"); return; }
+        // Vandermonde matrix approach for polynomial least squares
+        int n = xs.length;
+        int m = degree + 1;
+        double[][] A = new double[n][m];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                A[i][j] = Math.pow(xs[i], j);
+            }
+        }
+        // Solve via normal equations: (A^T A) c = A^T y
+        double[][] AtA = new double[m][m];
+        double[] Aty = new double[m];
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < m; j++) {
+                double sum = 0;
+                for (int k = 0; k < n; k++) sum += A[k][i] * A[k][j];
+                AtA[i][j] = sum;
+            }
+            double sum = 0;
+            for (int k = 0; k < n; k++) sum += A[k][i] * ys[k];
+            Aty[i] = sum;
+        }
+        // Gaussian elimination
+        double[] coeffs = solveLinearSystem(AtA, Aty);
+        if (coeffs == null) { toast("Singular matrix - cannot fit"); return; }
+        // R²
+        double yMean = 0;
+        for (double v : ys) yMean += v;
+        yMean /= n;
+        double ssRes = 0, ssTot = 0;
+        for (int i = 0; i < n; i++) {
+            double yPred = 0;
+            for (int j = 0; j < m; j++) yPred += coeffs[j] * Math.pow(xs[i], j);
+            ssRes += (ys[i] - yPred) * (ys[i] - yPred);
+            ssTot += (ys[i] - yMean) * (ys[i] - yMean);
+        }
+        double r2 = ssTot != 0 ? 1.0 - ssRes / ssTot : 0;
+        StringBuilder eq = new StringBuilder("y = ");
+        for (int j = degree; j >= 0; j--) {
+            if (Math.abs(coeffs[j]) < 1e-12) continue;
+            if (j < degree) eq.append(coeffs[j] >= 0 ? " + " : " - ");
+            eq.append(String.format("%.6g", Math.abs(coeffs[j])));
+            if (j > 1) eq.append("*x^").append(j);
+            else if (j == 1) eq.append("*x");
+        }
+        showRegResult("Polynomial Regression (deg " + degree + ")", eq.toString(), r2);
+    }
+
+    private double[] solveLinearSystem(double[][] A, double[] b) {
+        int n = A.length;
+        double[][] aug = new double[n][n + 1];
+        for (int i = 0; i < n; i++) {
+            System.arraycopy(A[i], 0, aug[i], 0, n);
+            aug[i][n] = b[i];
+        }
+        for (int col = 0; col < n; col++) {
+            int maxRow = col;
+            for (int row = col + 1; row < n; row++) {
+                if (Math.abs(aug[row][col]) > Math.abs(aug[maxRow][col])) maxRow = row;
+            }
+            double[] tmp = aug[col]; aug[col] = aug[maxRow]; aug[maxRow] = tmp;
+            if (Math.abs(aug[col][col]) < 1e-12) return null;
+            for (int row = col + 1; row < n; row++) {
+                double factor = aug[row][col] / aug[col][col];
+                for (int j = col; j <= n; j++) aug[row][j] -= factor * aug[col][j];
+            }
+        }
+        double[] x = new double[n];
+        for (int i = n - 1; i >= 0; i--) {
+            x[i] = aug[i][n];
+            for (int j = i + 1; j < n; j++) x[i] -= aug[i][j] * x[j];
+            x[i] /= aug[i][i];
+        }
+        return x;
+    }
+
+    private void onRegExponential(EditText xInput, EditText yInput) {
+        double[] xs = parseRegData(xInput, yInput, true);
+        double[] ys = parseRegData(xInput, yInput, false);
+        if (xs == null || ys == null || xs.length != ys.length) return;
+        // Filter positive y values for log transform
+        java.util.ArrayList<Double> xList = new java.util.ArrayList<>();
+        java.util.ArrayList<Double> yList = new java.util.ArrayList<>();
+        for (int i = 0; i < xs.length; i++) {
+            if (ys[i] > 0 && Double.isFinite(xs[i]) && Double.isFinite(ys[i])) {
+                xList.add(xs[i]); yList.add(ys[i]);
+            }
+        }
+        if (xList.size() < 2) { toast("Need at least 2 positive Y values"); return; }
+        int n = xList.size();
+        double[] lx = new double[n], ly = new double[n];
+        for (int i = 0; i < n; i++) { lx[i] = xList.get(i); ly[i] = Math.log(yList.get(i)); }
+        double xMean = 0, lyMean = 0;
+        for (int i = 0; i < n; i++) { xMean += lx[i]; lyMean += ly[i]; }
+        xMean /= n; lyMean /= n;
+        double ssXY = 0, ssXX = 0;
+        for (int i = 0; i < n; i++) {
+            ssXY += (lx[i] - xMean) * (ly[i] - lyMean);
+            ssXX += (lx[i] - xMean) * (lx[i] - xMean);
+        }
+        if (ssXX == 0) { toast("X data has zero variance"); return; }
+        double b = ssXY / ssXX;
+        double lnA = lyMean - b * xMean;
+        double a = Math.exp(lnA);
+        // R²
+        double yMean = 0;
+        for (double v : yList) yMean += v;
+        yMean /= n;
+        double ssRes = 0, ssTot = 0;
+        for (int i = 0; i < n; i++) {
+            double yPred = a * Math.exp(b * lx[i]);
+            ssRes += (yList.get(i) - yPred) * (yList.get(i) - yPred);
+            ssTot += (yList.get(i) - yMean) * (yList.get(i) - yMean);
+        }
+        double r2 = ssTot != 0 ? 1.0 - ssRes / ssTot : 0;
+        String eq = String.format("y = %.6g * e^(%.6g*x)", a, b);
+        showRegResult("Exponential Regression", eq, r2);
+    }
+
+    private void onRegPower(EditText xInput, EditText yInput) {
+        double[] xs = parseRegData(xInput, yInput, true);
+        double[] ys = parseRegData(xInput, yInput, false);
+        if (xs == null || ys == null || xs.length != ys.length) return;
+        java.util.ArrayList<Double> xList = new java.util.ArrayList<>();
+        java.util.ArrayList<Double> yList = new java.util.ArrayList<>();
+        for (int i = 0; i < xs.length; i++) {
+            if (xs[i] > 0 && ys[i] > 0 && Double.isFinite(xs[i]) && Double.isFinite(ys[i])) {
+                xList.add(xs[i]); yList.add(ys[i]);
+            }
+        }
+        if (xList.size() < 2) { toast("Need at least 2 positive data points"); return; }
+        int n = xList.size();
+        double[] lx = new double[n], ly = new double[n];
+        for (int i = 0; i < n; i++) { lx[i] = Math.log(xList.get(i)); ly[i] = Math.log(yList.get(i)); }
+        double xMean = 0, lyMean = 0;
+        for (int i = 0; i < n; i++) { xMean += lx[i]; lyMean += ly[i]; }
+        xMean /= n; lyMean /= n;
+        double ssXY = 0, ssXX = 0;
+        for (int i = 0; i < n; i++) {
+            ssXY += (lx[i] - xMean) * (ly[i] - lyMean);
+            ssXX += (lx[i] - xMean) * (lx[i] - xMean);
+        }
+        if (ssXX == 0) { toast("X data has zero variance"); return; }
+        double b = ssXY / ssXX;
+        double lnA = lyMean - b * xMean;
+        double a = Math.exp(lnA);
+        double yMean = 0;
+        for (double v : yList) yMean += v;
+        yMean /= n;
+        double ssRes = 0, ssTot = 0;
+        for (int i = 0; i < n; i++) {
+            double yPred = a * Math.pow(xList.get(i), b);
+            ssRes += (yList.get(i) - yPred) * (yList.get(i) - yPred);
+            ssTot += (yList.get(i) - yMean) * (yList.get(i) - yMean);
+        }
+        double r2 = ssTot != 0 ? 1.0 - ssRes / ssTot : 0;
+        String eq = String.format("y = %.6g * x^%.6g", a, b);
+        showRegResult("Power Regression", eq, r2);
+    }
+
+    private void onRegLogarithmic(EditText xInput, EditText yInput) {
+        double[] xs = parseRegData(xInput, yInput, true);
+        double[] ys = parseRegData(xInput, yInput, false);
+        if (xs == null || ys == null || xs.length != ys.length) return;
+        java.util.ArrayList<Double> xList = new java.util.ArrayList<>();
+        java.util.ArrayList<Double> yList = new java.util.ArrayList<>();
+        for (int i = 0; i < xs.length; i++) {
+            if (xs[i] > 0 && Double.isFinite(xs[i]) && Double.isFinite(ys[i])) {
+                xList.add(xs[i]); yList.add(ys[i]);
+            }
+        }
+        if (xList.size() < 2) { toast("Need at least 2 positive X values"); return; }
+        int n = xList.size();
+        double[] lx = new double[n];
+        for (int i = 0; i < n; i++) lx[i] = Math.log(xList.get(i));
+        double xMean = 0, yMean = 0;
+        for (int i = 0; i < n; i++) { xMean += lx[i]; yMean += yList.get(i); }
+        xMean /= n; yMean /= n;
+        double ssXY = 0, ssXX = 0;
+        for (int i = 0; i < n; i++) {
+            ssXY += (lx[i] - xMean) * (yList.get(i) - yMean);
+            ssXX += (lx[i] - xMean) * (lx[i] - xMean);
+        }
+        if (ssXX == 0) { toast("X data has zero variance"); return; }
+        double b = ssXY / ssXX;
+        double a = yMean - b * xMean;
+        double ssRes = 0, ssTot = 0;
+        for (int i = 0; i < n; i++) {
+            double yPred = a + b * lx[i];
+            ssRes += (yList.get(i) - yPred) * (yList.get(i) - yPred);
+            ssTot += (yList.get(i) - yMean) * (yList.get(i) - yMean);
+        }
+        double r2 = ssTot != 0 ? 1.0 - ssRes / ssTot : 0;
+        String eq = String.format("y = %.6g %s %.6g*ln(x)", a, b >= 0 ? "+" : "-", Math.abs(b));
+        showRegResult("Logarithmic Regression", eq, r2);
+    }
+
+    private double[] lastRegXs, lastRegYs;
+    private String lastRegEquation = "";
+    private void onRegPlot(EditText xInput, EditText yInput) {
+        double[] xs = parseRegData(xInput, yInput, true);
+        double[] ys = parseRegData(xInput, yInput, false);
+        if (xs == null || ys == null || xs.length != ys.length) return;
+        lastRegXs = xs; lastRegYs = ys;
+        Intent intent = new Intent(this, PlotActivity.class);
+        intent.putExtra("expr", "");  // We'll pass precomputed data
+        intent.putExtra("xMin", xs[0]);
+        intent.putExtra("xMax", xs[xs.length - 1]);
+        intent.putExtra("regression", true);
+        intent.putExtra("regXs", xs);
+        intent.putExtra("regYs", ys);
+        startActivity(intent);
     }
 
     private void onPlotParametric() {
