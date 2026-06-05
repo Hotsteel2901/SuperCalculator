@@ -834,7 +834,7 @@ class SuperCalcApp:
         ode_combo.bind("<<ComboboxSelected>>",
                         lambda e: self._on_ode_preset(self._var_ode_preset.get()))
 
-        self._ode_data = None  # last ODE solution dict
+        self._ode_data = None  # last ODE solution dict (None or dict)
 
         # --- Statistics Calculator ---
         frm_stats = ttk.LabelFrame(scroll_frame, text="Statistics Calculator",
@@ -1511,7 +1511,7 @@ class SuperCalcApp:
         self._fft_data = {}
         self._table_data = []
         self._table_expr = ""
-        self._ode_data = {}
+        self._ode_data = None
         if self.ax_2d is not None and self.canvas_2d is not None:
             self.ax_2d.clear()
             self._setup_axes(self.ax_2d, is_3d=False)

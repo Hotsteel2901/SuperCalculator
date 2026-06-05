@@ -89,7 +89,7 @@ jobs:
 
       - name: Create Release and Upload (if enabled)
         if: inputs.push_release == 'true'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: exe-${{ github.run_number }}
           name: Windows EXE Build #${{ github.run_number }}
