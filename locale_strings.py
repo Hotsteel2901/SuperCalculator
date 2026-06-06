@@ -1778,6 +1778,72 @@ STRINGS = {
         "en": "Angle",
         "zh": "角度",
     },
+
+    # ---- Statistical Distribution Calculator ----
+    "sec_dist": {
+        "en": "Statistical Distributions",
+        "zh": "统计分布",
+    },
+    "label_dist_type": {
+        "en": "Distribution:",
+        "zh": "分布类型：",
+    },
+    "label_x_value": {
+        "en": "x / q:",
+        "zh": "x / q：",
+    },
+    "btn_dist_pdf": {
+        "en": "PDF",
+        "zh": "PDF",
+    },
+    "btn_dist_cdf": {
+        "en": "CDF",
+        "zh": "CDF",
+    },
+    "btn_dist_ppf": {
+        "en": "PPF",
+        "zh": "PPF",
+    },
+    "btn_dist_plot": {
+        "en": "Plot",
+        "zh": "绘图",
+    },
+    "btn_dist_compare": {
+        "en": "Compare",
+        "zh": "对比",
+    },
+    "msg_invalid_param": {
+        "en": "Invalid value for parameter '{0}'.",
+        "zh": "参数 '{0}' 的值无效。",
+    },
+    "msg_invalid_x_value": {
+        "en": "Please enter a valid number for x.",
+        "zh": "请输入有效的 x 值。",
+    },
+    "msg_invalid_q_value": {
+        "en": "Please enter a valid probability q (0 < q < 1).",
+        "zh": "请输入有效的概率值 q（0 < q < 1）。",
+    },
+    "msg_q_range": {
+        "en": "q must be in the range (0, 1).",
+        "zh": "q 必须在 (0, 1) 范围内。",
+    },
+    "msg_dist_compare_prompt": {
+        "en": "Distribution: {0}\nCurrent params: {1}\n\nEnter new values (comma-separated):",
+        "zh": "分布：{0}\n当前参数：{1}\n\n输入新值（逗号分隔）：",
+    },
+    "msg_dist_param_count": {
+        "en": "Expected {0} parameter(s).",
+        "zh": "需要 {0} 个参数。",
+    },
+    "status_dist_plot": {
+        "en": "Distribution plot: {0}",
+        "zh": "分布图：{0}",
+    },
+    "status_dist_compare": {
+        "en": "Distribution comparison: {0}",
+        "zh": "分布对比：{0}",
+    },
 }
 
 

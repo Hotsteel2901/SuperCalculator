@@ -54,7 +54,12 @@ except ImportError as e:
     sys.exit(1)
 
 from calc_bridge import CalcEngine
-from locale_strings import t
+from locale_strings import t, CURRENT_LANG
+
+
+def _get_lang():
+    return CURRENT_LANG
+
 
 # ---------------------------------------------------------------------------
 #  Constants
@@ -866,6 +871,67 @@ class SuperCalcApp:
                    command=self._on_stats_histogram).pack(side=tk.LEFT, padx=2)
         ttk.Button(stats_row2, text=t("btn_export_csv"),
                    command=self._on_stats_export_csv).pack(side=tk.LEFT, padx=2)
+
+        # --- Statistical Distribution Calculator ---
+        from stat_dist import DISTRIBUTIONS as _STAT_DIST_REGISTRY
+
+        frm_dist = ttk.LabelFrame(scroll_frame, text=t("sec_dist"),
+                                  style="Dark.TLabelframe")
+        frm_dist.pack(fill=tk.X, padx=8, pady=4)
+
+        drow1 = ttk.Frame(frm_dist, style="Dark.TFrame")
+        drow1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(drow1, text=t("label_dist_type"),
+                  style="Dark.TLabel").pack(side=tk.LEFT, padx=2)
+        self._var_dist_type = tk.StringVar(value="normal")
+        self._dist_names_map = {}
+        _dist_display_names = []
+        for _k, _v in _STAT_DIST_REGISTRY.items():
+            _dn = _v.get(f"name_{_get_lang()}", _v["name_en"])
+            self._dist_names_map[_dn] = _k
+            _dist_display_names.append(_dn)
+        self._dist_combo = ttk.Combobox(drow1, textvariable=self._var_dist_type,
+                                         values=_dist_display_names, width=22,
+                                         state="readonly")
+        self._dist_combo.pack(side=tk.LEFT, padx=4)
+        self._dist_combo.bind("<<ComboboxSelected>>", self._on_dist_type_change)
+
+        self._dist_param_frames = {}
+        self._dist_param_vars = {}
+
+        for _dk, _dv in _STAT_DIST_REGISTRY.items():
+            _pframe = ttk.Frame(frm_dist, style="Dark.TFrame")
+            _pvars = {}
+            for _pname, _plabel, _psym, _pdef in _dv["params"]:
+                _sv = tk.StringVar(value=str(_pdef))
+                _pvars[_pname] = _sv
+                ttk.Label(_pframe, text=f"{_psym}=",
+                          style="Dark.TLabel").pack(side=tk.LEFT, padx=2)
+                ttk.Entry(_pframe, textvariable=_sv, width=6,
+                          font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+            self._dist_param_frames[_dk] = _pframe
+            self._dist_param_vars[_dk] = _pvars
+
+        self._on_dist_type_change()
+
+        drow2 = ttk.Frame(frm_dist, style="Dark.TFrame")
+        drow2.pack(fill=tk.X, padx=6, pady=(2, 4))
+
+        ttk.Label(drow2, text=t("label_x_value"),
+                  style="Dark.TLabel").pack(side=tk.LEFT, padx=2)
+        self._var_dist_x = tk.StringVar(value="0")
+        ttk.Entry(drow2, textvariable=self._var_dist_x, width=8,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+        ttk.Button(drow2, text=t("btn_dist_pdf"),
+                   command=self._on_dist_pdf).pack(side=tk.LEFT, padx=2)
+        ttk.Button(drow2, text=t("btn_dist_cdf"),
+                   command=self._on_dist_cdf).pack(side=tk.LEFT, padx=2)
+        ttk.Button(drow2, text=t("btn_dist_ppf"),
+                   command=self._on_dist_ppf).pack(side=tk.LEFT, padx=2)
+        ttk.Button(drow2, text=t("btn_dist_plot"),
+                   command=self._on_dist_plot).pack(side=tk.LEFT, padx=2)
+        ttk.Button(drow2, text=t("btn_dist_compare"),
+                   command=self._on_dist_compare).pack(side=tk.LEFT, padx=2)
 
         # --- Curve Fitting / Regression ---
         frm_regression = ttk.LabelFrame(scroll_frame, text=t("sec_regression"),
@@ -3059,6 +3125,299 @@ class SuperCalcApp:
             self.status_var.set(t("status_exported_stats", len(values), os.path.basename(path)))
         except Exception as e:
             messagebox.showerror(t("err_export"), t("msg_could_not_export", e))
+
+    # ------------------------------------------------------------------
+    #  Statistical Distribution Calculator
+    # ------------------------------------------------------------------
+    def _get_dist_info(self):
+        """Get current distribution key and info dict."""
+        from stat_dist import DISTRIBUTIONS as _REG
+        display_name = self._var_dist_type.get()
+        key = self._dist_names_map.get(display_name)
+        if key is None or key not in _REG:
+            return None, None
+        return key, _REG[key]
+
+    def _get_dist_params(self):
+        """Get current parameter values as a dict."""
+        from stat_dist import DISTRIBUTIONS as _REG
+        display_name = self._var_dist_type.get()
+        key = self._dist_names_map.get(display_name)
+        if key is None:
+            return None
+        pvars = self._dist_param_vars.get(key, {})
+        params = {}
+        for pname, sv in pvars.items():
+            try:
+                params[pname] = float(sv.get())
+            except ValueError:
+                messagebox.showerror(t("err_input"),
+                                     t("msg_invalid_param", pname))
+                return None
+        return params
+
+    def _on_dist_type_change(self, event=None):
+        """Show/hide parameter frames based on selected distribution."""
+        display_name = self._var_dist_type.get()
+        key = self._dist_names_map.get(display_name)
+        for dk, frame in self._dist_param_frames.items():
+            if dk == key:
+                frame.pack(fill=tk.X, padx=6, pady=1)
+            else:
+                frame.pack_forget()
+
+    def _on_dist_pdf(self):
+        """Compute PDF/PMF at a given x value."""
+        key, info = self._get_dist_info()
+        if key is None:
+            return
+        params = self._get_dist_params()
+        if params is None:
+            return
+        x_str = self._var_dist_x.get().strip()
+        try:
+            x_val = float(x_str)
+        except ValueError:
+            messagebox.showerror(t("err_input"), t("msg_invalid_x_value"))
+            return
+        try:
+            from stat_dist import create_distribution
+            dist = create_distribution(key, **params)
+            if key in ("binomial", "poisson"):
+                result = float(dist.pmf(int(round(x_val))))
+                label = info.get(f"pdf_label_{_get_lang()}", "PMF")
+            else:
+                result = float(dist.pdf(x_val))
+                label = info.get(f"pdf_label_{_get_lang()}", "PDF")
+            dist_name = info.get(f"name_{_get_lang()}", info["name_en"])
+            msg = f"{dist_name} {label}({x_str}) = {result:.10g}"
+            messagebox.showinfo(label, msg)
+            self.status_var.set(msg)
+        except Exception as e:
+            messagebox.showerror(t("err_error"), str(e))
+
+    def _on_dist_cdf(self):
+        """Compute CDF at a given x value."""
+        key, info = self._get_dist_info()
+        if key is None:
+            return
+        params = self._get_dist_params()
+        if params is None:
+            return
+        x_str = self._var_dist_x.get().strip()
+        try:
+            x_val = float(x_str)
+        except ValueError:
+            messagebox.showerror(t("err_input"), t("msg_invalid_x_value"))
+            return
+        try:
+            from stat_dist import create_distribution
+            dist = create_distribution(key, **params)
+            result = float(dist.cdf(x_val))
+            dist_name = info.get(f"name_{_get_lang()}", info["name_en"])
+            msg = f"{dist_name} CDF({x_str}) = {result:.10g}"
+            messagebox.showinfo("CDF", msg)
+            self.status_var.set(msg)
+        except Exception as e:
+            messagebox.showerror(t("err_error"), str(e))
+
+    def _on_dist_ppf(self):
+        """Compute PPF (inverse CDF) at a given q value."""
+        key, info = self._get_dist_info()
+        if key is None:
+            return
+        params = self._get_dist_params()
+        if params is None:
+            return
+        x_str = self._var_dist_x.get().strip()
+        try:
+            q_val = float(x_str)
+        except ValueError:
+            messagebox.showerror(t("err_input"), t("msg_invalid_q_value"))
+            return
+        if q_val <= 0 or q_val >= 1:
+            messagebox.showerror(t("err_input"), t("msg_q_range"))
+            return
+        try:
+            from stat_dist import create_distribution
+            dist = create_distribution(key, **params)
+            result = float(dist.ppf(q_val))
+            dist_name = info.get(f"name_{_get_lang()}", info["name_en"])
+            msg = f"{dist_name} PPF({x_str}) = {result:.10g}"
+            messagebox.showinfo("PPF", msg)
+            self.status_var.set(msg)
+        except Exception as e:
+            messagebox.showerror(t("err_error"), str(e))
+
+    def _on_dist_plot(self):
+        """Plot the PDF/PMF and CDF of the selected distribution."""
+        key, info = self._get_dist_info()
+        if key is None:
+            return
+        params = self._get_dist_params()
+        if params is None:
+            return
+        try:
+            from stat_dist import create_distribution, get_pdf_x_range
+            dist = create_distribution(key, **params)
+            dist_name = info.get(f"name_{_get_lang()}", info["name_en"])
+            pdf_label = info.get(f"pdf_label_{_get_lang()}", "PDF")
+            is_discrete = key in ("binomial", "poisson")
+
+            xs = get_pdf_x_range(key, params, n_points=500)
+            pdf_vals = dist.pmf(xs) if is_discrete else dist.pdf(xs)
+            cdf_vals = dist.cdf(xs)
+
+            self._ensure_2d_window()
+            self.fig_2d.clear()
+            ax1 = self.fig_2d.add_subplot(211)
+            ax2 = self.fig_2d.add_subplot(212)
+            self.fig_2d.subplots_adjust(hspace=0.4)
+
+            # Dark theme colors
+            bg_color = "#1e1e2e"
+            text_color = "#cdd6f4"
+            grid_color = "#45475a"
+            self.fig_2d.set_facecolor(bg_color)
+
+            for ax in (ax1, ax2):
+                ax.set_facecolor(bg_color)
+                ax.tick_params(colors=text_color, labelsize=9)
+                ax.spines['bottom'].set_color(grid_color)
+                ax.spines['left'].set_color(grid_color)
+                ax.spines['top'].set_visible(False)
+                ax.spines['right'].set_visible(False)
+                ax.grid(True, alpha=0.3, color=grid_color)
+
+            if is_discrete:
+                ax1.bar(xs, pdf_vals, color="#89b4fa", alpha=0.85, width=0.6,
+                        edgecolor="#313244", linewidth=0.8)
+                ax2.step(xs, cdf_vals, where="post", color="#a6e3a1", linewidth=2)
+            else:
+                ax1.fill_between(xs, pdf_vals, alpha=0.3, color="#89b4fa")
+                ax1.plot(xs, pdf_vals, color="#89b4fa", linewidth=2)
+                ax2.fill_between(xs, cdf_vals, alpha=0.3, color="#a6e3a1")
+                ax2.plot(xs, cdf_vals, color="#a6e3a1", linewidth=2)
+
+            ax1.set_title(f"{dist_name} — {pdf_label}", color=text_color, fontsize=11)
+            ax1.set_ylabel(pdf_label, color=text_color, fontsize=10)
+            ax2.set_title(f"{dist_name} — CDF", color=text_color, fontsize=11)
+            ax2.set_ylabel("CDF", color=text_color, fontsize=10)
+            ax2.set_xlabel("x", color=text_color, fontsize=10)
+
+            self.canvas_2d.draw()
+            self.status_var.set(t("status_dist_plot", dist_name))
+        except Exception as e:
+            messagebox.showerror(t("err_error"), str(e))
+
+    def _on_dist_compare(self):
+        """Compare PDF/PMF of multiple parameter sets for the same distribution."""
+        key, info = self._get_dist_info()
+        if key is None:
+            return
+        params = self._get_dist_params()
+        if params is None:
+            return
+        try:
+            from stat_dist import create_distribution, get_pdf_x_range
+            dist_name = info.get(f"name_{_get_lang()}", info["name_en"])
+            pdf_label = info.get(f"pdf_label_{_get_lang()}", "PDF")
+            is_discrete = key in ("binomial", "poisson")
+
+            # Ask user for comparison parameter values
+            param_defs = info["params"]
+            prompt_parts = []
+            for pname, plabel, psym, pdef in param_defs:
+                prompt_parts.append(f"{psym}={pdef}")
+            prompt = t("msg_dist_compare_prompt", dist_name, ", ".join(prompt_parts))
+
+            from tkinter import simpledialog
+            param_str = simpledialog.askstring(
+                t("btn_dist_compare"), prompt,
+                initialvalue=",".join(str(p[3]) for p in param_defs))
+            if not param_str:
+                return
+
+            values_list = [v.strip() for v in param_str.split(",")]
+            if len(values_list) != len(param_defs):
+                messagebox.showerror(t("err_input"), t("msg_dist_param_count", len(param_defs)))
+                return
+
+            param_sets = []
+            for i, (pname, plabel, psym, pdef) in enumerate(param_defs):
+                try:
+                    param_sets.append((pname, float(values_list[i])))
+                except ValueError:
+                    messagebox.showerror(t("err_input"), t("msg_invalid_param", psym))
+                    return
+
+            # Generate plots for each parameter combination
+            colors = ["#89b4fa", "#f38ba8", "#a6e3a1", "#f9e2af", "#cba6f7", "#fab387"]
+            self._ensure_2d_window()
+            self.fig_2d.clear()
+            ax1 = self.fig_2d.add_subplot(211)
+            ax2 = self.fig_2d.add_subplot(212)
+            self.fig_2d.subplots_adjust(hspace=0.4)
+
+            bg_color = "#1e1e2e"
+            text_color = "#cdd6f4"
+            grid_color = "#45475a"
+            self.fig_2d.set_facecolor(bg_color)
+
+            for ax in (ax1, ax2):
+                ax.set_facecolor(bg_color)
+                ax.tick_params(colors=text_color, labelsize=9)
+                ax.spines['bottom'].set_color(grid_color)
+                ax.spines['left'].set_color(grid_color)
+                ax.spines['top'].set_visible(False)
+                ax.spines['right'].set_visible(False)
+                ax.grid(True, alpha=0.3, color=grid_color)
+
+            # Default comparison: vary first parameter
+            pname0 = param_defs[0][0]
+            pval0 = param_sets[0][1]
+            default_values = [0.5, 1.0, 2.0, 3.0, 5.0] if key == "normal" else \
+                             [1.0, 3.0, 5.0, 10.0, 30.0] if key == "t" else \
+                             [1.0, 3.0, 5.0, 10.0] if key == "chi2" else \
+                             [1.0, 2.0, 5.0, 10.0] if key == "f" else \
+                             [0.1, 0.3, 0.5, 0.7, 0.9] if pname0 == "p" else \
+                             [1, 3, 5, 10, 20]
+
+            for idx, val in enumerate(default_values):
+                p = {pname: v for pname, v in param_sets}
+                p[pname0] = val
+                try:
+                    dist = create_distribution(key, **p)
+                    xs = get_pdf_x_range(key, p, n_points=500)
+                    pdf_vals = dist.pmf(xs) if is_discrete else dist.pdf(xs)
+                    cdf_vals = dist.cdf(xs)
+                    c = colors[idx % len(colors)]
+                    label = f"{pname0}={val:g}"
+                    if is_discrete:
+                        ax1.bar(xs, pdf_vals, color=c, alpha=0.6, width=0.4,
+                                label=label, edgecolor="none")
+                        ax2.step(xs, cdf_vals, where="post", color=c,
+                                 linewidth=1.5, label=label)
+                    else:
+                        ax1.plot(xs, pdf_vals, color=c, linewidth=2, label=label)
+                        ax2.plot(xs, cdf_vals, color=c, linewidth=2, label=label)
+                except Exception:
+                    continue
+
+            ax1.set_title(f"{dist_name} — {pdf_label} Comparison", color=text_color, fontsize=11)
+            ax1.set_ylabel(pdf_label, color=text_color, fontsize=10)
+            ax1.legend(facecolor="#313244", edgecolor="#585b70",
+                       labelcolor=text_color, fontsize=8)
+            ax2.set_title(f"{dist_name} — CDF Comparison", color=text_color, fontsize=11)
+            ax2.set_ylabel("CDF", color=text_color, fontsize=10)
+            ax2.set_xlabel("x", color=text_color, fontsize=10)
+            ax2.legend(facecolor="#313244", edgecolor="#585b70",
+                       labelcolor=text_color, fontsize=8)
+
+            self.canvas_2d.draw()
+            self.status_var.set(t("status_dist_compare", dist_name))
+        except Exception as e:
+            messagebox.showerror(t("err_error"), str(e))
 
     # ------------------------------------------------------------------
     #  Curve Fitting / Regression

@@ -65,6 +65,7 @@
    - **复数计算器** — 支持复数四则运算（+、-、*、/、^）、三角函数（sin、cos、tan）、指数、对数、平方根、绝对值与共轭运算。桌面端（Python）与 Android 端（JNI）均已同步。
     - **单位转换器** — 支持不同单位之间的转换，包括长度、重量、温度、面积、体积、时间、数据存储、速度和角度等 9 个单位类别，提供全面的转换因子。
     - **曲线拟合 / 回归分析** — 支持多种数据拟合模型：线性 (y=ax+b)、多项式（可配置阶数）、指数 (y=ae^(bx))、幂函数 (y=ax^b) 和对数 (y=a+b·ln(x))。显示方程、R² 拟合优度、散点图 + 拟合曲线可视化。桌面端（Python/numpy）与 Android 端（Java）均已同步。
+    - **统计分布计算器** — 计算 6 种常见概率分布的 PDF/PMF、CDF 和 PPF（逆 CDF）：正态分布（高斯）、学生 t 分布、卡方分布、F 分布、二项分布和泊松分布。支持参数化输入、分布绘图和多参数对比可视化。桌面端（Python）与 Android 端（Java）均已同步。
     - **Windows EXE** — 提供独立 Windows 可执行文件，无需安装 Python
  - **Android 应用** — 独立 APK，Material Design 3 界面 + JNI 桥接，现已支持 3D 曲面绘图与触控旋转及参数曲线绘制
  - **中文语言支持** — 桌面端（Python）与 Android 端均支持完整中文 (zh-CN) 本地化。桌面端自动检测系统语言或通过环境变量 `SUPERCALC_LANG=zh` 指定。Android 端跟随系统语言自动切换。
@@ -147,6 +148,7 @@ SuperCalculator/
   calc_bridge.py           Python ctypes 桥接层 (多架构自动检测)
   super_calc_bridged.py    GUI 主程序 (Tkinter + Matplotlib)
   locale_strings.py        国际化模块 (英文 + 中文，自动语言检测)
+  stat_dist.py             统计分布计算器 (正态、t、卡方、F、二项、泊松分布)
   SuperCalculator.ico      Windows EXE 图标
   SuperCalculator.spec     PyInstaller 构建配置 (Windows EXE)
   android/                 Android 项目 (Gradle + JNI + M3 UI)
@@ -158,6 +160,7 @@ SuperCalculator/
 
 ## 更新日志
 
+- **统计分布计算器** — 计算 6 种常见概率分布的 PDF/PMF、CDF 和 PPF（逆 CDF）：正态分布（高斯）、学生 t 分布、卡方分布、F 分布、二项分布和泊松分布。支持参数化输入、分布绘图和多参数对比可视化。桌面端（Python）与 Android 端（Java）均已同步。
 - **中文语言支持** — 桌面端与 Android 端均支持完整中文 (zh-CN) 本地化。桌面端使用 `locale_strings.py` 模块，自动检测系统语言（或通过 `SUPERCALC_LANG` 环境变量指定）。Android 端使用标准 `values-zh-rCN/` 字符串资源，跟随系统语言自动切换。所有界面标签、按钮、错误提示和对话框文本均已翻译。
 - **曲线拟合 / 回归分析** — 支持线性、多项式、指数、幂函数和对数拟合模型，显示方程与 R² 拟合优度，支持散点图 + 拟合曲线可视化。桌面端（Python/numpy）与 Android 端（Java）均已同步。
 - **非线性方程组求解 (2D)** — 求解两个未知数的非线性方程组 f(x,y)=0, g(x,y)=0，采用 Newton 法配合数值雅可比矩阵与克莱默法则。桌面端（Python）与 Android 端（JNI）均已同步。

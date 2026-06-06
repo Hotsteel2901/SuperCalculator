@@ -156,6 +156,13 @@
     <string name="unit_speed">Speed</string>
     <string name="unit_angle">Angle</string>
 
+    <!-- Statistical Distribution Calculator -->
+    <string name="stat_dist_title">Statistical Distributions</string>
+    <string name="hint_dist_type">Distribution Type</string>
+    <string name="hint_dist_params">Parameters (comma-sep)</string>
+    <string name="hint_dist_x">x / q value</string>
+    <string name="dist_plot">Plot Distribution</string>
+
     <!-- Toast/dialog strings -->
     <string name="toast_enter_expr">Enter an expression</string>
     <string name="toast_a_less_b">a must be less than b</string>

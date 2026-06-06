@@ -156,6 +156,13 @@
     <string name="unit_speed">速度</string>
     <string name="unit_angle">角度</string>
 
+    <!-- Statistical Distribution Calculator -->
+    <string name="stat_dist_title">统计分布</string>
+    <string name="hint_dist_type">分布类型</string>
+    <string name="hint_dist_params">参数（逗号分隔）</string>
+    <string name="hint_dist_x">x / q 值</string>
+    <string name="dist_plot">绘制分布图</string>
+
     <!-- Toast/dialog strings -->
     <string name="toast_enter_expr">请输入表达式</string>
     <string name="toast_a_less_b">a必须小于b</string>
