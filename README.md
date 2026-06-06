@@ -63,6 +63,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
   - **Complex Number Calculator** — perform complex arithmetic (+, -, *, /, ^), trigonometric functions (sin, cos, tan), exponential, logarithm, square root, absolute value, and conjugate. Available on both desktop (Python) and Android (JNI).
   - **Unit Converter** — convert between different units of measurement including Length, Weight, Temperature, Area, Volume, Time, Data Storage, Speed, and Angle. Supports 9 unit categories with comprehensive conversion factors.
   - **Curve Fitting / Regression** — fit data to various models: Linear (y=ax+b), Polynomial (configurable degree), Exponential (y=ae^(bx)), Power (y=ax^b), and Logarithmic (y=a+b·ln(x)). Displays equation, R² goodness-of-fit, and scatter + fitted curve plot. Available on both desktop (Python/numpy) and Android (Java).
+   - **Statistical Distribution Calculator** — compute PDF/PMF, CDF, and PPF (inverse CDF) for 6 common distributions: Normal (Gaussian), Student's t, Chi-squared, F, Binomial, and Poisson. Includes distribution plotting and parameter comparison visualization. Available on both desktop (Python) and Android (Java).
    - **Windows EXE** — standalone executable, no Python installation required
  - **Android App** — standalone APK with Material Design 3 UI and JNI bridge, now including 3D surface plotting with touch rotation and parametric curve support
  - **Chinese Language Support** — full Chinese (zh-CN) localization for both desktop (Python) and Android. Desktop auto-detects system locale or accepts `SUPERCALC_LANG=zh` env var. Android follows system language automatically.
@@ -145,6 +146,7 @@ SuperCalculator/
   calc_bridge.py           Python ctypes bridge layer (multi-arch detection)
   super_calc_bridged.py    GUI main program (Tkinter + Matplotlib)
   locale_strings.py        i18n module (English + Chinese, auto locale detection)
+  stat_dist.py             Statistical distribution calculator (Normal, t, Chi2, F, Binomial, Poisson)
   SuperCalculator.ico      Windows EXE icon
   SuperCalculator.spec     PyInstaller spec for Windows EXE build
   android/                 Android project (Gradle + JNI + M3 UI)
@@ -156,6 +158,7 @@ SuperCalculator/
 
 ## What's New
 
+- **Statistical Distribution Calculator** — compute PDF/PMF, CDF, and PPF (inverse CDF) for 6 common probability distributions: Normal (Gaussian), Student's t, Chi-squared, F, Binomial, and Poisson. Features parameterized input, distribution plotting, and multi-parameter comparison visualization. Available on both desktop (Python) and Android (Java).
 - **Chinese Language Support** — full Chinese (zh-CN) localization for both desktop and Android. Desktop uses `locale_strings.py` with auto locale detection (`SUPERCALC_LANG` env var or system locale). Android uses standard `values-zh-rCN/` string resources and follows system language. All UI labels, buttons, error messages, and dialog texts are translated.
 - **Curve Fitting / Regression** — fit data to Linear, Polynomial, Exponential, Power, and Logarithmic models with R² goodness-of-fit. Scatter + curve plot visualization. Available on both desktop (Python/numpy) and Android (Java).
 - **Nonlinear System Solver (2D)** — solve systems of two nonlinear equations f(x,y)=0, g(x,y)=0 using Newton's method for systems with numerical Jacobian via Cramer's rule. Available on both desktop (Python) and Android (JNI).
@@ -295,6 +298,40 @@ result = CalcEngine.power_regression(xs, ys)
 
 result = CalcEngine.logarithmic_regression(xs, ys)
 # result -> {'a': ..., 'b': ..., 'r_squared': ..., 'equation': '...', 'xs_fit': [...], 'ys_fit': [...]}
+
+# Statistical Distribution Calculator
+from stat_dist import create_distribution, DISTRIBUTIONS
+
+# Normal distribution
+dist = create_distribution("normal", mu=0, sigma=1)
+dist.pdf(0.5)      # -> ~0.352
+dist.cdf(1.96)     # -> ~0.975
+dist.ppf(0.975)    # -> ~1.96
+
+# Student's t-distribution
+dist = create_distribution("t", nu=5)
+dist.pdf(0.0)      # -> ~0.3796
+dist.cdf(2.0)      # -> ~0.944
+
+# Chi-squared distribution
+dist = create_distribution("chi2", k=3)
+dist.pdf(1.0)      # -> ~0.242
+dist.cdf(6.25)     # -> ~0.90
+
+# F-distribution
+dist = create_distribution("f", d1=5, d2=10)
+dist.pdf(1.0)      # -> ~0.348
+dist.cdf(2.0)      # -> ~0.84
+
+# Binomial distribution
+dist = create_distribution("binomial", n=20, p=0.5)
+dist.pmf(10)       # -> ~0.176
+dist.cdf(10)       # -> ~0.588
+
+# Poisson distribution
+dist = create_distribution("poisson", lam=5)
+dist.pmf(3)        # -> ~0.140
+dist.cdf(5)        # -> ~0.616
 ```
 
 ## Numerical Methods

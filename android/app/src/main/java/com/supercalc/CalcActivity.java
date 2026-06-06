@@ -241,6 +241,9 @@ public class CalcActivity extends AppCompatActivity {
 
         // Unit Converter
         setupUnitConverter();
+
+        // Statistical Distribution Calculator
+        setupDistCalc();
     }
 
     private String getExpr()  { return exprInput.getText().toString().trim(); }
@@ -1924,6 +1927,188 @@ public class CalcActivity extends AppCompatActivity {
     private AutoCompleteTextView unitCategoryDropdown, unitFromDropdown, unitToDropdown;
     private EditText unitValueInput, unitResultInput;
     private ArrayAdapter<String> unitCategoryAdapter, unitFromAdapter, unitToAdapter;
+
+    // Statistical Distribution Calculator
+    private AutoCompleteTextView distTypeDropdown;
+    private EditText distParamsInput, distXInput;
+    private ArrayAdapter<String> distTypeAdapter;
+
+    private void setupDistCalc() {
+        distTypeDropdown = findViewById(R.id.dist_type_dropdown);
+        distParamsInput = findViewById(R.id.dist_params_input);
+        distXInput = findViewById(R.id.dist_x_input);
+
+        String[] distNames = StatDistCalc.getDistributionNames();
+        distTypeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, distNames);
+        distTypeDropdown.setAdapter(distTypeAdapter);
+        distTypeDropdown.setText(distNames[0], false);
+
+        distTypeDropdown.setOnItemClickListener((parent, view, position, id) -> {
+            String name = distTypeAdapter.getItem(position);
+            updateDistParams(name);
+        });
+
+        MaterialButton btnDistPdf = findViewById(R.id.btn_dist_pdf);
+        MaterialButton btnDistCdf = findViewById(R.id.btn_dist_cdf);
+        MaterialButton btnDistPpf = findViewById(R.id.btn_dist_ppf);
+        MaterialButton btnDistPlot = findViewById(R.id.btn_dist_plot);
+
+        btnDistPdf.setOnClickListener(v -> onDistCompute("pdf"));
+        btnDistCdf.setOnClickListener(v -> onDistCompute("cdf"));
+        btnDistPpf.setOnClickListener(v -> onDistCompute("ppf"));
+        btnDistPlot.setOnClickListener(v -> onDistPlot());
+    }
+
+    private void updateDistParams(String name) {
+        switch (name) {
+            case "Normal": distParamsInput.setText("0, 1"); break;
+            case "Student's t": distParamsInput.setText("5"); break;
+            case "Chi-squared": distParamsInput.setText("3"); break;
+            case "F": distParamsInput.setText("5, 10"); break;
+            case "Binomial": distParamsInput.setText("20, 0.5"); break;
+            case "Poisson": distParamsInput.setText("5"); break;
+            default: distParamsInput.setText("0, 1"); break;
+        }
+    }
+
+    private void onDistCompute(String mode) {
+        String distName = distTypeDropdown.getText().toString();
+        StatDistCalc.DistType type = StatDistCalc.fromName(distName);
+        double[] params = parseParams(distParamsInput.getText().toString());
+        if (params == null) {
+            toast("Invalid parameters");
+            return;
+        }
+        double x;
+        try {
+            x = Double.parseDouble(distXInput.getText().toString().trim());
+        } catch (NumberFormatException e) {
+            toast("Invalid x value");
+            return;
+        }
+
+        double result;
+        String label;
+        switch (mode) {
+            case "pdf":
+                result = StatDistCalc.pdf(type, x, params);
+                label = "PDF";
+                break;
+            case "cdf":
+                result = StatDistCalc.cdf(type, x, params);
+                label = "CDF";
+                break;
+            case "ppf":
+                // PPF: binary search for inverse CDF
+                result = computePpf(type, x, params);
+                label = "PPF";
+                break;
+            default:
+                return;
+        }
+        if (Double.isNaN(result) || Double.isInfinite(result)) {
+            appendResult(distName + " " + label + "(" + fmt(x) + ")", Double.NaN);
+        } else {
+            appendResult(distName + " " + label + "(" + fmt(x) + ")", result);
+        }
+    }
+
+    private double computePpf(StatDistCalc.DistType type, double q, double[] params) {
+        if (q <= 0 || q >= 1) return Double.NaN;
+        double lo = -100, hi = 100;
+        for (int i = 0; i < 100; i++) {
+            double mid = (lo + hi) / 2.0;
+            if (StatDistCalc.cdf(type, mid, params) < q) lo = mid; else hi = mid;
+        }
+        return (lo + hi) / 2.0;
+    }
+
+    private void onDistPlot() {
+        String distName = distTypeDropdown.getText().toString();
+        StatDistCalc.DistType type = StatDistCalc.fromName(distName);
+        double[] params = parseParams(distParamsInput.getText().toString());
+        if (params == null) {
+            toast("Invalid parameters");
+            return;
+        }
+
+        double xMin, xMax;
+        switch (type) {
+            case NORMAL:
+                double mu = params[0], sigma = Math.abs(params[1]);
+                xMin = mu - 4 * sigma; xMax = mu + 4 * sigma;
+                break;
+            case T:
+                xMin = -6; xMax = 6;
+                break;
+            case CHI2:
+                double k = params[0];
+                xMin = 0; xMax = Math.max(k + 4 * Math.sqrt(2 * k), 1);
+                break;
+            case F:
+                xMin = 0.01; xMax = 10;
+                break;
+            case BINOMIAL:
+                xMin = 0; xMax = params[0];
+                break;
+            case POISSON:
+                double lam = params[0];
+                xMin = 0; xMax = (int)(lam + 4 * Math.sqrt(lam)) + 1;
+                break;
+            default:
+                xMin = -5; xMax = 5; break;
+        }
+
+        int n = 200;
+        double step = (xMax - xMin) / (n - 1);
+        float[] xs = new float[n];
+        float[] ys = new float[n];
+        for (int i = 0; i < n; i++) {
+            double x = xMin + i * step;
+            xs[i] = (float) x;
+            ys[i] = (float) StatDistCalc.pdf(type, x, params);
+        }
+
+        // Plot using MPAndroidChart
+        java.util.ArrayList<Entry> entries = new java.util.ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            entries.add(new Entry(xs[i], ys[i]));
+        }
+        LineDataSet dataSet = new LineDataSet(entries, distName + " PDF");
+        dataSet.setColor(0xFF89B4FA);
+        dataSet.setDrawCircles(false);
+        dataSet.setLineWidth(2f);
+        dataSet.setDrawValues(false);
+        LineData lineData = new LineData(dataSet);
+        lineChart.setData(lineData);
+        lineChart.getDescription().setText(distName + " Distribution");
+        lineChart.getDescription().setTextColor(0xFFCDD6F4);
+        lineChart.getAxisRight().setEnabled(false);
+        XAxis xAxis = lineChart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setTextColor(0xFFCDD6F4);
+        xAxis.setGridColor(0xFF45475A);
+        YAxis yAxis = lineChart.getAxisLeft();
+        yAxis.setTextColor(0xFFCDD6F4);
+        yAxis.setGridColor(0xFF45475A);
+        lineChart.invalidate();
+        graphCard.setVisibility(android.view.View.VISIBLE);
+        toast(distName + " distribution plotted");
+    }
+
+    private double[] parseParams(String text) {
+        if (text == null || text.trim().isEmpty()) return null;
+        String[] parts = text.trim().split(",");
+        double[] result = new double[parts.length];
+        try {
+            for (int i = 0; i < parts.length; i++) {
+                result[i] = Double.parseDouble(parts[i].trim());
+            }
+            return result;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
 
     private void setupUnitConverter() {
         unitCategoryDropdown = findViewById(R.id.unit_category_dropdown);
