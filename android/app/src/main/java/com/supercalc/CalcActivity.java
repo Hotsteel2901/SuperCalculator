@@ -877,16 +877,17 @@ public class CalcActivity extends AppCompatActivity {
         double[] xs, ys;
         if (xsFull.length > maxPoints) {
             int step = Math.max(1, xsFull.length / maxPoints);
-            xs = new double[xsFull.length / step + 1];
-            ys = new double[ysFull.length / step + 1];
+            int arraySize = (xsFull.length + step - 1) / step + 1;
+            xs = new double[arraySize];
+            ys = new double[arraySize];
             int idx = 0;
-            for (int i = 0; i < xsFull.length; i += step) {
+            for (int i = 0; i < xsFull.length && idx < xs.length; i += step) {
                 xs[idx] = xsFull[i];
                 ys[idx] = ysFull[i];
                 idx++;
             }
             // Always include the last point
-            if ((xsFull.length - 1) % step != 0) {
+            if ((xsFull.length - 1) % step != 0 && idx < xs.length) {
                 xs[idx] = xsFull[xsFull.length - 1];
                 ys[idx] = ysFull[ysFull.length - 1];
                 idx++;
@@ -1156,6 +1157,7 @@ public class CalcActivity extends AppCompatActivity {
     private void onMatrixAdd() {
         double[][] a = getMatrixA(); double[][] b = getMatrixB();
         if (a == null || b == null) return;
+        if (a.length == 0 || b.length == 0) return;
         if (a.length != b.length || a[0].length != b[0].length) { toast(getString(R.string.toast_dims_match)); return; }
         double[][] r = new double[a.length][a[0].length];
         for (int i = 0; i < a.length; i++)
@@ -1168,6 +1170,7 @@ public class CalcActivity extends AppCompatActivity {
     private void onMatrixSub() {
         double[][] a = getMatrixA(); double[][] b = getMatrixB();
         if (a == null || b == null) return;
+        if (a.length == 0 || b.length == 0) return;
         if (a.length != b.length || a[0].length != b[0].length) { toast(getString(R.string.toast_dims_match)); return; }
         double[][] r = new double[a.length][a[0].length];
         for (int i = 0; i < a.length; i++)
@@ -1180,6 +1183,7 @@ public class CalcActivity extends AppCompatActivity {
     private void onMatrixMul() {
         double[][] a = getMatrixA(); double[][] b = getMatrixB();
         if (a == null || b == null) return;
+        if (a.length == 0 || b.length == 0) return;
         if (a[0].length != b.length) { toast(getString(R.string.toast_cols_rows)); return; }
         double[][] r = new double[a.length][b[0].length];
         for (int i = 0; i < a.length; i++)
@@ -1195,6 +1199,7 @@ public class CalcActivity extends AppCompatActivity {
     private void onMatrixDet() {
         double[][] a = getMatrixA();
         if (a == null) return;
+        if (a.length == 0) return;
         if (a.length != a[0].length) { toast(getString(R.string.toast_det_square)); return; }
         double det = det(a);
         showMatrixResult("det(A)", "det(A) = " + fmt(det));
@@ -1998,14 +2003,14 @@ public class CalcActivity extends AppCompatActivity {
         StatDistCalc.DistType type = StatDistCalc.fromName(distName);
         double[] params = parseParams(distParamsInput.getText().toString());
         if (params == null) {
-            toast("Invalid parameters");
+            toast(getString(R.string.toast_invalid_params));
             return;
         }
         double x;
         try {
             x = Double.parseDouble(distXInput.getText().toString().trim());
         } catch (NumberFormatException e) {
-            toast("Invalid x value");
+            toast(getString(R.string.toast_invalid_x_value));
             return;
         }
 
@@ -2037,7 +2042,10 @@ public class CalcActivity extends AppCompatActivity {
 
     private double computePpf(StatDistCalc.DistType type, double q, double[] params) {
         if (q <= 0 || q >= 1) return Double.NaN;
-        double lo = -100, hi = 100;
+        double lo = -10.0, hi = 10.0;
+        // Dynamically expand search range to cover the full distribution support
+        while (StatDistCalc.cdf(type, lo, params) > q) lo *= 2;
+        while (StatDistCalc.cdf(type, hi, params) < q) hi *= 2;
         for (int i = 0; i < 100; i++) {
             double mid = (lo + hi) / 2.0;
             if (StatDistCalc.cdf(type, mid, params) < q) lo = mid; else hi = mid;
@@ -2050,7 +2058,7 @@ public class CalcActivity extends AppCompatActivity {
         StatDistCalc.DistType type = StatDistCalc.fromName(distName);
         double[] params = parseParams(distParamsInput.getText().toString());
         if (params == null) {
-            toast("Invalid parameters");
+            toast(getString(R.string.toast_invalid_params));
             return;
         }
 
@@ -2115,7 +2123,7 @@ public class CalcActivity extends AppCompatActivity {
         yAxis.setGridColor(0xFF45475A);
         lineChart.invalidate();
         graphCard.setVisibility(android.view.View.VISIBLE);
-        toast(distName + " distribution plotted");
+        toast(getString(R.string.toast_dist_plotted, distName));
     }
 
     private double[] parseParams(String text) {

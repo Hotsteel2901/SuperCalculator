@@ -268,4 +268,9 @@
     <string name="dialog_function_table">函数表（{0}个点）</string>
     <string name="dialog_close">关闭</string>
     <string name="dialog_share_csv">分享CSV</string>
+
+    <!-- Statistical distribution toasts -->
+    <string name="toast_invalid_params">参数无效</string>
+    <string name="toast_invalid_x_value">x值无效</string>
+    <string name="toast_dist_plotted">%1$s 分布已绘制</string>
 </resources>

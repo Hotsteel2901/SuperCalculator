@@ -116,10 +116,10 @@ def _igamma(a: float, x: float) -> float:
             b += 2.0
             d = an * d + b
             if abs(d) < 1e-30:
-                d = 1e-30
+                d = np.sign(d) * 1e-30 if d != 0 else 1e-30
             c = b + an / c
             if abs(c) < 1e-30:
-                c = 1e-30
+                c = np.sign(c) * 1e-30 if c != 0 else 1e-30
             d = 1.0 / d
             delta = d * c
             h *= delta
@@ -258,8 +258,12 @@ class StudentTDist:
         q = float(q)
         if q <= 0 or q >= 1:
             raise ValueError("q must be in (0, 1)")
-        # Use bisection with CDF
-        lo, hi = -100.0, 100.0
+        # Use bisection with CDF, dynamically expanding range
+        lo, hi = -10.0, 10.0
+        while float(self.cdf(lo)) > q:
+            lo *= 2
+        while float(self.cdf(hi)) < q:
+            hi *= 2
         for _ in range(100):
             mid = (lo + hi) / 2.0
             if float(self.cdf(mid)) < q:
@@ -379,7 +383,7 @@ class FDist:
         q = float(q)
         if q <= 0 or q >= 1:
             raise ValueError("q must be in (0, 1)")
-        lo, hi = 0.001, 1.0
+        lo, hi = 0.0, 1.0
         while float(self.cdf(hi)) < q:
             hi *= 2
         for _ in range(100):
@@ -415,12 +419,17 @@ class BinomialDist:
         for i, ki in enumerate(np.nditer(k)):
             ki_val = int(round(float(ki)))
             if 0 <= ki_val <= self.n:
-                log_pmf = (np.log(_gamma_scalar(self.n + 1)) -
-                           np.log(_gamma_scalar(ki_val + 1)) -
-                           np.log(_gamma_scalar(self.n - ki_val + 1)) +
-                           ki_val * np.log(self.p) +
-                           (self.n - ki_val) * np.log(1 - self.p))
-                result.flat[i] = np.exp(log_pmf)
+                if self.p == 0.0:
+                    result.flat[i] = 1.0 if ki_val == 0 else 0.0
+                elif self.p == 1.0:
+                    result.flat[i] = 1.0 if ki_val == self.n else 0.0
+                else:
+                    log_pmf = (np.log(_gamma_scalar(self.n + 1)) -
+                               np.log(_gamma_scalar(ki_val + 1)) -
+                               np.log(_gamma_scalar(self.n - ki_val + 1)) +
+                               ki_val * np.log(self.p) +
+                               (self.n - ki_val) * np.log(1 - self.p))
+                    result.flat[i] = np.exp(log_pmf)
         return result
 
     def cdf(self, x) -> np.ndarray:
@@ -477,9 +486,12 @@ class PoissonDist:
         for i, ki in enumerate(np.nditer(k)):
             ki_val = int(round(float(ki)))
             if ki_val >= 0:
-                log_pmf = ki_val * np.log(self.lam) - self.lam - \
-                          np.log(_gamma_scalar(ki_val + 1))
-                result.flat[i] = np.exp(log_pmf)
+                if self.lam == 0.0:
+                    result.flat[i] = 1.0 if ki_val == 0 else 0.0
+                else:
+                    log_pmf = ki_val * np.log(self.lam) - self.lam - \
+                              np.log(_gamma_scalar(ki_val + 1))
+                    result.flat[i] = np.exp(log_pmf)
         return result
 
     def cdf(self, x) -> np.ndarray:

@@ -53,7 +53,7 @@ public class StatDistCalc {
             case NORMAL: return normalCdf(x, params[0], params[1]);
             case T: return tCdf(x, (int) params[0]);
             case CHI2: return chi2Cdf(x, (int) params[0]);
-            case F: return fCdf(x, (int) params[0], (int) params[1]);
+            case F: return fCdf(x, params[0], params[1]);
             case BINOMIAL: return binomialCdf((int) x, (int) params[0], params[1]);
             case POISSON: return poissonCdf((int) x, params[0]);
             default: return Double.NaN;
@@ -78,7 +78,8 @@ public class StatDistCalc {
     }
 
     private static double tCdf(double x, int nu) {
-        // Use numerical integration (trapezoidal)
+        // Use numerical integration (trapezoidal) from 0 to x, plus 0.5 offset
+        // to get integral from -infinity to x
         if (x > 10) return 1.0;
         if (x < -10) return 0.0;
         int n = 2000;
@@ -88,7 +89,7 @@ public class StatDistCalc {
             sum += tPdf(i * h, nu);
         }
         sum += tPdf(x, nu) / 2.0;
-        return sum * h;
+        return sum * h + 0.5;
     }
 
     // --- Chi-squared distribution ---
@@ -115,7 +116,7 @@ public class StatDistCalc {
         return Math.exp(logPdf);
     }
 
-    private static double fCdf(double x, int d1, int d2) {
+    private static double fCdf(double x, double d1, double d2) {
         if (x <= 0) return 0.0;
         double z = d1 * x / (d1 * x + d2);
         return incompleteBeta(d1 / 2.0, d2 / 2.0, z);
@@ -124,6 +125,8 @@ public class StatDistCalc {
     // --- Binomial distribution ---
     private static double binomialPmf(int k, int n, double p) {
         if (k < 0 || k > n) return 0.0;
+        if (p == 0.0) return (k == 0) ? 1.0 : 0.0;
+        if (p == 1.0) return (k == n) ? 1.0 : 0.0;
         double logPmf = logGamma(n + 1) - logGamma(k + 1) - logGamma(n - k + 1)
                 + k * Math.log(p) + (n - k) * Math.log(1 - p);
         return Math.exp(logPmf);
@@ -142,6 +145,7 @@ public class StatDistCalc {
     // --- Poisson distribution ---
     private static double poissonPmf(int k, double lambda) {
         if (k < 0) return 0.0;
+        if (lambda == 0.0) return (k == 0) ? 1.0 : 0.0;
         double logPmf = k * Math.log(lambda) - lambda - logGamma(k + 1);
         return Math.exp(logPmf);
     }

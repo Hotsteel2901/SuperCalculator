@@ -125,7 +125,9 @@ Java_com_supercalc_CalcEngine_solve(JNIEnv* env, jclass clazz,
 
 JNIEXPORT jstring JNICALL
 Java_com_supercalc_CalcEngine_getLastError(JNIEnv* env, jclass clazz) {
-    return (*env)->NewStringUTF(env, get_last_error());
+    const char* err = get_last_error();
+    if (!err) err = "";
+    return (*env)->NewStringUTF(env, err);
 }
 
 JNIEXPORT jdoubleArray JNICALL

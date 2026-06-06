@@ -268,4 +268,9 @@
     <string name="dialog_function_table">Function Table ({0} pts)</string>
     <string name="dialog_close">Close</string>
     <string name="dialog_share_csv">Share CSV</string>
+
+    <!-- Statistical distribution toasts -->
+    <string name="toast_invalid_params">Invalid parameters</string>
+    <string name="toast_invalid_x_value">Invalid x value</string>
+    <string name="toast_dist_plotted">%1$s distribution plotted</string>
 </resources>
