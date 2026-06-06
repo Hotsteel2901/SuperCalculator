@@ -14,7 +14,7 @@ def _detect_language():
     if env_lang:
         return env_lang
     try:
-        default = locale.getdefaultlocale()[0]
+        default = locale.getlocale()[0]
         if default:
             lang = default.split("_")[0].lower()
             return lang
@@ -415,7 +415,7 @@ STRINGS = {
     },
     "btn_plot": {
         "en": "Plot",
-        "zh": "绘制",
+        "zh": "绘图",
     },
     "btn_clear_all": {
         "en": "Clear All",
@@ -1843,6 +1843,44 @@ STRINGS = {
     "status_dist_compare": {
         "en": "Distribution comparison: {0}",
         "zh": "分布对比：{0}",
+    },
+
+    # ---- Status messages for matrix/other operations ----
+    "status_table_copied": {
+        "en": "Table copied to clipboard.",
+        "zh": "表格已复制到剪贴板。",
+    },
+    "status_no_roots": {
+        "en": "No roots found",
+        "zh": "未找到根",
+    },
+    "status_matrix_add": {
+        "en": "Matrix A + B computed",
+        "zh": "矩阵 A + B 已计算",
+    },
+    "status_matrix_sub": {
+        "en": "Matrix A - B computed",
+        "zh": "矩阵 A - B 已计算",
+    },
+    "status_matrix_mul": {
+        "en": "Matrix A * B computed",
+        "zh": "矩阵 A * B 已计算",
+    },
+    "status_matrix_inv": {
+        "en": "Matrix inverse computed",
+        "zh": "矩阵逆已计算",
+    },
+    "status_matrix_trans": {
+        "en": "Matrix transpose computed",
+        "zh": "矩阵转置已计算",
+    },
+    "status_matrix_cleared": {
+        "en": "Matrix inputs cleared.",
+        "zh": "矩阵输入已清除。",
+    },
+    "status_unit_select": {
+        "en": "Unit converter: please select category and units.",
+        "zh": "单位换算：请选择类别和单位。",
     },
 }
 

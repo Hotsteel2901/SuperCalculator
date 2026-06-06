@@ -845,6 +845,7 @@ class SuperCalcApp:
                         lambda e: self._on_ode_preset(self._var_ode_preset.get()))
 
         self._ode_data = None  # last ODE solution dict (None or dict)
+        self._last_reg_result = None  # last regression result dict
 
         # --- Statistics Calculator ---
         frm_stats = ttk.LabelFrame(scroll_frame, text=t("sec_stats"),
@@ -1839,8 +1840,8 @@ class SuperCalcApp:
                            textcoords='offset points', color='#cba6f7', fontsize=8)
 
         # Draw tangent lines
-        for t in getattr(self, 'tangent_data', []):
-            x0, y0, slope = t["x0"], t["y0"], t["slope"]
+        for td in getattr(self, 'tangent_data', []):
+            x0, y0, slope = td["x0"], td["y0"], td["slope"]
             # Tangent line: y = slope*(x - x0) + y0
             x_left = max(self.x_min, x0 - (self.x_max - self.x_min) * 0.3)
             x_right = min(self.x_max, x0 + (self.x_max - self.x_min) * 0.3)
@@ -1851,8 +1852,8 @@ class SuperCalcApp:
             self.ax_2d.plot(x0, y0, 'co', markersize=6)
 
         # Draw normal lines
-        for n in getattr(self, 'normal_data', []):
-            x0, y0, slope = n["x0"], n["y0"], n["slope"]
+        for nd in getattr(self, 'normal_data', []):
+            x0, y0, slope = nd["x0"], nd["y0"], nd["slope"]
             if abs(slope) < 1e-12:
                 # Vertical normal line
                 y_bottom = max(self.y_min, y0 - (self.y_max - self.y_min) * 0.3)
@@ -2295,7 +2296,7 @@ class SuperCalcApp:
         text = "\n".join(lines)
         self.root.clipboard_clear()
         self.root.clipboard_append(text)
-        self.status_var.set("Table copied to clipboard.")
+        self.status_var.set(t("status_table_copied"))
 
     # ------------------------------------------------------------------
     #  Calculus operations
@@ -2765,6 +2766,10 @@ class SuperCalcApp:
         xs = np.array(self._ode_data['xs'])
         ys = np.array([y if y is not None else np.nan for y in self._ode_data['ys']])
 
+        if len(xs) == 0 or len(ys) == 0:
+            self.status_var.set(t("msg_no_ode_points"))
+            return
+
         expr = self._var_ode_expr.get().strip()
         x0 = self._var_ode_x0.get()
         y0 = self._var_ode_y0.get()
@@ -2984,7 +2989,7 @@ class SuperCalcApp:
             self.status_var.set(t("status_found_roots", len(unique_roots)))
         else:
             messagebox.showinfo(t("err_root_scan"), t("msg_no_roots"))
-            self.status_var.set("No roots found")
+            self.status_var.set(t("status_no_roots"))
 
     # ------------------------------------------------------------------
     #  Statistics Calculator
@@ -3270,7 +3275,7 @@ class SuperCalcApp:
 
             self._ensure_2d_window()
             self.fig_2d.clear()
-            ax1 = self.fig_2d.add_subplot(211)
+            self.ax_2d = self.fig_2d.add_subplot(211)
             ax2 = self.fig_2d.add_subplot(212)
             self.fig_2d.subplots_adjust(hspace=0.4)
 
@@ -3280,7 +3285,7 @@ class SuperCalcApp:
             grid_color = "#45475a"
             self.fig_2d.set_facecolor(bg_color)
 
-            for ax in (ax1, ax2):
+            for ax in (self.ax_2d, ax2):
                 ax.set_facecolor(bg_color)
                 ax.tick_params(colors=text_color, labelsize=9)
                 ax.spines['bottom'].set_color(grid_color)
@@ -3290,17 +3295,17 @@ class SuperCalcApp:
                 ax.grid(True, alpha=0.3, color=grid_color)
 
             if is_discrete:
-                ax1.bar(xs, pdf_vals, color="#89b4fa", alpha=0.85, width=0.6,
+                self.ax_2d.bar(xs, pdf_vals, color="#89b4fa", alpha=0.85, width=0.6,
                         edgecolor="#313244", linewidth=0.8)
                 ax2.step(xs, cdf_vals, where="post", color="#a6e3a1", linewidth=2)
             else:
-                ax1.fill_between(xs, pdf_vals, alpha=0.3, color="#89b4fa")
-                ax1.plot(xs, pdf_vals, color="#89b4fa", linewidth=2)
+                self.ax_2d.fill_between(xs, pdf_vals, alpha=0.3, color="#89b4fa")
+                self.ax_2d.plot(xs, pdf_vals, color="#89b4fa", linewidth=2)
                 ax2.fill_between(xs, cdf_vals, alpha=0.3, color="#a6e3a1")
                 ax2.plot(xs, cdf_vals, color="#a6e3a1", linewidth=2)
 
-            ax1.set_title(f"{dist_name} — {pdf_label}", color=text_color, fontsize=11)
-            ax1.set_ylabel(pdf_label, color=text_color, fontsize=10)
+            self.ax_2d.set_title(f"{dist_name} — {pdf_label}", color=text_color, fontsize=11)
+            self.ax_2d.set_ylabel(pdf_label, color=text_color, fontsize=10)
             ax2.set_title(f"{dist_name} — CDF", color=text_color, fontsize=11)
             ax2.set_ylabel("CDF", color=text_color, fontsize=10)
             ax2.set_xlabel("x", color=text_color, fontsize=10)
@@ -3355,7 +3360,7 @@ class SuperCalcApp:
             colors = ["#89b4fa", "#f38ba8", "#a6e3a1", "#f9e2af", "#cba6f7", "#fab387"]
             self._ensure_2d_window()
             self.fig_2d.clear()
-            ax1 = self.fig_2d.add_subplot(211)
+            self.ax_2d = self.fig_2d.add_subplot(211)
             ax2 = self.fig_2d.add_subplot(212)
             self.fig_2d.subplots_adjust(hspace=0.4)
 
@@ -3364,7 +3369,7 @@ class SuperCalcApp:
             grid_color = "#45475a"
             self.fig_2d.set_facecolor(bg_color)
 
-            for ax in (ax1, ax2):
+            for ax in (self.ax_2d, ax2):
                 ax.set_facecolor(bg_color)
                 ax.tick_params(colors=text_color, labelsize=9)
                 ax.spines['bottom'].set_color(grid_color)
@@ -3373,15 +3378,15 @@ class SuperCalcApp:
                 ax.spines['right'].set_visible(False)
                 ax.grid(True, alpha=0.3, color=grid_color)
 
-            # Default comparison: vary first parameter
+            # Default comparison: vary first parameter, including user's value
             pname0 = param_defs[0][0]
             pval0 = param_sets[0][1]
-            default_values = [0.5, 1.0, 2.0, 3.0, 5.0] if key == "normal" else \
-                             [1.0, 3.0, 5.0, 10.0, 30.0] if key == "t" else \
-                             [1.0, 3.0, 5.0, 10.0] if key == "chi2" else \
-                             [1.0, 2.0, 5.0, 10.0] if key == "f" else \
-                             [0.1, 0.3, 0.5, 0.7, 0.9] if pname0 == "p" else \
-                             [1, 3, 5, 10, 20]
+            default_values = [pval0, 0.5, 1.0, 2.0, 3.0, 5.0] if key == "normal" else \
+                             [pval0, 1.0, 3.0, 5.0, 10.0, 30.0] if key == "t" else \
+                             [pval0, 1.0, 3.0, 5.0, 10.0] if key == "chi2" else \
+                             [pval0, 1.0, 2.0, 5.0, 10.0] if key == "f" else \
+                             [pval0, 0.1, 0.3, 0.5, 0.7, 0.9] if pname0 == "p" else \
+                             [pval0, 1, 3, 5, 10, 20]
 
             for idx, val in enumerate(default_values):
                 p = {pname: v for pname, v in param_sets}
@@ -3394,19 +3399,19 @@ class SuperCalcApp:
                     c = colors[idx % len(colors)]
                     label = f"{pname0}={val:g}"
                     if is_discrete:
-                        ax1.bar(xs, pdf_vals, color=c, alpha=0.6, width=0.4,
+                        self.ax_2d.bar(xs, pdf_vals, color=c, alpha=0.6, width=0.4,
                                 label=label, edgecolor="none")
                         ax2.step(xs, cdf_vals, where="post", color=c,
                                  linewidth=1.5, label=label)
                     else:
-                        ax1.plot(xs, pdf_vals, color=c, linewidth=2, label=label)
+                        self.ax_2d.plot(xs, pdf_vals, color=c, linewidth=2, label=label)
                         ax2.plot(xs, cdf_vals, color=c, linewidth=2, label=label)
                 except Exception:
                     continue
 
-            ax1.set_title(f"{dist_name} — {pdf_label} Comparison", color=text_color, fontsize=11)
-            ax1.set_ylabel(pdf_label, color=text_color, fontsize=10)
-            ax1.legend(facecolor="#313244", edgecolor="#585b70",
+            self.ax_2d.set_title(f"{dist_name} — {pdf_label} Comparison", color=text_color, fontsize=11)
+            self.ax_2d.set_ylabel(pdf_label, color=text_color, fontsize=10)
+            self.ax_2d.legend(facecolor="#313244", edgecolor="#585b70",
                        labelcolor=text_color, fontsize=8)
             ax2.set_title(f"{dist_name} — CDF Comparison", color=text_color, fontsize=11)
             ax2.set_ylabel("CDF", color=text_color, fontsize=10)
@@ -3637,7 +3642,7 @@ class SuperCalcApp:
         try:
             result = np.array(a) + np.array(b)
             self._show_matrix_result("A + B", self._format_matrix(result))
-            self.status_var.set("Matrix A + B computed")
+            self.status_var.set(t("status_matrix_add"))
         except Exception as e:
             messagebox.showerror(t("err_matrix"), t("msg_add_failed", e))
 
@@ -3649,7 +3654,7 @@ class SuperCalcApp:
         try:
             result = np.array(a) - np.array(b)
             self._show_matrix_result("A - B", self._format_matrix(result))
-            self.status_var.set("Matrix A - B computed")
+            self.status_var.set(t("status_matrix_sub"))
         except Exception as e:
             messagebox.showerror(t("err_matrix"), t("msg_sub_failed", e))
 
@@ -3661,7 +3666,7 @@ class SuperCalcApp:
         try:
             result = np.array(a) @ np.array(b)
             self._show_matrix_result("A * B", self._format_matrix(result))
-            self.status_var.set("Matrix A * B computed")
+            self.status_var.set(t("status_matrix_mul"))
         except Exception as e:
             messagebox.showerror(t("err_matrix"), t("msg_mul_failed", e))
 
@@ -3691,7 +3696,7 @@ class SuperCalcApp:
                 return
             result = np.linalg.inv(arr)
             self._show_matrix_result("inv(A)", self._format_matrix(result))
-            self.status_var.set("Matrix inverse computed")
+            self.status_var.set(t("status_matrix_inv"))
         except np.linalg.LinAlgError:
             messagebox.showerror(t("err_matrix"), t("msg_singular"))
         except Exception as e:
@@ -3704,7 +3709,7 @@ class SuperCalcApp:
         try:
             result = np.array(a).T
             self._show_matrix_result("A^T (Transpose)", self._format_matrix(result))
-            self.status_var.set("Matrix transpose computed")
+            self.status_var.set(t("status_matrix_trans"))
         except Exception as e:
             messagebox.showerror(t("err_matrix"), t("msg_transpose_failed", e))
 
@@ -3778,7 +3783,7 @@ class SuperCalcApp:
     def _on_matrix_clear(self):
         self._var_matrix_a.set("")
         self._var_matrix_b.set("")
-        self.status_var.set("Matrix inputs cleared.")
+        self.status_var.set(t("status_matrix_cleared"))
 
     # ------------------------------------------------------------------
     #  Complex Number Operations
@@ -3986,7 +3991,7 @@ class SuperCalcApp:
         value_str = self._var_unit_value.get()
 
         if not cat or not from_unit or not to_unit:
-            self.status_var.set("Unit converter: please select category and units.")
+            self.status_var.set(t("status_unit_select"))
             return
 
         try:
