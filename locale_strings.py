@@ -962,10 +962,6 @@ STRINGS = {
         "en": "Info",
         "zh": "信息",
     },
-    "err_limit_dne": {
-        "en": "Limit Does Not Exist",
-        "zh": "极限不存在",
-    },
     "err_parametric": {
         "en": "Parametric Curve",
         "zh": "参数曲线",
@@ -1224,6 +1220,10 @@ STRINGS = {
         "en": "Solve an ODE first.",
         "zh": "请先求解ODE。",
     },
+    "msg_no_ode_points": {
+        "en": "No ODE data points available.",
+        "zh": "没有可用的ODE数据点。",
+    },
     "msg_solve_invalid": {
         "en": "Invalid solver parameters.",
         "zh": "求解器参数无效。",
@@ -1465,8 +1465,8 @@ STRINGS = {
         "zh": "无法导出：{0}",
     },
     "msg_could_not_extremum": {
-        "en": "Extremum finder failed.\n{0}",
-        "zh": "极值查找失败。\n{0}",
+        "en": "Could not find {0}.\n{1}",
+        "zh": "无法找到{0}。\n{1}",
     },
     "msg_could_not_fft": {
         "en": "Could not compute FFT spectrum.",
@@ -1701,8 +1701,8 @@ STRINGS = {
         "zh": "x0不能等于x_end。",
     },
     "msg_xdata_length": {
-        "en": "X and Y data must have the same length.",
-        "zh": "X和Y数据长度必须相同。",
+        "en": "X data length ({0}) does not match Y data length ({1}).",
+        "zh": "X数据长度（{0}）与Y数据长度（{1}）不匹配。",
     },
 
     # ---- FFT axis labels ----

@@ -150,7 +150,7 @@ CMAP_3D_OPTIONS = [
 PARAM_PATTERN = re.compile(r'\b([a-zA-Z]+)\b')
 KNOWN_FUNCTIONS = {'sin', 'cos', 'tan', 'log', 'ln', 'exp', 'sqrt', 'abs', 'floor', 'ceil'}
 KNOWN_CONSTANTS = {'pi', 'e'}
-INDEPENDENT_VARS = {'x', 'y'}  # variables used by the engine, not parameters
+INDEPENDENT_VARS = {'x', 'y', 't'}  # variables used by the engine, not parameters
 
 def _detect_parameters_static(expr: str) -> list:
     params = set()
@@ -3111,7 +3111,7 @@ class SuperCalcApp:
         data_range = data_max - data_min
 
         data_var_pop = _stats.pvariance(values)
-        data_var_sam = _stats.variance(values)
+        data_var_sam = _stats.variance(values) if n > 1 else None
         data_std_pop = _stats.pstdev(values)
         data_std_sam = _stats.stdev(values) if n > 1 else None
 

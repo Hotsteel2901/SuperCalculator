@@ -61,6 +61,8 @@ static inline int signbit(double x) {
 static _Thread_local char g_error[256] = {0};
 #elif defined(__GNUC__)
 static __thread char g_error[256] = {0};
+#elif defined(_MSC_VER)
+static __declspec(thread) char g_error[256] = {0};
 #else
 static char g_error[256] = {0};
 #endif
