@@ -735,6 +735,142 @@ STRINGS = {
         "en": "Invalid 3D plot range or resolution",
         "zh": "三维绘图范围或分辨率无效",
     },
+    "status_normal_line": {
+        "en": "Normal at x={0}: y = {1}(x-{2}) + {3}",
+        "zh": "法线在 x={0}：y = {1}(x-{2}) + {3}",
+    },
+    "status_table_gen": {
+        "en": "Table generated: {0}/{1} valid points.",
+        "zh": "表格已生成：{0}/{1} 个有效点。",
+    },
+    "status_exported_table": {
+        "en": "Exported table to {0}",
+        "zh": "已导出表格到 {0}",
+    },
+    "status_deriv_result": {
+        "en": "f'({0}) = {1}",
+        "zh": "f'({0}) = {1}",
+    },
+    "status_deriv2_result": {
+        "en": "f''({0}) = {1}",
+        "zh": "f''({0}) = {1}",
+    },
+    "status_integrate": {
+        "en": "Integrate [{0},{1}] = {2}",
+        "zh": "积分 [{0},{1}] = {2}",
+    },
+    "status_arc": {
+        "en": "Arc length [{0},{1}] = {2}",
+        "zh": "弧长 [{0},{1}] = {2}",
+    },
+    "status_area": {
+        "en": "Area between curves [{0},{1}] = {2}",
+        "zh": "曲线间面积 [{0},{1}] = {2}",
+    },
+    "status_limit": {
+        "en": "lim(x→{0}) = {1}",
+        "zh": "lim(x→{0}) = {1}",
+    },
+    "status_limit_dne": {
+        "en": "lim(x→{0}) does not exist",
+        "zh": "lim(x→{0}) 不存在",
+    },
+    "status_left_limit": {
+        "en": "lim(x→{0}⁻) = {1}",
+        "zh": "lim(x→{0}⁻) = {1}",
+    },
+    "status_right_limit": {
+        "en": "lim(x→{0}⁺) = {1}",
+        "zh": "lim(x→{0}⁺) = {1}",
+    },
+    "status_fft_computed": {
+        "en": "FFT computed: {0} frequency bins",
+        "zh": "FFT已计算：{0} 个频率分量",
+    },
+    "status_exported_fft": {
+        "en": "Exported FFT to {0}",
+        "zh": "已导出FFT到 {0}",
+    },
+    "status_taylor": {
+        "en": "Taylor series at a={0}, order={1}",
+        "zh": "泰勒级数在 a={0}，阶数={1}",
+    },
+    "status_taylor_plot": {
+        "en": "Taylor plot at a={0}, order={1}",
+        "zh": "泰勒绘图在 a={0}，阶数={1}",
+    },
+    "status_ode_solved": {
+        "en": "ODE solved: {0} points",
+        "zh": "ODE已求解：{0} 个点",
+    },
+    "status_ode_plotted": {
+        "en": "ODE solution plotted ({0} points)",
+        "zh": "ODE解已绘制（{0} 个点）",
+    },
+    "status_root": {
+        "en": "Root: x = {0}",
+        "zh": "根：x = {0}",
+    },
+    "status_system": {
+        "en": "System: x={0}, y={1}",
+        "zh": "方程组：x={0}, y={1}",
+    },
+    "status_extremum": {
+        "en": "{0}: x = {1}, f(x) = {2}",
+        "zh": "{0}：x = {1}, f(x) = {2}",
+    },
+    "status_found_roots": {
+        "en": "Found {0} root(s)",
+        "zh": "找到 {0} 个根",
+    },
+    "status_stats": {
+        "en": "Stats: n={0}, mean={1}, std={2}",
+        "zh": "统计：n={0}, 均值={1}, 标准差={2}",
+    },
+    "status_data_sorted": {
+        "en": "Data sorted ({0} values)",
+        "zh": "数据已排序（{0} 个值）",
+    },
+    "status_histogram": {
+        "en": "Histogram plotted ({0} values, {1} bins)",
+        "zh": "直方图已绘制（{0} 个值, {1} 个区间）",
+    },
+    "status_exported_stats": {
+        "en": "Exported {0} values to {1}",
+        "zh": "已导出 {0} 个值到 {1}",
+    },
+    "status_fit": {
+        "en": "Fit: {0}  R²={1}",
+        "zh": "拟合：{0}  R²={1}",
+    },
+    "status_fit_plotted": {
+        "en": "Fit curve plotted: {0}",
+        "zh": "拟合曲线已绘制：{0}",
+    },
+    "status_det": {
+        "en": "det(A) = {0}",
+        "zh": "det(A) = {0}",
+    },
+    "status_rank": {
+        "en": "rank(A) = {0}",
+        "zh": "rank(A) = {0}",
+    },
+    "status_rref": {
+        "en": "RREF computed, rank = {0}",
+        "zh": "RREF已计算，秩 = {0}",
+    },
+    "status_eigenvalues": {
+        "en": "Eigenvalues: {0}",
+        "zh": "特征值：{0}",
+    },
+    "status_complex_result": {
+        "en": "Result: {0}",
+        "zh": "结果：{0}",
+    },
+    "status_unit_convert": {
+        "en": "{0} {1} = {2} {3}",
+        "zh": "{0} {1} = {2} {3}",
+    },
 
     # ---- Error/Info dialog titles ----
     "err_input": {

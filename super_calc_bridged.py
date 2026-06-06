@@ -1981,10 +1981,10 @@ class SuperCalcApp:
         self.normal_data.append({"x0": x0, "y0": y0, "slope": slope, "expr": expr})
         self._plot_all()
         if abs(slope) < 1e-12:
-            self.status_var.set(f"Normal at x={x0}: vertical line x = {x0}")
+            self.status_var.set(t("status_normal_vert", x0, x0))
         else:
             normal_slope = -1.0 / slope
-            self.status_var.set(f"Normal at x={x0}: y = {normal_slope:.4g}(x-{x0:.4g}) + {y0:.4g}")
+            self.status_var.set(t("status_normal_line", x0, f"{normal_slope:.4g}", f"{x0:.4g}", f"{y0:.4g}"))
 
     def _clear_tangent_normal(self):
         self.tangent_data.clear()
@@ -2164,7 +2164,7 @@ class SuperCalcApp:
         self._table_expr = expr
 
         self._show_table_window(expr, valid_count)
-        self.status_var.set(f"Table generated: {valid_count}/{n} valid points.")
+        self.status_var.set(t("status_table_gen", valid_count, n))
 
     def _show_table_window(self, expr, valid_count):
         win = tk.Toplevel(self.root)
@@ -2215,7 +2215,7 @@ class SuperCalcApp:
                 writer.writerow(["x", f"f(x) = {self._table_expr}"])
                 for x, y in self._table_data:
                     writer.writerow([x, y if y is not None else ""])
-            self.status_var.set(f"Exported table to {os.path.basename(path)}")
+            self.status_var.set(t("status_exported_table", os.path.basename(path)))
         except Exception as e:
             messagebox.showerror(t("err_export"), str(e))
 
@@ -2275,7 +2275,7 @@ class SuperCalcApp:
             t("msg_deriv_result"),
             f"f(x) = {expr}\n"
             f"f'({x_val}) = {result:.10g}")
-        self.status_var.set(f"f'({x_val}) = {result:.10g}")
+        self.status_var.set(t("status_deriv_result", x_val, f"{result:.10g}"))
 
     def _on_derivative2(self):
         expr = self._get_active_expression()
@@ -2296,7 +2296,7 @@ class SuperCalcApp:
             t("msg_deriv2_result"),
             f"f(x) = {expr}\n"
             f"f''({x_val}) = {result:.10g}")
-        self.status_var.set(f"f''({x_val}) = {result:.10g}")
+        self.status_var.set(t("status_deriv2_result", x_val, f"{result:.10g}"))
 
     def _on_integrate(self):
         expr = self._get_active_expression()
@@ -2318,7 +2318,7 @@ class SuperCalcApp:
             t("msg_integ_result"),
             f"f(x) = {expr}\n"
             f"Integrate [{a}, {b}] f(x) dx = {result:.10g}")
-        self.status_var.set(f"Integrate [{a},{b}] = {result:.10g}")
+        self.status_var.set(t("status_integrate", a, b, f"{result:.10g}"))
 
     def _on_arc_length(self):
         expr = self._get_active_expression()
@@ -2342,7 +2342,7 @@ class SuperCalcApp:
             t("msg_arc_result"),
             f"f(x) = {expr}\n"
             f"Arc length from {a} to {b} = {result:.10g}")
-        self.status_var.set(f"Arc length [{a},{b}] = {result:.10g}")
+        self.status_var.set(t("status_arc", a, b, f"{result:.10g}"))
 
     def _on_area_between_curves(self):
         expr_f = self._var_area_f.get().strip()
@@ -2373,7 +2373,7 @@ class SuperCalcApp:
             f"f(x) = {expr_f}\n"
             f"g(x) = {expr_g}\n"
             f"Area from {a} to {b} = {result:.10g}")
-        self.status_var.set(f"Area between curves [{a},{b}] = {result:.10g}")
+        self.status_var.set(t("status_area", a, b, f"{result:.10g}"))
 
     def _on_limit(self, two_sided=True, side=None):
         expr = self._get_active_expression()
@@ -2401,7 +2401,7 @@ class SuperCalcApp:
                     f"lim(x→{a}) f(x) = {val:.10g}\n"
                     f"Left:  {left:.10g}\n"
                     f"Right: {right:.10g}")
-                self.status_var.set(f"lim(x→{a}) = {val:.10g}")
+                self.status_var.set(t("status_limit", a, f"{val:.10g}"))
             else:
                 msg = f"f(x) = {expr}\n\n"
                 if left is not None:
@@ -2414,7 +2414,7 @@ class SuperCalcApp:
                     msg += f"lim(x→{a}⁺) = DNE (undefined)\n"
                 msg += "\nTwo-sided limit does not exist."
                 messagebox.showwarning(t("err_limit_dne"), msg)
-                self.status_var.set(f"lim(x→{a}) does not exist")
+                self.status_var.set(t("status_limit_dne", a))
         elif side == "left":
             result = CalcEngine.limit_left(expr_sub, a)
             if result is None:
@@ -2425,7 +2425,7 @@ class SuperCalcApp:
                 t("msg_left_limit_result"),
                 f"f(x) = {expr}\n"
                 f"lim(x→{a}⁻) f(x) = {result:.10g}")
-            self.status_var.set(f"lim(x→{a}⁻) = {result:.10g}")
+            self.status_var.set(t("status_left_limit", a, f"{result:.10g}"))
         else:
             result = CalcEngine.limit_right(expr_sub, a)
             if result is None:
@@ -2436,7 +2436,7 @@ class SuperCalcApp:
                 t("msg_right_limit_result"),
                 f"f(x) = {expr}\n"
                 f"lim(x→{a}⁺) f(x) = {result:.10g}")
-            self.status_var.set(f"lim(x→{a}⁺) = {result:.10g}")
+            self.status_var.set(t("status_right_limit", a, f"{result:.10g}"))
 
     def _on_fft_compute(self):
         expr = self._get_active_expression()
@@ -2464,7 +2464,7 @@ class SuperCalcApp:
         self._fft_data = result
         self._ensure_fft_window()
         self._plot_fft(result, expr)
-        self.status_var.set(f"FFT computed: {len(result['freqs'])} frequency bins")
+        self.status_var.set(t("status_fft_computed", len(result['freqs'])))
 
     def _plot_fft(self, result, expr):
         if self.ax_fft_amp is None or self.ax_fft_phase is None:
@@ -2523,7 +2523,7 @@ class SuperCalcApp:
                                       self._fft_data['amps'],
                                       self._fft_data['phases']):
                     writer.writerow([fr, am, ph])
-            self.status_var.set(f"Exported FFT to {os.path.basename(path)}")
+            self.status_var.set(t("status_exported_fft", os.path.basename(path)))
         except Exception as e:
             messagebox.showerror(t("err_export"), str(e))
 
@@ -2579,7 +2579,7 @@ class SuperCalcApp:
             f"Coefficients (c_k = f^(k)(a)/k!):\n{coeff_str}"
         )
         messagebox.showinfo(t("msg_taylor_series"), result_msg)
-        self.status_var.set(f"Taylor series at a={a}, order={order}")
+        self.status_var.set(t("status_taylor", a, order))
 
     def _on_taylor_plot(self):
         expr = self._get_active_expression()
@@ -2638,7 +2638,7 @@ class SuperCalcApp:
         self.ax_2d.legend(loc="upper right", facecolor="#313244",
                           edgecolor="#585b70", labelcolor="#cdd6f4", fontsize=9)
         self.canvas_2d.draw()
-        self.status_var.set(f"Taylor plot at a={a}, order={order}")
+        self.status_var.set(t("status_taylor_plot", a, order))
 
     # ------------------------------------------------------------------
     #  ODE Solver (RK4)
@@ -2686,7 +2686,7 @@ class SuperCalcApp:
 
         msg = "\n".join(lines)
         messagebox.showinfo(t("msg_ode_solution"), msg)
-        self.status_var.set(f"ODE solved: {len(result['xs'])} points")
+        self.status_var.set(t("status_ode_solved", len(result['xs'])))
 
     def _on_ode_plot(self):
         if self._ode_data is None:
@@ -2710,7 +2710,7 @@ class SuperCalcApp:
         self.ax_2d.legend(loc="upper right", facecolor="#313244",
                           edgecolor="#585b70", labelcolor="#cdd6f4", fontsize=9)
         self.canvas_2d.draw()
-        self.status_var.set(f"ODE solution plotted ({len(xs)} points)")
+        self.status_var.set(t("status_ode_plotted", len(xs)))
 
     def _on_ode_preset(self, name: str):
         """Load an ODE preset into the input fields."""
@@ -2754,7 +2754,7 @@ class SuperCalcApp:
             f"f(x) = {expr} = 0\n"
             f"Root: x = {result:.12g}\n"
             f"Verification: f({result:.6g}) = {verify_str}")
-        self.status_var.set(f"Root: x = {result:.12g}")
+        self.status_var.set(t("status_root", f"{result:.12g}"))
 
     def _on_solve_bisection(self):
         expr = self._get_active_expression()
@@ -2780,7 +2780,7 @@ class SuperCalcApp:
             t("msg_root_found_bisection"),
             f"f(x) = {expr} = 0\n"
             f"Root: x = {result:.12g}")
-        self.status_var.set(f"Root: x = {result:.12g}")
+        self.status_var.set(t("status_root", f"{result:.12g}"))
 
     def _on_solve_system_2d(self):
         f_expr = self._var_sys_f.get().strip()
@@ -2816,7 +2816,7 @@ class SuperCalcApp:
             f"f(x,y) = {f_expr}\ng(x,y) = {g_expr}\n\n"
             f"Solution:\n  x = {x_sol:.12g}\n  y = {y_sol:.12g}\n\n"
             f"Residuals:\n  f(x,y) = {f_str}\n  g(x,y) = {g_str}")
-        self.status_var.set(f"System: x={x_sol:.10g}, y={y_sol:.10g}")
+        self.status_var.set(t("status_system", f"{x_sol:.10g}", f"{y_sol:.10g}"))
 
     def _on_find_extremum(self, minimum: bool = True):
         expr = self._get_active_expression()
@@ -2852,7 +2852,7 @@ class SuperCalcApp:
             f"f(x) = {expr}\n"
             f"{label}: x = {result:.12g}\n"
             f"f({result:.6g}) = {verify_str}")
-        self.status_var.set(f"{label}: x = {result:.12g}, f(x) = {verify_str}")
+        self.status_var.set(t("status_extremum", label, f"{result:.12g}", verify_str))
 
     def _on_scan_roots(self):
         expr = self._get_active_expression()
@@ -2915,7 +2915,7 @@ class SuperCalcApp:
                 lines.append(f"  ... and {len(unique_roots) - 20} more")
             msg = "\n".join(lines)
             messagebox.showinfo(t("err_root_scan"), msg)
-            self.status_var.set(f"Found {len(unique_roots)} root(s)")
+            self.status_var.set(t("status_found_roots", len(unique_roots)))
         else:
             messagebox.showinfo(t("err_root_scan"), t("msg_no_roots"))
             self.status_var.set("No roots found")
@@ -3000,7 +3000,7 @@ class SuperCalcApp:
 
         msg = "\n".join(line for line in lines if line)
         messagebox.showinfo(t("msg_stats_results"), msg)
-        self.status_var.set(f"Stats: n={n}, mean={data_mean:.6g}, std={data_std_pop:.6g}")
+        self.status_var.set(t("status_stats", n, f"{data_mean:.6g}", f"{data_std_pop:.6g}"))
 
     def _on_stats_sort(self):
         values = self._parse_stats_data()
@@ -3008,7 +3008,7 @@ class SuperCalcApp:
             return
         sorted_vals = sorted(values)
         self._var_stats_data.set(", ".join(f"{v:g}" for v in sorted_vals))
-        self.status_var.set(f"Data sorted ({len(values)} values)")
+        self.status_var.set(t("status_data_sorted", len(values)))
 
     def _on_stats_histogram(self):
         values = self._parse_stats_data()
@@ -3037,7 +3037,7 @@ class SuperCalcApp:
         self.ax_2d.set_ylabel("Frequency", color="#cdd6f4")
 
         self.canvas_2d.draw()
-        self.status_var.set(f"Histogram plotted ({len(values)} values, {n_bins} bins)")
+        self.status_var.set(t("status_histogram", len(values), n_bins))
 
     def _on_stats_export_csv(self):
         values = self._parse_stats_data()
@@ -3056,7 +3056,7 @@ class SuperCalcApp:
                 writer.writerow(["index", "value"])
                 for i, v in enumerate(values):
                     writer.writerow([i + 1, v])
-            self.status_var.set(f"Exported {len(values)} values to {os.path.basename(path)}")
+            self.status_var.set(t("status_exported_stats", len(values), os.path.basename(path)))
         except Exception as e:
             messagebox.showerror(t("err_export"), t("msg_could_not_export", e))
 
@@ -3115,7 +3115,7 @@ class SuperCalcApp:
         ]
         msg = "\n".join(lines)
         messagebox.showinfo(title, msg)
-        self.status_var.set(f"Fit: {result['equation']}  R²={result['r_squared']:.6f}")
+        self.status_var.set(t("status_fit", result['equation'], f"{result['r_squared']:.6f}"))
 
     def _on_reg_linear(self):
         xs, ys = self._get_reg_data()
@@ -3208,7 +3208,7 @@ class SuperCalcApp:
         self.ax_2d.set_ylabel("Y", color="#cdd6f4")
 
         self.canvas_2d.draw()
-        self.status_var.set(f"Fit curve plotted: {result['equation']}")
+        self.status_var.set(t("status_fit_plotted", result['equation']))
 
     # ------------------------------------------------------------------
     #  Matrix Operations
@@ -3317,7 +3317,7 @@ class SuperCalcApp:
                 return
             det = np.linalg.det(arr)
             self._show_matrix_result("det(A)", f"det(A) = {det:.10g}")
-            self.status_var.set(f"det(A) = {det:.10g}")
+            self.status_var.set(t("status_det", f"{det:.10g}"))
         except Exception as e:
             messagebox.showerror(t("err_matrix"), t("msg_det_failed", e))
 
@@ -3357,7 +3357,7 @@ class SuperCalcApp:
             arr = np.array(a)
             rank = np.linalg.matrix_rank(arr)
             self._show_matrix_result("rank(A)", f"rank(A) = {rank}")
-            self.status_var.set(f"rank(A) = {rank}")
+            self.status_var.set(t("status_rank", rank))
         except Exception as e:
             messagebox.showerror(t("err_matrix"), t("msg_rank_failed", e))
 
@@ -3389,7 +3389,7 @@ class SuperCalcApp:
             result_str = self._format_matrix(arr.tolist())
             info = f"Rank = {len(pivot_cols)}\n\n{result_str}"
             self._show_matrix_result("RREF(A)", info)
-            self.status_var.set(f"RREF computed, rank = {len(pivot_cols)}")
+            self.status_var.set(t("status_rref", len(pivot_cols)))
         except Exception as e:
             messagebox.showerror(t("err_matrix"), t("msg_rref_failed", e))
 
@@ -3410,7 +3410,7 @@ class SuperCalcApp:
             lines.append("Eigenvectors (columns):")
             lines.append(self._format_matrix(eigenvectors))
             self._show_matrix_result("Eigenvalues & Eigenvectors", "\n".join(lines))
-            self.status_var.set(f"Eigenvalues: {[f'{v:.6g}' for v in eigenvalues]}")
+            self.status_var.set(t("status_eigenvalues", str([f'{v:.6g}' for v in eigenvalues])))
         except np.linalg.LinAlgError:
             messagebox.showerror(t("err_matrix"), t("msg_eigen_failed"))
         except Exception as e:
@@ -3504,7 +3504,7 @@ class SuperCalcApp:
     def _show_complex_result(self, result: str):
         """Display complex result in the result field."""
         self._var_complex_result.set(result)
-        self.status_var.set(f"Result: {result}")
+        self.status_var.set(t("status_complex_result", result))
 
     def _on_complex_add(self):
         z1 = self._parse_complex(self._var_complex_z1.get())
@@ -3654,7 +3654,7 @@ class SuperCalcApp:
             result_str = f"{result:.10g}"
 
         self._var_unit_result.set(result_str)
-        self.status_var.set(f"{value} {from_unit} = {result_str} {to_unit}")
+        self.status_var.set(t("status_unit_convert", value, from_unit, result_str, to_unit))
 
     def _convert_temperature(self, value, from_type, to_type):
         if from_type == to_type:
