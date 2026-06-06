@@ -3110,7 +3110,7 @@ class SuperCalcApp:
         self._last_reg_result = result
         lines = [
             f"{title}",
-            f"Equation: {result['equation']}",
+            t("reg_equation", result['equation']),
             f"R² = {result['r_squared']:.8f}",
         ]
         msg = "\n".join(lines)
@@ -3122,14 +3122,14 @@ class SuperCalcApp:
         if xs is None:
             return
         result = CalcEngine.linear_regression(xs, ys)
-        self._show_reg_result("Linear Regression", result)
+        self._show_reg_result(t("reg_linear"), result)
 
     def _on_reg_quadratic(self):
         xs, ys = self._get_reg_data()
         if xs is None:
             return
         result = CalcEngine.polynomial_regression(xs, ys, degree=2)
-        self._show_reg_result("Quadratic Regression", result)
+        self._show_reg_result(t("reg_quadratic"), result)
 
     def _on_reg_polynomial(self):
         xs, ys = self._get_reg_data()
@@ -3144,28 +3144,28 @@ class SuperCalcApp:
             messagebox.showerror(t("err_error"), t("msg_invalid_degree"))
             return
         result = CalcEngine.polynomial_regression(xs, ys, degree=degree)
-        self._show_reg_result(f"Polynomial Regression (degree {degree})", result)
+        self._show_reg_result(t("reg_polynomial", degree), result)
 
     def _on_reg_exponential(self):
         xs, ys = self._get_reg_data()
         if xs is None:
             return
         result = CalcEngine.exponential_regression(xs, ys)
-        self._show_reg_result("Exponential Regression", result)
+        self._show_reg_result(t("reg_exponential"), result)
 
     def _on_reg_power(self):
         xs, ys = self._get_reg_data()
         if xs is None:
             return
         result = CalcEngine.power_regression(xs, ys)
-        self._show_reg_result("Power Regression", result)
+        self._show_reg_result(t("reg_power"), result)
 
     def _on_reg_logarithmic(self):
         xs, ys = self._get_reg_data()
         if xs is None:
             return
         result = CalcEngine.logarithmic_regression(xs, ys)
-        self._show_reg_result("Logarithmic Regression", result)
+        self._show_reg_result(t("reg_logarithmic"), result)
 
     def _on_reg_plot(self):
         """Plot data points and fitted curve."""

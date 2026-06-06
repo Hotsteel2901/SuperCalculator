@@ -1291,6 +1291,38 @@ STRINGS = {
         "en": "Regression failed. Check your data.",
         "zh": "回归失败。请检查数据。",
     },
+    "msg_regression_failed": {
+        "en": "Regression failed. Check your data.",
+        "zh": "回归失败。请检查数据。",
+    },
+    "reg_linear": {
+        "en": "Linear Regression",
+        "zh": "线性回归",
+    },
+    "reg_quadratic": {
+        "en": "Quadratic Regression",
+        "zh": "二次回归",
+    },
+    "reg_polynomial": {
+        "en": "Polynomial Regression (degree {0})",
+        "zh": "多项式回归（{0}阶）",
+    },
+    "reg_exponential": {
+        "en": "Exponential Regression",
+        "zh": "指数回归",
+    },
+    "reg_power": {
+        "en": "Power Regression",
+        "zh": "幂回归",
+    },
+    "reg_logarithmic": {
+        "en": "Logarithmic Regression",
+        "zh": "对数回归",
+    },
+    "reg_equation": {
+        "en": "Equation: {0}",
+        "zh": "方程：{0}",
+    },
     "msg_degree_range": {
         "en": "Degree must be between 1 and 10.",
         "zh": "阶数必须在1到10之间。",
