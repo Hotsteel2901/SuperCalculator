@@ -32,15 +32,15 @@ jobs:
       - name: Verify core files exist
         shell: bash
         run: |
-          echo "=== Verifying the three main files ==="
-          for f in super_calc_bridged.py calc_bridge.py calc_core.c; do
+          echo "=== Verifying core files ==="
+          for f in super_calc_bridged.py calc_bridge.py calc_core.c locale_strings.py; do
             if [ -f "$f" ]; then
               echo "  [OK] $f"
             else
               echo "  [MISSING] $f" && exit 1
             fi
           done
-          echo "All three main files are present."
+          echo "All core files are present."
 
       - name: Install dependencies
         run: |
@@ -78,7 +78,8 @@ jobs:
           if ($str -notlike "*calc_bridge*") { throw "calc_bridge not found in EXE" }
           if ($str -notlike "*super_calc_bridged*") { throw "super_calc_bridged not found in EXE" }
           if ($str -notlike "*calc_core.dll*") { throw "calc_core.dll not found in EXE" }
-          Write-Host "Embedded components verified: calc_bridge, super_calc_bridged, calc_core.dll"
+          if ($str -notlike "*locale_strings*") { throw "locale_strings not found in EXE" }
+          Write-Host "Embedded components verified: calc_bridge, super_calc_bridged, calc_core.dll, locale_strings"
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
