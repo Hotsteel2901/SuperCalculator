@@ -32,6 +32,7 @@ a = Analysis(
         'matplotlib',
         'tkinter',
         'calc_bridge',
+        'locale_strings',
     ],
     hookspath=[],
     hooksconfig={},

@@ -65,6 +65,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
   - **Curve Fitting / Regression** — fit data to various models: Linear (y=ax+b), Polynomial (configurable degree), Exponential (y=ae^(bx)), Power (y=ax^b), and Logarithmic (y=a+b·ln(x)). Displays equation, R² goodness-of-fit, and scatter + fitted curve plot. Available on both desktop (Python/numpy) and Android (Java).
    - **Windows EXE** — standalone executable, no Python installation required
  - **Android App** — standalone APK with Material Design 3 UI and JNI bridge, now including 3D surface plotting with touch rotation and parametric curve support
+ - **Chinese Language Support** — full Chinese (zh-CN) localization for both desktop (Python) and Android. Desktop auto-detects system locale or accepts `SUPERCALC_LANG=zh` env var. Android follows system language automatically.
 
 ## Pre-compiled Binaries
 
@@ -143,6 +144,7 @@ SuperCalculator/
   calc_core.c              C core engine (expression parser, calculus, solver)
   calc_bridge.py           Python ctypes bridge layer (multi-arch detection)
   super_calc_bridged.py    GUI main program (Tkinter + Matplotlib)
+  locale_strings.py        i18n module (English + Chinese, auto locale detection)
   SuperCalculator.ico      Windows EXE icon
   SuperCalculator.spec     PyInstaller spec for Windows EXE build
   android/                 Android project (Gradle + JNI + M3 UI)
@@ -154,6 +156,7 @@ SuperCalculator/
 
 ## What's New
 
+- **Chinese Language Support** — full Chinese (zh-CN) localization for both desktop and Android. Desktop uses `locale_strings.py` with auto locale detection (`SUPERCALC_LANG` env var or system locale). Android uses standard `values-zh-rCN/` string resources and follows system language. All UI labels, buttons, error messages, and dialog texts are translated.
 - **Curve Fitting / Regression** — fit data to Linear, Polynomial, Exponential, Power, and Logarithmic models with R² goodness-of-fit. Scatter + curve plot visualization. Available on both desktop (Python/numpy) and Android (Java).
 - **Nonlinear System Solver (2D)** — solve systems of two nonlinear equations f(x,y)=0, g(x,y)=0 using Newton's method for systems with numerical Jacobian via Cramer's rule. Available on both desktop (Python) and Android (JNI).
 - **Area Between Curves** — compute the enclosed area between any two curves f(x) and g(x) over an interval [a,b] using adaptive Simpson's rule. Available on both desktop (Python) and Android (JNI).

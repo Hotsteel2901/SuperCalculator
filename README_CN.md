@@ -67,6 +67,7 @@
     - **曲线拟合 / 回归分析** — 支持多种数据拟合模型：线性 (y=ax+b)、多项式（可配置阶数）、指数 (y=ae^(bx))、幂函数 (y=ax^b) 和对数 (y=a+b·ln(x))。显示方程、R² 拟合优度、散点图 + 拟合曲线可视化。桌面端（Python/numpy）与 Android 端（Java）均已同步。
     - **Windows EXE** — 提供独立 Windows 可执行文件，无需安装 Python
  - **Android 应用** — 独立 APK，Material Design 3 界面 + JNI 桥接，现已支持 3D 曲面绘图与触控旋转及参数曲线绘制
+ - **中文语言支持** — 桌面端（Python）与 Android 端均支持完整中文 (zh-CN) 本地化。桌面端自动检测系统语言或通过环境变量 `SUPERCALC_LANG=zh` 指定。Android 端跟随系统语言自动切换。
 
 ## 预编译二进制文件
 
@@ -145,6 +146,7 @@ SuperCalculator/
   calc_core.c              C 核心引擎 (表达式解析、微积分、方程求解)
   calc_bridge.py           Python ctypes 桥接层 (多架构自动检测)
   super_calc_bridged.py    GUI 主程序 (Tkinter + Matplotlib)
+  locale_strings.py        国际化模块 (英文 + 中文，自动语言检测)
   SuperCalculator.ico      Windows EXE 图标
   SuperCalculator.spec     PyInstaller 构建配置 (Windows EXE)
   android/                 Android 项目 (Gradle + JNI + M3 UI)
@@ -156,6 +158,7 @@ SuperCalculator/
 
 ## 更新日志
 
+- **中文语言支持** — 桌面端与 Android 端均支持完整中文 (zh-CN) 本地化。桌面端使用 `locale_strings.py` 模块，自动检测系统语言（或通过 `SUPERCALC_LANG` 环境变量指定）。Android 端使用标准 `values-zh-rCN/` 字符串资源，跟随系统语言自动切换。所有界面标签、按钮、错误提示和对话框文本均已翻译。
 - **曲线拟合 / 回归分析** — 支持线性、多项式、指数、幂函数和对数拟合模型，显示方程与 R² 拟合优度，支持散点图 + 拟合曲线可视化。桌面端（Python/numpy）与 Android 端（Java）均已同步。
 - **非线性方程组求解 (2D)** — 求解两个未知数的非线性方程组 f(x,y)=0, g(x,y)=0，采用 Newton 法配合数值雅可比矩阵与克莱默法则。桌面端（Python）与 Android 端（JNI）均已同步。
 - **曲线间面积** — 使用自适应辛普森法则计算任意两条曲线 f(x) 和 g(x) 在区间 [a,b] 上的封闭面积。桌面端（Python）与 Android 端（JNI）均已同步。
