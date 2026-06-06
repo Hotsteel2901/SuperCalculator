@@ -537,7 +537,7 @@ public class PlotActivity extends AppCompatActivity {
         dsScatter.setCircleRadius(4f);
         dsScatter.setCircleColor(scatterColor);
         dsScatter.setDrawValues(false);
-        dsScatter.setMode(LineDataSet.Mode.SCATTER);
+        dsScatter.setMode(LineDataSet.Mode.LINEAR);
         dataSets.add(dsScatter);
         
         if (!dataSets.isEmpty()) {
