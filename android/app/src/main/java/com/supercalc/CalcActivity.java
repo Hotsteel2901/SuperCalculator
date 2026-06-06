@@ -181,6 +181,28 @@ public class CalcActivity extends AppCompatActivity {
         btnMatRank.setOnClickListener(v -> onMatrixRank());
         btnMatEigen.setOnClickListener(v -> onMatrixEigen());
 
+        // Number Theory Calculator
+        EditText ntNInput = findViewById(R.id.nt_n_input);
+        EditText ntAInput = findViewById(R.id.nt_a_input);
+        EditText ntBInput = findViewById(R.id.nt_b_input);
+        EditText ntModpowBaseInput = findViewById(R.id.nt_modpow_base_input);
+        EditText ntModpowExpInput = findViewById(R.id.nt_modpow_exp_input);
+        EditText ntModpowModInput = findViewById(R.id.nt_modpow_mod_input);
+        MaterialButton btnNtFactorize = findViewById(R.id.btn_nt_factorize);
+        MaterialButton btnNtIsPrime = findViewById(R.id.btn_nt_is_prime);
+        MaterialButton btnNtGcd = findViewById(R.id.btn_nt_gcd);
+        MaterialButton btnNtLcm = findViewById(R.id.btn_nt_lcm);
+        MaterialButton btnNtFibonacci = findViewById(R.id.btn_nt_fibonacci);
+        MaterialButton btnNtModPow = findViewById(R.id.btn_nt_mod_pow);
+        MaterialButton btnNtTotient = findViewById(R.id.btn_nt_totient);
+        btnNtFactorize.setOnClickListener(v -> onNtFactorize(ntNInput));
+        btnNtIsPrime.setOnClickListener(v -> onNtIsPrime(ntNInput));
+        btnNtGcd.setOnClickListener(v -> onNtGcd(ntAInput, ntBInput));
+        btnNtLcm.setOnClickListener(v -> onNtLcm(ntAInput, ntBInput));
+        btnNtFibonacci.setOnClickListener(v -> onNtFibonacci(ntNInput));
+        btnNtModPow.setOnClickListener(v -> onNtModPow(ntModpowBaseInput, ntModpowExpInput, ntModpowModInput));
+        btnNtTotient.setOnClickListener(v -> onNtTotient(ntNInput));
+
         // Parametric plotting
         MaterialButton btnPlotParametric = findViewById(R.id.btn_plot_parametric);
         Chip chipCircle = findViewById(R.id.chip_circle);
@@ -2314,5 +2336,169 @@ public class CalcActivity extends AppCompatActivity {
         } else {
             return celsius;
         }
+    }
+
+    // ------------------------------------------------------------------
+    //  Number Theory Calculator
+    // ------------------------------------------------------------------
+    private boolean ntIsPrime(long n) {
+        if (n < 2) return false;
+        if (n < 4) return true;
+        if (n % 2 == 0 || n % 3 == 0) return false;
+        long i = 5;
+        while (i * i <= n) {
+            if (n % i == 0 || n % (i + 2) == 0) return false;
+            i += 6;
+        }
+        return true;
+    }
+
+    private String ntFactorize(long n) {
+        if (n <= 1) return String.valueOf(n);
+        java.util.List<String> parts = new java.util.ArrayList<>();
+        long d = 2;
+        while (d * d <= n) {
+            int count = 0;
+            while (n % d == 0) {
+                count++;
+                n /= d;
+            }
+            if (count > 0) {
+                if (count == 1) parts.add(String.valueOf(d));
+                else parts.add(d + "^" + count);
+            }
+            d++;
+        }
+        if (n > 1) parts.add(String.valueOf(n));
+        return String.join(" × ", parts);
+    }
+
+    private long ntGcd(long a, long b) {
+        a = Math.abs(a);
+        b = Math.abs(b);
+        while (b != 0) {
+            long t = b;
+            b = a % b;
+            a = t;
+        }
+        return a;
+    }
+
+    private long ntLcm(long a, long b) {
+        if (a == 0 || b == 0) return 0;
+        return Math.abs(a / ntGcd(a, b) * b);
+    }
+
+    private long ntFibonacci(int n) {
+        if (n <= 0) return 0;
+        if (n == 1) return 0;
+        if (n == 2) return 1;
+        long a = 0, b = 1;
+        for (int i = 2; i < n; i++) {
+            long t = a + b;
+            a = b;
+            b = t;
+        }
+        return b;
+    }
+
+    private long ntModPow(long base, long exp, long mod) {
+        if (mod <= 0) throw new ArithmeticException("mod must be positive");
+        long result = 1;
+        base = base % mod;
+        while (exp > 0) {
+            if ((exp & 1) == 1) result = (result * base) % mod;
+            exp >>= 1;
+            base = (base * base) % mod;
+        }
+        return result;
+    }
+
+    private long ntTotient(long n) {
+        if (n <= 0) return 0;
+        long result = n;
+        long temp = n;
+        for (long p = 2; p * p <= temp; p++) {
+            if (temp % p == 0) {
+                while (temp % p == 0) temp /= p;
+                result -= result / p;
+            }
+        }
+        if (temp > 1) result -= result / temp;
+        return result;
+    }
+
+    private void onNtFactorize(EditText nInput) {
+        long n;
+        try { n = Long.parseLong(nInput.getText().toString().trim()); }
+        catch (NumberFormatException e) { toast(getString(R.string.toast_nt_invalid_n)); return; }
+        if (n <= 0) { toast(getString(R.string.toast_nt_invalid_n)); return; }
+        if (n > 1_000_000_000_000L) { toast(getString(R.string.toast_nt_n_too_large)); return; }
+        String result = ntFactorize(n);
+        resultView.append(n + " = " + result + "\n");
+    }
+
+    private void onNtIsPrime(EditText nInput) {
+        long n;
+        try { n = Long.parseLong(nInput.getText().toString().trim()); }
+        catch (NumberFormatException e) { toast(getString(R.string.toast_nt_invalid_n)); return; }
+        if (n <= 0) { toast(getString(R.string.toast_nt_invalid_n)); return; }
+        if (ntIsPrime(n)) {
+            resultView.append(n + " is prime\n");
+        } else {
+            resultView.append(n + " is composite = " + ntFactorize(n) + "\n");
+        }
+    }
+
+    private void onNtGcd(EditText aInput, EditText bInput) {
+        long a, b;
+        try {
+            a = Long.parseLong(aInput.getText().toString().trim());
+            b = Long.parseLong(bInput.getText().toString().trim());
+        } catch (NumberFormatException e) { toast(getString(R.string.toast_nt_invalid_ab)); return; }
+        resultView.append("gcd(" + a + ", " + b + ") = " + ntGcd(a, b) + "\n");
+    }
+
+    private void onNtLcm(EditText aInput, EditText bInput) {
+        long a, b;
+        try {
+            a = Long.parseLong(aInput.getText().toString().trim());
+            b = Long.parseLong(bInput.getText().toString().trim());
+        } catch (NumberFormatException e) { toast(getString(R.string.toast_nt_invalid_ab)); return; }
+        resultView.append("lcm(" + a + ", " + b + ") = " + ntLcm(a, b) + "\n");
+    }
+
+    private void onNtFibonacci(EditText nInput) {
+        int n;
+        try { n = Integer.parseInt(nInput.getText().toString().trim()); }
+        catch (NumberFormatException e) { toast(getString(R.string.toast_nt_invalid_n)); return; }
+        if (n <= 0 || n > 1000) { toast(getString(R.string.toast_nt_invalid_n)); return; }
+        StringBuilder sb = new StringBuilder("Fibonacci(" + n + "):\n");
+        for (int i = 1; i <= Math.min(n, 20); i++) {
+            sb.append("F(").append(i).append(") = ").append(ntFibonacci(i));
+            if (i < Math.min(n, 20)) sb.append("\n");
+        }
+        if (n > 20) sb.append("\n... (showing first 20 of ").append(n).append(")");
+        resultView.append(sb.toString() + "\n");
+    }
+
+    private void onNtModPow(EditText baseInput, EditText expInput, EditText modInput) {
+        long base, exp, mod;
+        try {
+            base = Long.parseLong(baseInput.getText().toString().trim());
+            exp = Long.parseLong(expInput.getText().toString().trim());
+            mod = Long.parseLong(modInput.getText().toString().trim());
+        } catch (NumberFormatException e) { toast(getString(R.string.toast_nt_invalid_modpow)); return; }
+        if (mod <= 0) { toast(getString(R.string.toast_nt_invalid_modpow)); return; }
+        long result = ntModPow(base, exp, mod);
+        resultView.append(base + "^" + exp + " mod " + mod + " = " + result + "\n");
+    }
+
+    private void onNtTotient(EditText nInput) {
+        long n;
+        try { n = Long.parseLong(nInput.getText().toString().trim()); }
+        catch (NumberFormatException e) { toast(getString(R.string.toast_nt_invalid_n)); return; }
+        if (n <= 0) { toast(getString(R.string.toast_nt_invalid_n)); return; }
+        resultView.append("φ(" + n + ") = " + ntTotient(n) + "\n");
     }
 }

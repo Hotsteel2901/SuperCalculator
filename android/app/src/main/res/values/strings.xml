@@ -156,6 +156,26 @@
     <string name="unit_speed">Speed</string>
     <string name="unit_angle">Angle</string>
 
+    <!-- Number Theory Calculator -->
+    <string name="number_theory">Number Theory Calculator</string>
+    <string name="hint_nt_n">n</string>
+    <string name="hint_nt_a">a</string>
+    <string name="hint_nt_b">b</string>
+    <string name="hint_nt_base">base</string>
+    <string name="hint_nt_exp">exp</string>
+    <string name="hint_nt_mod">mod</string>
+    <string name="nt_factorize">Factorize</string>
+    <string name="nt_is_prime">Is Prime?</string>
+    <string name="nt_gcd">GCD</string>
+    <string name="nt_lcm">LCM</string>
+    <string name="nt_fibonacci">Fibonacci</string>
+    <string name="nt_mod_pow">modPow</string>
+    <string name="nt_totient">φ(n)</string>
+    <string name="toast_nt_invalid_n">Please enter a valid positive integer for n</string>
+    <string name="toast_nt_invalid_ab">Please enter valid integers for a and b</string>
+    <string name="toast_nt_invalid_modpow">Please enter valid base, exponent, and modulus (mod &gt; 0)</string>
+    <string name="toast_nt_n_too_large">n is too large (max 10^12 for factorization)</string>
+
     <!-- Statistical Distribution Calculator -->
     <string name="stat_dist_title">Statistical Distributions</string>
     <string name="hint_dist_type">Distribution Type</string>
