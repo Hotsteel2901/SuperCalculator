@@ -958,6 +958,27 @@ STRINGS = {
         "zh": "回归结果",
     },
 
+    "err_info": {
+        "en": "Info",
+        "zh": "信息",
+    },
+    "err_limit_dne": {
+        "en": "Limit Does Not Exist",
+        "zh": "极限不存在",
+    },
+    "err_parametric": {
+        "en": "Parametric Curve",
+        "zh": "参数曲线",
+    },
+    "err_polar": {
+        "en": "Polar Curve",
+        "zh": "极坐标曲线",
+    },
+    "err_root_scan": {
+        "en": "Root Scan Results",
+        "zh": "根扫描结果",
+    },
+
     # ---- Dialog message strings ----
     "msg_enter_xt_yt": {
         "en": "Please enter both x(t) and y(t) expressions.",
@@ -1418,6 +1439,270 @@ STRINGS = {
     "msg_unit_invalid": {
         "en": "Invalid value. Please enter a number.",
         "zh": "无效值，请输入数字。",
+    },
+    "msg_add_failed": {
+        "en": "Addition failed: {0}",
+        "zh": "加法失败：{0}",
+    },
+    "msg_add_func": {
+        "en": "Add a function first.",
+        "zh": "请先添加函数。",
+    },
+    "msg_compute_fft": {
+        "en": "Compute FFT first.",
+        "zh": "请先计算FFT。",
+    },
+    "msg_could_not_arc": {
+        "en": "Could not compute arc length.",
+        "zh": "无法计算弧长。",
+    },
+    "msg_could_not_area": {
+        "en": "Could not compute area between curves.\n{0}",
+        "zh": "无法计算曲线间面积。\n{0}",
+    },
+    "msg_could_not_export": {
+        "en": "Could not export: {0}",
+        "zh": "无法导出：{0}",
+    },
+    "msg_could_not_extremum": {
+        "en": "Extremum finder failed.\n{0}",
+        "zh": "极值查找失败。\n{0}",
+    },
+    "msg_could_not_fft": {
+        "en": "Could not compute FFT spectrum.",
+        "zh": "无法计算FFT频谱。",
+    },
+    "msg_could_not_left_limit": {
+        "en": "Could not compute left limit.\n{0}",
+        "zh": "无法计算左极限。\n{0}",
+    },
+    "msg_could_not_limit": {
+        "en": "Could not compute limit.\n{0}",
+        "zh": "无法计算极限。\n{0}",
+    },
+    "msg_could_not_ode": {
+        "en": "Could not solve ODE.\n{0}",
+        "zh": "无法求解ODE。\n{0}",
+    },
+    "msg_could_not_right_limit": {
+        "en": "Could not compute right limit.\n{0}",
+        "zh": "无法计算右极限。\n{0}",
+    },
+    "msg_could_not_root": {
+        "en": "Could not locate selected curves.",
+        "zh": "无法定位所选曲线。",
+    },
+    "msg_could_not_system": {
+        "en": "System solver did not converge.\n{0}",
+        "zh": "方程组求解未收敛。\n{0}",
+    },
+    "msg_could_not_taylor": {
+        "en": "Could not compute Taylor expansion.\n{0}",
+        "zh": "无法计算泰勒展开。\n{0}",
+    },
+    "msg_deriv2_failed": {
+        "en": "Second derivative failed.\n{0}",
+        "zh": "二阶求导失败。\n{0}",
+    },
+    "msg_det_failed": {
+        "en": "Determinant failed: {0}",
+        "zh": "行列式计算失败：{0}",
+    },
+    "msg_det_square": {
+        "en": "Determinant requires a square matrix.",
+        "zh": "行列式需要方阵。",
+    },
+    "msg_eigen_error": {
+        "en": "Eigenvalue computation failed.",
+        "zh": "特征值计算失败。",
+    },
+    "msg_eigen_failed": {
+        "en": "Eigenvalue failed: {0}",
+        "zh": "特征值计算失败：{0}",
+    },
+    "msg_eigen_square": {
+        "en": "Eigenvalues require a square matrix.",
+        "zh": "特征值需要方阵。",
+    },
+    "msg_enter_fg_xy": {
+        "en": "Enter both f(x,y) and g(x,y) expressions.",
+        "zh": "请输入 f(x,y) 和 g(x,y) 表达式。",
+    },
+    "msg_enter_ode": {
+        "en": "Please enter an ODE expression dy/dx = f(x,y).",
+        "zh": "请输入ODE表达式 dy/dx = f(x,y)。",
+    },
+    "msg_extremum_found": {
+        "en": "{0} at x ≈ {1}\nf(x) ≈ {2}",
+        "zh": "{0}在 x ≈ {1}\nf(x) ≈ {2}",
+    },
+    "msg_generate_table": {
+        "en": "Generate a table first.",
+        "zh": "请先生成表格。",
+    },
+    "msg_integ_failed": {
+        "en": "Integration failed.\n{0}",
+        "zh": "积分失败。\n{0}",
+    },
+    "msg_integ_result": {
+        "en": "∫f(x)dx [{0}, {1}] = {2}",
+        "zh": "∫f(x)dx [{0}, {1}] = {2}",
+    },
+    "msg_inv_failed": {
+        "en": "Inverse failed: {0}",
+        "zh": "求逆失败：{0}",
+    },
+    "msg_inv_square": {
+        "en": "Inverse requires a square matrix.",
+        "zh": "逆矩阵需要方阵。",
+    },
+    "msg_invalid_arc_bounds": {
+        "en": "Invalid arc length bounds.",
+        "zh": "弧长边界无效。",
+    },
+    "msg_invalid_bounds": {
+        "en": "Invalid interval bounds.",
+        "zh": "区间边界无效。",
+    },
+    "msg_invalid_bounds_val": {
+        "en": "Invalid integration bounds.",
+        "zh": "积分边界无效。",
+    },
+    "msg_invalid_complex": {
+        "en": "Invalid complex number: {0}{1}",
+        "zh": "无效复数：{0}{1}",
+    },
+    "msg_invalid_complex2": {
+        "en": "Invalid complex number: {0}",
+        "zh": "无效复数：{0}",
+    },
+    "msg_invalid_fft": {
+        "en": "Invalid FFT parameters.",
+        "zh": "FFT参数无效。",
+    },
+    "msg_invalid_interval": {
+        "en": "Invalid interval bounds.",
+        "zh": "区间边界无效。",
+    },
+    "msg_invalid_number": {
+        "en": "Invalid number: '{0}'",
+        "zh": "无效数字：'{0}'",
+    },
+    "msg_invalid_ode": {
+        "en": "Invalid ODE parameters.",
+        "zh": "ODE参数无效。",
+    },
+    "msg_invalid_solver": {
+        "en": "Invalid solver parameters.",
+        "zh": "求解器参数无效。",
+    },
+    "msg_invalid_taylor": {
+        "en": "Invalid Taylor parameters.",
+        "zh": "泰勒参数无效。",
+    },
+    "msg_invalid_value": {
+        "en": "Invalid value. Please enter a number.",
+        "zh": "无效值，请输入数字。",
+    },
+    "msg_ln_zero": {
+        "en": "ln(0) is undefined",
+        "zh": "ln(0) 未定义",
+    },
+    "msg_matrix_cols": {
+        "en": "All rows must have the same number of columns.",
+        "zh": "所有行必须具有相同的列数。",
+    },
+    "msg_mul_failed": {
+        "en": "Multiplication failed: {0}",
+        "zh": "乘法失败：{0}",
+    },
+    "msg_need_2_ydata": {
+        "en": "Need at least 2 Y data points.",
+        "zh": "至少需要2个Y数据点。",
+    },
+    "msg_ode_solution": {
+        "en": "ODE Solution",
+        "zh": "ODE解",
+    },
+    "msg_parametric_no_calc": {
+        "en": "Parametric curves do not support this operation.",
+        "zh": "参数曲线不支持此操作。",
+    },
+    "msg_points_range": {
+        "en": "Points must be between 2 and 5000.",
+        "zh": "点数必须在2到5000之间。",
+    },
+    "msg_polar_no_calc": {
+        "en": "Polar curves do not support this operation.",
+        "zh": "极坐标曲线不支持此操作。",
+    },
+    "msg_rank_failed": {
+        "en": "Rank computation failed: {0}",
+        "zh": "秩计算失败：{0}",
+    },
+    "msg_root_found": {
+        "en": "Root (Newton): x ≈ {0}\nf(x) ≈ {1}",
+        "zh": "根（牛顿法）：x ≈ {0}\nf(x) ≈ {1}",
+    },
+    "msg_root_found_bisection": {
+        "en": "Root (Bisection): x ≈ {0}\nf(x) ≈ {1}",
+        "zh": "根（二分法）：x ≈ {0}\nf(x) ≈ {1}",
+    },
+    "msg_rref_failed": {
+        "en": "RREF failed: {0}",
+        "zh": "RREF失败：{0}",
+    },
+    "msg_run_regression": {
+        "en": "Run a regression first to generate fit data.",
+        "zh": "请先运行回归以生成拟合数据。",
+    },
+    "msg_select_different": {
+        "en": "Please select two different curves.",
+        "zh": "请选择两条不同的曲线。",
+    },
+    "msg_select_remove": {
+        "en": "Select a curve to remove.",
+        "zh": "请选择要删除的曲线。",
+    },
+    "msg_singular": {
+        "en": "Matrix is singular, inverse does not exist.",
+        "zh": "矩阵奇异，逆矩阵不存在。",
+    },
+    "msg_solve_ode_first": {
+        "en": "Solve an ODE first.",
+        "zh": "请先求解ODE。",
+    },
+    "msg_stats_results": {
+        "en": "Statistics Results",
+        "zh": "统计结果",
+    },
+    "msg_steps_range": {
+        "en": "Steps must be between 1 and 100000.",
+        "zh": "步数必须在1到100000之间。",
+    },
+    "msg_sub_failed": {
+        "en": "Subtraction failed: {0}",
+        "zh": "减法失败：{0}",
+    },
+    "msg_system_solved": {
+        "en": "System Solution",
+        "zh": "方程组解",
+    },
+    "msg_taylor_series": {
+        "en": "Taylor Series",
+        "zh": "泰勒级数",
+    },
+    "msg_transpose_failed": {
+        "en": "Transpose failed: {0}",
+        "zh": "转置失败：{0}",
+    },
+    "msg_x0_neq_xend": {
+        "en": "x0 must not equal x_end.",
+        "zh": "x0不能等于x_end。",
+    },
+    "msg_xdata_length": {
+        "en": "X and Y data must have the same length.",
+        "zh": "X和Y数据长度必须相同。",
     },
 
     # ---- FFT axis labels ----
