@@ -54,6 +54,7 @@ except ImportError as e:
     sys.exit(1)
 
 from calc_bridge import CalcEngine
+from locale_strings import t
 
 # ---------------------------------------------------------------------------
 #  Constants
@@ -214,7 +215,7 @@ class CurveModel:
 class SuperCalcApp:
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("Super Function Graphing Calculator")
+        self.root.title(t("win_title"))
         self.root.geometry("520x900")
         self.root.minsize(450, 700)
         self.root.configure(bg="#1e1e2e")
@@ -309,11 +310,11 @@ class SuperCalcApp:
         canvas.bind("<Button-5>", _on_mousewheel_linux)
 
         # --- Expression Input ---
-        frm_expr = ttk.LabelFrame(scroll_frame, text="Function Input",
+        frm_expr = ttk.LabelFrame(scroll_frame, text=t("sec_function_input"),
                                   style="Dark.TLabelframe")
         frm_expr.pack(fill=tk.X, padx=8, pady=(8, 4))
 
-        ttk.Label(frm_expr, text="Expression f(x):",
+        ttk.Label(frm_expr, text=t("label_expr"),
                   style="Dark.TLabel").pack(anchor=tk.W, padx=6, pady=(6, 0))
         
         input_row = ttk.Frame(frm_expr, style="Dark.TFrame")
@@ -331,22 +332,22 @@ class SuperCalcApp:
 
         btn_row = ttk.Frame(frm_expr, style="Dark.TFrame")
         btn_row.pack(fill=tk.X, padx=6, pady=4)
-        ttk.Button(btn_row, text="+ Add Curve",
+        ttk.Button(btn_row, text=t("btn_add_curve"),
                    command=self._on_add_curve).pack(side=tk.LEFT, padx=(0, 4))
-        ttk.Button(btn_row, text="Plot",
+        ttk.Button(btn_row, text=t("btn_plot"),
                    command=self._on_plot).pack(side=tk.LEFT, padx=2)
-        ttk.Button(btn_row, text="Clear All",
+        ttk.Button(btn_row, text=t("btn_clear_all"),
                    command=self._on_clear_all).pack(side=tk.LEFT, padx=4)
 
         # --- Parametric Mode ---
         self._var_parametric = tk.BooleanVar(value=False)
-        frm_param = ttk.LabelFrame(scroll_frame, text="Parametric Mode x(t), y(t)",
+        frm_param = ttk.LabelFrame(scroll_frame, text=t("sec_parametric"),
                                    style="Dark.TLabelframe")
         frm_param.pack(fill=tk.X, padx=8, pady=4)
 
         ptog = ttk.Frame(frm_param, style="Dark.TFrame")
         ptog.pack(fill=tk.X, padx=6, pady=(4, 2))
-        ttk.Checkbutton(ptog, text="Enable parametric curve",
+        ttk.Checkbutton(ptog, text=t("btn_enable_parametric"),
                         variable=self._var_parametric,
                         command=self._on_parametric_toggle).pack(side=tk.LEFT)
 
@@ -355,29 +356,29 @@ class SuperCalcApp:
 
         pr1 = ttk.Frame(self._frame_param_inputs, style="Dark.TFrame")
         pr1.pack(fill=tk.X, pady=2)
-        ttk.Label(pr1, text="x(t) =", style="Dark.TLabel", width=6).pack(side=tk.LEFT)
+        ttk.Label(pr1, text=t("label_xt"), style="Dark.TLabel", width=6).pack(side=tk.LEFT)
         self._var_x_param = tk.StringVar(value="cos(t)")
         ttk.Entry(pr1, textvariable=self._var_x_param, width=22).pack(side=tk.LEFT, padx=2)
 
         pr2 = ttk.Frame(self._frame_param_inputs, style="Dark.TFrame")
         pr2.pack(fill=tk.X, pady=2)
-        ttk.Label(pr2, text="y(t) =", style="Dark.TLabel", width=6).pack(side=tk.LEFT)
+        ttk.Label(pr2, text=t("label_yt"), style="Dark.TLabel", width=6).pack(side=tk.LEFT)
         self._var_y_param = tk.StringVar(value="sin(t)")
         ttk.Entry(pr2, textvariable=self._var_y_param, width=22).pack(side=tk.LEFT, padx=2)
 
         pr3 = ttk.Frame(self._frame_param_inputs, style="Dark.TFrame")
         pr3.pack(fill=tk.X, pady=2)
-        ttk.Label(pr3, text="t range:", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(pr3, text=t("label_t_range"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_t_min = tk.StringVar(value="0")
         ttk.Entry(pr3, textvariable=self._var_t_min, width=8).pack(side=tk.LEFT, padx=2)
-        ttk.Label(pr3, text="to", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(pr3, text=t("label_to"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_t_max = tk.StringVar(value="2*pi")
         ttk.Entry(pr3, textvariable=self._var_t_max, width=8).pack(side=tk.LEFT, padx=2)
 
         # Parametric presets
         pr4 = ttk.Frame(self._frame_param_inputs, style="Dark.TFrame")
         pr4.pack(fill=tk.X, pady=(4, 2))
-        ttk.Label(pr4, text="Preset:", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(pr4, text=t("label_preset"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_param_preset = tk.StringVar()
         param_combo = ttk.Combobox(pr4, textvariable=self._var_param_preset,
                                    values=list(PARAMETRIC_PRESETS.keys()),
@@ -391,13 +392,13 @@ class SuperCalcApp:
 
         # --- Polar Mode ---
         self._var_polar = tk.BooleanVar(value=False)
-        frm_polar = ttk.LabelFrame(scroll_frame, text="Polar Mode r(theta)",
+        frm_polar = ttk.LabelFrame(scroll_frame, text=t("sec_polar"),
                                    style="Dark.TLabelframe")
         frm_polar.pack(fill=tk.X, padx=8, pady=4)
 
         ptog2 = ttk.Frame(frm_polar, style="Dark.TFrame")
         ptog2.pack(fill=tk.X, padx=6, pady=(4, 2))
-        ttk.Checkbutton(ptog2, text="Enable polar curve",
+        ttk.Checkbutton(ptog2, text=t("btn_enable_polar"),
                         variable=self._var_polar,
                         command=self._on_polar_toggle).pack(side=tk.LEFT)
 
@@ -406,23 +407,23 @@ class SuperCalcApp:
 
         pr1p = ttk.Frame(self._frame_polar_inputs, style="Dark.TFrame")
         pr1p.pack(fill=tk.X, pady=2)
-        ttk.Label(pr1p, text="r(theta) =", style="Dark.TLabel", width=8).pack(side=tk.LEFT)
+        ttk.Label(pr1p, text=t("label_rtheta"), style="Dark.TLabel", width=8).pack(side=tk.LEFT)
         self._var_r_param = tk.StringVar(value="1")
         ttk.Entry(pr1p, textvariable=self._var_r_param, width=22).pack(side=tk.LEFT, padx=2)
 
         pr3p = ttk.Frame(self._frame_polar_inputs, style="Dark.TFrame")
         pr3p.pack(fill=tk.X, pady=2)
-        ttk.Label(pr3p, text="theta range:", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(pr3p, text=t("label_theta_range"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_theta_min = tk.StringVar(value="0")
         ttk.Entry(pr3p, textvariable=self._var_theta_min, width=8).pack(side=tk.LEFT, padx=2)
-        ttk.Label(pr3p, text="to", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(pr3p, text=t("label_to"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_theta_max = tk.StringVar(value="2*pi")
         ttk.Entry(pr3p, textvariable=self._var_theta_max, width=8).pack(side=tk.LEFT, padx=2)
 
         # Polar presets
         pr4p = ttk.Frame(self._frame_polar_inputs, style="Dark.TFrame")
         pr4p.pack(fill=tk.X, pady=(4, 2))
-        ttk.Label(pr4p, text="Preset:", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(pr4p, text=t("label_preset"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_polar_preset = tk.StringVar()
         polar_combo = ttk.Combobox(pr4p, textvariable=self._var_polar_preset,
                                    values=list(POLAR_PRESETS.keys()),
@@ -435,15 +436,15 @@ class SuperCalcApp:
         self._on_polar_toggle()
 
         # --- Parameter Inputs ---
-        self.frm_params = ttk.LabelFrame(scroll_frame, text="Parameters",
+        self.frm_params = ttk.LabelFrame(scroll_frame, text=t("sec_parameters"),
                                          style="Dark.TLabelframe")
         self.frm_params.pack(fill=tk.X, padx=8, pady=4)
         self.param_widgets = {}
-        ttk.Label(self.frm_params, text="No parameters detected",
+        ttk.Label(self.frm_params, text=t("label_no_params"),
                   style="Dark.TLabel").pack(padx=6, pady=8)
 
         # --- Presets ---
-        frm_preset = ttk.LabelFrame(scroll_frame, text="Preset Functions",
+        frm_preset = ttk.LabelFrame(scroll_frame, text=t("sec_preset"),
                                     style="Dark.TLabelframe")
         frm_preset.pack(fill=tk.X, padx=8, pady=4)
 
@@ -456,7 +457,7 @@ class SuperCalcApp:
                    lambda e: self._on_preset(self.preset_var.get()))
 
         # --- Curve List ---
-        frm_curves = ttk.LabelFrame(scroll_frame, text="Curves (click to select)",
+        frm_curves = ttk.LabelFrame(scroll_frame, text=t("sec_curves"),
                                     style="Dark.TLabelframe")
         frm_curves.pack(fill=tk.X, padx=8, pady=4)
         self.listbox_curves = tk.Listbox(
@@ -464,22 +465,22 @@ class SuperCalcApp:
             selectbackground="#89b4fa", selectforeground="#1e1e2e",
             font=("Consolas", 10), height=6, exportselection=False)
         self.listbox_curves.pack(fill=tk.X, padx=6, pady=4)
-        ttk.Button(frm_curves, text="Remove Selected",
+        ttk.Button(frm_curves, text=t("btn_remove"),
                    command=self._on_remove_curve).pack(padx=6, pady=(0, 4))
-        ttk.Button(frm_curves, text="Find Intersections...",
+        ttk.Button(frm_curves, text=t("btn_find_intersections"),
                    command=self._show_intersection_dialog).pack(padx=6, pady=(0, 4))
 
         # --- Range ---
-        frm_range = ttk.LabelFrame(scroll_frame, text="Coordinate Range",
+        frm_range = ttk.LabelFrame(scroll_frame, text=t("sec_range"),
                                    style="Dark.TLabelframe")
         frm_range.pack(fill=tk.X, padx=8, pady=4)
 
         grid = ttk.Frame(frm_range, style="Dark.TFrame")
         grid.pack(fill=tk.X, padx=6, pady=4)
         range_fields = [
-            ("X min", "x_min"), ("X max", "x_max"),
-            ("Y min", "y_min"), ("Y max", "y_max"),
-            ("Z min", "z_min"), ("Z max", "z_max"),
+            (t("range_xmin"), "x_min"), (t("range_xmax"), "x_max"),
+            (t("range_ymin"), "y_min"), (t("range_ymax"), "y_max"),
+            (t("range_zmin"), "z_min"), (t("range_zmax"), "z_max"),
         ]
         for col, (lbl, var_attr) in enumerate(range_fields):
             ttk.Label(grid, text=lbl, style="Dark.TLabel").grid(
@@ -491,211 +492,211 @@ class SuperCalcApp:
 
         range_row2 = ttk.Frame(frm_range, style="Dark.TFrame")
         range_row2.pack(fill=tk.X, padx=6, pady=(0, 4))
-        ttk.Label(range_row2, text="Step:",
+        ttk.Label(range_row2, text=t("label_step"),
                   style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 2))
         self._var_step = tk.StringVar(value=str(self.step_size))
         ttk.Entry(range_row2, textvariable=self._var_step, width=6).pack(
             side=tk.LEFT)
-        ttk.Button(range_row2, text="Apply",
+        ttk.Button(range_row2, text=t("btn_apply"),
                     command=self._on_apply_range).pack(side=tk.RIGHT, padx=6)
 
         self._var_grid = tk.BooleanVar(value=True)
-        ttk.Checkbutton(range_row2, text="Grid",
+        ttk.Checkbutton(range_row2, text=t("label_grid"),
                          variable=self._var_grid).pack(
             side=tk.LEFT, padx=(12, 0))
 
-        ttk.Label(range_row2, text="3D Grid:", style="Dark.TLabel").pack(side=tk.LEFT, padx=(12, 0))
+        ttk.Label(range_row2, text=t("label_3d_grid"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(12, 0))
         self._var_3d_res = tk.StringVar(value=str(DEFAULT_3D_POINTS))
         ttk.Entry(range_row2, textvariable=self._var_3d_res, width=5).pack(side=tk.LEFT)
 
         # --- Calculus ---
-        frm_calc = ttk.LabelFrame(scroll_frame, text="Calculus Operations",
+        frm_calc = ttk.LabelFrame(scroll_frame, text=t("sec_calculus"),
                                   style="Dark.TLabelframe")
         frm_calc.pack(fill=tk.X, padx=8, pady=4)
 
         row1 = ttk.Frame(frm_calc, style="Dark.TFrame")
         row1.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(row1, text="At x =", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(row1, text=t("label_at_x"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_diff_x = tk.StringVar(value="0")
         ttk.Entry(row1, textvariable=self._var_diff_x, width=8).pack(
             side=tk.LEFT, padx=4)
-        ttk.Button(row1, text="f'(x) Derivative",
+        ttk.Button(row1, text=t("btn_deriv"),
                    command=lambda: self._on_derivative()).pack(side=tk.LEFT, padx=2)
-        ttk.Button(row1, text="f''(x) 2nd Deriv",
+        ttk.Button(row1, text=t("btn_deriv2"),
                    command=lambda: self._on_derivative2()).pack(side=tk.LEFT, padx=2)
 
         row2 = ttk.Frame(frm_calc, style="Dark.TFrame")
         row2.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(row2, text="Integrate [", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(row2, text=t("label_integrate"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_int_a = tk.StringVar(value="0")
         ttk.Entry(row2, textvariable=self._var_int_a, width=6).pack(side=tk.LEFT)
-        ttk.Label(row2, text=" , ", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(row2, text=t("label_comma"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_int_b = tk.StringVar(value="1")
         ttk.Entry(row2, textvariable=self._var_int_b, width=6).pack(side=tk.LEFT)
-        ttk.Label(row2, text=" ]", style="Dark.TLabel").pack(side=tk.LEFT)
-        ttk.Button(row2, text="Integrate",
+        ttk.Label(row2, text=t("label_close_bracket"), style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Button(row2, text=t("btn_integrate"),
                    command=self._on_integrate).pack(side=tk.LEFT, padx=8)
 
         row_limit = ttk.Frame(frm_calc, style="Dark.TFrame")
         row_limit.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(row_limit, text="Limit x→", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(row_limit, text=t("label_limit"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_limit_a = tk.StringVar(value="0")
         ttk.Entry(row_limit, textvariable=self._var_limit_a, width=8).pack(
             side=tk.LEFT, padx=4)
-        ttk.Button(row_limit, text="lim f(x)",
+        ttk.Button(row_limit, text=t("btn_lim"),
                    command=lambda: self._on_limit(two_sided=True)).pack(side=tk.LEFT, padx=2)
-        ttk.Button(row_limit, text="Left lim",
+        ttk.Button(row_limit, text=t("btn_left_lim"),
                    command=lambda: self._on_limit(two_sided=False, side="left")).pack(side=tk.LEFT, padx=2)
-        ttk.Button(row_limit, text="Right lim",
+        ttk.Button(row_limit, text=t("btn_right_lim"),
                    command=lambda: self._on_limit(two_sided=False, side="right")).pack(side=tk.LEFT, padx=2)
 
         # --- Equation Solver ---
-        frm_solve = ttk.LabelFrame(scroll_frame, text="Equation Solver f(x)=0",
+        frm_solve = ttk.LabelFrame(scroll_frame, text=t("sec_solver"),
                                    style="Dark.TLabelframe")
         frm_solve.pack(fill=tk.X, padx=8, pady=4)
 
         srow1 = ttk.Frame(frm_solve, style="Dark.TFrame")
         srow1.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(srow1, text="Guess:", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(srow1, text=t("label_guess"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_guess = tk.StringVar(value="0")
         ttk.Entry(srow1, textvariable=self._var_guess, width=8).pack(
             side=tk.LEFT, padx=2)
-        ttk.Label(srow1, text="Range:",
+        ttk.Label(srow1, text=t("label_range"),
                   style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
         self._var_solve_a = tk.StringVar(value="-10")
         ttk.Entry(srow1, textvariable=self._var_solve_a, width=6).pack(side=tk.LEFT)
-        ttk.Label(srow1, text="to", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(srow1, text=t("label_to"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_solve_b = tk.StringVar(value="10")
         ttk.Entry(srow1, textvariable=self._var_solve_b, width=6).pack(side=tk.LEFT)
 
         srow2 = ttk.Frame(frm_solve, style="Dark.TFrame")
         srow2.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Button(srow2, text="Find Root (Newton)",
+        ttk.Button(srow2, text=t("btn_solve_newton"),
                    command=lambda: self._on_solve()).pack(side=tk.LEFT, padx=2)
-        ttk.Button(srow2, text="Find Root (Bisection)",
+        ttk.Button(srow2, text=t("btn_solve_bisection"),
                    command=lambda: self._on_solve_bisection()).pack(side=tk.LEFT, padx=2)
 
         # --- Nonlinear System Solver (2D) ---
-        frm_sys = ttk.LabelFrame(scroll_frame, text="Nonlinear System Solver f(x,y)=0, g(x,y)=0",
+        frm_sys = ttk.LabelFrame(scroll_frame, text=t("sec_system"),
                                  style="Dark.TLabelframe")
         frm_sys.pack(fill=tk.X, padx=8, pady=4)
 
         sysrow1 = ttk.Frame(frm_sys, style="Dark.TFrame")
         sysrow1.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(sysrow1, text="f(x,y) =", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(sysrow1, text=t("label_sys_f"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_sys_f = tk.StringVar(value="x^2+y^2-1")
         ttk.Entry(sysrow1, textvariable=self._var_sys_f, width=20).pack(side=tk.LEFT, padx=4)
-        ttk.Label(sysrow1, text="g(x,y) =", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(sysrow1, text=t("label_sys_g"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_sys_g = tk.StringVar(value="x-y")
         ttk.Entry(sysrow1, textvariable=self._var_sys_g, width=20).pack(side=tk.LEFT, padx=4)
 
         sysrow2 = ttk.Frame(frm_sys, style="Dark.TFrame")
         sysrow2.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(sysrow2, text="Initial guess:", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(sysrow2, text=t("label_init_guess"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_sys_x0 = tk.StringVar(value="0.7")
         ttk.Entry(sysrow2, textvariable=self._var_sys_x0, width=8).pack(side=tk.LEFT, padx=2)
         ttk.Label(sysrow2, text=",", style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_sys_y0 = tk.StringVar(value="0.7")
         ttk.Entry(sysrow2, textvariable=self._var_sys_y0, width=8).pack(side=tk.LEFT, padx=2)
-        ttk.Button(sysrow2, text="Solve System",
+        ttk.Button(sysrow2, text=t("btn_solve_system"),
                    command=self._on_solve_system_2d).pack(side=tk.LEFT, padx=8)
 
         sysrow3 = ttk.Frame(frm_sys, style="Dark.TFrame")
         sysrow3.pack(fill=tk.X, padx=6, pady=(0, 4))
-        ttk.Label(sysrow3, text="Solves f(x,y)=0, g(x,y)=0 simultaneously (Newton's method for systems)",
+        ttk.Label(sysrow3, text=t("label_sys_desc"),
                   style="Dark.TLabel").pack(side=tk.LEFT)
 
         # --- Extremum Finder ---
-        frm_extremum = ttk.LabelFrame(scroll_frame, text="Extremum Finder on [a,b]",
+        frm_extremum = ttk.LabelFrame(scroll_frame, text=t("sec_extremum"),
                                       style="Dark.TLabelframe")
         frm_extremum.pack(fill=tk.X, padx=8, pady=4)
 
         erow1 = ttk.Frame(frm_extremum, style="Dark.TFrame")
         erow1.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(erow1, text="a:", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(erow1, text=t("label_a"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_ext_a = tk.StringVar(value="-10")
         ttk.Entry(erow1, textvariable=self._var_ext_a, width=7).pack(side=tk.LEFT, padx=2)
-        ttk.Label(erow1, text="b:", style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
+        ttk.Label(erow1, text=t("label_b"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
         self._var_ext_b = tk.StringVar(value="10")
         ttk.Entry(erow1, textvariable=self._var_ext_b, width=7).pack(side=tk.LEFT, padx=2)
 
         erow2 = ttk.Frame(frm_extremum, style="Dark.TFrame")
         erow2.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Button(erow2, text="Find Minimum",
+        ttk.Button(erow2, text=t("btn_find_min"),
                    command=lambda: self._on_find_extremum(minimum=True)).pack(side=tk.LEFT, padx=2)
-        ttk.Button(erow2, text="Find Maximum",
+        ttk.Button(erow2, text=t("btn_find_max"),
                    command=lambda: self._on_find_extremum(minimum=False)).pack(side=tk.LEFT, padx=2)
 
         # --- Auto Root Scanner ---
-        frm_scan = ttk.LabelFrame(scroll_frame, text="Auto Root Scanner",
+        frm_scan = ttk.LabelFrame(scroll_frame, text=t("sec_scan"),
                                   style="Dark.TLabelframe")
         frm_scan.pack(fill=tk.X, padx=8, pady=4)
 
         srow = ttk.Frame(frm_scan, style="Dark.TFrame")
         srow.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(srow, text="Scan interval [a,b] for all roots f(x)=0",
+        ttk.Label(srow, text=t("label_scan_desc"),
                   style="Dark.TLabel").pack(side=tk.LEFT, padx=2)
-        ttk.Button(srow, text="Scan Roots",
+        ttk.Button(srow, text=t("btn_scan_roots"),
                    command=self._on_scan_roots).pack(side=tk.RIGHT, padx=2)
 
         # --- Coordinate Marking ---
-        frm_mark = ttk.LabelFrame(scroll_frame, text="Coordinate Marking",
+        frm_mark = ttk.LabelFrame(scroll_frame, text=t("sec_mark"),
                                   style="Dark.TLabelframe")
         frm_mark.pack(fill=tk.X, padx=8, pady=4)
 
-        ttk.Label(frm_mark, text="Left-click to mark, right-click to delete, or enter x:",
+        ttk.Label(frm_mark, text=t("label_mark_hint"),
                   style="Dark.TLabel").pack(anchor=tk.W, padx=6, pady=(6, 0))
 
         mark_row = ttk.Frame(frm_mark, style="Dark.TFrame")
         mark_row.pack(fill=tk.X, padx=6, pady=2)
         self._var_mark_x = tk.StringVar(value="")
         ttk.Entry(mark_row, textvariable=self._var_mark_x, width=10).pack(side=tk.LEFT, padx=2)
-        ttk.Button(mark_row, text="Mark Point",
+        ttk.Button(mark_row, text=t("btn_mark_point"),
                    command=self._on_mark_point).pack(side=tk.LEFT, padx=2)
-        ttk.Button(mark_row, text="Clear Marks",
+        ttk.Button(mark_row, text=t("btn_clear_marks"),
                    command=self._clear_marks).pack(side=tk.LEFT, padx=2)
 
         # --- Tangent & Normal Lines ---
-        frm_tan = ttk.LabelFrame(scroll_frame, text="Tangent & Normal Lines",
+        frm_tan = ttk.LabelFrame(scroll_frame, text=t("sec_tangent"),
                                  style="Dark.TLabelframe")
         frm_tan.pack(fill=tk.X, padx=8, pady=4)
 
         trow_tan = ttk.Frame(frm_tan, style="Dark.TFrame")
         trow_tan.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(trow_tan, text="At x =", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(trow_tan, text=t("label_tan_at_x"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_tan_x = tk.StringVar(value="0")
         ttk.Entry(trow_tan, textvariable=self._var_tan_x, width=8).pack(side=tk.LEFT, padx=4)
-        ttk.Button(trow_tan, text="Draw Tangent",
+        ttk.Button(trow_tan, text=t("btn_draw_tangent"),
                    command=self._on_draw_tangent).pack(side=tk.LEFT, padx=2)
-        ttk.Button(trow_tan, text="Draw Normal",
+        ttk.Button(trow_tan, text=t("btn_draw_normal"),
                    command=self._on_draw_normal).pack(side=tk.LEFT, padx=2)
-        ttk.Button(trow_tan, text="Clear Lines",
+        ttk.Button(trow_tan, text=t("btn_clear_lines"),
                    command=self._clear_tangent_normal).pack(side=tk.LEFT, padx=2)
 
         # --- Arc Length ---
-        frm_arc = ttk.LabelFrame(scroll_frame, text="Arc Length",
+        frm_arc = ttk.LabelFrame(scroll_frame, text=t("sec_arc"),
                                  style="Dark.TLabelframe")
         frm_arc.pack(fill=tk.X, padx=8, pady=4)
 
         arow = ttk.Frame(frm_arc, style="Dark.TFrame")
         arow.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(arow, text="Uses integration bounds [a,b] above",
+        ttk.Label(arow, text=t("label_arc_uses"),
                   style="Dark.TLabel").pack(side=tk.LEFT, padx=2)
-        ttk.Button(arow, text="Compute Arc Length",
+        ttk.Button(arow, text=t("btn_compute_arc"),
                    command=self._on_arc_length).pack(side=tk.RIGHT, padx=2)
 
         # --- Area Between Curves ---
-        frm_area = ttk.LabelFrame(scroll_frame, text="Area Between Curves",
+        frm_area = ttk.LabelFrame(scroll_frame, text=t("sec_area"),
                                   style="Dark.TLabelframe")
         frm_area.pack(fill=tk.X, padx=8, pady=4)
 
         area_row1 = ttk.Frame(frm_area, style="Dark.TFrame")
         area_row1.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(area_row1, text="f(x) =", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(area_row1, text=t("label_area_fx"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_area_f = tk.StringVar(value="sin(x)")
         ttk.Entry(area_row1, textvariable=self._var_area_f, width=18).pack(
             side=tk.LEFT, padx=4)
-        ttk.Label(area_row1, text="g(x) =", style="Dark.TLabel").pack(
+        ttk.Label(area_row1, text=t("label_area_gx"), style="Dark.TLabel").pack(
             side=tk.LEFT, padx=(8, 0))
         self._var_area_g = tk.StringVar(value="0")
         ttk.Entry(area_row1, textvariable=self._var_area_g, width=18).pack(
@@ -703,42 +704,42 @@ class SuperCalcApp:
 
         area_row2 = ttk.Frame(frm_area, style="Dark.TFrame")
         area_row2.pack(fill=tk.X, padx=6, pady=(0, 4))
-        ttk.Label(area_row2, text="Interval [a,b]:",
+        ttk.Label(area_row2, text=t("label_interval_ab"),
                   style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_area_a = tk.StringVar(value="0")
         ttk.Entry(area_row2, textvariable=self._var_area_a, width=7).pack(
             side=tk.LEFT, padx=2)
-        ttk.Label(area_row2, text="to", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(area_row2, text=t("label_to"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_area_b = tk.StringVar(value="pi")
         ttk.Entry(area_row2, textvariable=self._var_area_b, width=7).pack(
             side=tk.LEFT, padx=2)
-        ttk.Button(area_row2, text="Compute Area",
+        ttk.Button(area_row2, text=t("btn_compute_area"),
                    command=self._on_area_between_curves).pack(side=tk.RIGHT, padx=2)
 
         # --- Function Table ---
-        frm_table = ttk.LabelFrame(scroll_frame, text="Function Table & Export",
+        frm_table = ttk.LabelFrame(scroll_frame, text=t("sec_table"),
                                    style="Dark.TLabelframe")
         frm_table.pack(fill=tk.X, padx=8, pady=4)
 
         trow = ttk.Frame(frm_table, style="Dark.TFrame")
         trow.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(trow, text="From:", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(trow, text=t("label_from"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_tbl_from = tk.StringVar(value="-10")
         ttk.Entry(trow, textvariable=self._var_tbl_from, width=7).pack(side=tk.LEFT, padx=2)
-        ttk.Label(trow, text="To:", style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
+        ttk.Label(trow, text=t("label_to2"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
         self._var_tbl_to = tk.StringVar(value="10")
         ttk.Entry(trow, textvariable=self._var_tbl_to, width=7).pack(side=tk.LEFT, padx=2)
-        ttk.Label(trow, text="Points:", style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
+        ttk.Label(trow, text=t("label_points"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
         self._var_tbl_n = tk.StringVar(value="21")
         ttk.Entry(trow, textvariable=self._var_tbl_n, width=5).pack(side=tk.LEFT, padx=2)
 
         trow2 = ttk.Frame(frm_table, style="Dark.TFrame")
         trow2.pack(fill=tk.X, padx=6, pady=(0, 4))
-        ttk.Button(trow2, text="Generate Table",
+        ttk.Button(trow2, text=t("btn_gen_table"),
                    command=self._on_generate_table).pack(side=tk.LEFT, padx=2)
-        ttk.Button(trow2, text="Export CSV",
+        ttk.Button(trow2, text=t("btn_export_csv"),
                    command=self._on_export_csv).pack(side=tk.LEFT, padx=2)
-        ttk.Button(trow2, text="Copy Table",
+        ttk.Button(trow2, text=t("btn_copy_table"),
                    command=self._on_copy_table).pack(side=tk.LEFT, padx=2)
 
         self._table_data = []   # list of (x, y) tuples
@@ -746,90 +747,90 @@ class SuperCalcApp:
         self._fft_data = {}     # last FFT result dict
 
         # --- Fourier Transform & Spectrum ---
-        frm_fft = ttk.LabelFrame(scroll_frame, text="Fourier Transform & Spectrum",
+        frm_fft = ttk.LabelFrame(scroll_frame, text=t("sec_fft"),
                                  style="Dark.TLabelframe")
         frm_fft.pack(fill=tk.X, padx=8, pady=4)
 
         fft_row1 = ttk.Frame(frm_fft, style="Dark.TFrame")
         fft_row1.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(fft_row1, text="Samples:", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(fft_row1, text=t("label_samples"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_fft_n = tk.StringVar(value="1024")
         ttk.Entry(fft_row1, textvariable=self._var_fft_n, width=8).pack(side=tk.LEFT, padx=2)
-        ttk.Label(fft_row1, text="Uses [a,b] from Integrate bounds",
+        ttk.Label(fft_row1, text=t("label_fft_uses"),
                   style="Dark.TLabel").pack(side=tk.LEFT, padx=(8, 0))
 
         fft_row2 = ttk.Frame(frm_fft, style="Dark.TFrame")
         fft_row2.pack(fill=tk.X, padx=6, pady=(0, 4))
-        ttk.Button(fft_row2, text="Compute FFT",
+        ttk.Button(fft_row2, text=t("btn_compute_fft"),
                    command=self._on_fft_compute).pack(side=tk.LEFT, padx=2)
-        ttk.Button(fft_row2, text="Export Spectrum CSV",
+        ttk.Button(fft_row2, text=t("btn_export_spectrum"),
                    command=self._on_export_fft_csv).pack(side=tk.LEFT, padx=2)
 
         # --- Taylor Series Expansion ---
-        frm_taylor = ttk.LabelFrame(scroll_frame, text="Taylor Series Expansion",
+        frm_taylor = ttk.LabelFrame(scroll_frame, text=t("sec_taylor"),
                                     style="Dark.TLabelframe")
         frm_taylor.pack(fill=tk.X, padx=8, pady=4)
 
         trow1 = ttk.Frame(frm_taylor, style="Dark.TFrame")
         trow1.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(trow1, text="Expand at a =", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(trow1, text=t("label_expand_at"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_taylor_a = tk.StringVar(value="0")
         ttk.Entry(trow1, textvariable=self._var_taylor_a, width=8).pack(
             side=tk.LEFT, padx=4)
-        ttk.Label(trow1, text="Order:", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(trow1, text=t("label_order"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_taylor_order = tk.StringVar(value="5")
         ttk.Entry(trow1, textvariable=self._var_taylor_order, width=5).pack(
             side=tk.LEFT, padx=4)
 
         trow2 = ttk.Frame(frm_taylor, style="Dark.TFrame")
         trow2.pack(fill=tk.X, padx=6, pady=(0, 4))
-        ttk.Button(trow2, text="Expand Taylor",
+        ttk.Button(trow2, text=t("btn_expand_taylor"),
                    command=self._on_taylor_expand).pack(side=tk.LEFT, padx=2)
-        ttk.Button(trow2, text="Plot Taylor + Original",
+        ttk.Button(trow2, text=t("btn_plot_taylor"),
                    command=self._on_taylor_plot).pack(side=tk.LEFT, padx=2)
 
         # --- ODE Solver (RK4) ---
-        frm_ode = ttk.LabelFrame(scroll_frame, text="ODE Solver (dy/dx = f(x,y))",
+        frm_ode = ttk.LabelFrame(scroll_frame, text=t("sec_ode"),
                                   style="Dark.TLabelframe")
         frm_ode.pack(fill=tk.X, padx=8, pady=4)
 
         ode_row1 = ttk.Frame(frm_ode, style="Dark.TFrame")
         ode_row1.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(ode_row1, text="dy/dx =", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(ode_row1, text=t("label_dydx"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_ode_expr = tk.StringVar(value="-y")
         ttk.Entry(ode_row1, textvariable=self._var_ode_expr, width=22).pack(
             side=tk.LEFT, padx=4)
 
         ode_row2 = ttk.Frame(frm_ode, style="Dark.TFrame")
         ode_row2.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(ode_row2, text="x0:", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(ode_row2, text=t("label_x0"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_ode_x0 = tk.StringVar(value="0")
         ttk.Entry(ode_row2, textvariable=self._var_ode_x0, width=6).pack(
             side=tk.LEFT, padx=2)
-        ttk.Label(ode_row2, text="y0:", style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
+        ttk.Label(ode_row2, text=t("label_y0"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
         self._var_ode_y0 = tk.StringVar(value="1")
         ttk.Entry(ode_row2, textvariable=self._var_ode_y0, width=6).pack(
             side=tk.LEFT, padx=2)
-        ttk.Label(ode_row2, text="x_end:", style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
+        ttk.Label(ode_row2, text=t("label_xend"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
         self._var_ode_xend = tk.StringVar(value="5")
         ttk.Entry(ode_row2, textvariable=self._var_ode_xend, width=6).pack(
             side=tk.LEFT, padx=2)
-        ttk.Label(ode_row2, text="Steps:", style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
+        ttk.Label(ode_row2, text=t("label_steps"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
         self._var_ode_steps = tk.StringVar(value="200")
         ttk.Entry(ode_row2, textvariable=self._var_ode_steps, width=6).pack(
             side=tk.LEFT, padx=2)
 
         ode_row3 = ttk.Frame(frm_ode, style="Dark.TFrame")
         ode_row3.pack(fill=tk.X, padx=6, pady=(0, 4))
-        ttk.Button(ode_row3, text="Solve ODE",
+        ttk.Button(ode_row3, text=t("btn_solve_ode"),
                    command=self._on_ode_solve).pack(side=tk.LEFT, padx=2)
-        ttk.Button(ode_row3, text="Plot Solution",
+        ttk.Button(ode_row3, text=t("btn_plot_solution"),
                    command=self._on_ode_plot).pack(side=tk.LEFT, padx=2)
 
         # ODE presets
         ode_row4 = ttk.Frame(frm_ode, style="Dark.TFrame")
         ode_row4.pack(fill=tk.X, padx=6, pady=(0, 4))
-        ttk.Label(ode_row4, text="Preset:", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(ode_row4, text=t("label_preset"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_ode_preset = tk.StringVar()
         ode_combo = ttk.Combobox(ode_row4, textvariable=self._var_ode_preset,
                                   values=list(ODE_PRESETS.keys()),
@@ -841,13 +842,13 @@ class SuperCalcApp:
         self._ode_data = None  # last ODE solution dict (None or dict)
 
         # --- Statistics Calculator ---
-        frm_stats = ttk.LabelFrame(scroll_frame, text="Statistics Calculator",
+        frm_stats = ttk.LabelFrame(scroll_frame, text=t("sec_stats"),
                                     style="Dark.TLabelframe")
         frm_stats.pack(fill=tk.X, padx=8, pady=4)
 
         stats_row1 = ttk.Frame(frm_stats, style="Dark.TFrame")
         stats_row1.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(stats_row1, text="Data (comma/space separated):",
+        ttk.Label(stats_row1, text=t("label_data"),
                   style="Dark.TLabel").pack(anchor=tk.W, padx=2)
 
         self._var_stats_data = tk.StringVar(value="1, 2, 3, 4, 5, 6, 7, 8, 9, 10")
@@ -857,23 +858,23 @@ class SuperCalcApp:
 
         stats_row2 = ttk.Frame(frm_stats, style="Dark.TFrame")
         stats_row2.pack(fill=tk.X, padx=6, pady=(0, 4))
-        ttk.Button(stats_row2, text="Compute Stats",
+        ttk.Button(stats_row2, text=t("btn_compute_stats"),
                    command=self._on_stats_compute).pack(side=tk.LEFT, padx=2)
-        ttk.Button(stats_row2, text="Sort Data",
+        ttk.Button(stats_row2, text=t("btn_sort_data"),
                    command=self._on_stats_sort).pack(side=tk.LEFT, padx=2)
-        ttk.Button(stats_row2, text="Plot Histogram",
+        ttk.Button(stats_row2, text=t("btn_plot_histogram"),
                    command=self._on_stats_histogram).pack(side=tk.LEFT, padx=2)
-        ttk.Button(stats_row2, text="Export CSV",
+        ttk.Button(stats_row2, text=t("btn_export_csv"),
                    command=self._on_stats_export_csv).pack(side=tk.LEFT, padx=2)
 
         # --- Curve Fitting / Regression ---
-        frm_regression = ttk.LabelFrame(scroll_frame, text="Curve Fitting / Regression",
+        frm_regression = ttk.LabelFrame(scroll_frame, text=t("sec_regression"),
                                         style="Dark.TLabelframe")
         frm_regression.pack(fill=tk.X, padx=8, pady=4)
 
         reg_row1 = ttk.Frame(frm_regression, style="Dark.TFrame")
         reg_row1.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(reg_row1, text="X data (comma/space separated, optional):",
+        ttk.Label(reg_row1, text=t("label_xdata"),
                   style="Dark.TLabel").pack(anchor=tk.W, padx=2)
         self._var_reg_xdata = tk.StringVar(value="")
         ttk.Entry(reg_row1, textvariable=self._var_reg_xdata, width=36,
@@ -881,7 +882,7 @@ class SuperCalcApp:
 
         reg_row1b = ttk.Frame(frm_regression, style="Dark.TFrame")
         reg_row1b.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(reg_row1b, text="Y data (uses Statistics data if X is empty):",
+        ttk.Label(reg_row1b, text=t("label_ydata"),
                   style="Dark.TLabel").pack(anchor=tk.W, padx=2)
         self._var_reg_ydata = tk.StringVar(value="")
         ttk.Entry(reg_row1b, textvariable=self._var_reg_ydata, width=36,
@@ -889,39 +890,39 @@ class SuperCalcApp:
 
         reg_row2 = ttk.Frame(frm_regression, style="Dark.TFrame")
         reg_row2.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Button(reg_row2, text="Linear (y=ax+b)",
+        ttk.Button(reg_row2, text=t("btn_linear"),
                    command=self._on_reg_linear).pack(side=tk.LEFT, padx=2)
-        ttk.Button(reg_row2, text="Quadratic",
+        ttk.Button(reg_row2, text=t("btn_quadratic"),
                    command=self._on_reg_quadratic).pack(side=tk.LEFT, padx=2)
-        ttk.Button(reg_row2, text="Polynomial",
+        ttk.Button(reg_row2, text=t("btn_polynomial"),
                    command=self._on_reg_polynomial).pack(side=tk.LEFT, padx=2)
 
         reg_row3 = ttk.Frame(frm_regression, style="Dark.TFrame")
         reg_row3.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Button(reg_row3, text="Exponential",
+        ttk.Button(reg_row3, text=t("btn_exponential"),
                    command=self._on_reg_exponential).pack(side=tk.LEFT, padx=2)
-        ttk.Button(reg_row3, text="Power",
+        ttk.Button(reg_row3, text=t("btn_power"),
                    command=self._on_reg_power).pack(side=tk.LEFT, padx=2)
-        ttk.Button(reg_row3, text="Logarithmic",
+        ttk.Button(reg_row3, text=t("btn_logarithmic"),
                    command=self._on_reg_logarithmic).pack(side=tk.LEFT, padx=2)
 
         reg_row4 = ttk.Frame(frm_regression, style="Dark.TFrame")
         reg_row4.pack(fill=tk.X, padx=6, pady=(0, 4))
-        ttk.Label(reg_row4, text="Poly degree:", style="Dark.TLabel").pack(side=tk.LEFT, padx=2)
+        ttk.Label(reg_row4, text=t("label_poly_degree"), style="Dark.TLabel").pack(side=tk.LEFT, padx=2)
         self._var_reg_degree = tk.StringVar(value="3")
         ttk.Entry(reg_row4, textvariable=self._var_reg_degree, width=5,
                   font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
-        ttk.Button(reg_row4, text="Plot Fit",
+        ttk.Button(reg_row4, text=t("btn_plot_fit"),
                    command=self._on_reg_plot).pack(side=tk.LEFT, padx=(8, 2))
 
         # --- Matrix Operations ---
-        frm_matrix = ttk.LabelFrame(scroll_frame, text="Matrix Operations (Linear Algebra)",
+        frm_matrix = ttk.LabelFrame(scroll_frame, text=t("sec_matrix"),
                                     style="Dark.TLabelframe")
         frm_matrix.pack(fill=tk.X, padx=8, pady=4)
 
         mrow1 = ttk.Frame(frm_matrix, style="Dark.TFrame")
         mrow1.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(mrow1, text="Matrix A (rows separated by ;, cols by ,):",
+        ttk.Label(mrow1, text=t("label_matrix_a"),
                   style="Dark.TLabel").pack(anchor=tk.W, padx=2)
         self._var_matrix_a = tk.StringVar(value="1,2;3,4")
         ttk.Entry(mrow1, textvariable=self._var_matrix_a, width=36,
@@ -929,7 +930,7 @@ class SuperCalcApp:
 
         mrow2 = ttk.Frame(frm_matrix, style="Dark.TFrame")
         mrow2.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(mrow2, text="Matrix B (for binary operations):",
+        ttk.Label(mrow2, text=t("label_matrix_b"),
                   style="Dark.TLabel").pack(anchor=tk.W, padx=2)
         self._var_matrix_b = tk.StringVar(value="5,6;7,8")
         ttk.Entry(mrow2, textvariable=self._var_matrix_b, width=36,
@@ -957,17 +958,17 @@ class SuperCalcApp:
         self._matrix_result = None
 
         # --- Complex Number Calculator ---
-        frm_complex = ttk.LabelFrame(scroll_frame, text="Complex Number Calculator",
+        frm_complex = ttk.LabelFrame(scroll_frame, text=t("sec_complex"),
                                      style="Dark.TLabelframe")
         frm_complex.pack(fill=tk.X, padx=8, pady=4)
 
         crow1 = ttk.Frame(frm_complex, style="Dark.TFrame")
         crow1.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(crow1, text="z1 (a+bi):", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(crow1, text=t("label_z1"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_complex_z1 = tk.StringVar(value="1+2i")
         ttk.Entry(crow1, textvariable=self._var_complex_z1, width=15,
                   font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
-        ttk.Label(crow1, text="z2 (c+di):", style="Dark.TLabel").pack(side=tk.LEFT, padx=(8, 0))
+        ttk.Label(crow1, text=t("label_z2"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(8, 0))
         self._var_complex_z2 = tk.StringVar(value="3+4i")
         ttk.Entry(crow1, textvariable=self._var_complex_z2, width=15,
                   font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
@@ -982,7 +983,7 @@ class SuperCalcApp:
 
         crow3 = ttk.Frame(frm_complex, style="Dark.TFrame")
         crow3.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(crow3, text="Single z:", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(crow3, text=t("label_single_z"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_complex_z = tk.StringVar(value="1+1i")
         ttk.Entry(crow3, textvariable=self._var_complex_z, width=15,
                   font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
@@ -1005,7 +1006,7 @@ class SuperCalcApp:
 
         crow6 = ttk.Frame(frm_complex, style="Dark.TFrame")
         crow6.pack(fill=tk.X, padx=6, pady=(0, 4))
-        ttk.Label(crow6, text="Result:", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(crow6, text=t("label_result"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_complex_result = tk.StringVar(value="")
         ttk.Entry(crow6, textvariable=self._var_complex_result, width=30,
                   font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
@@ -1095,13 +1096,13 @@ class SuperCalcApp:
 
         self._unit_categories = UNIT_CATEGORIES
 
-        frm_unit = ttk.LabelFrame(scroll_frame, text="Unit Converter",
+        frm_unit = ttk.LabelFrame(scroll_frame, text=t("sec_unit"),
                                   style="Dark.TLabelframe")
         frm_unit.pack(fill=tk.X, padx=8, pady=4)
 
         urow1 = ttk.Frame(frm_unit, style="Dark.TFrame")
         urow1.pack(fill=tk.X, padx=6, pady=(4, 2))
-        ttk.Label(urow1, text="Category:", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(urow1, text=t("label_category"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_unit_cat = tk.StringVar(value="Length")
         self._unit_cat_combo = ttk.Combobox(urow1, textvariable=self._var_unit_cat,
                                             values=list(UNIT_CATEGORIES.keys()),
@@ -1112,7 +1113,7 @@ class SuperCalcApp:
 
         urow2 = ttk.Frame(frm_unit, style="Dark.TFrame")
         urow2.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(urow2, text="From:", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(urow2, text=t("label_from_unit"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_unit_from = tk.StringVar()
         self._unit_from_combo = ttk.Combobox(urow2, textvariable=self._var_unit_from,
                                              state="readonly", font=("Consolas", 10), width=20)
@@ -1120,7 +1121,7 @@ class SuperCalcApp:
 
         urow3 = ttk.Frame(frm_unit, style="Dark.TFrame")
         urow3.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(urow3, text="To:", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(urow3, text=t("label_to_unit"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_unit_to = tk.StringVar()
         self._unit_to_combo = ttk.Combobox(urow3, textvariable=self._var_unit_to,
                                            state="readonly", font=("Consolas", 10), width=20)
@@ -1128,16 +1129,16 @@ class SuperCalcApp:
 
         urow4 = ttk.Frame(frm_unit, style="Dark.TFrame")
         urow4.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Label(urow4, text="Value:", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(urow4, text=t("label_value"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_unit_value = tk.StringVar(value="1")
         ttk.Entry(urow4, textvariable=self._var_unit_value, width=15,
                   font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
-        ttk.Button(urow4, text="Convert",
+        ttk.Button(urow4, text=t("btn_convert"),
                    command=self._on_unit_convert).pack(side=tk.LEFT, padx=8)
 
         urow5 = ttk.Frame(frm_unit, style="Dark.TFrame")
         urow5.pack(fill=tk.X, padx=6, pady=(0, 4))
-        ttk.Label(urow5, text="Result:", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(urow5, text=t("label_result"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_unit_result = tk.StringVar(value="")
         ttk.Entry(urow5, textvariable=self._var_unit_result, width=30,
                   font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
@@ -1146,7 +1147,7 @@ class SuperCalcApp:
         self._on_unit_category_change()
 
         # --- Status ---
-        self.status_var = tk.StringVar(value="Ready.")
+        self.status_var = tk.StringVar(value=t("status_ready"))
         status_bar = ttk.Label(scroll_frame, textvariable=self.status_var,
                                style="Dark.TLabel", relief=tk.SUNKEN,
                                anchor=tk.W, padding=(8, 2))
@@ -1169,7 +1170,7 @@ class SuperCalcApp:
         if self.window_2d is not None and self.window_2d.winfo_exists():
             return
         self.window_2d = tk.Toplevel(self.root)
-        self.window_2d.title("2D Function Plot")
+        self.window_2d.title(t("win_2d"))
         self.window_2d.geometry("900x700")
         self.window_2d.minsize(600, 400)
         self.window_2d.configure(bg="#1e1e2e")
@@ -1202,7 +1203,7 @@ class SuperCalcApp:
         if self.window_3d is not None and self.window_3d.winfo_exists():
             return
         self.window_3d = tk.Toplevel(self.root)
-        self.window_3d.title("3D Function Plot")
+        self.window_3d.title(t("win_3d"))
         self.window_3d.geometry("900x700")
         self.window_3d.minsize(600, 400)
         self.window_3d.configure(bg="#1e1e2e")
@@ -1234,7 +1235,7 @@ class SuperCalcApp:
         if self.window_fft is not None and self.window_fft.winfo_exists():
             return
         self.window_fft = tk.Toplevel(self.root)
-        self.window_fft.title("FFT Spectrum Analysis")
+        self.window_fft.title(t("win_fft"))
         self.window_fft.geometry("900x750")
         self.window_fft.minsize(600, 500)
         self.window_fft.configure(bg="#1e1e2e")
@@ -1245,12 +1246,12 @@ class SuperCalcApp:
         self.ax_fft_phase = self.fig_fft.add_subplot(212)
         self._setup_axes(self.ax_fft_amp, is_3d=False)
         self._setup_axes(self.ax_fft_phase, is_3d=False)
-        self.ax_fft_amp.set_title("Amplitude Spectrum", color="#cdd6f4", fontsize=11)
-        self.ax_fft_phase.set_title("Phase Spectrum", color="#cdd6f4", fontsize=11)
-        self.ax_fft_amp.set_xlabel("Frequency")
-        self.ax_fft_amp.set_ylabel("Amplitude")
-        self.ax_fft_phase.set_xlabel("Frequency")
-        self.ax_fft_phase.set_ylabel("Phase (rad)")
+        self.ax_fft_amp.set_title(t("fft_amp_title"), color="#cdd6f4", fontsize=11)
+        self.ax_fft_phase.set_title(t("fft_phase_title"), color="#cdd6f4", fontsize=11)
+        self.ax_fft_amp.set_xlabel(t("fft_freq"))
+        self.ax_fft_amp.set_ylabel(t("fft_amp"))
+        self.ax_fft_phase.set_xlabel(t("fft_freq"))
+        self.ax_fft_phase.set_ylabel(t("fft_phase_rad"))
 
         self.canvas_fft = FigureCanvasTkAgg(self.fig_fft, master=self.window_fft)
         self.canvas_fft.draw()
@@ -1276,7 +1277,7 @@ class SuperCalcApp:
     # ------------------------------------------------------------------
     def _open_input_panel(self):
         panel = tk.Toplevel(self.root)
-        panel.title("Quick Input Panel")
+        panel.title(t("win_input_panel"))
         panel.geometry("500x400")
         panel.configure(bg="#1e1e2e")
         panel.transient(self.root)
@@ -1287,28 +1288,28 @@ class SuperCalcApp:
         
         # Only include operators/functions/constants supported by the C core
         buttons_config = [
-            ("Basic", [
+            (t("cat_basic"), [
                 ("x²", "x^2"), ("x³", "x^3"), ("xⁿ", "x^n"),
                 ("√", "sqrt("), ("|x|", "abs("),
             ]),
-            ("Operators", [
+            (t("cat_operators"), [
                 ("÷", "/"), ("×", "*"), ("^", "^"), ("-", "-"), ("+", "+"),
                 ("mod", " mod "),
             ]),
-            ("Log/Exp", [
+            (t("cat_logexp"), [
                 ("ln", "ln("), ("log", "log("), ("eˣ", "exp("), ("e", "e"),
             ]),
-            ("Trig", [
+            (t("cat_trig"), [
                 ("sin", "sin("), ("cos", "cos("), ("tan", "tan("),
                 ("π", "pi"), ("°", "*pi/180"),
             ]),
-            ("Rounding", [
+            (t("cat_rounding"), [
                 ("floor", "floor("), ("ceil", "ceil("),
             ]),
-            ("Special", [
+            (t("cat_special"), [
                 ("!", "!"), ("(", "("), (")", ")"), (",", ","),
             ]),
-            ("Constants", [
+            (t("cat_constants"), [
                 ("π", "pi"), ("e", "e"),
             ]),
         ]
@@ -1325,7 +1326,7 @@ class SuperCalcApp:
                                 command=lambda t=text: self._insert_text(t))
                 btn.grid(row=0, column=i, padx=2, pady=2)
 
-        ttk.Button(main_frame, text="Close", command=panel.destroy).pack(pady=10)
+        ttk.Button(main_frame, text=t("btn_close"), command=panel.destroy).pack(pady=10)
 
     def _insert_text(self, text):
         """Insert text at cursor, replacing any selected text."""
@@ -1355,11 +1356,11 @@ class SuperCalcApp:
         self.param_widgets.clear()
 
         if not params:
-            ttk.Label(self.frm_params, text="No parameters detected",
+            ttk.Label(self.frm_params, text=t("label_no_params"),
                       style="Dark.TLabel").pack(padx=6, pady=8)
             return
 
-        ttk.Label(self.frm_params, text="Set parameter values:",
+        ttk.Label(self.frm_params, text=t("label_set_params"),
                   style="Dark.TLabel").pack(anchor=tk.W, padx=6, pady=(6, 0))
 
         for param in params:
@@ -1463,7 +1464,7 @@ class SuperCalcApp:
             x_expr = self._var_x_param.get().strip()
             y_expr = self._var_y_param.get().strip()
             if not x_expr or not y_expr:
-                messagebox.showwarning("Input Error", "Please enter both x(t) and y(t) expressions.")
+                messagebox.showwarning(t("err_input"), t("msg_enter_xt_yt"))
                 return
             color = DEFAULT_COLORS[self.color_index % len(DEFAULT_COLORS)]
             self.color_index += 1
@@ -1477,7 +1478,7 @@ class SuperCalcApp:
         elif self._var_polar.get():
             r_expr = self._var_r_param.get().strip()
             if not r_expr:
-                messagebox.showwarning("Input Error", "Please enter an r(theta) expression.")
+                messagebox.showwarning(t("err_input"), t("msg_enter_rtheta"))
                 return
             color = DEFAULT_COLORS[self.color_index % len(DEFAULT_COLORS)]
             self.color_index += 1
@@ -1491,7 +1492,7 @@ class SuperCalcApp:
         else:
             expr = self.entry_expr.get().strip()
             if not expr:
-                messagebox.showwarning("Input Error", "Please enter an expression.")
+                messagebox.showwarning(t("err_input"), t("msg_enter_expr"))
                 return
             self._add_curve(expr)
             self._plot_all()
@@ -1499,7 +1500,7 @@ class SuperCalcApp:
     def _on_remove_curve(self):
         sel = self.listbox_curves.curselection()
         if not sel:
-            messagebox.showinfo("Info", "Select a curve to remove.")
+            messagebox.showinfo(t("err_info"), t("msg_select_remove"))
             return
         idx = sel[0]
         del self.curves[idx]
@@ -1534,7 +1535,7 @@ class SuperCalcApp:
             self._setup_axes(self.ax_fft_amp, is_3d=False)
             self._setup_axes(self.ax_fft_phase, is_3d=False)
             self.canvas_fft.draw()
-        self.status_var.set("Cleared all curves.")
+        self.status_var.set(t("status_cleared"))
 
     def _on_preset(self, name: str):
         expr = PRESET_FUNCTIONS.get(name, "")
@@ -1553,7 +1554,7 @@ class SuperCalcApp:
             x_expr = self._var_x_param.get().strip()
             y_expr = self._var_y_param.get().strip()
             if not x_expr or not y_expr:
-                messagebox.showwarning("Input Error", "Please enter both x(t) and y(t) expressions.")
+                messagebox.showwarning(t("err_input"), t("msg_enter_xt_yt"))
                 return
             label = f"x(t)={x_expr}, y(t)={y_expr}"
             if not any(c.is_parametric and c.label == label for c in self.curves):
@@ -1568,7 +1569,7 @@ class SuperCalcApp:
         elif self._var_polar.get():
             r_expr = self._var_r_param.get().strip()
             if not r_expr:
-                messagebox.showwarning("Input Error", "Please enter an r(theta) expression.")
+                messagebox.showwarning(t("err_input"), t("msg_enter_rtheta"))
                 return
             label = f"r(theta)={r_expr}"
             if not any(c.is_polar and c.label == label for c in self.curves):
@@ -1598,16 +1599,16 @@ class SuperCalcApp:
             step = float(self._var_step.get())
             
             if x_min >= x_max:
-                messagebox.showerror("Error", "X min must be less than X max.")
+                messagebox.showerror(t("err_error"), t("msg_xmin_xmax"))
                 return
             if y_min >= y_max:
-                messagebox.showerror("Error", "Y min must be less than Y max.")
+                messagebox.showerror(t("err_error"), t("msg_ymin_ymax"))
                 return
             if z_min >= z_max:
-                messagebox.showerror("Error", "Z min must be less than Z max.")
+                messagebox.showerror(t("err_error"), t("msg_zmin_zmax"))
                 return
             if step <= 0:
-                messagebox.showerror("Error", "Step size must be positive.")
+                messagebox.showerror(t("err_error"), t("msg_step_positive"))
                 return
                 
             self.x_min = x_min
@@ -1621,7 +1622,7 @@ class SuperCalcApp:
             self.grid_on = self._var_grid.get()
             self._plot_all()
         except ValueError:
-            messagebox.showerror("Error", "Invalid range values.")
+            messagebox.showerror(t("err_error"), t("msg_invalid_range"))
 
     def _plot_all(self):
         try:
@@ -1635,10 +1636,10 @@ class SuperCalcApp:
             self.n_pts_3d = max(MIN_3D_POINTS, min(MAX_3D_POINTS, int(self._var_3d_res.get())))
             self.grid_on = self._var_grid.get()
             if self.x_min >= self.x_max or self.y_min >= self.y_max or self.z_min >= self.z_max or self.step_size <= 0:
-                self.status_var.set("Invalid range or step values; using previous settings.")
+                self.status_var.set(t("status_invalid_range"))
                 return
         except ValueError:
-            self.status_var.set("Invalid numeric values; using previous settings.")
+            self.status_var.set(t("status_invalid_numeric"))
             return
 
         if not self.curves:
@@ -1651,7 +1652,7 @@ class SuperCalcApp:
                 self.ax_3d.clear()
                 self._setup_axes(self.ax_3d, is_3d=True)
                 self.canvas_3d.draw()
-            self.status_var.set("No curves to plot.")
+            self.status_var.set(t("status_no_curves"))
             return
 
         has_2d = any((not c.is_3d and not c.is_polar and c.visible) or 
@@ -1684,7 +1685,7 @@ class SuperCalcApp:
         self._setup_axes(self.ax_2d, is_3d=False)
 
         if self.x_min >= self.x_max or self.step_size <= 0:
-            self.status_var.set("Invalid plot range or step size")
+            self.status_var.set(t("status_invalid_plot"))
             return
         n_pts = max(MIN_PLOT_POINTS, min(MAX_PLOT_POINTS, int((self.x_max - self.x_min) / self.step_size)))
         xs_np = np.linspace(self.x_min, self.x_max, n_pts)
@@ -1810,7 +1811,7 @@ class SuperCalcApp:
 
         self.canvas_2d.draw()
         self.status_var.set(
-            f"Plotted {len(visible_2d)} 2D curve(s) on [{self.x_min}, {self.x_max}]")
+            t("status_plotted_2d", len(visible_2d), self.x_min, self.x_max))
 
     def _plot_3d(self):
         if self.ax_3d is None:
@@ -1819,7 +1820,7 @@ class SuperCalcApp:
         self._setup_axes(self.ax_3d, is_3d=True)
 
         if self.x_min >= self.x_max or self.y_min >= self.y_max or self.n_pts_3d < 2:
-            self.status_var.set("Invalid 3D plot range or resolution")
+            self.status_var.set(t("status_invalid_3d"))
             return
         n_pts = self.n_pts_3d
         x_vals = np.linspace(self.x_min, self.x_max, n_pts)
@@ -1846,7 +1847,7 @@ class SuperCalcApp:
                                      antialiased=False)
 
         self.canvas_3d.draw()
-        self.status_var.set(f"Plotted 3D surface(s) [{n_pts}×{n_pts} grid]")
+        self.status_var.set(t("status_plotted_3d", n_pts, n_pts))
 
     def _setup_axes(self, ax, is_3d=False):
         try:
@@ -1885,12 +1886,12 @@ class SuperCalcApp:
         if event.button == 1:
             self.marked_points.append((x, y))
             self._plot_all()
-            self.status_var.set(f"Marked point: ({x:.4f}, {y:.4f})")
+            self.status_var.set(t("status_marked", f"{x:.4f}", f"{y:.4f}"))
 
         # Right click (button 3) – delete nearest marked point
         elif event.button == 3:
             if not self.marked_points:
-                self.status_var.set("No points to delete")
+                self.status_var.set(t("status_no_points_del"))
                 return
 
             nearest_idx = 0
@@ -1910,9 +1911,9 @@ class SuperCalcApp:
             if nearest_dist < threshold:
                 removed = self.marked_points.pop(nearest_idx)
                 self._plot_all()
-                self.status_var.set(f"Deleted point: ({removed[0]:.4f}, {removed[1]:.4f})")
+                self.status_var.set(t("status_deleted", f"{removed[0]:.4f}", f"{removed[1]:.4f}"))
             else:
-                self.status_var.set("Right-click: no point nearby to delete")
+                self.status_var.set(t("status_right_no_point"))
 
     def _on_mark_point(self):
         try:
@@ -1925,11 +1926,11 @@ class SuperCalcApp:
             if y is not None:
                 self.auto_mark_point = x
                 self._plot_all()
-                self.status_var.set(f"Marked point at x={x}: ({x:.4f}, {y:.4f})")
+                self.status_var.set(t("status_marked_at", x, f"{x:.4f}", f"{y:.4f}"))
             else:
-                messagebox.showerror("Error", "Could not evaluate function at this x")
+                messagebox.showerror(t("err_error"), t("msg_could_not_eval"))
         except ValueError:
-            messagebox.showerror("Error", "Invalid x value")
+            messagebox.showerror(t("err_error"), t("msg_invalid_x"))
 
     def _clear_marks(self):
         self.marked_points.clear()
@@ -1948,18 +1949,18 @@ class SuperCalcApp:
         try:
             x0 = float(self._var_tan_x.get())
         except ValueError:
-            messagebox.showerror("Error", "Invalid x value.")
+            messagebox.showerror(t("err_error"), t("msg_invalid_x"))
             return
         expr_sub = self._substitute_params(expr)
         y0 = CalcEngine.evaluate(expr_sub, x0)
         slope = CalcEngine.derivative(expr_sub, x0)
         if y0 is None or slope is None:
             err = CalcEngine.get_last_error()
-            messagebox.showerror("Error", f"Could not compute tangent.\n{err}")
+            messagebox.showerror(t("err_error"), t("msg_could_not_tangent", err))
             return
         self.tangent_data.append({"x0": x0, "y0": y0, "slope": slope, "expr": expr})
         self._plot_all()
-        self.status_var.set(f"Tangent at x={x0}: y = {slope:.4g}(x-{x0:.4g}) + {y0:.4g}")
+        self.status_var.set(t("status_tangent", x0, f"{slope:.4g}", f"{x0:.4g}", f"{y0:.4g}"))
 
     def _on_draw_normal(self):
         expr = self._get_active_expression()
@@ -1968,14 +1969,14 @@ class SuperCalcApp:
         try:
             x0 = float(self._var_tan_x.get())
         except ValueError:
-            messagebox.showerror("Error", "Invalid x value.")
+            messagebox.showerror(t("err_error"), t("msg_invalid_x"))
             return
         expr_sub = self._substitute_params(expr)
         y0 = CalcEngine.evaluate(expr_sub, x0)
         slope = CalcEngine.derivative(expr_sub, x0)
         if y0 is None or slope is None:
             err = CalcEngine.get_last_error()
-            messagebox.showerror("Error", f"Could not compute normal.\n{err}")
+            messagebox.showerror(t("err_error"), t("msg_could_not_normal", err))
             return
         self.normal_data.append({"x0": x0, "y0": y0, "slope": slope, "expr": expr})
         self._plot_all()
@@ -1989,7 +1990,7 @@ class SuperCalcApp:
         self.tangent_data.clear()
         self.normal_data.clear()
         self._plot_all()
-        self.status_var.set("Cleared tangent and normal lines.")
+        self.status_var.set(t("status_cleared_tan"))
 
     # ------------------------------------------------------------------
     #  Intersection Finder
@@ -1997,21 +1998,21 @@ class SuperCalcApp:
     def _show_intersection_dialog(self):
         curves_2d = [c for c in self.curves if not c.is_3d]
         if len(curves_2d) < 2:
-            messagebox.showinfo("Info", "Add at least two 2D curves to find intersections.")
+            messagebox.showinfo(t("err_info"), t("msg_add_two_curves"))
             return
         win = tk.Toplevel(self.root)
-        win.title("Find Curve Intersections")
+        win.title(t("win_intersect"))
         win.geometry("420x420")
         win.configure(bg="#1e1e2e")
         win.minsize(320, 300)
         win.transient(self.root)
         win.grab_set()
 
-        ttk.Label(win, text="Select two curves to find their intersections:",
+        ttk.Label(win, text=t("intersect_select"),
                   style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(10, 4))
 
         # Curve A
-        ttk.Label(win, text="Curve A:", style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(8, 0))
+        ttk.Label(win, text=t("intersect_curve_a"), style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(8, 0))
         var_a = tk.StringVar()
         combo_a = ttk.Combobox(win, textvariable=var_a,
                                values=[c.label for c in curves_2d],
@@ -2020,7 +2021,7 @@ class SuperCalcApp:
         combo_a.current(0)
 
         # Curve B
-        ttk.Label(win, text="Curve B:", style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(8, 0))
+        ttk.Label(win, text=t("intersect_curve_b"), style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(8, 0))
         var_b = tk.StringVar()
         combo_b = ttk.Combobox(win, textvariable=var_b,
                                values=[c.label for c in curves_2d],
@@ -2039,10 +2040,10 @@ class SuperCalcApp:
             label_a = var_a.get()
             label_b = var_b.get()
             if not label_a or not label_b:
-                messagebox.showwarning("Input", "Please select both curves.", parent=win)
+                messagebox.showwarning(t("err_input"), t("msg_select_both"), parent=win)
                 return
             if label_a == label_b:
-                messagebox.showwarning("Input", "Please select two different curves.", parent=win)
+                messagebox.showwarning(t("err_input"), t("msg_select_different"), parent=win)
                 return
             curve_a = None
             curve_b = None
@@ -2052,25 +2053,25 @@ class SuperCalcApp:
                 if c.label == label_b:
                     curve_b = c
             if curve_a is None or curve_b is None:
-                messagebox.showerror("Error", "Could not locate selected curves.", parent=win)
+                messagebox.showerror(t("err_error"), t("msg_could_not_locate"), parent=win)
                 return
             intersections = self._find_intersections(curve_a, curve_b)
             result_text.configure(state=tk.NORMAL)
             result_text.delete("1.0", tk.END)
             if intersections:
-                result_text.insert(tk.END, f"Found {len(intersections)} intersection(s):\n\n")
+                result_text.insert(tk.END, t("msg_found_intersect", len(intersections)) + "\n\n")
                 for i, (xi, yi) in enumerate(intersections, 1):
                     result_text.insert(tk.END, f"  {i}. x = {xi:.10g}, y = {yi:.10g}\n")
             else:
-                result_text.insert(tk.END, "No intersections found in the current X range.\n")
+                result_text.insert(tk.END, t("msg_no_intersect") + "\n")
             result_text.configure(state=tk.DISABLED)
             self._plot_all()
 
         btn_frame = ttk.Frame(win, style="Dark.TFrame")
         btn_frame.pack(fill=tk.X, padx=10, pady=(0, 10))
-        ttk.Button(btn_frame, text="Find Intersections", command=do_find).pack(side=tk.LEFT, padx=2)
-        ttk.Button(btn_frame, text="Clear Marks", command=lambda: (self.intersection_marks.clear(), self._plot_all())).pack(side=tk.LEFT, padx=2)
-        ttk.Button(btn_frame, text="Close", command=win.destroy).pack(side=tk.RIGHT, padx=2)
+        ttk.Button(btn_frame, text=t("btn_find_intersections2"), command=do_find).pack(side=tk.LEFT, padx=2)
+        ttk.Button(btn_frame, text=t("btn_clear_marks"), command=lambda: (self.intersection_marks.clear(), self._plot_all())).pack(side=tk.LEFT, padx=2)
+        ttk.Button(btn_frame, text=t("btn_close"), command=win.destroy).pack(side=tk.RIGHT, padx=2)
 
     def _find_intersections(self, curve_a, curve_b):
         """Find intersections of two 2D curves within the current X range."""
@@ -2141,13 +2142,13 @@ class SuperCalcApp:
             b = float(self._var_tbl_to.get())
             n = int(self._var_tbl_n.get())
         except ValueError:
-            messagebox.showerror("Error", "Invalid table parameters.")
+            messagebox.showerror(t("err_error"), t("msg_invalid_table"))
             return
         if a >= b:
-            messagebox.showerror("Error", "From must be less than To.")
+            messagebox.showerror(t("err_error"), t("msg_from_less_to"))
             return
         if n < 2 or n > 5000:
-            messagebox.showerror("Error", "Points must be between 2 and 5000.")
+            messagebox.showerror(t("err_error"), t("msg_points_range"))
             return
 
         expr_sub = self._substitute_params(expr)
@@ -2167,7 +2168,7 @@ class SuperCalcApp:
 
     def _show_table_window(self, expr, valid_count):
         win = tk.Toplevel(self.root)
-        win.title("Function Table")
+        win.title(t("win_table"))
         win.geometry("420x500")
         win.configure(bg="#1e1e2e")
         win.minsize(320, 300)
@@ -2195,11 +2196,11 @@ class SuperCalcApp:
             yv = f"{y:.10g}" if y is not None else "N/A"
             tree.insert("", tk.END, values=(xv, yv))
 
-        ttk.Button(win, text="Close", command=win.destroy).pack(pady=(0, 10))
+        ttk.Button(win, text=t("btn_close"), command=win.destroy).pack(pady=(0, 10))
 
     def _on_export_csv(self):
         if not self._table_data:
-            messagebox.showinfo("Info", "Generate a table first.")
+            messagebox.showinfo(t("err_info"), t("msg_generate_table"))
             return
         path = filedialog.asksaveasfilename(
             defaultextension=".csv",
@@ -2216,11 +2217,11 @@ class SuperCalcApp:
                     writer.writerow([x, y if y is not None else ""])
             self.status_var.set(f"Exported table to {os.path.basename(path)}")
         except Exception as e:
-            messagebox.showerror("Export Error", str(e))
+            messagebox.showerror(t("err_export"), str(e))
 
     def _on_copy_table(self):
         if not self._table_data:
-            messagebox.showinfo("Info", "Generate a table first.")
+            messagebox.showinfo(t("err_info"), t("msg_generate_table"))
             return
         lines = [f"x\tf(x) = {self._table_expr}"]
         for x, y in self._table_data:
@@ -2238,14 +2239,12 @@ class SuperCalcApp:
         if sel:
             curve = self.curves[sel[0]]
             if curve.is_parametric:
-                messagebox.showwarning("Parametric Curve",
-                    "Calculus operations are not available for parametric curves.\n"
-                    "Select a regular (non-parametric) curve.")
+                messagebox.showwarning(t("err_parametric"),
+                    t("msg_parametric_no_calc"))
                 return None
             if curve.is_polar:
-                messagebox.showwarning("Polar Curve",
-                    "Calculus operations are not available for polar curves.\n"
-                    "Select a regular (non-polar, non-parametric) curve.")
+                messagebox.showwarning(t("err_polar"),
+                    t("msg_polar_no_calc"))
                 return None
             return curve.expression
         for c in reversed(self.curves):
@@ -2254,7 +2253,7 @@ class SuperCalcApp:
         expr = self.entry_expr.get().strip()
         if expr:
             return expr
-        messagebox.showwarning("No Expression", "Add a function first.")
+        messagebox.showwarning(t("err_no_expr"), t("msg_add_func"))
         return None
 
     def _on_derivative(self):
@@ -2264,16 +2263,16 @@ class SuperCalcApp:
         try:
             x_val = float(self._var_diff_x.get())
         except ValueError:
-            messagebox.showerror("Error", "Invalid x value.")
+            messagebox.showerror(t("err_error"), t("msg_invalid_x"))
             return
         expr_sub = self._substitute_params(expr)
         result = CalcEngine.derivative(expr_sub, x_val)
         if result is None:
             err = CalcEngine.get_last_error()
-            messagebox.showerror("Error", f"Derivative failed.\n{err}")
+            messagebox.showerror(t("err_error"), t("msg_deriv_failed", err))
             return
         messagebox.showinfo(
-            "Derivative Result",
+            t("msg_deriv_result"),
             f"f(x) = {expr}\n"
             f"f'({x_val}) = {result:.10g}")
         self.status_var.set(f"f'({x_val}) = {result:.10g}")
@@ -2285,16 +2284,16 @@ class SuperCalcApp:
         try:
             x_val = float(self._var_diff_x.get())
         except ValueError:
-            messagebox.showerror("Error", "Invalid x value.")
+            messagebox.showerror(t("err_error"), t("msg_invalid_x"))
             return
         expr_sub = self._substitute_params(expr)
         result = CalcEngine.derivative2(expr_sub, x_val)
         if result is None:
             err = CalcEngine.get_last_error()
-            messagebox.showerror("Error", f"Second derivative failed.\n{err}")
+            messagebox.showerror(t("err_error"), t("msg_deriv2_failed", err))
             return
         messagebox.showinfo(
-            "Second Derivative Result",
+            t("msg_deriv2_result"),
             f"f(x) = {expr}\n"
             f"f''({x_val}) = {result:.10g}")
         self.status_var.set(f"f''({x_val}) = {result:.10g}")
@@ -2307,16 +2306,16 @@ class SuperCalcApp:
             a = float(self._var_int_a.get())
             b = float(self._var_int_b.get())
         except ValueError:
-            messagebox.showerror("Error", "Invalid integration bounds.")
+            messagebox.showerror(t("err_error"), t("msg_invalid_bounds"))
             return
         expr_sub = self._substitute_params(expr)
         result = CalcEngine.integrate_adaptive(expr_sub, a, b)
         if result is None:
             err = CalcEngine.get_last_error()
-            messagebox.showerror("Error", f"Integration failed.\n{err}")
+            messagebox.showerror(t("err_error"), t("msg_integ_failed", err))
             return
         messagebox.showinfo(
-            "Integration Result",
+            t("msg_integ_result"),
             f"f(x) = {expr}\n"
             f"Integrate [{a}, {b}] f(x) dx = {result:.10g}")
         self.status_var.set(f"Integrate [{a},{b}] = {result:.10g}")
@@ -2329,18 +2328,18 @@ class SuperCalcApp:
             a = float(self._var_int_a.get())
             b = float(self._var_int_b.get())
         except ValueError:
-            messagebox.showerror("Error", "Invalid arc length bounds.")
+            messagebox.showerror(t("err_error"), t("msg_invalid_arc_bounds"))
             return
         if a >= b:
-            messagebox.showerror("Error", "a must be less than b.")
+            messagebox.showerror(t("err_error"), t("msg_a_less_b"))
             return
         expr_sub = self._substitute_params(expr)
         result = CalcEngine.arc_length(expr_sub, a, b)
         if result is None:
-            messagebox.showerror("Error", "Could not compute arc length.")
+            messagebox.showerror(t("err_error"), t("msg_could_not_arc"))
             return
         messagebox.showinfo(
-            "Arc Length Result",
+            t("msg_arc_result"),
             f"f(x) = {expr}\n"
             f"Arc length from {a} to {b} = {result:.10g}")
         self.status_var.set(f"Arc length [{a},{b}] = {result:.10g}")
@@ -2349,7 +2348,7 @@ class SuperCalcApp:
         expr_f = self._var_area_f.get().strip()
         expr_g = self._var_area_g.get().strip()
         if not expr_f or not expr_g:
-            messagebox.showwarning("Input Error", "Please enter both f(x) and g(x) expressions.")
+            messagebox.showwarning(t("err_input"), t("msg_enter_fg"))
             return
         try:
             a_str = self._resolve_t_range(self._var_area_a.get())
@@ -2357,20 +2356,20 @@ class SuperCalcApp:
             a = float(a_str)
             b = float(b_str)
         except ValueError:
-            messagebox.showerror("Error", "Invalid interval bounds.")
+            messagebox.showerror(t("err_error"), t("msg_invalid_interval"))
             return
         if a >= b:
-            messagebox.showerror("Error", "a must be less than b.")
+            messagebox.showerror(t("err_error"), t("msg_a_less_b"))
             return
         f_sub = self._substitute_params(expr_f)
         g_sub = self._substitute_params(expr_g)
         result = CalcEngine.area_between_curves(f_sub, g_sub, a, b)
         if result is None:
             err = CalcEngine.get_last_error()
-            messagebox.showerror("Error", f"Could not compute area between curves.\n{err}")
+            messagebox.showerror(t("err_error"), t("msg_could_not_area", err))
             return
         messagebox.showinfo(
-            "Area Between Curves",
+            t("msg_area_result"),
             f"f(x) = {expr_f}\n"
             f"g(x) = {expr_g}\n"
             f"Area from {a} to {b} = {result:.10g}")
@@ -2383,7 +2382,7 @@ class SuperCalcApp:
         try:
             a = float(self._var_limit_a.get())
         except ValueError:
-            messagebox.showerror("Error", "Invalid limit point.")
+            messagebox.showerror(t("err_error"), t("msg_invalid_limit"))
             return
         expr_sub = self._substitute_params(expr)
 
@@ -2392,12 +2391,12 @@ class SuperCalcApp:
             right = CalcEngine.limit_right(expr_sub, a)
             if left is None and right is None:
                 err = CalcEngine.get_last_error()
-                messagebox.showerror("Limit Error", f"Could not compute limit.\n{err}")
+                messagebox.showerror(t("err_limit"), t("msg_could_not_limit", err))
                 return
             if left is not None and right is not None and abs(left - right) < 1e-8:
                 val = (left + right) / 2.0
                 messagebox.showinfo(
-                    "Limit Result",
+                    t("msg_limit_result"),
                     f"f(x) = {expr}\n"
                     f"lim(x→{a}) f(x) = {val:.10g}\n"
                     f"Left:  {left:.10g}\n"
@@ -2414,16 +2413,16 @@ class SuperCalcApp:
                 else:
                     msg += f"lim(x→{a}⁺) = DNE (undefined)\n"
                 msg += "\nTwo-sided limit does not exist."
-                messagebox.showwarning("Limit Does Not Exist", msg)
+                messagebox.showwarning(t("err_limit_dne"), msg)
                 self.status_var.set(f"lim(x→{a}) does not exist")
         elif side == "left":
             result = CalcEngine.limit_left(expr_sub, a)
             if result is None:
                 err = CalcEngine.get_last_error()
-                messagebox.showerror("Limit Error", f"Could not compute left limit.\n{err}")
+                messagebox.showerror(t("err_limit"), t("msg_could_not_left_limit", err))
                 return
             messagebox.showinfo(
-                "Left Limit Result",
+                t("msg_left_limit_result"),
                 f"f(x) = {expr}\n"
                 f"lim(x→{a}⁻) f(x) = {result:.10g}")
             self.status_var.set(f"lim(x→{a}⁻) = {result:.10g}")
@@ -2431,10 +2430,10 @@ class SuperCalcApp:
             result = CalcEngine.limit_right(expr_sub, a)
             if result is None:
                 err = CalcEngine.get_last_error()
-                messagebox.showerror("Limit Error", f"Could not compute right limit.\n{err}")
+                messagebox.showerror(t("err_limit"), t("msg_could_not_right_limit", err))
                 return
             messagebox.showinfo(
-                "Right Limit Result",
+                t("msg_right_limit_result"),
                 f"f(x) = {expr}\n"
                 f"lim(x→{a}⁺) f(x) = {result:.10g}")
             self.status_var.set(f"lim(x→{a}⁺) = {result:.10g}")
@@ -2448,19 +2447,19 @@ class SuperCalcApp:
             b = float(self._var_int_b.get())
             n = int(self._var_fft_n.get())
         except ValueError:
-            messagebox.showerror("Error", "Invalid FFT parameters.")
+            messagebox.showerror(t("err_error"), t("msg_invalid_fft"))
             return
         if a >= b:
-            messagebox.showerror("Error", "a must be less than b.")
+            messagebox.showerror(t("err_error"), t("msg_a_less_b"))
             return
         if n < 2 or n > 65536:
-            messagebox.showerror("Error", "Samples must be between 2 and 65536.")
+            messagebox.showerror(t("err_error"), t("msg_samples_range"))
             return
 
         expr_sub = self._substitute_params(expr)
         result = CalcEngine.fft_spectrum(expr_sub, a, b, n)
         if result is None:
-            messagebox.showerror("Error", "Could not compute FFT spectrum.")
+            messagebox.showerror(t("err_error"), t("msg_could_not_fft"))
             return
         self._fft_data = result
         self._ensure_fft_window()
@@ -2507,7 +2506,7 @@ class SuperCalcApp:
 
     def _on_export_fft_csv(self):
         if not self._fft_data or not self._fft_data.get('freqs'):
-            messagebox.showinfo("Info", "Compute FFT first.")
+            messagebox.showinfo(t("err_info"), t("msg_compute_fft"))
             return
         path = filedialog.asksaveasfilename(
             defaultextension=".csv",
@@ -2526,7 +2525,7 @@ class SuperCalcApp:
                     writer.writerow([fr, am, ph])
             self.status_var.set(f"Exported FFT to {os.path.basename(path)}")
         except Exception as e:
-            messagebox.showerror("Export Error", str(e))
+            messagebox.showerror(t("err_export"), str(e))
 
     # ------------------------------------------------------------------
     #  Taylor Series Expansion
@@ -2539,17 +2538,17 @@ class SuperCalcApp:
             a = float(self._var_taylor_a.get())
             order = int(self._var_taylor_order.get())
         except ValueError:
-            messagebox.showerror("Error", "Invalid Taylor parameters.")
+            messagebox.showerror(t("err_error"), t("msg_invalid_taylor"))
             return
         if order < 1 or order > 20:
-            messagebox.showerror("Error", "Order must be between 1 and 20.")
+            messagebox.showerror(t("err_error"), t("msg_order_range"))
             return
 
         expr_sub = self._substitute_params(expr)
         coeffs = CalcEngine.taylor_coefficients(expr_sub, a, order)
         if coeffs is None:
             err = CalcEngine.get_last_error()
-            messagebox.showerror("Taylor Error", f"Could not compute Taylor expansion.\n{err}")
+            messagebox.showerror(t("err_taylor"), t("msg_could_not_taylor", err))
             return
 
         terms = []
@@ -2579,7 +2578,7 @@ class SuperCalcApp:
             f"T(x) = {poly_str}\n\n"
             f"Coefficients (c_k = f^(k)(a)/k!):\n{coeff_str}"
         )
-        messagebox.showinfo("Taylor Series", result_msg)
+        messagebox.showinfo(t("msg_taylor_series"), result_msg)
         self.status_var.set(f"Taylor series at a={a}, order={order}")
 
     def _on_taylor_plot(self):
@@ -2590,17 +2589,17 @@ class SuperCalcApp:
             a = float(self._var_taylor_a.get())
             order = int(self._var_taylor_order.get())
         except ValueError:
-            messagebox.showerror("Error", "Invalid Taylor parameters.")
+            messagebox.showerror(t("err_error"), t("msg_invalid_taylor"))
             return
         if order < 1 or order > 20:
-            messagebox.showerror("Error", "Order must be between 1 and 20.")
+            messagebox.showerror(t("err_error"), t("msg_order_range"))
             return
 
         expr_sub = self._substitute_params(expr)
         coeffs = CalcEngine.taylor_coefficients(expr_sub, a, order)
         if coeffs is None:
             err = CalcEngine.get_last_error()
-            messagebox.showerror("Taylor Error", f"Could not compute Taylor expansion.\n{err}")
+            messagebox.showerror(t("err_taylor"), t("msg_could_not_taylor", err))
             return
 
         n_pts = max(MIN_PLOT_POINTS, min(MAX_PLOT_POINTS, int((self.x_max - self.x_min) / self.step_size)))
@@ -2647,7 +2646,7 @@ class SuperCalcApp:
     def _on_ode_solve(self):
         expr = self._var_ode_expr.get().strip()
         if not expr:
-            messagebox.showwarning("Input Error", "Please enter an ODE expression dy/dx = f(x,y).")
+            messagebox.showwarning(t("err_input"), t("msg_enter_ode"))
             return
         try:
             x0 = float(self._var_ode_x0.get())
@@ -2655,19 +2654,19 @@ class SuperCalcApp:
             x_end = float(self._var_ode_xend.get())
             n_steps = int(self._var_ode_steps.get())
         except ValueError:
-            messagebox.showerror("Error", "Invalid ODE parameters.")
+            messagebox.showerror(t("err_error"), t("msg_invalid_ode"))
             return
         if n_steps < 1 or n_steps > 100000:
-            messagebox.showerror("Error", "Steps must be between 1 and 100000.")
+            messagebox.showerror(t("err_error"), t("msg_steps_range"))
             return
         if x0 == x_end:
-            messagebox.showerror("Error", "x0 must not equal x_end.")
+            messagebox.showerror(t("err_error"), t("msg_x0_neq_xend"))
             return
 
         result = CalcEngine.ode_solve_rk4(expr, x0, y0, x_end, n_steps)
         if result is None:
             err = CalcEngine.get_last_error()
-            messagebox.showerror("ODE Error", f"Could not solve ODE.\n{err}")
+            messagebox.showerror(t("err_ode"), t("msg_could_not_ode", err))
             return
         self._ode_data = result
 
@@ -2686,12 +2685,12 @@ class SuperCalcApp:
             lines.append(f"  ... ({len(result['xs'])} total points)")
 
         msg = "\n".join(lines)
-        messagebox.showinfo("ODE Solution", msg)
+        messagebox.showinfo(t("msg_ode_solution"), msg)
         self.status_var.set(f"ODE solved: {len(result['xs'])} points")
 
     def _on_ode_plot(self):
         if self._ode_data is None:
-            messagebox.showinfo("Info", "Solve an ODE first.")
+            messagebox.showinfo(t("err_info"), t("msg_solve_ode_first"))
             return
         self._ensure_2d_window()
         self.ax_2d.clear()
@@ -2736,22 +2735,22 @@ class SuperCalcApp:
             a = float(self._var_solve_a.get())
             b = float(self._var_solve_b.get())
         except ValueError:
-            messagebox.showerror("Error", "Invalid solver parameters.")
+            messagebox.showerror(t("err_error"), t("msg_invalid_solver"))
             return
         if a >= b:
-            messagebox.showerror("Error", "Left bound must be less than right bound.")
+            messagebox.showerror(t("err_error"), t("msg_left_less_right"))
             return
         expr_sub = self._substitute_params(expr)
         result = CalcEngine.solve(expr_sub, guess=guess, xmin=a, xmax=b)
         if result is None:
             err = CalcEngine.get_last_error()
-            messagebox.showerror("Solver Error",
-                                 f"Could not find root.\n{err}")
+            messagebox.showerror(t("err_solver"),
+                                 t("msg_could_not_root", err))
             return
         verify = CalcEngine.evaluate(expr_sub, result)
         verify_str = f"{verify:.2e}" if verify is not None else "N/A"
         messagebox.showinfo(
-            "Root Found",
+            t("msg_root_found"),
             f"f(x) = {expr} = 0\n"
             f"Root: x = {result:.12g}\n"
             f"Verification: f({result:.6g}) = {verify_str}")
@@ -2765,20 +2764,20 @@ class SuperCalcApp:
             a = float(self._var_solve_a.get())
             b = float(self._var_solve_b.get())
         except ValueError:
-            messagebox.showerror("Error", "Invalid bounds.")
+            messagebox.showerror(t("err_error"), t("msg_invalid_bounds_val"))
             return
         if a >= b:
-            messagebox.showerror("Error", "Left bound must be less than right bound.")
+            messagebox.showerror(t("err_error"), t("msg_left_less_right"))
             return
         expr_sub = self._substitute_params(expr)
         result = CalcEngine.solve_bisection(expr_sub, a, b)
         if result is None:
             err = CalcEngine.get_last_error()
-            messagebox.showerror("Bisection Error",
-                                 f"Could not find root.\n{err}")
+            messagebox.showerror(t("err_bisection"),
+                                 t("msg_could_not_root", err))
             return
         messagebox.showinfo(
-            "Root Found (Bisection)",
+            t("msg_root_found_bisection"),
             f"f(x) = {expr} = 0\n"
             f"Root: x = {result:.12g}")
         self.status_var.set(f"Root: x = {result:.12g}")
@@ -2787,24 +2786,24 @@ class SuperCalcApp:
         f_expr = self._var_sys_f.get().strip()
         g_expr = self._var_sys_g.get().strip()
         if not f_expr or not g_expr:
-            messagebox.showerror("Error", "Enter both f(x,y) and g(x,y) expressions.")
+            messagebox.showerror(t("err_error"), t("msg_enter_fg_xy"))
             return
         try:
             x0 = float(self._var_sys_x0.get())
             y0 = float(self._var_sys_y0.get())
         except ValueError:
-            messagebox.showerror("Error", "Invalid initial guess.")
+            messagebox.showerror(t("err_error"), t("msg_invalid_guess"))
             return
         f_sub = self._substitute_params(f_expr)
         g_sub = self._substitute_params(g_expr)
         if not f_sub or not g_sub:
-            messagebox.showerror("Error", "Empty expression after parameter substitution.")
+            messagebox.showerror(t("err_error"), t("msg_empty_after_sub"))
             return
         result = CalcEngine.solve_system_2d(f_sub, g_sub, x0, y0)
         if result is None:
             err = CalcEngine.get_last_error()
-            messagebox.showerror("System Solver Error",
-                                 f"Could not solve system.\n{err}")
+            messagebox.showerror(t("err_system"),
+                                 t("msg_could_not_system", err))
             return
         x_sol = result['x']
         y_sol = result['y']
@@ -2813,7 +2812,7 @@ class SuperCalcApp:
         f_str = f"{f_val:.2e}" if f_val is not None else "N/A"
         g_str = f"{g_val:.2e}" if g_val is not None else "N/A"
         messagebox.showinfo(
-            "System Solved",
+            t("msg_system_solved"),
             f"f(x,y) = {f_expr}\ng(x,y) = {g_expr}\n\n"
             f"Solution:\n  x = {x_sol:.12g}\n  y = {y_sol:.12g}\n\n"
             f"Residuals:\n  f(x,y) = {f_str}\n  g(x,y) = {g_str}")
@@ -2827,10 +2826,10 @@ class SuperCalcApp:
             a = float(self._var_ext_a.get())
             b = float(self._var_ext_b.get())
         except ValueError:
-            messagebox.showerror("Error", "Invalid interval bounds.")
+            messagebox.showerror(t("err_error"), t("msg_invalid_interval"))
             return
         if a >= b:
-            messagebox.showerror("Error", "Left bound must be less than right bound.")
+            messagebox.showerror(t("err_error"), t("msg_left_less_right"))
             return
         expr_sub = self._substitute_params(expr)
         if minimum:
@@ -2843,13 +2842,13 @@ class SuperCalcApp:
             short = "max"
         if result is None:
             err = CalcEngine.get_last_error()
-            messagebox.showerror("Extremum Error",
-                                 f"Could not find {label.lower()}.\n{err}")
+            messagebox.showerror(t("err_extremum"),
+                                 t("msg_could_not_extremum", label.lower(), err))
             return
         f_val = CalcEngine.evaluate(expr_sub, result)
         verify_str = f"{f_val:.10g}" if f_val is not None else "N/A"
         messagebox.showinfo(
-            f"{label} Found",
+            t("msg_extremum_found", label),
             f"f(x) = {expr}\n"
             f"{label}: x = {result:.12g}\n"
             f"f({result:.6g}) = {verify_str}")
@@ -2863,10 +2862,10 @@ class SuperCalcApp:
             a = float(self._var_ext_a.get())
             b = float(self._var_ext_b.get())
         except ValueError:
-            messagebox.showerror("Error", "Invalid interval bounds.")
+            messagebox.showerror(t("err_error"), t("msg_invalid_interval"))
             return
         if a >= b:
-            messagebox.showerror("Error", "a must be less than b.")
+            messagebox.showerror(t("err_error"), t("msg_a_less_b"))
             return
 
         expr_sub = self._substitute_params(expr)
@@ -2915,10 +2914,10 @@ class SuperCalcApp:
             if len(unique_roots) > 20:
                 lines.append(f"  ... and {len(unique_roots) - 20} more")
             msg = "\n".join(lines)
-            messagebox.showinfo("Root Scan Results", msg)
+            messagebox.showinfo(t("err_root_scan"), msg)
             self.status_var.set(f"Found {len(unique_roots)} root(s)")
         else:
-            messagebox.showinfo("Root Scan Results", "No roots found in the interval.")
+            messagebox.showinfo(t("err_root_scan"), t("msg_no_roots"))
             self.status_var.set("No roots found")
 
     # ------------------------------------------------------------------
@@ -2932,17 +2931,17 @@ class SuperCalcApp:
         import re as _re
         tokens = _re.split(r'[,;\s]+', raw)
         values = []
-        for t in tokens:
-            t = t.strip()
-            if not t:
+        for tok in tokens:
+            tok = tok.strip()
+            if not tok:
                 continue
             try:
-                values.append(float(t))
+                values.append(float(tok))
             except ValueError:
-                messagebox.showerror("Input Error", f"Invalid number: '{t}'")
+                messagebox.showerror(t("err_input"), t("msg_invalid_number", tok))
                 return None
         if not values:
-            messagebox.showerror("Input Error", "No valid numbers entered.")
+            messagebox.showerror(t("err_input"), t("msg_no_valid_nums"))
             return None
         return values
 
@@ -3000,7 +2999,7 @@ class SuperCalcApp:
         ]
 
         msg = "\n".join(line for line in lines if line)
-        messagebox.showinfo("Statistics Results", msg)
+        messagebox.showinfo(t("msg_stats_results"), msg)
         self.status_var.set(f"Stats: n={n}, mean={data_mean:.6g}, std={data_std_pop:.6g}")
 
     def _on_stats_sort(self):
@@ -3059,7 +3058,7 @@ class SuperCalcApp:
                     writer.writerow([i + 1, v])
             self.status_var.set(f"Exported {len(values)} values to {os.path.basename(path)}")
         except Exception as e:
-            messagebox.showerror("Export Error", f"Could not export: {e}")
+            messagebox.showerror(t("err_export"), t("msg_could_not_export", e))
 
     # ------------------------------------------------------------------
     #  Curve Fitting / Regression
@@ -3073,13 +3072,13 @@ class SuperCalcApp:
         else:
             ys = self._parse_stats_data()
         if ys is None or len(ys) < 2:
-            messagebox.showerror("Error", "Need at least 2 Y data points.")
+            messagebox.showerror(t("err_error"), t("msg_need_2_ydata"))
             return None, None
         if x_text:
             xs = self._parse_data_list(x_text)
             if xs is None or len(xs) != len(ys):
-                messagebox.showerror("Error",
-                    f"X data length ({len(xs) if xs else 0}) must match Y data length ({len(ys)}).")
+                messagebox.showerror(t("err_error"),
+                    t("msg_xdata_length", len(xs) if xs else 0, len(ys)))
                 return None, None
         else:
             xs = list(range(1, len(ys) + 1))
@@ -3106,7 +3105,7 @@ class SuperCalcApp:
     def _show_reg_result(self, title, result):
         """Show regression result and optionally store for plotting."""
         if result is None:
-            messagebox.showerror("Error", "Regression failed. Check your data.")
+            messagebox.showerror(t("err_error"), t("msg_regression_failed"))
             return
         self._last_reg_result = result
         lines = [
@@ -3139,10 +3138,10 @@ class SuperCalcApp:
         try:
             degree = int(self._var_reg_degree.get())
             if degree < 1 or degree > 10:
-                messagebox.showerror("Error", "Degree must be between 1 and 10.")
+                messagebox.showerror(t("err_error"), t("msg_degree_range"))
                 return
         except ValueError:
-            messagebox.showerror("Error", "Invalid degree value.")
+            messagebox.showerror(t("err_error"), t("msg_invalid_degree"))
             return
         result = CalcEngine.polynomial_regression(xs, ys, degree=degree)
         self._show_reg_result(f"Polynomial Regression (degree {degree})", result)
@@ -3171,7 +3170,7 @@ class SuperCalcApp:
     def _on_reg_plot(self):
         """Plot data points and fitted curve."""
         if not hasattr(self, '_last_reg_result') or self._last_reg_result is None:
-            messagebox.showinfo("Info", "Run a regression first to generate fit data.")
+            messagebox.showinfo(t("err_info"), t("msg_run_regression"))
             return
         result = self._last_reg_result
         xs_fit = result.get('xs_fit', [])
@@ -3234,7 +3233,7 @@ class SuperCalcApp:
                 try:
                     vals.append(float(c))
                 except ValueError:
-                    messagebox.showerror("Matrix Error", f"Invalid number: '{c}'")
+                    messagebox.showerror(t("err_matrix"), t("msg_invalid_num", c))
                     return None
             if vals:
                 matrix.append(vals)
@@ -3243,7 +3242,7 @@ class SuperCalcApp:
         ncols = len(matrix[0])
         for row in matrix:
             if len(row) != ncols:
-                messagebox.showerror("Matrix Error", "All rows must have the same number of columns.")
+                messagebox.showerror(t("err_matrix"), t("msg_matrix_cols"))
                 return None
         return matrix
 
@@ -3269,7 +3268,7 @@ class SuperCalcApp:
         text.pack(fill=tk.BOTH, expand=True, padx=10, pady=4)
         text.insert("1.0", result_str)
         text.configure(state=tk.DISABLED)
-        ttk.Button(win, text="Close", command=win.destroy).pack(pady=(0, 10))
+        ttk.Button(win, text=t("btn_close"), command=win.destroy).pack(pady=(0, 10))
 
     def _on_matrix_add(self):
         a = self._parse_matrix(self._var_matrix_a.get())
@@ -3281,7 +3280,7 @@ class SuperCalcApp:
             self._show_matrix_result("A + B", self._format_matrix(result))
             self.status_var.set("Matrix A + B computed")
         except Exception as e:
-            messagebox.showerror("Matrix Error", f"Addition failed: {e}")
+            messagebox.showerror(t("err_matrix"), t("msg_add_failed", e))
 
     def _on_matrix_sub(self):
         a = self._parse_matrix(self._var_matrix_a.get())
@@ -3293,7 +3292,7 @@ class SuperCalcApp:
             self._show_matrix_result("A - B", self._format_matrix(result))
             self.status_var.set("Matrix A - B computed")
         except Exception as e:
-            messagebox.showerror("Matrix Error", f"Subtraction failed: {e}")
+            messagebox.showerror(t("err_matrix"), t("msg_sub_failed", e))
 
     def _on_matrix_mul(self):
         a = self._parse_matrix(self._var_matrix_a.get())
@@ -3305,7 +3304,7 @@ class SuperCalcApp:
             self._show_matrix_result("A * B", self._format_matrix(result))
             self.status_var.set("Matrix A * B computed")
         except Exception as e:
-            messagebox.showerror("Matrix Error", f"Multiplication failed: {e}")
+            messagebox.showerror(t("err_matrix"), t("msg_mul_failed", e))
 
     def _on_matrix_det(self):
         a = self._parse_matrix(self._var_matrix_a.get())
@@ -3314,13 +3313,13 @@ class SuperCalcApp:
         try:
             arr = np.array(a)
             if arr.shape[0] != arr.shape[1]:
-                messagebox.showerror("Matrix Error", "Determinant requires a square matrix.")
+                messagebox.showerror(t("err_matrix"), t("msg_det_square"))
                 return
             det = np.linalg.det(arr)
             self._show_matrix_result("det(A)", f"det(A) = {det:.10g}")
             self.status_var.set(f"det(A) = {det:.10g}")
         except Exception as e:
-            messagebox.showerror("Matrix Error", f"Determinant failed: {e}")
+            messagebox.showerror(t("err_matrix"), t("msg_det_failed", e))
 
     def _on_matrix_inv(self):
         a = self._parse_matrix(self._var_matrix_a.get())
@@ -3329,15 +3328,15 @@ class SuperCalcApp:
         try:
             arr = np.array(a)
             if arr.shape[0] != arr.shape[1]:
-                messagebox.showerror("Matrix Error", "Inverse requires a square matrix.")
+                messagebox.showerror(t("err_matrix"), t("msg_inv_square"))
                 return
             result = np.linalg.inv(arr)
             self._show_matrix_result("inv(A)", self._format_matrix(result))
             self.status_var.set("Matrix inverse computed")
         except np.linalg.LinAlgError:
-            messagebox.showerror("Matrix Error", "Matrix is singular, inverse does not exist.")
+            messagebox.showerror(t("err_matrix"), t("msg_singular"))
         except Exception as e:
-            messagebox.showerror("Matrix Error", f"Inverse failed: {e}")
+            messagebox.showerror(t("err_matrix"), t("msg_inv_failed", e))
 
     def _on_matrix_transpose(self):
         a = self._parse_matrix(self._var_matrix_a.get())
@@ -3348,7 +3347,7 @@ class SuperCalcApp:
             self._show_matrix_result("A^T (Transpose)", self._format_matrix(result))
             self.status_var.set("Matrix transpose computed")
         except Exception as e:
-            messagebox.showerror("Matrix Error", f"Transpose failed: {e}")
+            messagebox.showerror(t("err_matrix"), t("msg_transpose_failed", e))
 
     def _on_matrix_rank(self):
         a = self._parse_matrix(self._var_matrix_a.get())
@@ -3360,7 +3359,7 @@ class SuperCalcApp:
             self._show_matrix_result("rank(A)", f"rank(A) = {rank}")
             self.status_var.set(f"rank(A) = {rank}")
         except Exception as e:
-            messagebox.showerror("Matrix Error", f"Rank computation failed: {e}")
+            messagebox.showerror(t("err_matrix"), t("msg_rank_failed", e))
 
     def _on_matrix_rref(self):
         a = self._parse_matrix(self._var_matrix_a.get())
@@ -3392,7 +3391,7 @@ class SuperCalcApp:
             self._show_matrix_result("RREF(A)", info)
             self.status_var.set(f"RREF computed, rank = {len(pivot_cols)}")
         except Exception as e:
-            messagebox.showerror("Matrix Error", f"RREF failed: {e}")
+            messagebox.showerror(t("err_matrix"), t("msg_rref_failed", e))
 
     def _on_matrix_eigen(self):
         a = self._parse_matrix(self._var_matrix_a.get())
@@ -3401,7 +3400,7 @@ class SuperCalcApp:
         try:
             arr = np.array(a)
             if arr.shape[0] != arr.shape[1]:
-                messagebox.showerror("Matrix Error", "Eigenvalues require a square matrix.")
+                messagebox.showerror(t("err_matrix"), t("msg_eigen_square"))
                 return
             eigenvalues, eigenvectors = np.linalg.eig(arr)
             lines = ["Eigenvalues:"]
@@ -3413,9 +3412,9 @@ class SuperCalcApp:
             self._show_matrix_result("Eigenvalues & Eigenvectors", "\n".join(lines))
             self.status_var.set(f"Eigenvalues: {[f'{v:.6g}' for v in eigenvalues]}")
         except np.linalg.LinAlgError:
-            messagebox.showerror("Matrix Error", "Eigenvalue computation failed.")
+            messagebox.showerror(t("err_matrix"), t("msg_eigen_failed"))
         except Exception as e:
-            messagebox.showerror("Matrix Error", f"Eigenvalue failed: {e}")
+            messagebox.showerror(t("err_matrix"), t("msg_eigen_error", e))
 
     def _on_matrix_clear(self):
         self._var_matrix_a.set("")
@@ -3466,7 +3465,7 @@ class SuperCalcApp:
             try:
                 return complex(s + 'j')
             except ValueError:
-                messagebox.showerror("Complex Error", f"Invalid complex number: {s}{'' if s else 'i'}")
+                messagebox.showerror(t("err_complex"), t("msg_invalid_complex", s, '' if s else 'i'))
                 return None
         else:
             # No 'i' suffix — pure real number
@@ -3476,7 +3475,7 @@ class SuperCalcApp:
                 try:
                     return complex(s)
                 except ValueError:
-                    messagebox.showerror("Complex Error", f"Invalid complex number: {s}")
+                    messagebox.showerror(t("err_complex"), t("msg_invalid_complex2", s))
                     return None
 
     def _format_complex(self, z: complex) -> str:
@@ -3533,7 +3532,7 @@ class SuperCalcApp:
         z2 = self._parse_complex(self._var_complex_z2.get())
         if z1 is not None and z2 is not None:
             if abs(z2) == 0:
-                messagebox.showerror("Complex Error", "Division by zero")
+                messagebox.showerror(t("err_complex"), t("msg_cplx_div_zero"))
                 return
             result = CalcEngine.complex_div(z1, z2)
             self._show_complex_result(self._format_complex(result))
@@ -3573,7 +3572,7 @@ class SuperCalcApp:
         z = self._parse_complex(self._var_complex_z.get())
         if z is not None:
             if abs(z) == 0:
-                messagebox.showerror("Complex Error", "ln(0) is undefined")
+                messagebox.showerror(t("err_complex"), t("msg_ln_zero"))
                 return
             result = CalcEngine.complex_ln(z)
             self._show_complex_result(self._format_complex(result))
@@ -3634,7 +3633,7 @@ class SuperCalcApp:
         try:
             value = float(value_str)
         except ValueError:
-            messagebox.showerror("Unit Converter", "Invalid value. Please enter a number.")
+            messagebox.showerror(t("err_unit"), t("msg_invalid_value"))
             return
 
         units = self._unit_categories[cat]

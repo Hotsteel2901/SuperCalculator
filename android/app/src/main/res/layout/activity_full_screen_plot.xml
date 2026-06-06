@@ -57,7 +57,7 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_margin="16dp"
-            android:text="Exit Full Screen"
+            android:text="@string/exit_full_screen"
             android:fontFamily="@font/jetbrains_mono"
             android:textSize="14sp"
             app:cornerRadius="14dp" />

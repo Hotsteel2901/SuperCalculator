@@ -185,10 +185,10 @@ public class PlotActivity extends AppCompatActivity {
         double[] xs = CalcEngine.evaluateArray(xExprSub, ts);
         double[] ys = CalcEngine.evaluateArray(yExprSub, ts);
         if (xs == null || ys == null) {
-            toast("Error: " + CalcEngine.getLastError());
+            toast(getString(R.string.toast_error_prefix, CalcEngine.getLastError()));
             return;
         }
-        
+
         ArrayList<Entry> entries = new ArrayList<>();
         double xMin = Double.POSITIVE_INFINITY, xMax = Double.NEGATIVE_INFINITY;
         double yMin = Double.POSITIVE_INFINITY, yMax = Double.NEGATIVE_INFINITY;
@@ -202,9 +202,9 @@ public class PlotActivity extends AppCompatActivity {
                 if (ys[i] > yMax) yMax = ys[i];
             }
         }
-        
+
         if (entries.isEmpty()) {
-            toast("No valid points to plot");
+            toast(getString(R.string.toast_no_valid_points));
             return;
         }
         
@@ -250,7 +250,7 @@ public class PlotActivity extends AppCompatActivity {
             lineChart.setData(lineData);
             lineChart.invalidate();
         }
-        toast("Parametric curve plotted");
+        toast(getString(R.string.toast_parametric_plotted));
     }
     
     private void plotPolarCurve(String rExpr, double thetaMin, double thetaMax) {
@@ -265,7 +265,7 @@ public class PlotActivity extends AppCompatActivity {
         String rExprSub = rExpr.replaceAll("\\btheta\\b", "x");
         double[] rs = CalcEngine.evaluateArray(rExprSub, thetas);
         if (rs == null) {
-            toast("Error: " + CalcEngine.getLastError());
+            toast(getString(R.string.toast_error_prefix, CalcEngine.getLastError()));
             return;
         }
         
@@ -286,10 +286,10 @@ public class PlotActivity extends AppCompatActivity {
         }
         
         if (entries.isEmpty()) {
-            toast("No valid points to plot");
+            toast(getString(R.string.toast_no_valid_points));
             return;
         }
-        
+
         // Set range with padding
         double xPad = (xMax - xMin) * 0.1;
         double yPad = (yMax - yMin) * 0.1;
@@ -297,7 +297,7 @@ public class PlotActivity extends AppCompatActivity {
         xMaxInput.setText(String.valueOf(xMax + xPad));
         yMinInput.setText(String.valueOf(yMin - yPad));
         yMaxInput.setText(String.valueOf(yMax + yPad));
-        
+
         allEntries.clear();
         allExpressions.clear();
         curveColors.clear();
@@ -331,7 +331,7 @@ public class PlotActivity extends AppCompatActivity {
             lineChart.setData(lineData);
             lineChart.invalidate();
         }
-        toast("Polar curve plotted");
+        toast(getString(R.string.toast_polar_plotted));
     }
     
     private void plotOdeSolution(double[] xs, double[] ys, String expr) {
@@ -350,7 +350,7 @@ public class PlotActivity extends AppCompatActivity {
         }
         
         if (entries.isEmpty()) {
-            toast("No valid ODE points to plot");
+            toast(getString(R.string.toast_no_ode_points));
             return;
         }
         
@@ -392,7 +392,7 @@ public class PlotActivity extends AppCompatActivity {
             lineChart.setData(lineData);
             lineChart.invalidate();
         }
-        toast("ODE solution plotted");
+        toast(getString(R.string.toast_ode_plotted));
     }
     
     private void plotTaylorSeries(String expr, double a, int order, double[] xs, double[] ysOrig, double[] ysTaylor) {
@@ -413,10 +413,10 @@ public class PlotActivity extends AppCompatActivity {
         }
         
         if (entriesOrig.isEmpty() && entriesTaylor.isEmpty()) {
-            toast("No valid points to plot");
+            toast(getString(R.string.toast_no_valid_points));
             return;
         }
-        
+
         allEntries.clear();
         allExpressions.clear();
         curveColors.clear();
@@ -428,7 +428,7 @@ public class PlotActivity extends AppCompatActivity {
         polarExprs.clear();
         polarThetaMin.clear();
         polarThetaMax.clear();
-        
+
         List<ILineDataSet> dataSets = new ArrayList<>();
         
         // Original function (blue)
@@ -491,7 +491,7 @@ public class PlotActivity extends AppCompatActivity {
             
             lineChart.invalidate();
         }
-        toast("Taylor series (order " + order + ") plotted at a=" + String.format("%.4g", a));
+        toast(getString(R.string.toast_taylor_plotted, order, String.format("%.4g", a)));
     }
     
     private void plotRegressionData(double[] xs, double[] ys) {
@@ -505,7 +505,7 @@ public class PlotActivity extends AppCompatActivity {
         }
         
         if (scatterEntries.isEmpty()) {
-            toast("No valid data points to plot");
+            toast(getString(R.string.toast_no_data_points));
             return;
         }
         
@@ -564,7 +564,7 @@ public class PlotActivity extends AppCompatActivity {
             yAxisLeft.setAxisMaximum(yMax + yPad);
         }
         lineChart.invalidate();
-        toast("Regression data plotted (" + xs.length + " points)");
+        toast(getString(R.string.toast_regression_plotted, xs.length));
     }
     
     private void setupGestureListener() {
@@ -604,7 +604,7 @@ public class PlotActivity extends AppCompatActivity {
                     if (nearestDist < threshold) {
                         markedPoints.remove(nearestIdx);
                         refreshMarkedPoints();
-                        toast("Deleted marked point");
+                        toast(getString(R.string.toast_deleted_mark));
                     }
                 }
             }
@@ -621,7 +621,7 @@ public class PlotActivity extends AppCompatActivity {
                 
                 markedPoints.add(new Entry(x, y));
                 refreshMarkedPoints();
-                toast(String.format("Marked point: (%.4g, %.4g)", x, y));
+                toast(getString(R.string.toast_marked_point, String.format("%.4g", x), String.format("%.4g", y)));
             }
             
             @Override
@@ -685,7 +685,7 @@ public class PlotActivity extends AppCompatActivity {
     private void onAddCurve() {
         String expr = exprInput.getText().toString().trim();
         if (expr.isEmpty()) {
-            toast("Enter an expression");
+            toast(getString(R.string.toast_enter_expr));
             return;
         }
         allExpressions.add(expr);
@@ -693,13 +693,13 @@ public class PlotActivity extends AppCompatActivity {
         curveTypes.add("regular");
         // Add empty entries list for the new curve (keep existing ODE/Taylor data)
         allEntries.add(new ArrayList<Entry>());
-        toast("Added curve: " + expr);
+        toast(getString(R.string.toast_added_curve, expr));
         exprInput.setText("");
     }
     
     private void onRemoveCurve() {
         if (allExpressions.isEmpty()) {
-            toast("No curves to remove");
+            toast(getString(R.string.toast_no_curves_remove));
             return;
         }
         int idx = allExpressions.size() - 1;
@@ -728,12 +728,12 @@ public class PlotActivity extends AppCompatActivity {
         if (idx < allEntries.size()) {
             allEntries.remove(idx);
         }
-        toast("Removed curve: " + (idx < allExpressions.size() ? allExpressions.get(idx) : "last"));
+        toast(getString(R.string.toast_removed_curve, idx < allExpressions.size() ? allExpressions.get(idx) : "last"));
     }
     
     private void onPlotAll() {
         if (allExpressions.isEmpty()) {
-            toast("Add curves first");
+            toast(getString(R.string.toast_add_curves_first));
             return;
         }
         
@@ -744,17 +744,17 @@ public class PlotActivity extends AppCompatActivity {
             yMin = Double.parseDouble(yMinInput.getText().toString().trim());
             yMax = Double.parseDouble(yMaxInput.getText().toString().trim());
         } catch (NumberFormatException e) {
-            toast("Invalid range values");
+            toast(getString(R.string.toast_invalid_range));
             return;
         }
         
         if (xMin >= xMax) {
-            toast("X min must be less than X max");
+            toast(getString(R.string.toast_xmin_xmax));
             return;
         }
         
         if (yMin >= yMax) {
-            toast("Y min must be less than Y max");
+            toast(getString(R.string.toast_ymin_ymax));
             return;
         }
         
@@ -807,7 +807,7 @@ public class PlotActivity extends AppCompatActivity {
                     allEntries.add(entries);
                 } else {
                     allEntries.add(new ArrayList<Entry>());
-                    toast("Error in parametric: " + CalcEngine.getLastError());
+                    toast(getString(R.string.toast_error_parametric, CalcEngine.getLastError()));
                 }
                 paramIdx++;
             } else if ("polar".equals(type) && polarIdx < polarExprs.size()) {
@@ -833,7 +833,7 @@ public class PlotActivity extends AppCompatActivity {
                     allEntries.add(entries);
                 } else {
                     allEntries.add(new ArrayList<Entry>());
-                    toast("Error in polar: " + CalcEngine.getLastError());
+                    toast(getString(R.string.toast_error_polar, CalcEngine.getLastError()));
                 }
                 polarIdx++;
             } else if ("ode".equals(type) || "taylor".equals(type)) {
@@ -855,7 +855,7 @@ public class PlotActivity extends AppCompatActivity {
                 
                 double[] ys = CalcEngine.evaluateArray(expr, xs);
                 if (ys == null) {
-                    toast("Error in " + expr + ": " + CalcEngine.getLastError());
+                    toast(getString(R.string.toast_error_expr, expr, CalcEngine.getLastError()));
                     allEntries.add(new ArrayList<Entry>());
                     continue;
                 }
@@ -874,7 +874,7 @@ public class PlotActivity extends AppCompatActivity {
         }
         
         if (allEntries.isEmpty()) {
-            toast("No valid points to plot");
+            toast(getString(R.string.toast_no_valid_points));
             return;
         }
         
@@ -903,7 +903,7 @@ public class PlotActivity extends AppCompatActivity {
         dataSets.add(markedPointDataSet);
         
         if (dataSets.isEmpty()) {
-            toast("No valid data to display");
+            toast(getString(R.string.toast_no_data_display));
             return;
         }
         
@@ -932,12 +932,12 @@ public class PlotActivity extends AppCompatActivity {
         desc.setEnabled(false);
         
         lineChart.invalidate();
-        toast("Plotted " + dataSets.size() + " curve(s)");
+        toast(getString(R.string.toast_plotted_curves, dataSets.size()));
     }
     
     private void openFullScreen() {
         if (allEntries.isEmpty()) {
-            toast("Plot some curves first");
+            toast(getString(R.string.toast_plot_first));
             return;
         }
         
@@ -969,7 +969,7 @@ public class PlotActivity extends AppCompatActivity {
                 }
                 entriesData[i] = sb.toString();
             }
-            toast("Downsampled for full screen view");
+            toast(getString(R.string.toast_downsampled));
         } else {
             entriesData = new String[allEntries.size()];
             for (int i = 0; i < allEntries.size(); i++) {

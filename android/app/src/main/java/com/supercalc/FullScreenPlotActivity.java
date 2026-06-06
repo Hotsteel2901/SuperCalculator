@@ -187,7 +187,7 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
         float yMax = getIntent().getFloatExtra("y_max", 10f);
         
         if (expressions == null || entriesData == null) {
-            toast("No plot data received");
+            toast(getString(R.string.toast_no_plot_data));
             return;
         }
         
@@ -247,7 +247,7 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
         dataSets.add(markedPointDataSet);
         
         if (dataSets.isEmpty()) {
-            toast("No valid data to display");
+            toast(getString(R.string.toast_no_data_display));
             return;
         }
         

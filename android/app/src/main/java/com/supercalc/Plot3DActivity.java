@@ -62,7 +62,7 @@ public class Plot3DActivity extends AppCompatActivity {
     private void onPlot3D() {
         String expr = exprInput.getText().toString().trim();
         if (expr.isEmpty()) {
-            toast("Enter an expression with x and y");
+            toast(getString(R.string.toast_enter_xy));
             return;
         }
 
@@ -75,12 +75,12 @@ public class Plot3DActivity extends AppCompatActivity {
             zMin = Float.parseFloat(zMinInput.getText().toString().trim());
             zMax = Float.parseFloat(zMaxInput.getText().toString().trim());
         } catch (NumberFormatException e) {
-            toast("Invalid range values");
+            toast(getString(R.string.toast_invalid_range));
             return;
         }
 
         if (xMin >= xMax || yMin >= yMax || zMin >= zMax) {
-            toast("Min must be less than max for each axis");
+            toast(getString(R.string.toast_min_max));
             return;
         }
 
@@ -108,7 +108,7 @@ public class Plot3DActivity extends AppCompatActivity {
         }
         double[] zs = CalcEngine.evaluateXYArray(expr, xs, ys);
         if (zs == null) {
-            toast("Error evaluating expression");
+            toast(getString(R.string.toast_error_eval));
             return;
         }
 
@@ -129,7 +129,7 @@ public class Plot3DActivity extends AppCompatActivity {
         }
 
         if (!hasValid) {
-            toast("Could not evaluate expression");
+            toast(getString(R.string.toast_could_not_eval));
             return;
         }
 
@@ -150,12 +150,12 @@ public class Plot3DActivity extends AppCompatActivity {
         lastZMin = zMin;
         lastZMax = zMax;
         hasPlot = true;
-        toast("Plotted 3D surface");
+        toast(getString(R.string.toast_plotted_3d));
     }
 
     private void openFullScreen3D() {
         if (!hasPlot) {
-            toast("Plot a surface first");
+            toast(getString(R.string.toast_plot_surface_first));
             return;
         }
 

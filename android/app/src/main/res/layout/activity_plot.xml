@@ -50,7 +50,7 @@
                     android:padding="16dp">
 
                     <TextView
-                        android:text="Plot Controls"
+                        android:text="@string/plot_controls"
                         android:textSize="12sp"
                         android:textColor="@color/m3_on_surface_variant"
                         android:fontFamily="@font/outfit_regular"
@@ -63,7 +63,7 @@
                         style="@style/Widget.SuperCalc.TextInput"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Function f(x)"
+                        android:hint="@string/hint_fx"
                         app:hintTextColor="@color/m3_outline"
                         android:layout_marginBottom="8dp">
 
@@ -90,7 +90,7 @@
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="48dp"
-                            android:text="+ Add Curve"
+                            android:text="@string/add_curve"
                             android:fontFamily="@font/jetbrains_mono"
                             android:textSize="12sp"
                             app:cornerRadius="12dp"
@@ -102,7 +102,7 @@
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="48dp"
-                            android:text="- Remove"
+                            android:text="@string/remove_curve"
                             android:fontFamily="@font/jetbrains_mono"
                             android:textSize="12sp"
                             app:cornerRadius="12dp"
@@ -114,7 +114,7 @@
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="48dp"
-                            android:text="Intersect"
+                            android:text="@string/intersect"
                             android:fontFamily="@font/jetbrains_mono"
                             android:textSize="12sp"
                             app:cornerRadius="12dp"
@@ -139,7 +139,7 @@
                     android:padding="16dp">
 
                     <TextView
-                        android:text="Coordinate Range"
+                        android:text="@string/coordinate_range"
                         android:textSize="12sp"
                         android:textColor="@color/m3_on_surface_variant"
                         android:fontFamily="@font/outfit_regular"
@@ -157,7 +157,7 @@
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="wrap_content"
-                            android:hint="X min"
+                            android:hint="@string/hint_x_min"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
                             app:hintTextColor="@color/m3_outline"
                             android:layout_marginEnd="4dp">
@@ -179,7 +179,7 @@
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="wrap_content"
-                            android:hint="X max"
+                            android:hint="@string/hint_x_max"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
                             app:hintTextColor="@color/m3_outline"
                             android:layout_marginStart="4dp"
@@ -202,7 +202,7 @@
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="wrap_content"
-                            android:hint="Y min"
+                            android:hint="@string/hint_y_min"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
                             app:hintTextColor="@color/m3_outline"
                             android:layout_marginStart="4dp"
@@ -225,7 +225,7 @@
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="wrap_content"
-                            android:hint="Y max"
+                            android:hint="@string/hint_y_max"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
                             app:hintTextColor="@color/m3_outline"
                             android:layout_marginStart="4dp">
@@ -250,7 +250,7 @@
                         style="@style/Widget.Material3.Button"
                         android:layout_width="match_parent"
                         android:layout_height="56dp"
-                        android:text="Plot All Curves"
+                        android:text="@string/plot_all_curves"
                         android:fontFamily="@font/jetbrains_mono"
                         android:textSize="14sp"
                         app:cornerRadius="14dp"
@@ -273,7 +273,7 @@
                     android:padding="8dp">
 
                     <TextView
-                        android:text="Function Graph (pinch to zoom)"
+                        android:text="@string/plot_title"
                         android:textSize="12sp"
                         android:textColor="@color/m3_on_surface_variant"
                         android:fontFamily="@font/outfit_regular"
@@ -294,7 +294,7 @@
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="48dp"
-                            android:text="⛶ Full Screen"
+                            android:text="@string/full_screen"
                             android:fontFamily="@font/jetbrains_mono"
                             android:textSize="12sp"
                             app:cornerRadius="12dp" />
@@ -315,7 +315,7 @@
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
-                android:text="Back to Calculator"
+                android:text="@string/back_to_calc"
                 android:fontFamily="@font/jetbrains_mono"
                 android:textSize="14sp"
                 app:cornerRadius="14dp"

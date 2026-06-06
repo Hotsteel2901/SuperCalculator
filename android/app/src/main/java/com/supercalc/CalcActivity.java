@@ -270,28 +270,28 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private void onEvaluate() {
-        String e = getExpr(); if (e.isEmpty()) { toast("Enter an expression"); return; }
+        String e = getExpr(); if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
         appendResult("f(" + fmt(getX()) + ")", CalcEngine.evaluate(e, getX()));
     }
 
     private void onDerivative() {
-        String e = getExpr(); if (e.isEmpty()) { toast("Enter an expression"); return; }
+        String e = getExpr(); if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
         appendResult("f'(" + fmt(getX()) + ")", CalcEngine.derivative(e, getX(), 1e-6));
     }
 
     private void onDerivative2() {
-        String e = getExpr(); if (e.isEmpty()) { toast("Enter an expression"); return; }
+        String e = getExpr(); if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
         appendResult("f''(" + fmt(getX()) + ")", CalcEngine.derivative2(e, getX(), 1e-6));
     }
 
     private void onIntegrate() {
-        String e = getExpr(); if (e.isEmpty()) { toast("Enter an expression"); return; }
+        String e = getExpr(); if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
         appendResult("I[" + fmt(getA()) + "," + fmt(getB()) + "]",
                      CalcEngine.integrate(e, getA(), getB()));
     }
 
     private void onSolve() {
-        String e = getExpr(); if (e.isEmpty()) { toast("Enter an expression"); return; }
+        String e = getExpr(); if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
         double root = CalcEngine.solve(e, getGuess(), getA(), getB());
         if (Double.isNaN(root)) {
             appendResult("Root", Double.NaN);
@@ -302,7 +302,7 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private void onFindExtremum(boolean minimum) {
-        String e = getExpr(); if (e.isEmpty()) { toast("Enter an expression"); return; }
+        String e = getExpr(); if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
         double a = getA();
         double b = getB();
         double result;
@@ -335,10 +335,10 @@ public class CalcActivity extends AppCompatActivity {
 
     private void onScanRoots() {
         String e = getExpr();
-        if (e.isEmpty()) { toast("Enter an expression"); return; }
+        if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
         double a = getA();
         double b = getB();
-        if (a >= b) { toast("a must be less than b"); return; }
+        if (a >= b) { toast(getString(R.string.toast_a_less_b)); return; }
 
         int nSamples = 2000;
         double tolZero = 1e-6;
@@ -407,7 +407,7 @@ public class CalcActivity extends AppCompatActivity {
 
     private void onTangentNormal(boolean tangent) {
         String e = getExpr();
-        if (e.isEmpty()) { toast("Enter an expression"); return; }
+        if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
         double x0 = getX();
         double y0 = CalcEngine.evaluate(e, x0);
         double slope = CalcEngine.derivative(e, x0, 1e-6);
@@ -430,10 +430,10 @@ public class CalcActivity extends AppCompatActivity {
 
     private void onArcLength() {
         String e = getExpr();
-        if (e.isEmpty()) { toast("Enter an expression"); return; }
+        if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
         double a = getA();
         double b = getB();
-        if (a >= b) { toast("a must be less than b"); return; }
+        if (a >= b) { toast(getString(R.string.toast_a_less_b)); return; }
 
         int n = 5000;
         double h = (b - a) / n;
@@ -463,11 +463,11 @@ public class CalcActivity extends AppCompatActivity {
     private void onAreaBetweenCurves() {
         String eF = getExpr();
         String eG = areaGInput.getText().toString().trim();
-        if (eF.isEmpty()) { toast("Enter f(x) expression"); return; }
-        if (eG.isEmpty()) { toast("Enter g(x) expression"); return; }
+        if (eF.isEmpty()) { toast(getString(R.string.toast_enter_fx)); return; }
+        if (eG.isEmpty()) { toast(getString(R.string.toast_enter_gx)); return; }
         double a = getA();
         double b = getB();
-        if (a >= b) { toast("a must be less than b"); return; }
+        if (a >= b) { toast(getString(R.string.toast_a_less_b)); return; }
 
         double result = CalcEngine.areaBetweenCurves(eF, eG, a, b);
         if (Double.isNaN(result)) {
@@ -483,7 +483,7 @@ public class CalcActivity extends AppCompatActivity {
         String fExpr = sysFInput.getText().toString().trim();
         String gExpr = sysGInput.getText().toString().trim();
         if (fExpr.isEmpty() || gExpr.isEmpty()) {
-            toast("Enter both f(x,y) and g(x,y) expressions");
+            toast(getString(R.string.toast_enter_fg));
             return;
         }
         double x0, y0;
@@ -491,7 +491,7 @@ public class CalcActivity extends AppCompatActivity {
             x0 = Double.parseDouble(sysX0Input.getText().toString().trim());
             y0 = Double.parseDouble(sysY0Input.getText().toString().trim());
         } catch (NumberFormatException ex) {
-            toast("Invalid initial guess");
+            toast(getString(R.string.toast_invalid_guess));
             return;
         }
 
@@ -536,9 +536,9 @@ public class CalcActivity extends AppCompatActivity {
         sv.addView(tv);
 
         new androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert)
-            .setTitle("System Solution")
+            .setTitle(getString(R.string.dialog_system_solution))
             .setView(sv)
-            .setPositiveButton("Close", null)
+            .setPositiveButton(getString(R.string.dialog_close), null)
             .show();
 
         resultView.append("System solved: x=" + fmt(xSol) + ", y=" + fmt(ySol) + "\n");
@@ -546,10 +546,10 @@ public class CalcActivity extends AppCompatActivity {
 
     private void onFFT() {
         String e = getExpr();
-        if (e.isEmpty()) { toast("Enter an expression"); return; }
+        if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
         double a = getA();
         double b = getB();
-        if (a >= b) { toast("a must be less than b"); return; }
+        if (a >= b) { toast(getString(R.string.toast_a_less_b)); return; }
         int n = 256; // default samples for DFT
         double step = (b - a) / n;
         double[] xs = new double[n];
@@ -616,9 +616,9 @@ public class CalcActivity extends AppCompatActivity {
         sv.addView(tv);
 
         new androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert)
-            .setTitle("FFT Spectrum")
+            .setTitle(getString(R.string.dialog_fft_spectrum))
             .setView(sv)
-            .setPositiveButton("Close", null)
+            .setPositiveButton(getString(R.string.dialog_close), null)
             .show();
 
         resultView.append("FFT: dominant f=" + fmt(freqs[peakIdx]) + " A=" + fmt(amps[peakIdx]) + "\n");
@@ -626,7 +626,7 @@ public class CalcActivity extends AppCompatActivity {
 
     private void onLimit() {
         String e = getExpr();
-        if (e.isEmpty()) { toast("Enter an expression"); return; }
+        if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
         double a = getX();
 
         double left  = CalcEngine.limitLeft(e, a);
@@ -659,7 +659,7 @@ public class CalcActivity extends AppCompatActivity {
 
     private void onLimitSide(boolean left) {
         String e = getExpr();
-        if (e.isEmpty()) { toast("Enter an expression"); return; }
+        if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
         double a = getX();
         double result;
         String label;
@@ -690,7 +690,7 @@ public class CalcActivity extends AppCompatActivity {
 
     private void onTaylor() {
         String e = getExpr();
-        if (e.isEmpty()) { toast("Enter an expression"); return; }
+        if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
         double a = getX();
         int order = getTaylorOrder();
 
@@ -736,9 +736,9 @@ public class CalcActivity extends AppCompatActivity {
         sv.addView(tv);
 
         new androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert)
-            .setTitle("Taylor Series Expansion")
+            .setTitle(getString(R.string.dialog_taylor_series))
             .setView(sv)
-            .setPositiveButton("Close", null)
+            .setPositiveButton(getString(R.string.dialog_close), null)
             .show();
 
         resultView.append("Taylor at a=" + fmt(a) + " (order " + order + ")\n");
@@ -746,7 +746,7 @@ public class CalcActivity extends AppCompatActivity {
 
     private void onOdeSolve() {
         String expr = odeExprInput.getText().toString().trim();
-        if (expr.isEmpty()) { toast("Enter ODE expression dy/dx = f(x,y)"); return; }
+        if (expr.isEmpty()) { toast(getString(R.string.toast_enter_ode)); return; }
         double x0, y0, xEnd;
         int steps;
         try {
@@ -755,11 +755,11 @@ public class CalcActivity extends AppCompatActivity {
             xEnd = Double.parseDouble(odeXEndInput.getText().toString().trim());
             steps = Integer.parseInt(odeStepsInput.getText().toString().trim());
         } catch (NumberFormatException ex) {
-            toast("Invalid ODE parameters");
+            toast(getString(R.string.toast_invalid_ode));
             return;
         }
-        if (steps < 1 || steps > 100000) { toast("Steps must be 1-100000"); return; }
-        if (x0 == xEnd) { toast("x0 must not equal x end"); return; }
+        if (steps < 1 || steps > 100000) { toast(getString(R.string.toast_steps_range)); return; }
+        if (x0 == xEnd) { toast(getString(R.string.toast_x0_xend)); return; }
 
         HashMap<String, Object> result = CalcEngine.odeSolveRk4(expr, x0, y0, xEnd, steps);
         if (result == null) {
@@ -804,9 +804,9 @@ public class CalcActivity extends AppCompatActivity {
         sv.addView(tv);
 
         new androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert)
-            .setTitle("ODE Solution (RK4)")
+            .setTitle(getString(R.string.dialog_ode_solution))
             .setView(sv)
-            .setPositiveButton("Close", null)
+            .setPositiveButton(getString(R.string.dialog_close), null)
             .show();
 
         resultView.append("ODE solved: " + count + " points\n");
@@ -814,7 +814,7 @@ public class CalcActivity extends AppCompatActivity {
 
     private void onOdePlot() {
         String expr = odeExprInput.getText().toString().trim();
-        if (expr.isEmpty()) { toast("Enter ODE expression dy/dx = f(x,y)"); return; }
+        if (expr.isEmpty()) { toast(getString(R.string.toast_enter_ode)); return; }
         double x0, y0, xEnd;
         int steps;
         try {
@@ -823,11 +823,11 @@ public class CalcActivity extends AppCompatActivity {
             xEnd = Double.parseDouble(odeXEndInput.getText().toString().trim());
             steps = Integer.parseInt(odeStepsInput.getText().toString().trim());
         } catch (NumberFormatException ex) {
-            toast("Invalid ODE parameters");
+            toast(getString(R.string.toast_invalid_ode));
             return;
         }
-        if (steps < 1 || steps > 100000) { toast("Steps must be 1-100000"); return; }
-        if (x0 == xEnd) { toast("x0 must not equal x end"); return; }
+        if (steps < 1 || steps > 100000) { toast(getString(R.string.toast_steps_range)); return; }
+        if (x0 == xEnd) { toast(getString(R.string.toast_x0_xend)); return; }
 
         HashMap<String, Object> result = CalcEngine.odeSolveRk4(expr, x0, y0, xEnd, steps);
         if (result == null) {
@@ -883,13 +883,13 @@ public class CalcActivity extends AppCompatActivity {
 
     private void onTaylorPlot() {
         String e = getExpr();
-        if (e.isEmpty()) { toast("Enter an expression"); return; }
+        if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
         double a = getX();
         int order = getTaylorOrder();
 
         double rangeA = getA();
         double rangeB = getB();
-        if (rangeA >= rangeB) { toast("Set a < b for plot range"); return; }
+        if (rangeA >= rangeB) { toast(getString(R.string.toast_set_ab)); return; }
 
         // Precompute Taylor coefficients once (avoids O(n*order) redundant derivative calls)
         double[] coeffs = new double[order + 1];
@@ -936,7 +936,7 @@ public class CalcActivity extends AppCompatActivity {
 
     private double[] parseStatsData() {
         String raw = statsDataInput.getText().toString().trim();
-        if (raw.isEmpty()) { toast("Enter data points"); return null; }
+        if (raw.isEmpty()) { toast(getString(R.string.toast_enter_data)); return null; }
         String[] tokens = raw.split("[,;\\s]+");
         java.util.ArrayList<Double> values = new java.util.ArrayList<>();
         for (String t : tokens) {
@@ -945,11 +945,11 @@ public class CalcActivity extends AppCompatActivity {
             try {
                 values.add(Double.parseDouble(t));
             } catch (NumberFormatException e) {
-                toast("Invalid number: " + t);
+                toast(getString(R.string.toast_invalid_num, t));
                 return null;
             }
         }
-        if (values.isEmpty()) { toast("No valid numbers entered"); return null; }
+        if (values.isEmpty()) { toast(getString(R.string.toast_no_valid_nums)); return null; }
         double[] result = new double[values.size()];
         for (int i = 0; i < values.size(); i++) result[i] = values.get(i);
         return result;
@@ -1030,9 +1030,9 @@ public class CalcActivity extends AppCompatActivity {
         sv.addView(tv);
 
         new androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert)
-            .setTitle("Statistics Results")
+            .setTitle(getString(R.string.dialog_statistics))
             .setView(sv)
-            .setPositiveButton("Close", null)
+            .setPositiveButton(getString(R.string.dialog_close), null)
             .show();
 
         resultView.append("Stats: n=" + n + ", mean=" + fmt(mean) + ", std=" + fmt(stdPop) + "\n");
@@ -1048,7 +1048,7 @@ public class CalcActivity extends AppCompatActivity {
             sb.append(fmt(data[i]));
         }
         statsDataInput.setText(sb.toString());
-        toast("Data sorted (" + data.length + " values)");
+        toast(getString(R.string.toast_data_sorted, data.length));
     }
 
     // --- Matrix Operations ---
@@ -1070,14 +1070,14 @@ public class CalcActivity extends AppCompatActivity {
                 try {
                     vals.add(Double.parseDouble(c));
                 } catch (NumberFormatException e) {
-                    toast("Invalid number: " + c);
+                    toast(getString(R.string.toast_invalid_num_matrix, c));
                     return null;
                 }
             }
             if (vals.isEmpty()) continue;
             if (ncols < 0) ncols = vals.size();
             else if (vals.size() != ncols) {
-                toast("All rows must have same columns");
+                toast(getString(R.string.toast_cols_match));
                 return null;
             }
             double[] rowArr = new double[vals.size()];
@@ -1114,7 +1114,7 @@ public class CalcActivity extends AppCompatActivity {
         new androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert)
             .setTitle(title)
             .setView(sv)
-            .setPositiveButton("Close", null)
+            .setPositiveButton(getString(R.string.dialog_close), null)
             .show();
     }
 
@@ -1129,7 +1129,7 @@ public class CalcActivity extends AppCompatActivity {
     private void onMatrixAdd() {
         double[][] a = getMatrixA(); double[][] b = getMatrixB();
         if (a == null || b == null) return;
-        if (a.length != b.length || a[0].length != b[0].length) { toast("Dimensions must match"); return; }
+        if (a.length != b.length || a[0].length != b[0].length) { toast(getString(R.string.toast_dims_match)); return; }
         double[][] r = new double[a.length][a[0].length];
         for (int i = 0; i < a.length; i++)
             for (int j = 0; j < a[0].length; j++)
@@ -1141,7 +1141,7 @@ public class CalcActivity extends AppCompatActivity {
     private void onMatrixSub() {
         double[][] a = getMatrixA(); double[][] b = getMatrixB();
         if (a == null || b == null) return;
-        if (a.length != b.length || a[0].length != b[0].length) { toast("Dimensions must match"); return; }
+        if (a.length != b.length || a[0].length != b[0].length) { toast(getString(R.string.toast_dims_match)); return; }
         double[][] r = new double[a.length][a[0].length];
         for (int i = 0; i < a.length; i++)
             for (int j = 0; j < a[0].length; j++)
@@ -1153,7 +1153,7 @@ public class CalcActivity extends AppCompatActivity {
     private void onMatrixMul() {
         double[][] a = getMatrixA(); double[][] b = getMatrixB();
         if (a == null || b == null) return;
-        if (a[0].length != b.length) { toast("Cols of A must equal rows of B"); return; }
+        if (a[0].length != b.length) { toast(getString(R.string.toast_cols_rows)); return; }
         double[][] r = new double[a.length][b[0].length];
         for (int i = 0; i < a.length; i++)
             for (int j = 0; j < b[0].length; j++) {
@@ -1168,7 +1168,7 @@ public class CalcActivity extends AppCompatActivity {
     private void onMatrixDet() {
         double[][] a = getMatrixA();
         if (a == null) return;
-        if (a.length != a[0].length) { toast("Determinant requires square matrix"); return; }
+        if (a.length != a[0].length) { toast(getString(R.string.toast_det_square)); return; }
         double det = det(a);
         showMatrixResult("det(A)", "det(A) = " + fmt(det));
         resultView.append("det(A) = " + fmt(det) + "\n");
@@ -1196,7 +1196,7 @@ public class CalcActivity extends AppCompatActivity {
     private void onMatrixInv() {
         double[][] a = getMatrixA();
         if (a == null) return;
-        if (a.length != a[0].length) { toast("Inverse requires square matrix"); return; }
+        if (a.length != a[0].length) { toast(getString(R.string.toast_inv_square)); return; }
         int n = a.length;
         // Use Gauss-Jordan elimination with partial pivoting for better accuracy
         double[][] aug = new double[n][2 * n];
@@ -1216,7 +1216,7 @@ public class CalcActivity extends AppCompatActivity {
                     maxRow = row;
                 }
             }
-            if (maxVal < 1e-12) { toast("Matrix is singular"); return; }
+            if (maxVal < 1e-12) { toast(getString(R.string.toast_singular)); return; }
             // Swap rows
             double[] tmp = aug[col]; aug[col] = aug[maxRow]; aug[maxRow] = tmp;
             // Scale pivot row
@@ -1281,7 +1281,7 @@ public class CalcActivity extends AppCompatActivity {
     private void onMatrixEigen() {
         double[][] a = getMatrixA();
         if (a == null) return;
-        if (a.length != a[0].length) { toast("Eigenvalues require square matrix"); return; }
+        if (a.length != a[0].length) { toast(getString(R.string.toast_eig_square)); return; }
         int n = a.length;
         // For 2x2: use characteristic equation
         if (n == 2) {
@@ -1418,9 +1418,9 @@ public class CalcActivity extends AppCompatActivity {
         sv.addView(tv);
 
         new androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert)
-            .setTitle("Histogram")
+            .setTitle(getString(R.string.dialog_histogram))
             .setView(sv)
-            .setPositiveButton("Close", null)
+            .setPositiveButton(getString(R.string.dialog_close), null)
             .show();
 
         resultView.append("Histogram: " + nBins + " bins, mean=" + fmt(mean) + "\n");
@@ -1438,7 +1438,7 @@ public class CalcActivity extends AppCompatActivity {
             ys = parseStatsData();
         }
         if (ys == null || ys.length < 2) {
-            toast("Need at least 2 Y data points");
+            toast(getString(R.string.toast_need_2y));
             return null;
         }
         if (useX) {
@@ -1481,7 +1481,7 @@ public class CalcActivity extends AppCompatActivity {
         new androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert)
             .setTitle(title)
             .setView(tv)
-            .setPositiveButton("Close", null)
+            .setPositiveButton(getString(R.string.dialog_close), null)
             .show();
         resultView.append(String.format("%s: %s (R\u00B2=%.6f)\n", title, equation, r2));
     }
@@ -1499,7 +1499,7 @@ public class CalcActivity extends AppCompatActivity {
             ssXY += (xs[i] - xMean) * (ys[i] - yMean);
             ssXX += (xs[i] - xMean) * (xs[i] - xMean);
         }
-        if (ssXX == 0) { toast("X data has zero variance"); return; }
+        if (ssXX == 0) { toast(getString(R.string.toast_zero_variance)); return; }
         double slope = ssXY / ssXX;
         double intercept = yMean - slope * xMean;
         double ssRes = 0, ssTot = 0;
@@ -1517,7 +1517,7 @@ public class CalcActivity extends AppCompatActivity {
         double[] xs = parseRegData(xInput, yInput, true);
         double[] ys = parseRegData(xInput, yInput, false);
         if (xs == null || ys == null || xs.length != ys.length) return;
-        if (xs.length < degree + 1) { toast("Need at least " + (degree + 1) + " data points"); return; }
+        if (xs.length < degree + 1) { toast(getString(R.string.toast_need_n_points, degree + 1)); return; }
         // Vandermonde matrix approach for polynomial least squares
         int n = xs.length;
         int m = degree + 1;
@@ -1542,7 +1542,7 @@ public class CalcActivity extends AppCompatActivity {
         }
         // Gaussian elimination
         double[] coeffs = solveLinearSystem(AtA, Aty);
-        if (coeffs == null) { toast("Singular matrix - cannot fit"); return; }
+        if (coeffs == null) { toast(getString(R.string.toast_cannot_fit)); return; }
         // R²
         double yMean = 0;
         for (double v : ys) yMean += v;
@@ -1606,7 +1606,7 @@ public class CalcActivity extends AppCompatActivity {
                 xList.add(xs[i]); yList.add(ys[i]);
             }
         }
-        if (xList.size() < 2) { toast("Need at least 2 positive Y values"); return; }
+        if (xList.size() < 2) { toast(getString(R.string.toast_need_2_pos_y)); return; }
         int n = xList.size();
         double[] lx = new double[n], ly = new double[n];
         for (int i = 0; i < n; i++) { lx[i] = xList.get(i); ly[i] = Math.log(yList.get(i)); }
@@ -1618,7 +1618,7 @@ public class CalcActivity extends AppCompatActivity {
             ssXY += (lx[i] - xMean) * (ly[i] - lyMean);
             ssXX += (lx[i] - xMean) * (lx[i] - xMean);
         }
-        if (ssXX == 0) { toast("X data has zero variance"); return; }
+        if (ssXX == 0) { toast(getString(R.string.toast_zero_variance)); return; }
         double b = ssXY / ssXX;
         double lnA = lyMean - b * xMean;
         double a = Math.exp(lnA);
@@ -1648,7 +1648,7 @@ public class CalcActivity extends AppCompatActivity {
                 xList.add(xs[i]); yList.add(ys[i]);
             }
         }
-        if (xList.size() < 2) { toast("Need at least 2 positive data points"); return; }
+        if (xList.size() < 2) { toast(getString(R.string.toast_need_2_pos)); return; }
         int n = xList.size();
         double[] lx = new double[n], ly = new double[n];
         for (int i = 0; i < n; i++) { lx[i] = Math.log(xList.get(i)); ly[i] = Math.log(yList.get(i)); }
@@ -1660,7 +1660,7 @@ public class CalcActivity extends AppCompatActivity {
             ssXY += (lx[i] - xMean) * (ly[i] - lyMean);
             ssXX += (lx[i] - xMean) * (lx[i] - xMean);
         }
-        if (ssXX == 0) { toast("X data has zero variance"); return; }
+        if (ssXX == 0) { toast(getString(R.string.toast_zero_variance)); return; }
         double b = ssXY / ssXX;
         double lnA = lyMean - b * xMean;
         double a = Math.exp(lnA);
@@ -1689,7 +1689,7 @@ public class CalcActivity extends AppCompatActivity {
                 xList.add(xs[i]); yList.add(ys[i]);
             }
         }
-        if (xList.size() < 2) { toast("Need at least 2 positive X values"); return; }
+        if (xList.size() < 2) { toast(getString(R.string.toast_need_2_pos_x)); return; }
         int n = xList.size();
         double[] lx = new double[n];
         for (int i = 0; i < n; i++) lx[i] = Math.log(xList.get(i));
@@ -1701,7 +1701,7 @@ public class CalcActivity extends AppCompatActivity {
             ssXY += (lx[i] - xMean) * (yList.get(i) - yMean);
             ssXX += (lx[i] - xMean) * (lx[i] - xMean);
         }
-        if (ssXX == 0) { toast("X data has zero variance"); return; }
+        if (ssXX == 0) { toast(getString(R.string.toast_zero_variance)); return; }
         double b = ssXY / ssXX;
         double a = yMean - b * xMean;
         double ssRes = 0, ssTot = 0;
@@ -1736,7 +1736,7 @@ public class CalcActivity extends AppCompatActivity {
         String xExpr = xParamInput.getText().toString().trim();
         String yExpr = yParamInput.getText().toString().trim();
         if (xExpr.isEmpty() || yExpr.isEmpty()) {
-            toast("Enter both x(t) and y(t) expressions");
+            toast(getString(R.string.toast_enter_xt_yt));
             return;
         }
 
@@ -1745,11 +1745,11 @@ public class CalcActivity extends AppCompatActivity {
             tMin = Double.parseDouble(tMinInput.getText().toString().trim());
             tMax = Double.parseDouble(tMaxInput.getText().toString().trim());
         } catch (NumberFormatException ex) {
-            toast("Invalid t range");
+            toast(getString(R.string.toast_invalid_t_range));
             return;
         }
         if (tMin >= tMax) {
-            toast("t min must be less than t max");
+            toast(getString(R.string.toast_t_range));
             return;
         }
 
@@ -1782,7 +1782,7 @@ public class CalcActivity extends AppCompatActivity {
     private void onPlotPolar() {
         String rExpr = rPolarInput.getText().toString().trim();
         if (rExpr.isEmpty()) {
-            toast("Enter an r(theta) expression");
+            toast(getString(R.string.toast_enter_rtheta));
             return;
         }
 
@@ -1791,11 +1791,11 @@ public class CalcActivity extends AppCompatActivity {
             thetaMin = Double.parseDouble(thetaMinInput.getText().toString().trim());
             thetaMax = Double.parseDouble(thetaMaxInput.getText().toString().trim());
         } catch (NumberFormatException ex) {
-            toast("Invalid theta range");
+            toast(getString(R.string.toast_invalid_theta_range));
             return;
         }
         if (thetaMin >= thetaMax) {
-            toast("theta min must be less than theta max");
+            toast(getString(R.string.toast_theta_range));
             return;
         }
 
@@ -1837,10 +1837,10 @@ public class CalcActivity extends AppCompatActivity {
 
     private void onGenerateTable() {
         String e = getExpr();
-        if (e.isEmpty()) { toast("Enter an expression"); return; }
+        if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
         double a = getA();
         double b = getB();
-        if (a >= b) { toast("a must be less than b for table range"); return; }
+        if (a >= b) { toast(getString(R.string.toast_table_range)); return; }
         int n = 21; // default points
 
         double step = (b - a) / (n - 1);
@@ -1889,10 +1889,10 @@ public class CalcActivity extends AppCompatActivity {
         scrollView.setPadding(0, 0, 0, 0);
 
         new androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert)
-            .setTitle("Function Table (" + n + " pts)")
+            .setTitle(getString(R.string.dialog_function_table, n))
             .setView(scrollView)
-            .setPositiveButton("Share CSV", (dialog, which) -> shareText(csvText, "SuperCalc Table"))
-            .setNegativeButton("Close", null)
+            .setPositiveButton(getString(R.string.dialog_share_csv), (dialog, which) -> shareText(csvText, "SuperCalc Table"))
+            .setNegativeButton(getString(R.string.dialog_close), null)
             .show();
 
         resultView.append("Table generated: " + valid + "/" + n + " valid points\n");
@@ -2039,7 +2039,7 @@ public class CalcActivity extends AppCompatActivity {
         String valueStr = unitValueInput.getText().toString().trim();
 
         if (category.isEmpty() || fromUnit.isEmpty() || toUnit.isEmpty()) {
-            toast("Please fill in all fields");
+            toast(getString(R.string.toast_fill_fields));
             return;
         }
 
@@ -2047,20 +2047,20 @@ public class CalcActivity extends AppCompatActivity {
         try {
             value = Double.parseDouble(valueStr);
         } catch (NumberFormatException e) {
-            toast("Invalid value");
+            toast(getString(R.string.toast_invalid_value));
             return;
         }
 
         java.util.Map<String, Double> units = UNIT_DATA.get(category);
         if (units == null) {
-            toast("Unknown category: " + category);
+            toast(getString(R.string.toast_unknown_category, category));
             return;
         }
 
         Double fromFactor = units.get(fromUnit);
         Double toFactor = units.get(toUnit);
         if (fromFactor == null || toFactor == null) {
-            toast("Invalid unit for this category");
+            toast(getString(R.string.toast_invalid_unit));
             return;
         }
 

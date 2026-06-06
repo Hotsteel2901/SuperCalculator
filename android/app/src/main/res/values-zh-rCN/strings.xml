@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App identity -->
+    <string name="app_name">SuperCalc</string>
+    <string name="app_subtitle">光谱计算器</string>
+    <string name="app_version">SuperCalc AlphaV1</string>
+
+    <!-- Main calculator layout -->
+    <string name="expr_label">表达式 f(x)</string>
+    <string name="expr_hint">例如 x^2 + sin(x)</string>
+    <string name="quick_select">快速选择</string>
+    <string name="preset_functions">预设函数</string>
+    <string name="preset_parametric">参数曲线 x(t), y(t)</string>
+    <string name="preset_polar">极坐标曲线 r(theta)</string>
+    <string name="enable_parametric">启用参数曲线</string>
+    <string name="enable_polar">启用极坐标曲线</string>
+    <string name="parametric_label">参数曲线 x(t), y(t)</string>
+    <string name="polar_label">极坐标曲线 r(theta)</string>
+    <string name="parameters">参数</string>
+    <string name="operations">运算</string>
+    <string name="evaluate">求值</string>
+    <string name="derivative">f\'(x)</string>
+    <string name="second_derivative">f\'\'(x)</string>
+    <string name="integrate">积分</string>
+    <string name="solve_eq">求解=0</string>
+    <string name="plot">绘制</string>
+    <string name="solve">求解</string>
+    <string name="compute">计算</string>
+    <string name="plot_parametric">绘制参数曲线</string>
+    <string name="plot_polar">绘制极坐标曲线</string>
+    <string name="find_min">求最小值</string>
+    <string name="find_max">求最大值</string>
+    <string name="clear">清除</string>
+    <string name="scan_roots">扫描根</string>
+    <string name="plot_3d">3D绘图</string>
+    <string name="table">表格</string>
+    <string name="tangent">切线</string>
+    <string name="normal">法线</string>
+    <string name="fft">FFT</string>
+    <string name="taylor_series">泰勒级数</string>
+    <string name="taylor_plot">泰勒绘图</string>
+    <string name="solve_ode">求解ODE</string>
+    <string name="ode_plot">ODE绘图</string>
+    <string name="histogram">直方图</string>
+    <string name="sort">排序</string>
+    <string name="function_graph">函数图像</string>
+    <string name="statistics_calculator">统计计算器</string>
+    <string name="curve_fitting">曲线拟合/回归</string>
+    <string name="linear">线性</string>
+    <string name="quadratic">二次</string>
+    <string name="polynomial">多项式</string>
+    <string name="exponential">指数</string>
+    <string name="power">幂</string>
+    <string name="logarithmic">对数</string>
+    <string name="plot_fit">绘制拟合</string>
+    <string name="matrix_operations">矩阵运算</string>
+    <string name="nonlinear_system">非线性方程组 f(x,y)=0, g(x,y)=0</string>
+    <string name="ode_solver">ODE求解器 dy/dx = f(x,y)</string>
+    <string name="arc_length">弧长</string>
+    <string name="area_between">曲线间面积</string>
+    <string name="unit_converter">单位换算</string>
+    <string name="convert">换算</string>
+    <string name="lim_fx">lim f(x)</string>
+    <string name="lim_left">左极限</string>
+    <string name="lim_right">右极限</string>
+
+    <!-- Matrix operation buttons -->
+    <string name="mat_add">A+B</string>
+    <string name="mat_sub">A-B</string>
+    <string name="mat_mul">A*B</string>
+    <string name="mat_det">det(A)</string>
+    <string name="mat_inv">inv(A)</string>
+    <string name="mat_transpose">A^T</string>
+    <string name="mat_rank">rank(A)</string>
+    <string name="mat_rref">rref(A)</string>
+    <string name="mat_eigen">eig(A)</string>
+
+    <!-- Plot activity -->
+    <string name="plot_title">函数图像（双指缩放）</string>
+    <string name="plot_controls">绘图控制</string>
+    <string name="coordinate_range">坐标范围</string>
+    <string name="add_curve">+ 添加曲线</string>
+    <string name="remove_curve">- 删除</string>
+    <string name="plot_all_curves">绘制所有曲线</string>
+    <string name="intersect">交点</string>
+    <string name="back_to_calc">返回计算器</string>
+    <string name="full_screen">&#x26F6; 全屏</string>
+
+    <!-- Plot 3D activity -->
+    <string name="plot_3d_title">三维函数 f(x,y)</string>
+    <string name="plot_3d_surface_hint">三维曲面（拖动旋转，双指缩放）</string>
+    <string name="x_range">X范围</string>
+    <string name="y_range">Y范围</string>
+    <string name="z_range">Z范围（自动调整）</string>
+    <string name="plot_3d_btn">绘制3D</string>
+    <string name="reset_view">重置视图</string>
+    <string name="full_screen_3d">&#x26F6; 全屏</string>
+
+    <!-- Full screen plot -->
+    <string name="exit_full_screen">退出全屏</string>
+    <string name="surface_hint">三维曲面（拖动旋转，双指缩放）</string>
+
+    <!-- Ready/status -->
+    <string name="ready_msg">就绪。输入表达式并按下运算按钮。</string>
+    <string name="results">结果</string>
+
+    <!-- Hint strings for inputs -->
+    <string name="hint_x">x</string>
+    <string name="hint_a">a</string>
+    <string name="hint_b">b</string>
+    <string name="hint_guess">猜测值</string>
+    <string name="hint_x0">x0</string>
+    <string name="hint_y0">y0</string>
+    <string name="hint_x_end">x终点</string>
+    <string name="hint_steps">步数</string>
+    <string name="hint_order">阶数</string>
+    <string name="hint_ode_expr">dy/dx = f(x,y)</string>
+    <string name="hint_xt">x(t)</string>
+    <string name="hint_yt">y(t)</string>
+    <string name="hint_t_min">t最小</string>
+    <string name="hint_t_max">t最大</string>
+    <string name="hint_rtheta">r(theta)</string>
+    <string name="hint_theta_min">theta最小</string>
+    <string name="hint_theta_max">theta最大</string>
+    <string name="hint_data">数据（逗号/空格分隔）</string>
+    <string name="hint_x_data">X数据（可选，使用1,2,3...）</string>
+    <string name="hint_y_data">Y数据（X为空时使用统计数据）</string>
+    <string name="hint_degree">阶数</string>
+    <string name="hint_matrix_a">矩阵A（行：;，列：,）</string>
+    <string name="hint_matrix_b">矩阵B（用于二元运算）</string>
+    <string name="hint_fx">f(x)</string>
+    <string name="hint_gx">g(x)</string>
+    <string name="hint_fxy">f(x,y)</string>
+    <string name="hint_gxy">g(x,y)</string>
+    <string name="hint_category">类别</string>
+    <string name="hint_from_unit">从单位</string>
+    <string name="hint_to_unit">到单位</string>
+    <string name="hint_value">数值</string>
+    <string name="hint_result">结果</string>
+    <string name="hint_expr_3d">表达式 例如 x^2 + y^2</string>
+    <string name="hint_x_min">X最小</string>
+    <string name="hint_x_max">X最大</string>
+    <string name="hint_y_min">Y最小</string>
+    <string name="hint_y_max">Y最大</string>
+    <string name="hint_z_min">Z最小</string>
+    <string name="hint_z_max">Z最大</string>
+
+    <!-- Unit category names -->
+    <string name="unit_length">长度</string>
+    <string name="unit_weight">质量</string>
+    <string name="unit_temperature">温度</string>
+    <string name="unit_area">面积</string>
+    <string name="unit_volume">体积</string>
+    <string name="unit_time">时间</string>
+    <string name="unit_data_storage">数据存储</string>
+    <string name="unit_speed">速度</string>
+    <string name="unit_angle">角度</string>
+
+    <!-- Toast/dialog strings -->
+    <string name="toast_enter_expr">请输入表达式</string>
+    <string name="toast_a_less_b">a必须小于b</string>
+    <string name="toast_enter_fx">请输入f(x)表达式</string>
+    <string name="toast_enter_gx">请输入g(x)表达式</string>
+    <string name="toast_enter_fg">请输入f(x,y)和g(x,y)表达式</string>
+    <string name="toast_invalid_guess">初始猜测无效</string>
+    <string name="toast_enter_ode">请输入ODE表达式 dy/dx = f(x,y)</string>
+    <string name="toast_invalid_ode">ODE参数无效</string>
+    <string name="toast_steps_range">步数必须在1-100000之间</string>
+    <string name="toast_x0_xend">x0不能等于x终点</string>
+    <string name="toast_set_ab">设置 a &lt; b 作为绘图范围</string>
+    <string name="toast_enter_data">请输入数据点</string>
+    <string name="toast_invalid_num">无效数字：{0}</string>
+    <string name="toast_no_valid_nums">未输入有效数字</string>
+    <string name="toast_data_sorted">数据已排序（{0}个值）</string>
+    <string name="toast_invalid_num_matrix">无效数字：{0}</string>
+    <string name="toast_cols_match">所有行必须具有相同的列数</string>
+    <string name="toast_dims_match">维度必须匹配</string>
+    <string name="toast_cols_rows">A的列数必须等于B的行数</string>
+    <string name="toast_det_square">行列式需要方阵</string>
+    <string name="toast_inv_square">逆矩阵需要方阵</string>
+    <string name="toast_singular">矩阵奇异</string>
+    <string name="toast_eig_square">特征值需要方阵</string>
+    <string name="toast_need_2y">至少需要2个Y数据点</string>
+    <string name="toast_zero_variance">X数据方差为零</string>
+    <string name="toast_need_n_points">至少需要{0}个数据点</string>
+    <string name="toast_cannot_fit">奇异矩阵 - 无法拟合</string>
+    <string name="toast_need_2_pos_y">至少需要2个正Y值</string>
+    <string name="toast_need_2_pos">至少需要2个正数据点</string>
+    <string name="toast_need_2_pos_x">至少需要2个正X值</string>
+    <string name="toast_enter_xt_yt">请输入x(t)和y(t)表达式</string>
+    <string name="toast_invalid_t_range">t范围无效</string>
+    <string name="toast_t_range">t最小值必须小于t最大值</string>
+    <string name="toast_enter_rtheta">请输入r(theta)表达式</string>
+    <string name="toast_invalid_theta_range">theta范围无效</string>
+    <string name="toast_theta_range">theta最小值必须小于theta最大值</string>
+    <string name="toast_table_range">表格范围的a必须小于b</string>
+    <string name="toast_fill_fields">请填写所有字段</string>
+    <string name="toast_invalid_value">无效值</string>
+    <string name="toast_unknown_category">未知类别：%1$s</string>
+    <string name="toast_invalid_unit">此类别的单位无效</string>
+    <string name="toast_error_prefix">错误：{0}</string>
+    <string name="toast_no_valid_points">没有有效点可绘制</string>
+    <string name="toast_parametric_plotted">参数曲线已绘制</string>
+    <string name="toast_polar_plotted">极坐标曲线已绘制</string>
+    <string name="toast_no_ode_points">没有有效ODE点可绘制</string>
+    <string name="toast_ode_plotted">ODE解已绘制</string>
+    <string name="toast_taylor_plotted">泰勒级数（{0}阶）已在a={1}处绘制</string>
+    <string name="toast_no_data_points">没有有效数据点可绘制</string>
+    <string name="toast_regression_plotted">回归数据已绘制（{0}个点）</string>
+    <string name="toast_deleted_mark">已删除标记点</string>
+    <string name="toast_marked_point">已标记点：({0}, {1})</string>
+    <string name="toast_added_curve">已添加曲线：{0}</string>
+    <string name="toast_no_curves_remove">没有曲线可删除</string>
+    <string name="toast_removed_curve">已删除曲线：{0}</string>
+    <string name="toast_add_curves_first">请先添加曲线</string>
+    <string name="toast_invalid_range">范围值无效</string>
+    <string name="toast_xmin_xmax">X最小值必须小于X最大值</string>
+    <string name="toast_ymin_ymax">Y最小值必须小于Y最大值</string>
+    <string name="toast_error_parametric">参数曲线错误：{0}</string>
+    <string name="toast_error_polar">极坐标曲线错误：{0}</string>
+    <string name="toast_error_expr">{0}中的错误：{1}</string>
+    <string name="toast_no_data_display">没有有效数据可显示</string>
+    <string name="toast_plotted_curves">已绘制{0}条曲线</string>
+    <string name="toast_plot_first">请先绘制曲线</string>
+    <string name="toast_downsampled">已为全屏视图降采样</string>
+    <string name="toast_no_plot_data">未收到绘图数据</string>
+    <string name="toast_error_eval">表达式求值错误</string>
+    <string name="toast_could_not_eval">无法求值表达式</string>
+    <string name="toast_plotted_3d">已绘制三维曲面</string>
+    <string name="toast_plot_surface_first">请先绘制曲面</string>
+    <string name="toast_enter_xy">请输入包含x和y的表达式</string>
+    <string name="toast_min_max">每个轴的最小值必须小于最大值</string>
+
+    <!-- Dialog titles -->
+    <string name="dialog_system_solution">方程组解</string>
+    <string name="dialog_fft_spectrum">FFT频谱</string>
+    <string name="dialog_taylor_series">泰勒级数展开</string>
+    <string name="dialog_ode_solution">ODE解（RK4）</string>
+    <string name="dialog_statistics">统计结果</string>
+    <string name="dialog_histogram">直方图</string>
+    <string name="dialog_function_table">函数表（{0}个点）</string>
+    <string name="dialog_close">关闭</string>
+    <string name="dialog_share_csv">分享CSV</string>
+</resources>

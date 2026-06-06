@@ -1,4 +1,244 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- App identity -->
     <string name="app_name">SuperCalc</string>
+    <string name="app_subtitle">Spectral Calculator</string>
+    <string name="app_version">SuperCalc AlphaV1</string>
+
+    <!-- Main calculator layout -->
+    <string name="expr_label">Expression f(x)</string>
+    <string name="expr_hint">e.g. x^2 + sin(x)</string>
+    <string name="quick_select">Quick Select</string>
+    <string name="preset_functions">Preset Functions</string>
+    <string name="preset_parametric">Parametric Curve x(t), y(t)</string>
+    <string name="preset_polar">Polar Curve r(theta)</string>
+    <string name="enable_parametric">Enable parametric curve</string>
+    <string name="enable_polar">Enable polar curve</string>
+    <string name="parametric_label">Parametric Curve x(t), y(t)</string>
+    <string name="polar_label">Polar Curve r(theta)</string>
+    <string name="parameters">Parameters</string>
+    <string name="operations">Operations</string>
+    <string name="evaluate">Evaluate</string>
+    <string name="derivative">f\'(x)</string>
+    <string name="second_derivative">f\'\'(x)</string>
+    <string name="integrate">Integrate</string>
+    <string name="solve_eq">Solve=0</string>
+    <string name="plot">Plot</string>
+    <string name="solve">Solve</string>
+    <string name="compute">Compute</string>
+    <string name="plot_parametric">Plot Parametric</string>
+    <string name="plot_polar">Plot Polar</string>
+    <string name="find_min">Find Min</string>
+    <string name="find_max">Find Max</string>
+    <string name="clear">Clear</string>
+    <string name="scan_roots">Scan Roots</string>
+    <string name="plot_3d">3D Plot</string>
+    <string name="table">Table</string>
+    <string name="tangent">Tangent</string>
+    <string name="normal">Normal</string>
+    <string name="fft">FFT</string>
+    <string name="taylor_series">Taylor Series</string>
+    <string name="taylor_plot">Taylor Plot</string>
+    <string name="solve_ode">Solve ODE</string>
+    <string name="ode_plot">ODE Plot</string>
+    <string name="histogram">Histogram</string>
+    <string name="sort">Sort</string>
+    <string name="function_graph">Function Graph</string>
+    <string name="statistics_calculator">Statistics Calculator</string>
+    <string name="curve_fitting">Curve Fitting / Regression</string>
+    <string name="linear">Linear</string>
+    <string name="quadratic">Quadratic</string>
+    <string name="polynomial">Poly</string>
+    <string name="exponential">Exp</string>
+    <string name="power">Power</string>
+    <string name="logarithmic">Log</string>
+    <string name="plot_fit">Plot Fit</string>
+    <string name="matrix_operations">Matrix Operations</string>
+    <string name="nonlinear_system">Nonlinear System f(x,y)=0, g(x,y)=0</string>
+    <string name="ode_solver">ODE Solver dy/dx = f(x,y)</string>
+    <string name="arc_length">Arc Length</string>
+    <string name="area_between">Area Between</string>
+    <string name="unit_converter">Unit Converter</string>
+    <string name="convert">Convert</string>
+    <string name="lim_fx">lim f(x)</string>
+    <string name="lim_left">lim&#x207B;</string>
+    <string name="lim_right">lim&#x207A;</string>
+
+    <!-- Matrix operation buttons -->
+    <string name="mat_add">A+B</string>
+    <string name="mat_sub">A-B</string>
+    <string name="mat_mul">A*B</string>
+    <string name="mat_det">det(A)</string>
+    <string name="mat_inv">inv(A)</string>
+    <string name="mat_transpose">A^T</string>
+    <string name="mat_rank">rank(A)</string>
+    <string name="mat_rref">rref(A)</string>
+    <string name="mat_eigen">eig(A)</string>
+
+    <!-- Plot activity -->
+    <string name="plot_title">Function Graph (pinch to zoom)</string>
+    <string name="plot_controls">Plot Controls</string>
+    <string name="coordinate_range">Coordinate Range</string>
+    <string name="add_curve">+ Add Curve</string>
+    <string name="remove_curve">- Remove</string>
+    <string name="plot_all_curves">Plot All Curves</string>
+    <string name="intersect">Intersect</string>
+    <string name="back_to_calc">Back to Calculator</string>
+    <string name="full_screen">&#x26F6; Full Screen</string>
+
+    <!-- Plot 3D activity -->
+    <string name="plot_3d_title">3D Function f(x,y)</string>
+    <string name="plot_3d_surface_hint">3D Surface (drag to rotate, pinch to zoom)</string>
+    <string name="x_range">X Range</string>
+    <string name="y_range">Y Range</string>
+    <string name="z_range">Z Range (auto-adjusted)</string>
+    <string name="plot_3d_btn">Plot 3D</string>
+    <string name="reset_view">Reset View</string>
+    <string name="full_screen_3d">&#x26F6; Full Screen</string>
+
+    <!-- Full screen plot -->
+    <string name="exit_full_screen">Exit Full Screen</string>
+    <string name="surface_hint">3D Surface (drag to rotate, pinch to zoom)</string>
+
+    <!-- Ready/status -->
+    <string name="ready_msg">Ready. Enter expression and press an operation.</string>
+    <string name="results">Results</string>
+
+    <!-- Hint strings for inputs -->
+    <string name="hint_x">x</string>
+    <string name="hint_a">a</string>
+    <string name="hint_b">b</string>
+    <string name="hint_guess">guess</string>
+    <string name="hint_x0">x0</string>
+    <string name="hint_y0">y0</string>
+    <string name="hint_x_end">x end</string>
+    <string name="hint_steps">steps</string>
+    <string name="hint_order">order</string>
+    <string name="hint_ode_expr">dy/dx = f(x,y)</string>
+    <string name="hint_xt">x(t)</string>
+    <string name="hint_yt">y(t)</string>
+    <string name="hint_t_min">t min</string>
+    <string name="hint_t_max">t max</string>
+    <string name="hint_rtheta">r(theta)</string>
+    <string name="hint_theta_min">theta min</string>
+    <string name="hint_theta_max">theta max</string>
+    <string name="hint_data">Data (comma/space separated)</string>
+    <string name="hint_x_data">X data (optional, uses 1,2,3...)</string>
+    <string name="hint_y_data">Y data (uses Statistics data if empty)</string>
+    <string name="hint_degree">Degree</string>
+    <string name="hint_matrix_a">Matrix A (rows: ;, cols: ,)</string>
+    <string name="hint_matrix_b">Matrix B (for binary ops)</string>
+    <string name="hint_fx">f(x)</string>
+    <string name="hint_gx">g(x)</string>
+    <string name="hint_fxy">f(x,y)</string>
+    <string name="hint_gxy">g(x,y)</string>
+    <string name="hint_category">Category</string>
+    <string name="hint_from_unit">From Unit</string>
+    <string name="hint_to_unit">To Unit</string>
+    <string name="hint_value">Value</string>
+    <string name="hint_result">Result</string>
+    <string name="hint_expr_3d">Expression e.g. x^2 + y^2</string>
+    <string name="hint_x_min">X min</string>
+    <string name="hint_x_max">X max</string>
+    <string name="hint_y_min">Y min</string>
+    <string name="hint_y_max">Y max</string>
+    <string name="hint_z_min">Z min</string>
+    <string name="hint_z_max">Z max</string>
+
+    <!-- Unit category names -->
+    <string name="unit_length">Length</string>
+    <string name="unit_weight">Weight</string>
+    <string name="unit_temperature">Temperature</string>
+    <string name="unit_area">Area</string>
+    <string name="unit_volume">Volume</string>
+    <string name="unit_time">Time</string>
+    <string name="unit_data_storage">Data Storage</string>
+    <string name="unit_speed">Speed</string>
+    <string name="unit_angle">Angle</string>
+
+    <!-- Toast/dialog strings -->
+    <string name="toast_enter_expr">Enter an expression</string>
+    <string name="toast_a_less_b">a must be less than b</string>
+    <string name="toast_enter_fx">Enter f(x) expression</string>
+    <string name="toast_enter_gx">Enter g(x) expression</string>
+    <string name="toast_enter_fg">Enter both f(x,y) and g(x,y) expressions</string>
+    <string name="toast_invalid_guess">Invalid initial guess</string>
+    <string name="toast_enter_ode">Enter ODE expression dy/dx = f(x,y)</string>
+    <string name="toast_invalid_ode">Invalid ODE parameters</string>
+    <string name="toast_steps_range">Steps must be 1-100000</string>
+    <string name="toast_x0_xend">x0 must not equal x end</string>
+    <string name="toast_set_ab">Set a &lt; b for plot range</string>
+    <string name="toast_enter_data">Enter data points</string>
+    <string name="toast_invalid_num">Invalid number: {0}</string>
+    <string name="toast_no_valid_nums">No valid numbers entered</string>
+    <string name="toast_data_sorted">Data sorted ({0} values)</string>
+    <string name="toast_invalid_num_matrix">Invalid number: {0}</string>
+    <string name="toast_cols_match">All rows must have same columns</string>
+    <string name="toast_dims_match">Dimensions must match</string>
+    <string name="toast_cols_rows">Cols of A must equal rows of B</string>
+    <string name="toast_det_square">Determinant requires square matrix</string>
+    <string name="toast_inv_square">Inverse requires square matrix</string>
+    <string name="toast_singular">Matrix is singular</string>
+    <string name="toast_eig_square">Eigenvalues require square matrix</string>
+    <string name="toast_need_2y">Need at least 2 Y data points</string>
+    <string name="toast_zero_variance">X data has zero variance</string>
+    <string name="toast_need_n_points">Need at least {0} data points</string>
+    <string name="toast_cannot_fit">Singular matrix - cannot fit</string>
+    <string name="toast_need_2_pos_y">Need at least 2 positive Y values</string>
+    <string name="toast_need_2_pos">Need at least 2 positive data points</string>
+    <string name="toast_need_2_pos_x">Need at least 2 positive X values</string>
+    <string name="toast_enter_xt_yt">Enter both x(t) and y(t) expressions</string>
+    <string name="toast_invalid_t_range">Invalid t range</string>
+    <string name="toast_t_range">t min must be less than t max</string>
+    <string name="toast_enter_rtheta">Enter an r(theta) expression</string>
+    <string name="toast_invalid_theta_range">Invalid theta range</string>
+    <string name="toast_theta_range">theta min must be less than theta max</string>
+    <string name="toast_table_range">a must be less than b for table range</string>
+    <string name="toast_fill_fields">Please fill in all fields</string>
+    <string name="toast_invalid_value">Invalid value</string>
+    <string name="toast_unknown_category">Unknown category: %1$s</string>
+    <string name="toast_invalid_unit">Invalid unit for this category</string>
+    <string name="toast_error_prefix">Error: {0}</string>
+    <string name="toast_no_valid_points">No valid points to plot</string>
+    <string name="toast_parametric_plotted">Parametric curve plotted</string>
+    <string name="toast_polar_plotted">Polar curve plotted</string>
+    <string name="toast_no_ode_points">No valid ODE points to plot</string>
+    <string name="toast_ode_plotted">ODE solution plotted</string>
+    <string name="toast_taylor_plotted">Taylor series (order {0}) plotted at a={1}</string>
+    <string name="toast_no_data_points">No valid data points to plot</string>
+    <string name="toast_regression_plotted">Regression data plotted ({0} points)</string>
+    <string name="toast_deleted_mark">Deleted marked point</string>
+    <string name="toast_marked_point">Marked point: ({0}, {1})</string>
+    <string name="toast_added_curve">Added curve: {0}</string>
+    <string name="toast_no_curves_remove">No curves to remove</string>
+    <string name="toast_removed_curve">Removed curve: {0}</string>
+    <string name="toast_add_curves_first">Add curves first</string>
+    <string name="toast_invalid_range">Invalid range values</string>
+    <string name="toast_xmin_xmax">X min must be less than X max</string>
+    <string name="toast_ymin_ymax">Y min must be less than Y max</string>
+    <string name="toast_error_parametric">Error in parametric: {0}</string>
+    <string name="toast_error_polar">Error in polar: {0}</string>
+    <string name="toast_error_expr">Error in {0}: {1}</string>
+    <string name="toast_no_data_display">No valid data to display</string>
+    <string name="toast_plotted_curves">Plotted {0} curve(s)</string>
+    <string name="toast_plot_first">Plot some curves first</string>
+    <string name="toast_downsampled">Downsampled for full screen view</string>
+    <string name="toast_no_plot_data">No plot data received</string>
+    <string name="toast_error_eval">Error evaluating expression</string>
+    <string name="toast_could_not_eval">Could not evaluate expression</string>
+    <string name="toast_plotted_3d">Plotted 3D surface</string>
+    <string name="toast_plot_surface_first">Plot a surface first</string>
+    <string name="toast_enter_xy">Enter an expression with x and y</string>
+    <string name="toast_min_max">Min must be less than max for each axis</string>
+
+    <!-- Dialog titles -->
+    <string name="dialog_system_solution">System Solution</string>
+    <string name="dialog_fft_spectrum">FFT Spectrum</string>
+    <string name="dialog_taylor_series">Taylor Series Expansion</string>
+    <string name="dialog_ode_solution">ODE Solution (RK4)</string>
+    <string name="dialog_statistics">Statistics Results</string>
+    <string name="dialog_histogram">Histogram</string>
+    <string name="dialog_function_table">Function Table ({0} pts)</string>
+    <string name="dialog_close">Close</string>
+    <string name="dialog_share_csv">Share CSV</string>
 </resources>

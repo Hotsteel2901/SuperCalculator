@@ -32,7 +32,7 @@ public class FullScreenPlot3DActivity extends AppCompatActivity {
         float zMax = getIntent().getFloatExtra("z_max", 10f);
 
         if (expr == null || expr.isEmpty()) {
-            toast("No plot data received");
+            toast(getString(R.string.toast_no_plot_data));
             return;
         }
 
@@ -59,7 +59,7 @@ public class FullScreenPlot3DActivity extends AppCompatActivity {
         }
         double[] zs = CalcEngine.evaluateXYArray(expr, xs, ys);
         if (zs == null) {
-            toast("Error evaluating expression");
+            toast(getString(R.string.toast_error_eval));
             return;
         }
 
@@ -80,7 +80,7 @@ public class FullScreenPlot3DActivity extends AppCompatActivity {
         }
 
         if (!hasValid) {
-            toast("Could not evaluate expression");
+            toast(getString(R.string.toast_could_not_eval));
             return;
         }
 

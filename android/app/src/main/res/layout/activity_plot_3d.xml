@@ -49,7 +49,7 @@
                     android:padding="16dp">
 
                     <TextView
-                        android:text="3D Function f(x,y)"
+                        android:text="@string/plot_3d_title"
                         android:textSize="12sp"
                         android:textColor="@color/m3_on_surface_variant"
                         android:fontFamily="@font/outfit_regular"
@@ -62,7 +62,7 @@
                         style="@style/Widget.SuperCalc.TextInput"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Expression e.g. x^2 + y^2"
+                        android:hint="@string/hint_expr_3d"
                         app:hintTextColor="@color/m3_outline"
                         android:layout_marginBottom="8dp">
 
@@ -79,7 +79,7 @@
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <TextView
-                        android:text="X Range"
+                        android:text="@string/x_range"
                         android:textSize="12sp"
                         android:textColor="@color/m3_on_surface_variant"
                         android:fontFamily="@font/outfit_regular"
@@ -99,7 +99,7 @@
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="wrap_content"
-                            android:hint="X min"
+                            android:hint="@string/hint_x_min"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
                             app:hintTextColor="@color/m3_outline"
                             android:layout_marginEnd="4dp">
@@ -121,7 +121,7 @@
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="wrap_content"
-                            android:hint="X max"
+                            android:hint="@string/hint_x_max"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
                             app:hintTextColor="@color/m3_outline"
                             android:layout_marginStart="4dp">
@@ -142,7 +142,7 @@
                     </LinearLayout>
 
                     <TextView
-                        android:text="Y Range"
+                        android:text="@string/y_range"
                         android:textSize="12sp"
                         android:textColor="@color/m3_on_surface_variant"
                         android:fontFamily="@font/outfit_regular"
@@ -162,7 +162,7 @@
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="wrap_content"
-                            android:hint="Y min"
+                            android:hint="@string/hint_y_min"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
                             app:hintTextColor="@color/m3_outline"
                             android:layout_marginEnd="4dp">
@@ -184,7 +184,7 @@
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="wrap_content"
-                            android:hint="Y max"
+                            android:hint="@string/hint_y_max"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
                             app:hintTextColor="@color/m3_outline"
                             android:layout_marginStart="4dp">
@@ -205,7 +205,7 @@
                     </LinearLayout>
 
                     <TextView
-                        android:text="Z Range (auto-adjusted)"
+                        android:text="@string/z_range"
                         android:textSize="12sp"
                         android:textColor="@color/m3_on_surface_variant"
                         android:fontFamily="@font/outfit_regular"
@@ -225,7 +225,7 @@
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="wrap_content"
-                            android:hint="Z min"
+                            android:hint="@string/hint_z_min"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
                             app:hintTextColor="@color/m3_outline"
                             android:layout_marginEnd="4dp">
@@ -247,7 +247,7 @@
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="wrap_content"
-                            android:hint="Z max"
+                            android:hint="@string/hint_z_max"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense"
                             app:hintTextColor="@color/m3_outline"
                             android:layout_marginStart="4dp">
@@ -278,7 +278,7 @@
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="56dp"
-                            android:text="Plot 3D"
+                            android:text="@string/plot_3d_btn"
                             android:fontFamily="@font/jetbrains_mono"
                             android:textSize="14sp"
                             app:cornerRadius="14dp"
@@ -290,7 +290,7 @@
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="56dp"
-                            android:text="Reset View"
+                            android:text="@string/reset_view"
                             android:fontFamily="@font/jetbrains_mono"
                             android:textSize="14sp"
                             app:cornerRadius="14dp"
@@ -315,7 +315,7 @@
                     android:padding="8dp">
 
                     <TextView
-                        android:text="3D Surface (drag to rotate, pinch to zoom)"
+                        android:text="@string/plot_3d_surface_hint"
                         android:textSize="12sp"
                         android:textColor="@color/m3_on_surface_variant"
                         android:fontFamily="@font/outfit_regular"
@@ -336,7 +336,7 @@
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="48dp"
-                            android:text="&#x26F6; Full Screen"
+                            android:text="@string/full_screen_3d"
                             android:fontFamily="@font/jetbrains_mono"
                             android:textSize="12sp"
                             app:cornerRadius="12dp" />
@@ -357,7 +357,7 @@
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
-                android:text="Back to Calculator"
+                android:text="@string/back_to_calc"
                 android:fontFamily="@font/jetbrains_mono"
                 android:textSize="14sp"
                 app:cornerRadius="14dp"
