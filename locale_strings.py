@@ -1882,6 +1882,128 @@ STRINGS = {
         "en": "Unit converter: please select category and units.",
         "zh": "单位换算：请选择类别和单位。",
     },
+
+    # ---- Number Theory Calculator ----
+    "sec_number_theory": {
+        "en": "Number Theory Calculator",
+        "zh": "数论计算器",
+    },
+    "label_nt_n": {
+        "en": "n:",
+        "zh": "n：",
+    },
+    "label_nt_a": {
+        "en": "a:",
+        "zh": "a：",
+    },
+    "label_nt_b": {
+        "en": "b:",
+        "zh": "b：",
+    },
+    "label_nt_base": {
+        "en": "base:",
+        "zh": "底数：",
+    },
+    "label_nt_exp": {
+        "en": "exp:",
+        "zh": "指数：",
+    },
+    "label_nt_mod": {
+        "en": "mod:",
+        "zh": "模：",
+    },
+    "label_nt_count": {
+        "en": "count:",
+        "zh": "个数：",
+    },
+    "btn_nt_factorize": {
+        "en": "Factorize",
+        "zh": "因式分解",
+    },
+    "btn_nt_is_prime": {
+        "en": "Is Prime?",
+        "zh": "是否素数？",
+    },
+    "btn_nt_gcd": {
+        "en": "GCD(a,b)",
+        "zh": "GCD(a,b)",
+    },
+    "btn_nt_lcm": {
+        "en": "LCM(a,b)",
+        "zh": "LCM(a,b)",
+    },
+    "btn_nt_fibonacci": {
+        "en": "Fibonacci(n)",
+        "zh": "Fibonacci(n)",
+    },
+    "btn_nt_mod_pow": {
+        "en": "modPow",
+        "zh": "模幂",
+    },
+    "btn_nt_totient": {
+        "en": "φ(n)",
+        "zh": "φ(n)",
+    },
+    "btn_nt_clear": {
+        "en": "Clear",
+        "zh": "清除",
+    },
+    "label_nt_result": {
+        "en": "Result:",
+        "zh": "结果：",
+    },
+    "status_nt_prime": {
+        "en": "{0} is prime",
+        "zh": "{0} 是素数",
+    },
+    "status_nt_composite": {
+        "en": "{0} is composite = {1}",
+        "zh": "{0} 是合数 = {1}",
+    },
+    "status_nt_gcd": {
+        "en": "gcd({0}, {1}) = {2}",
+        "zh": "gcd({0}, {1}) = {2}",
+    },
+    "status_nt_lcm": {
+        "en": "lcm({0}, {1}) = {2}",
+        "zh": "lcm({0}, {1}) = {2}",
+    },
+    "status_nt_fibonacci": {
+        "en": "fibonacci({0}) = {1}",
+        "zh": "fibonacci({0}) = {1}",
+    },
+    "status_nt_mod_pow": {
+        "en": "{0}^{1} mod {2} = {3}",
+        "zh": "{0}^{1} mod {2} = {3}",
+    },
+    "status_nt_totient": {
+        "en": "φ({0}) = {1}",
+        "zh": "φ({0}) = {1}",
+    },
+    "status_nt_factorize": {
+        "en": "{0} = {1}",
+        "zh": "{0} = {1}",
+    },
+    "err_nt_input": {
+        "en": "Number Theory Error",
+        "zh": "数论错误",
+    },
+    "msg_nt_invalid_n": {
+        "en": "Please enter a valid positive integer for n.",
+        "zh": "请输入有效的正整数 n。",
+    },
+    "msg_nt_invalid_ab": {
+        "en": "Please enter valid integers for a and b.",
+        "zh": "请输入有效的整数 a 和 b。",
+    },
+    "msg_nt_invalid_modpow": {
+        "en": "Please enter valid base, exponent, and modulus (mod > 0).",
+        "zh": "请输入有效的底数、指数和模数（模 > 0）。",
+    },
+    "msg_nt_n_too_large": {
+        "en": "n is too large (max 10^12 for factorization).",
+        "zh": "n 太大（因式分解最大支持 10^12）。",
+    },
 }
 
 

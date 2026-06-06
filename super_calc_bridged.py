@@ -1078,6 +1078,79 @@ class SuperCalcApp:
         ttk.Entry(crow6, textvariable=self._var_complex_result, width=30,
                   font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
 
+        # --- Number Theory Calculator ---
+        frm_nt = ttk.LabelFrame(scroll_frame, text=t("sec_number_theory"),
+                                style="Dark.TLabelframe")
+        frm_nt.pack(fill=tk.X, padx=8, pady=4)
+
+        # Row 1: n input
+        nt_row1 = ttk.Frame(frm_nt, style="Dark.TFrame")
+        nt_row1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(nt_row1, text=t("label_nt_n"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_nt_n = tk.StringVar(value="12")
+        ttk.Entry(nt_row1, textvariable=self._var_nt_n, width=15,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
+        ttk.Button(nt_row1, text=t("btn_nt_factorize"),
+                   command=self._on_nt_factorize).pack(side=tk.LEFT, padx=2)
+        ttk.Button(nt_row1, text=t("btn_nt_is_prime"),
+                   command=self._on_nt_is_prime).pack(side=tk.LEFT, padx=2)
+
+        # Row 2: a, b inputs for GCD/LCM
+        nt_row2 = ttk.Frame(frm_nt, style="Dark.TFrame")
+        nt_row2.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(nt_row2, text=t("label_nt_a"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_nt_a = tk.StringVar(value="12")
+        ttk.Entry(nt_row2, textvariable=self._var_nt_a, width=10,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
+        ttk.Label(nt_row2, text=t("label_nt_b"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_nt_b = tk.StringVar(value="18")
+        ttk.Entry(nt_row2, textvariable=self._var_nt_b, width=10,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
+        ttk.Button(nt_row2, text=t("btn_nt_gcd"),
+                   command=self._on_nt_gcd).pack(side=tk.LEFT, padx=2)
+        ttk.Button(nt_row2, text=t("btn_nt_lcm"),
+                   command=self._on_nt_lcm).pack(side=tk.LEFT, padx=2)
+
+        # Row 3: Fibonacci
+        nt_row3 = ttk.Frame(frm_nt, style="Dark.TFrame")
+        nt_row3.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(nt_row3, text=t("label_nt_count"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_nt_fib_count = tk.StringVar(value="20")
+        ttk.Entry(nt_row3, textvariable=self._var_nt_fib_count, width=10,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
+        ttk.Button(nt_row3, text=t("btn_nt_fibonacci"),
+                   command=self._on_nt_fibonacci).pack(side=tk.LEFT, padx=2)
+        ttk.Button(nt_row3, text=t("btn_nt_totient"),
+                   command=self._on_nt_totient).pack(side=tk.LEFT, padx=2)
+
+        # Row 4: modPow: base^exp mod m
+        nt_row4 = ttk.Frame(frm_nt, style="Dark.TFrame")
+        nt_row4.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(nt_row4, text=t("label_nt_base"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_nt_modpow_base = tk.StringVar(value="2")
+        ttk.Entry(nt_row4, textvariable=self._var_nt_modpow_base, width=8,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+        ttk.Label(nt_row4, text=t("label_nt_exp"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_nt_modpow_exp = tk.StringVar(value="10")
+        ttk.Entry(nt_row4, textvariable=self._var_nt_modpow_exp, width=8,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+        ttk.Label(nt_row4, text=t("label_nt_mod"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_nt_modpow_mod = tk.StringVar(value="1000")
+        ttk.Entry(nt_row4, textvariable=self._var_nt_modpow_mod, width=8,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+        ttk.Button(nt_row4, text=t("btn_nt_mod_pow"),
+                   command=self._on_nt_mod_pow).pack(side=tk.LEFT, padx=2)
+
+        # Row 5: Result display
+        nt_row5 = ttk.Frame(frm_nt, style="Dark.TFrame")
+        nt_row5.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Label(nt_row5, text=t("label_nt_result"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_nt_result = tk.StringVar(value="")
+        ttk.Entry(nt_row5, textvariable=self._var_nt_result, width=40,
+                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+        ttk.Button(nt_row5, text=t("btn_nt_clear"),
+                   command=self._on_nt_clear).pack(side=tk.LEFT, padx=2)
+
         # --- Unit Converter ---
         UNIT_CATEGORIES = {
             "Length": {
@@ -3968,6 +4041,219 @@ class SuperCalcApp:
         z = self._parse_complex(self._var_complex_z.get())
         if z is not None:
             self._show_complex_result(f"Im(z) = {z.imag:.10g}")
+
+    # ------------------------------------------------------------------
+    #  Number Theory Calculator
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _nt_is_prime(n):
+        if n < 2:
+            return False
+        if n < 4:
+            return True
+        if n % 2 == 0 or n % 3 == 0:
+            return False
+        i = 5
+        while i * i <= n:
+            if n % i == 0 or n % (i + 2) == 0:
+                return False
+            i += 6
+        return True
+
+    @staticmethod
+    def _nt_factorize(n):
+        factors = []
+        d = 2
+        while d * d <= n:
+            while n % d == 0:
+                factors.append(d)
+                n //= d
+            d += 1
+        if n > 1:
+            factors.append(n)
+        return factors
+
+    @staticmethod
+    def _nt_format_factors(factors):
+        if not factors:
+            return "1"
+        parts = []
+        i = 0
+        while i < len(factors):
+            p = factors[i]
+            count = 1
+            while i + count < len(factors) and factors[i + count] == p:
+                count += 1
+            if count == 1:
+                parts.append(str(p))
+            else:
+                parts.append(f"{p}^{count}")
+            i += count
+        return " × ".join(parts)
+
+    @staticmethod
+    def _nt_gcd(a, b):
+        a, b = abs(a), abs(b)
+        while b:
+            a, b = b, a % b
+        return a
+
+    @staticmethod
+    def _nt_lcm(a, b):
+        if a == 0 or b == 0:
+            return 0
+        return abs(a * b) // SuperCalcApp._nt_gcd(a, b)
+
+    @staticmethod
+    def _nt_fibonacci(n):
+        if n <= 0:
+            return 0
+        if n == 1:
+            return 0
+        if n == 2:
+            return 1
+        a, b = 0, 1
+        for _ in range(2, n):
+            a, b = b, a + b
+        return b
+
+    @staticmethod
+    def _nt_mod_pow(base, exp, mod):
+        if mod <= 0:
+            raise ValueError("mod must be positive")
+        result = 1
+        base = base % mod
+        while exp > 0:
+            if exp % 2 == 1:
+                result = (result * base) % mod
+            exp >>= 1
+            base = (base * base) % mod
+        return result
+
+    @staticmethod
+    def _nt_totient(n):
+        if n <= 0:
+            return 0
+        result = n
+        p = 2
+        temp = n
+        while p * p <= temp:
+            if temp % p == 0:
+                while temp % p == 0:
+                    temp //= p
+                result -= result // p
+            p += 1
+        if temp > 1:
+            result -= result // temp
+        return result
+
+    def _nt_show_result(self, result_str):
+        self._var_nt_result.set(result_str)
+
+    def _on_nt_factorize(self):
+        try:
+            n = int(self._var_nt_n.get().strip())
+        except ValueError:
+            messagebox.showerror(t("err_nt_input"), t("msg_nt_invalid_n"))
+            return
+        if n <= 0:
+            messagebox.showerror(t("err_nt_input"), t("msg_nt_invalid_n"))
+            return
+        if n > 10**12:
+            messagebox.showerror(t("err_nt_input"), t("msg_nt_n_too_large"))
+            return
+        factors = self._nt_factorize(n)
+        formatted = self._nt_format_factors(factors)
+        self._nt_show_result(formatted)
+        self.status_var.set(t("status_nt_factorize", n, formatted))
+
+    def _on_nt_is_prime(self):
+        try:
+            n = int(self._var_nt_n.get().strip())
+        except ValueError:
+            messagebox.showerror(t("err_nt_input"), t("msg_nt_invalid_n"))
+            return
+        if n <= 0:
+            messagebox.showerror(t("err_nt_input"), t("msg_nt_invalid_n"))
+            return
+        if self._nt_is_prime(n):
+            self._nt_show_result(f"{n} is prime")
+            self.status_var.set(t("status_nt_prime", n))
+        else:
+            factors = self._nt_factorize(n)
+            formatted = self._nt_format_factors(factors)
+            self._nt_show_result(f"{n} = {formatted}")
+            self.status_var.set(t("status_nt_composite", n, formatted))
+
+    def _on_nt_gcd(self):
+        try:
+            a = int(self._var_nt_a.get().strip())
+            b = int(self._var_nt_b.get().strip())
+        except ValueError:
+            messagebox.showerror(t("err_nt_input"), t("msg_nt_invalid_ab"))
+            return
+        result = self._nt_gcd(a, b)
+        self._nt_show_result(str(result))
+        self.status_var.set(t("status_nt_gcd", a, b, result))
+
+    def _on_nt_lcm(self):
+        try:
+            a = int(self._var_nt_a.get().strip())
+            b = int(self._var_nt_b.get().strip())
+        except ValueError:
+            messagebox.showerror(t("err_nt_input"), t("msg_nt_invalid_ab"))
+            return
+        result = self._nt_lcm(a, b)
+        self._nt_show_result(str(result))
+        self.status_var.set(t("status_nt_lcm", a, b, result))
+
+    def _on_nt_fibonacci(self):
+        try:
+            count = int(self._var_nt_fib_count.get().strip())
+        except ValueError:
+            messagebox.showerror(t("err_nt_input"), t("msg_nt_invalid_n"))
+            return
+        if count <= 0 or count > 1000:
+            messagebox.showerror(t("err_nt_input"), t("msg_nt_invalid_n"))
+            return
+        seq = [self._nt_fibonacci(i) for i in range(1, count + 1)]
+        if count <= 20:
+            result_str = ", ".join(str(x) for x in seq)
+        else:
+            result_str = ", ".join(str(x) for x in seq[:15]) + f", ... ({count} terms)"
+        self._nt_show_result(result_str)
+        self.status_var.set(t("status_nt_fibonacci", count, seq[-1]))
+
+    def _on_nt_mod_pow(self):
+        try:
+            base = int(self._var_nt_modpow_base.get().strip())
+            exp = int(self._var_nt_modpow_exp.get().strip())
+            mod = int(self._var_nt_modpow_mod.get().strip())
+        except ValueError:
+            messagebox.showerror(t("err_nt_input"), t("msg_nt_invalid_modpow"))
+            return
+        if mod <= 0:
+            messagebox.showerror(t("err_nt_input"), t("msg_nt_invalid_modpow"))
+            return
+        result = self._nt_mod_pow(base, exp, mod)
+        self._nt_show_result(str(result))
+        self.status_var.set(t("status_nt_mod_pow", base, exp, mod, result))
+
+    def _on_nt_totient(self):
+        try:
+            n = int(self._var_nt_n.get().strip())
+        except ValueError:
+            messagebox.showerror(t("err_nt_input"), t("msg_nt_invalid_n"))
+            return
+        if n <= 0:
+            messagebox.showerror(t("err_nt_input"), t("msg_nt_invalid_n"))
+            return
+        result = self._nt_totient(n)
+        self._nt_show_result(str(result))
+        self.status_var.set(t("status_nt_totient", n, result))
+
+    def _on_nt_clear(self):
+        self._var_nt_result.set("")
 
     # ------------------------------------------------------------------
     #  Unit Converter Operations
