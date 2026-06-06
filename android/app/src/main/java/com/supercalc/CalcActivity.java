@@ -3,6 +3,8 @@ package com.supercalc;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -1919,17 +1921,52 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     // Unit Converter
-    private EditText unitCategoryInput, unitFromInput, unitToInput, unitValueInput, unitResultInput;
+    private AutoCompleteTextView unitCategoryDropdown, unitFromDropdown, unitToDropdown;
+    private EditText unitValueInput, unitResultInput;
+    private ArrayAdapter<String> unitCategoryAdapter, unitFromAdapter, unitToAdapter;
 
     private void setupUnitConverter() {
-        unitCategoryInput = findViewById(R.id.unit_category_input);
-        unitFromInput = findViewById(R.id.unit_from_input);
-        unitToInput = findViewById(R.id.unit_to_input);
+        unitCategoryDropdown = findViewById(R.id.unit_category_dropdown);
+        unitFromDropdown = findViewById(R.id.unit_from_dropdown);
+        unitToDropdown = findViewById(R.id.unit_to_dropdown);
         unitValueInput = findViewById(R.id.unit_value_input);
         unitResultInput = findViewById(R.id.unit_result_input);
 
+        // Category adapter
+        java.util.List<String> categories = new java.util.ArrayList<>(UNIT_DATA.keySet());
+        unitCategoryAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, categories);
+        unitCategoryDropdown.setAdapter(unitCategoryAdapter);
+        unitCategoryDropdown.setText(categories.get(0), false);
+
+        // From/To adapters — populated based on selected category
+        unitFromAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, new java.util.ArrayList<>());
+        unitToAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, new java.util.ArrayList<>());
+        unitFromDropdown.setAdapter(unitFromAdapter);
+        unitToDropdown.setAdapter(unitToAdapter);
+
+        // Refresh from/to when category changes
+        unitCategoryDropdown.setOnItemClickListener((parent, view, position, id) -> {
+            String cat = unitCategoryAdapter.getItem(position);
+            updateUnitDropdowns(cat);
+        });
+
+        // Initialize from/to for default category
+        updateUnitDropdowns(categories.get(0));
+
         MaterialButton btnUnitConvert = findViewById(R.id.btn_unit_convert);
         btnUnitConvert.setOnClickListener(v -> onUnitConvert());
+    }
+
+    private void updateUnitDropdowns(String category) {
+        java.util.Map<String, Double> units = UNIT_DATA.get(category);
+        if (units == null) return;
+        java.util.List<String> unitNames = new java.util.ArrayList<>(units.keySet());
+        unitFromAdapter.clear();
+        unitFromAdapter.addAll(unitNames);
+        unitToAdapter.clear();
+        unitToAdapter.addAll(unitNames);
+        unitFromDropdown.setText(unitNames.get(0), false);
+        unitToDropdown.setText(unitNames.size() > 1 ? unitNames.get(1) : unitNames.get(0), false);
     }
 
     private static final java.util.Map<String, java.util.Map<String, Double>> UNIT_DATA = new java.util.HashMap<>();
@@ -2033,9 +2070,9 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private void onUnitConvert() {
-        String category = unitCategoryInput.getText().toString().trim();
-        String fromUnit = unitFromInput.getText().toString().trim();
-        String toUnit = unitToInput.getText().toString().trim();
+        String category = unitCategoryDropdown.getText().toString().trim();
+        String fromUnit = unitFromDropdown.getText().toString().trim();
+        String toUnit = unitToDropdown.getText().toString().trim();
         String valueStr = unitValueInput.getText().toString().trim();
 
         if (category.isEmpty() || fromUnit.isEmpty() || toUnit.isEmpty()) {
