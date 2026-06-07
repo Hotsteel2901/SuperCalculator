@@ -67,6 +67,7 @@
     - **曲线拟合 / 回归分析** — 支持多种数据拟合模型：线性 (y=ax+b)、多项式（可配置阶数）、指数 (y=ae^(bx))、幂函数 (y=ax^b) 和对数 (y=a+b·ln(x))。显示方程、R² 拟合优度、散点图 + 拟合曲线可视化。桌面端（Python/numpy）与 Android 端（Java）均已同步。
     - **统计分布计算器** — 计算 6 种常见概率分布的 PDF/PMF、CDF 和 PPF（逆 CDF）：正态分布（高斯）、学生 t 分布、卡方分布、F 分布、二项分布和泊松分布。支持参数化输入、分布绘图和多参数对比可视化。桌面端（Python）与 Android 端（Java）均已同步。
     - **数论计算器** — 支持整数因式分解、素数判定（试除法）、最大公约数/最小公倍数、Fibonacci 数列、模幂运算（快速二进制幂）和欧拉函数 φ(n)。桌面端（Python）与 Android 端（Java）均已同步。
+    - **进制转换器** — 支持二进制（2）、八进制（8）、十进制（10）、十六进制（16）以及 2-36 任意进制之间的数字转换。支持同时显示所有常用进制的转换结果，支持负数。项目主页提供交互式网页演示。桌面端（Python）与 Android 端（Java）均已同步。
     - **Windows EXE** — 提供独立 Windows 可执行文件，无需安装 Python
  - **Android 应用** — 独立 APK，Material Design 3 界面 + JNI 桥接，现已支持 3D 曲面绘图与触控旋转及参数曲线绘制
  - **中文语言支持** — 桌面端（Python）与 Android 端均支持完整中文 (zh-CN) 本地化。桌面端自动检测系统语言或通过环境变量 `SUPERCALC_LANG=zh` 指定。Android 端跟随系统语言自动切换。
@@ -168,6 +169,7 @@ SuperCalculator/
 
 ## 更新日志
 
+- **进制转换器** — 支持二进制、八进制、十进制与十六进制之间的数字转换，同时支持 2-36 任意进制。支持同时显示所有常用进制的转换结果，支持负数，项目主页提供交互式网页演示。桌面端（Python）与 Android 端（Java）均已同步。
 - **统计分布计算器** — 计算 6 种常见概率分布的 PDF/PMF、CDF 和 PPF（逆 CDF）：正态分布（高斯）、学生 t 分布、卡方分布、F 分布、二项分布和泊松分布。支持参数化输入、分布绘图和多参数对比可视化。桌面端（Python）与 Android 端（Java）均已同步。
 - **中文语言支持** — 桌面端与 Android 端均支持完整中文 (zh-CN) 本地化。桌面端使用 `locale_strings.py` 模块，自动检测系统语言（或通过 `SUPERCALC_LANG` 环境变量指定）。Android 端使用标准 `values-zh-rCN/` 字符串资源，跟随系统语言自动切换。所有界面标签、按钮、错误提示和对话框文本均已翻译。
 - **曲线拟合 / 回归分析** — 支持线性、多项式、指数、幂函数和对数拟合模型，显示方程与 R² 拟合优度，支持散点图 + 拟合曲线可视化。桌面端（Python/numpy）与 Android 端（Java）均已同步。
@@ -307,6 +309,13 @@ result = CalcEngine.power_regression(xs, ys)
 
 result = CalcEngine.logarithmic_regression(xs, ys)
 # result -> {'a': ..., 'b': ..., 'r_squared': ..., 'equation': '...', 'xs_fit': [...], 'ys_fit': [...]}
+
+# 进制转换
+result = CalcEngine.convert_base("FF", 16, 10)    # -> "255"
+result = CalcEngine.convert_base("255", 10, 2)     # -> "11111111"
+result = CalcEngine.convert_base_all("255", 10)     # -> {'bin': '11111111', 'oct': '377', 'dec': '255', 'hex': 'FF'}
+value = CalcEngine.base_to_long("FF", 16)           # -> 255
+result = CalcEngine.long_to_base(255, 16)           # -> "FF"
 ```
 
 ## 数值方法

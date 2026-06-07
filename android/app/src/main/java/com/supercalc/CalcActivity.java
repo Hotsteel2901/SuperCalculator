@@ -264,6 +264,9 @@ public class CalcActivity extends AppCompatActivity {
         // Unit Converter
         setupUnitConverter();
 
+        // Base Converter
+        setupBaseConverter();
+
         // Statistical Distribution Calculator
         setupDistCalc();
     }
@@ -2138,6 +2141,49 @@ public class CalcActivity extends AppCompatActivity {
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    private void setupBaseConverter() {
+        EditText baseInput = findViewById(R.id.base_input);
+        AutoCompleteTextView baseFromDropdown = findViewById(R.id.base_from_dropdown);
+        MaterialButton btnBaseConvert = findViewById(R.id.btn_base_convert);
+        TextView baseBinResult = findViewById(R.id.base_bin_result);
+        TextView baseOctResult = findViewById(R.id.base_oct_result);
+        TextView baseDecResult = findViewById(R.id.base_dec_result);
+        TextView baseHexResult = findViewById(R.id.base_hex_result);
+
+        String[] bases = {"2", "8", "10", "16"};
+        ArrayAdapter<String> baseAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, bases);
+        baseFromDropdown.setAdapter(baseAdapter);
+        baseFromDropdown.setText("10", false);
+
+        btnBaseConvert.setOnClickListener(v -> {
+            String input = baseInput.getText().toString().trim();
+            if (input.isEmpty()) {
+                Toast.makeText(this, R.string.toast_base_invalid, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            int fromBase;
+            try {
+                fromBase = Integer.parseInt(baseFromDropdown.getText().toString());
+            } catch (NumberFormatException e) {
+                fromBase = 10;
+            }
+
+            try {
+                long value = CalcEngine.baseToLong(input, fromBase);
+                baseBinResult.setText(CalcEngine.longToBase(value, 2));
+                baseOctResult.setText(CalcEngine.longToBase(value, 8));
+                baseDecResult.setText(CalcEngine.longToBase(value, 10));
+                baseHexResult.setText(CalcEngine.longToBase(value, 16));
+            } catch (Exception e) {
+                Toast.makeText(this, R.string.toast_base_invalid, Toast.LENGTH_SHORT).show();
+                baseBinResult.setText("");
+                baseOctResult.setText("");
+                baseDecResult.setText("");
+                baseHexResult.setText("");
+            }
+        });
     }
 
     private void setupUnitConverter() {

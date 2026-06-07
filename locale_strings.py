@@ -2004,6 +2004,72 @@ STRINGS = {
         "en": "n is too large (max 10^12 for factorization).",
         "zh": "n 太大（因式分解最大支持 10^12）。",
     },
+
+    # ---- Base Number Converter ----
+    "sec_base_converter": {
+        "en": "Base Number Converter",
+        "zh": "进制转换器",
+    },
+    "label_base_input": {
+        "en": "Input number:",
+        "zh": "输入数字：",
+    },
+    "label_base_from": {
+        "en": "From base:",
+        "zh": "源进制：",
+    },
+    "label_base_to": {
+        "en": "To base:",
+        "zh": "目标进制：",
+    },
+    "btn_base_convert": {
+        "en": "Convert",
+        "zh": "转换",
+    },
+    "btn_base_clear": {
+        "en": "Clear",
+        "zh": "清除",
+    },
+    "label_base_result": {
+        "en": "Result:",
+        "zh": "结果：",
+    },
+    "label_base_all": {
+        "en": "All bases:",
+        "zh": "所有进制：",
+    },
+    "label_base_binary": {
+        "en": "Binary (2):",
+        "zh": "二进制 (2)：",
+    },
+    "label_base_octal": {
+        "en": "Octal (8):",
+        "zh": "八进制 (8)：",
+    },
+    "label_base_decimal": {
+        "en": "Decimal (10):",
+        "zh": "十进制 (10)：",
+    },
+    "label_base_hex": {
+        "en": "Hex (16):",
+        "zh": "十六进制 (16)：",
+    },
+    "status_base_convert": {
+        "en": "{0} (base {1}) = {2} (base {3})",
+        "zh": "{0} (进制{1}) = {2} (进制{3})",
+    },
+    "err_base": {
+        "en": "Base Conversion Error",
+        "zh": "进制转换错误",
+    },
+    "msg_base_invalid_input": {
+        "en": "Invalid input for the given base.",
+        "zh": "输入内容在该进制下无效。",
+    },
+    "msg_base_invalid_base": {
+        "en": "Base must be between 2 and 36.",
+        "zh": "进制必须在 2 到 36 之间。",
+    },
 }
 
 

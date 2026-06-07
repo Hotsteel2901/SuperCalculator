@@ -1259,8 +1259,123 @@ EXPORT int solve_system_2d(const char* f_expr, const char* g_expr,
     return 0;
 }
 
+/* --------------------------------------------------------------------------
+ *  Base Number Converter
+ *  Converts integer numbers between different bases (2-36).
+ *  Supports binary (2), octal (8), decimal (10), hexadecimal (16),
+ *  and any base from 2 to 36.
+ * -------------------------------------------------------------------------- */
+
+EXPORT long long base_to_long(const char* str, int base) {
+    if (!str || base < 2 || base > 36) return 0;
+    clear_error();
+    long long result = 0;
+    int negative = 0;
+    const char* p = str;
+
+    while (*p == ' ' || *p == '\t') p++;
+    if (*p == '-') { negative = 1; p++; }
+    else if (*p == '+') { p++; }
+
+    if (*p == '0' && (*(p+1) == 'x' || *(p+1) == 'X')) {
+        if (base == 16) p += 2;
+    }
+
+    while (*p) {
+        int digit;
+        if (*p >= '0' && *p <= '9') digit = *p - '0';
+        else if (*p >= 'a' && *p <= 'z') digit = *p - 'a' + 10;
+        else if (*p >= 'A' && *p <= 'Z') digit = *p - 'A' + 10;
+        else break;
+
+        if (digit >= base) {
+            set_error("Invalid digit for the given base");
+            return 0;
+        }
+        result = result * base + digit;
+        p++;
+    }
+
+    return negative ? -result : result;
+}
+
+EXPORT int long_to_base(long long n, int base, char* output, int max_out) {
+    if (!output || max_out <= 0) return 0;
+    if (base < 2 || base > 36) { set_error("Base must be between 2 and 36"); return 0; }
+    clear_error();
+
+    char temp[66];
+    int i = 0;
+    int negative = 0;
+    unsigned long long un;
+
+    if (n < 0) { negative = 1; un = (unsigned long long)(-n); }
+    else { un = (unsigned long long)n; }
+
+    if (un == 0) {
+        temp[i++] = '0';
+    } else {
+        while (un > 0 && i < 64) {
+            int digit = un % base;
+            temp[i++] = (digit < 10) ? ('0' + digit) : ('A' + digit - 10);
+            un /= base;
+        }
+    }
+
+    if (negative && i < max_out - 1) {
+        temp[i++] = '-';
+    }
+
+    int len = i;
+    if (len >= max_out) { set_error("Output buffer too small"); return 0; }
+
+    for (int j = 0; j < len; j++) {
+        output[j] = temp[len - 1 - j];
+    }
+    output[len] = '\0';
+    return len;
+}
+
+EXPORT int convert_base(const char* input, int from_base, int to_base,
+                         char* output, int max_out) {
+    if (!input || !output || max_out <= 0) return 0;
+    if (from_base < 2 || from_base > 36 || to_base < 2 || to_base > 36) {
+        set_error("Base must be between 2 and 36");
+        return 0;
+    }
+    clear_error();
+
+    long long value = base_to_long(input, from_base);
+    if (g_error[0] != '\0') return 0;
+
+    return long_to_base(value, to_base, output, max_out);
+}
+
+EXPORT void convert_base_all(const char* input, int from_base,
+                              char* bin, int bin_max,
+                              char* oct, int oct_max,
+                              char* dec, int dec_max,
+                              char* hex, int hex_max) {
+    if (!input) return;
+    clear_error();
+
+    long long value = base_to_long(input, from_base);
+    if (g_error[0] != '\0') {
+        if (bin && bin_max > 0) bin[0] = '\0';
+        if (oct && oct_max > 0) oct[0] = '\0';
+        if (dec && dec_max > 0) dec[0] = '\0';
+        if (hex && hex_max > 0) hex[0] = '\0';
+        return;
+    }
+
+    if (bin) long_to_base(value, 2, bin, bin_max);
+    if (oct) long_to_base(value, 8, oct, oct_max);
+    if (dec) long_to_base(value, 10, dec, dec_max);
+    if (hex) long_to_base(value, 16, hex, hex_max);
+}
+
 EXPORT void complex_array_evaluate(const char* expr, const double* xs, const double* ys,
-                                   double* out_re, double* out_im, int n) {
+                                    double* out_re, double* out_im, int n) {
     if (!expr || !xs || !ys || !out_re || !out_im || n <= 0) return;
     clear_error();
     int any_failed = 0;
