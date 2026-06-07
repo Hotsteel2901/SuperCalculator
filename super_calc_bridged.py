@@ -300,8 +300,13 @@ class SuperCalcApp:
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         def _on_mousewheel(event):
-            # Windows / macOS
-            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            import platform
+            if platform.system() == "Darwin":
+                # macOS: event.delta is ±1
+                canvas.yview_scroll(int(-1 * event.delta), "units")
+            else:
+                # Windows: event.delta is ±120
+                canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
         def _on_mousewheel_linux(event):
             # Linux (Button-4 = scroll up, Button-5 = scroll down)
@@ -874,7 +879,12 @@ class SuperCalcApp:
                    command=self._on_stats_export_csv).pack(side=tk.LEFT, padx=2)
 
         # --- Statistical Distribution Calculator ---
-        from stat_dist import DISTRIBUTIONS as _STAT_DIST_REGISTRY
+        try:
+            from stat_dist import DISTRIBUTIONS as _STAT_DIST_REGISTRY
+            _HAS_STAT_DIST = True
+        except ImportError:
+            _STAT_DIST_REGISTRY = {}
+            _HAS_STAT_DIST = False
 
         frm_dist = ttk.LabelFrame(scroll_frame, text=t("sec_dist"),
                                   style="Dark.TLabelframe")
@@ -3209,7 +3219,10 @@ class SuperCalcApp:
     # ------------------------------------------------------------------
     def _get_dist_info(self):
         """Get current distribution key and info dict."""
-        from stat_dist import DISTRIBUTIONS as _REG
+        try:
+            from stat_dist import DISTRIBUTIONS as _REG
+        except ImportError:
+            return None, None
         display_name = self._var_dist_type.get()
         key = self._dist_names_map.get(display_name)
         if key is None or key not in _REG:
@@ -3218,7 +3231,10 @@ class SuperCalcApp:
 
     def _get_dist_params(self):
         """Get current parameter values as a dict."""
-        from stat_dist import DISTRIBUTIONS as _REG
+        try:
+            from stat_dist import DISTRIBUTIONS as _REG
+        except ImportError:
+            return None
         display_name = self._var_dist_type.get()
         key = self._dist_names_map.get(display_name)
         if key is None:

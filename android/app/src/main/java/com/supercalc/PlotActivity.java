@@ -100,6 +100,37 @@ public class PlotActivity extends AppCompatActivity {
         polarThetaMax = new ArrayList<>();
         markedPoints = new ArrayList<>();
         
+        // Restore state if available
+        if (savedInstanceState != null) {
+            ArrayList<String> savedExprs = savedInstanceState.getStringArrayList("expressions");
+            if (savedExprs != null) allExpressions.addAll(savedExprs);
+            ArrayList<Integer> savedColors = savedInstanceState.getIntegerArrayList("colors");
+            if (savedColors != null) curveColors.addAll(savedColors);
+            ArrayList<String> savedTypes = savedInstanceState.getStringArrayList("curve_types");
+            if (savedTypes != null) curveTypes.addAll(savedTypes);
+            ArrayList<String> savedParamX = savedInstanceState.getStringArrayList("param_x_exprs");
+            if (savedParamX != null) parametricXExprs.addAll(savedParamX);
+            ArrayList<String> savedParamY = savedInstanceState.getStringArrayList("param_y_exprs");
+            if (savedParamY != null) parametricYExprs.addAll(savedParamY);
+            ArrayList<String> savedPolar = savedInstanceState.getStringArrayList("polar_exprs");
+            if (savedPolar != null) polarExprs.addAll(savedPolar);
+            colorIndex = savedInstanceState.getInt("color_index", 0);
+            
+            // Restore parametric/polar parameters
+            ArrayList<String> savedParamTMin = savedInstanceState.getStringArrayList("param_t_min");
+            ArrayList<String> savedParamTMax = savedInstanceState.getStringArrayList("param_t_max");
+            if (savedParamTMin != null && savedParamTMax != null) {
+                for (String s : savedParamTMin) parametricTMin.add(Double.parseDouble(s));
+                for (String s : savedParamTMax) parametricTMax.add(Double.parseDouble(s));
+            }
+            ArrayList<String> savedPolarThetaMin = savedInstanceState.getStringArrayList("polar_theta_min");
+            ArrayList<String> savedPolarThetaMax = savedInstanceState.getStringArrayList("polar_theta_max");
+            if (savedPolarThetaMin != null && savedPolarThetaMax != null) {
+                for (String s : savedPolarThetaMin) polarThetaMin.add(Double.parseDouble(s));
+                for (String s : savedPolarThetaMax) polarThetaMax.add(Double.parseDouble(s));
+            }
+        }
+        
         btnAddCurve.setOnClickListener(v -> onAddCurve());
         btnPlot.setOnClickListener(v -> onPlotAll());
         btnRemoveCurve.setOnClickListener(v -> onRemoveCurve());
@@ -670,10 +701,27 @@ public class PlotActivity extends AppCompatActivity {
         outState.putStringArrayList("curve_types", curveTypes);
         outState.putStringArrayList("param_x_exprs", parametricXExprs);
         outState.putStringArrayList("param_y_exprs", parametricYExprs);
+        outState.putStringArrayList("polar_exprs", polarExprs);
         outState.putString("x_min", xMinInput.getText().toString());
         outState.putString("x_max", xMaxInput.getText().toString());
         outState.putString("y_min", yMinInput.getText().toString());
         outState.putString("y_max", yMaxInput.getText().toString());
+        outState.putInt("color_index", colorIndex);
+        
+        // Save parametric and polar parameters
+        ArrayList<String> paramTMinStrs = new ArrayList<>();
+        ArrayList<String> paramTMaxStrs = new ArrayList<>();
+        for (Double d : parametricTMin) paramTMinStrs.add(String.valueOf(d));
+        for (Double d : parametricTMax) paramTMaxStrs.add(String.valueOf(d));
+        outState.putStringArrayList("param_t_min", paramTMinStrs);
+        outState.putStringArrayList("param_t_max", paramTMaxStrs);
+        
+        ArrayList<String> polarThetaMinStrs = new ArrayList<>();
+        ArrayList<String> polarThetaMaxStrs = new ArrayList<>();
+        for (Double d : polarThetaMin) polarThetaMinStrs.add(String.valueOf(d));
+        for (Double d : polarThetaMax) polarThetaMaxStrs.add(String.valueOf(d));
+        outState.putStringArrayList("polar_theta_min", polarThetaMinStrs);
+        outState.putStringArrayList("polar_theta_max", polarThetaMaxStrs);
     }
     
     private int getNextColor() {
@@ -710,18 +758,33 @@ public class PlotActivity extends AppCompatActivity {
         if (idx < curveTypes.size()) {
             String type = curveTypes.remove(idx);
             // Clean up parametric/polar data if applicable
+            // Need to find the correct index in parametric/polar lists
             if ("parametric".equals(type)) {
-                if (idx < parametricXExprs.size()) {
-                    parametricXExprs.remove(idx);
-                    parametricYExprs.remove(idx);
-                    parametricTMin.remove(idx);
-                    parametricTMax.remove(idx);
+                // Count parametric curves before this index
+                int paramIdx = 0;
+                for (int i = 0; i < idx; i++) {
+                    if (i < curveTypes.size() && "parametric".equals(curveTypes.get(i))) {
+                        paramIdx++;
+                    }
+                }
+                if (paramIdx < parametricXExprs.size()) {
+                    parametricXExprs.remove(paramIdx);
+                    parametricYExprs.remove(paramIdx);
+                    parametricTMin.remove(paramIdx);
+                    parametricTMax.remove(paramIdx);
                 }
             } else if ("polar".equals(type)) {
-                if (idx < polarExprs.size()) {
-                    polarExprs.remove(idx);
-                    polarThetaMin.remove(idx);
-                    polarThetaMax.remove(idx);
+                // Count polar curves before this index
+                int polarIdx = 0;
+                for (int i = 0; i < idx; i++) {
+                    if (i < curveTypes.size() && "polar".equals(curveTypes.get(i))) {
+                        polarIdx++;
+                    }
+                }
+                if (polarIdx < polarExprs.size()) {
+                    polarExprs.remove(polarIdx);
+                    polarThetaMin.remove(polarIdx);
+                    polarThetaMax.remove(polarIdx);
                 }
             }
         }

@@ -897,7 +897,7 @@ STRINGS = {
         "en": "Limit Error",
         "zh": "极限错误",
     },
-    "warn_limit_dne": {
+    "err_limit_dne": {
         "en": "Limit Does Not Exist",
         "zh": "极限不存在",
     },

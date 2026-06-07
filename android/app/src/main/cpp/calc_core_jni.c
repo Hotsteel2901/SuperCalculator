@@ -775,11 +775,15 @@ Java_com_supercalc_CalcEngine_convertBaseAll(JNIEnv* env, jclass clazz,
     long_to_base(value, 16, bufHex, sizeof(bufHex));
 
     jclass hashMapClass = (*env)->FindClass(env, "java/util/HashMap");
+    if (!hashMapClass) return NULL;
     jmethodID initMethod = (*env)->GetMethodID(env, hashMapClass, "<init>", "(I)V");
+    if (!initMethod) { (*env)->DeleteLocalRef(env, hashMapClass); return NULL; }
     jmethodID putMethod = (*env)->GetMethodID(env, hashMapClass, "put",
         "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+    if (!putMethod) { (*env)->DeleteLocalRef(env, hashMapClass); return NULL; }
 
     jobject result = (*env)->NewObject(env, hashMapClass, initMethod, 4);
+    if (!result) { (*env)->DeleteLocalRef(env, hashMapClass); return NULL; }
 
     jstring keyBin = (*env)->NewStringUTF(env, "bin");
     jstring keyOct = (*env)->NewStringUTF(env, "oct");
@@ -789,6 +793,12 @@ Java_com_supercalc_CalcEngine_convertBaseAll(JNIEnv* env, jclass clazz,
     jstring valOct = (*env)->NewStringUTF(env, bufOct);
     jstring valDec = (*env)->NewStringUTF(env, bufDec);
     jstring valHex = (*env)->NewStringUTF(env, bufHex);
+
+    if (!keyBin || !keyOct || !keyDec || !keyHex || !valBin || !valOct || !valDec || !valHex) {
+        (*env)->DeleteLocalRef(env, result);
+        (*env)->DeleteLocalRef(env, hashMapClass);
+        return NULL;
+    }
 
     (*env)->CallObjectMethod(env, result, putMethod, keyBin, valBin);
     (*env)->CallObjectMethod(env, result, putMethod, keyOct, valOct);

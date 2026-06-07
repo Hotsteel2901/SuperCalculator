@@ -2,7 +2,7 @@
 <resources>
     <!-- App identity -->
     <string name="app_name">SuperCalc</string>
-    <string name="app_subtitle">光谱计算器</string>
+    <string name="app_subtitle">超级计算器</string>
     <string name="app_version">SuperCalc v1.0.1</string>
 
     <!-- Main calculator layout -->
