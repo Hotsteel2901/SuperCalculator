@@ -2070,6 +2070,96 @@ STRINGS = {
         "en": "Base must be between 2 and 36.",
         "zh": "进制必须在 2 到 36 之间。",
     },
+
+    # ---- Perpetual Calendar / Date Calculator ----
+    "sec_calendar": {
+        "en": "Perpetual Calendar",
+        "zh": "万年历",
+    },
+    "label_cal_date": {
+        "en": "Date (YYYY-MM-DD):",
+        "zh": "日期（年-月-日）：",
+    },
+    "label_cal_year": {
+        "en": "Year:",
+        "zh": "年：",
+    },
+    "label_cal_month": {
+        "en": "Month:",
+        "zh": "月：",
+    },
+    "label_cal_day": {
+        "en": "Day:",
+        "zh": "日：",
+    },
+    "label_cal_date2": {
+        "en": "End date (YYYY-MM-DD):",
+        "zh": "结束日期（年-月-日）：",
+    },
+    "label_cal_year2": {
+        "en": "End year:",
+        "zh": "结束年：",
+    },
+    "label_cal_month2": {
+        "en": "End month:",
+        "zh": "结束月：",
+    },
+    "label_cal_day2": {
+        "en": "End day:",
+        "zh": "结束日：",
+    },
+    "label_cal_add_days": {
+        "en": "Add days:",
+        "zh": "加上天数：",
+    },
+    "btn_cal_day_of_week": {
+        "en": "Day of Week",
+        "zh": "查询星期",
+    },
+    "btn_cal_diff": {
+        "en": "Date Difference",
+        "zh": "日期差",
+    },
+    "btn_cal_add_days": {
+        "en": "Add/Subtract Days",
+        "zh": "加减天数",
+    },
+    "btn_cal_today": {
+        "en": "Today",
+        "zh": "今天",
+    },
+    "btn_cal_clear": {
+        "en": "Clear",
+        "zh": "清除",
+    },
+    "status_cal_day_of_week": {
+        "en": "{0}-{1}-{2} is a {3}",
+        "zh": "{0}年{1}月{2}日是星期{3}",
+    },
+    "status_cal_diff": {
+        "en": "Days between dates: {0}",
+        "zh": "两日期相差：{0} 天",
+    },
+    "status_cal_add": {
+        "en": "{0} + {1} days = {2}",
+        "zh": "{0} 加 {1} 天 = {2}",
+    },
+    "err_cal": {
+        "en": "Date Error",
+        "zh": "日期错误",
+    },
+    "msg_cal_invalid_date": {
+        "en": "Invalid date. Please check year, month, and day.",
+        "zh": "无效日期，请检查年、月、日。",
+    },
+    "msg_cal_invalid_input": {
+        "en": "Invalid input. Please enter valid numbers.",
+        "zh": "无效输入，请输入有效数字。",
+    },
+    "msg_cal_date_range": {
+        "en": "Year must be 1-9999, Month 1-12, Day 1-31.",
+        "zh": "年份1-9999，月份1-12，日期1-31。",
+    },
 }
 
 

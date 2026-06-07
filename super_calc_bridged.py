@@ -1296,6 +1296,57 @@ class SuperCalcApp:
         # Initialize unit dropdowns
         self._on_unit_category_change()
 
+        # --- Perpetual Calendar ---
+        frm_cal = ttk.LabelFrame(scroll_frame, text=t("sec_calendar"),
+                                  style="Dark.TLabelframe")
+        frm_cal.pack(fill=tk.X, padx=8, pady=4)
+
+        # Row 1: Date 1 (YYYY-MM-DD)
+        cal_row1 = ttk.Frame(frm_cal, style="Dark.TFrame")
+        cal_row1.pack(fill=tk.X, padx=6, pady=(4, 2))
+        ttk.Label(cal_row1, text=t("label_cal_date"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_cal_date1 = tk.StringVar(value="2026-01-01")
+        ttk.Entry(cal_row1, textvariable=self._var_cal_date1, width=14,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
+        ttk.Button(cal_row1, text=t("btn_cal_today"),
+                   command=self._on_cal_today).pack(side=tk.LEFT, padx=4)
+
+        # Row 2: Date 2 (YYYY-MM-DD) for difference
+        cal_row2 = ttk.Frame(frm_cal, style="Dark.TFrame")
+        cal_row2.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(cal_row2, text=t("label_cal_date2"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_cal_date2 = tk.StringVar(value="2026-12-31")
+        ttk.Entry(cal_row2, textvariable=self._var_cal_date2, width=14,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
+
+        # Row 3: Add/Subtract days
+        cal_row3 = ttk.Frame(frm_cal, style="Dark.TFrame")
+        cal_row3.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(cal_row3, text=t("label_cal_add_days"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_cal_add_days = tk.StringVar(value="0")
+        ttk.Entry(cal_row3, textvariable=self._var_cal_add_days, width=10,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
+
+        # Row 4: Buttons
+        cal_row4 = ttk.Frame(frm_cal, style="Dark.TFrame")
+        cal_row4.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Button(cal_row4, text=t("btn_cal_day_of_week"),
+                   command=self._on_cal_day_of_week).pack(side=tk.LEFT, padx=2)
+        ttk.Button(cal_row4, text=t("btn_cal_diff"),
+                   command=self._on_cal_diff).pack(side=tk.LEFT, padx=2)
+        ttk.Button(cal_row4, text=t("btn_cal_add_days"),
+                   command=self._on_cal_add_days).pack(side=tk.LEFT, padx=2)
+        ttk.Button(cal_row4, text=t("btn_cal_clear"),
+                   command=self._on_cal_clear).pack(side=tk.LEFT, padx=2)
+
+        # Row 5: Result
+        cal_row5 = ttk.Frame(frm_cal, style="Dark.TFrame")
+        cal_row5.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Label(cal_row5, text=t("label_result"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_cal_result = tk.StringVar(value="")
+        ttk.Entry(cal_row5, textvariable=self._var_cal_result, width=35,
+                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+
         # --- Status ---
         self.status_var = tk.StringVar(value=t("status_ready"))
         status_bar = ttk.Label(scroll_frame, textvariable=self.status_var,
@@ -4339,6 +4390,105 @@ class SuperCalcApp:
             return celsius + 273.15
         else:
             return celsius
+
+    # ------------------------------------------------------------------
+    #  Perpetual Calendar / Date Calculator
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _cal_parse_date(date_str):
+        """Parse YYYY-MM-DD string and return (year, month, day) as ints."""
+        parts = date_str.strip().split("-")
+        if len(parts) != 3:
+            return None
+        try:
+            y, m, d = int(parts[0]), int(parts[1]), int(parts[2])
+            return (y, m, d)
+        except ValueError:
+            return None
+
+    @staticmethod
+    def _cal_day_of_week(year, month, day):
+        """Zeller-like calculation: returns 0=Mon .. 6=Sun."""
+        import calendar
+        return calendar.weekday(year, month, day)
+
+    @staticmethod
+    def _cal_days_in_month(year, month):
+        import calendar
+        return calendar.monthrange(year, month)[1]
+
+    def _on_cal_today(self):
+        from datetime import date
+        today = date.today()
+        self._var_cal_date1.set(f"{today.year:04d}-{today.month:02d}-{today.day:02d}")
+
+    def _on_cal_clear(self):
+        self._var_cal_date1.set("")
+        self._var_cal_date2.set("")
+        self._var_cal_add_days.set("0")
+        self._var_cal_result.set("")
+
+    def _on_cal_day_of_week(self):
+        d1 = self._cal_parse_date(self._var_cal_date1.get())
+        if d1 is None:
+            messagebox.showerror(t("err_cal"), t("msg_cal_invalid_date"))
+            return
+        y, m, day = d1
+        if m < 1 or m > 12 or day < 1 or day > 31:
+            messagebox.showerror(t("err_cal"), t("msg_cal_date_range"))
+            return
+        try:
+            dow = self._cal_day_of_week(y, m, day)
+        except ValueError:
+            messagebox.showerror(t("err_cal"), t("msg_cal_invalid_date"))
+            return
+        days_en = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        days_zh = ["一", "二", "三", "四", "五", "六", "日"]
+        lang = _get_lang()
+        if lang == "zh":
+            dow_str = days_zh[dow]
+        else:
+            dow_str = days_en[dow]
+        self._var_cal_result.set(t("status_cal_day_of_week", y, m, day, dow_str))
+        self.status_var.set(t("status_cal_day_of_week", y, m, day, dow_str))
+
+    def _on_cal_diff(self):
+        d1 = self._cal_parse_date(self._var_cal_date1.get())
+        d2 = self._cal_parse_date(self._var_cal_date2.get())
+        if d1 is None or d2 is None:
+            messagebox.showerror(t("err_cal"), t("msg_cal_invalid_date"))
+            return
+        from datetime import date
+        try:
+            dt1 = date(d1[0], d1[1], d1[2])
+            dt2 = date(d2[0], d2[1], d2[2])
+        except ValueError:
+            messagebox.showerror(t("err_cal"), t("msg_cal_invalid_date"))
+            return
+        diff = (dt2 - dt1).days
+        self._var_cal_result.set(t("status_cal_diff", diff))
+        self.status_var.set(t("status_cal_diff", diff))
+
+    def _on_cal_add_days(self):
+        d1 = self._cal_parse_date(self._var_cal_date1.get())
+        if d1 is None:
+            messagebox.showerror(t("err_cal"), t("msg_cal_invalid_date"))
+            return
+        try:
+            add = int(self._var_cal_add_days.get())
+        except ValueError:
+            messagebox.showerror(t("err_cal"), t("msg_cal_invalid_input"))
+            return
+        from datetime import date, timedelta
+        try:
+            dt1 = date(d1[0], d1[1], d1[2])
+        except ValueError:
+            messagebox.showerror(t("err_cal"), t("msg_cal_invalid_date"))
+            return
+        dt2 = dt1 + timedelta(days=add)
+        self._var_cal_date2.set(f"{dt2.year:04d}-{dt2.month:02d}-{dt2.day:02d}")
+        self._var_cal_result.set(t("status_cal_add", dt1.isoformat(), add, dt2.isoformat()))
+        self.status_var.set(t("status_cal_add", dt1.isoformat(), add, dt2.isoformat()))
 
 
 # ---------------------------------------------------------------------------

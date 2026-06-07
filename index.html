@@ -1204,6 +1204,7 @@
         <nav class="nav" aria-label="主导航">
             <a href="#features" class="nav-link"><span>功能特性</span></a>
             <a href="#base-converter" class="nav-link"><span>进制转换</span></a>
+            <a href="#calendar" class="nav-link"><span>万年历</span></a>
             <a href="#quick-start" class="nav-link"><span>快速开始</span></a>
             <a href="#platforms" class="nav-link"><span>支持平台</span></a>
             <a href="#api" class="nav-link"><span>API 参考</span></a>
@@ -1227,6 +1228,7 @@
     <nav class="mobile-nav" id="mobileNav" aria-label="移动端导航">
         <a href="#features" class="mobile-nav-link">功能特性</a>
         <a href="#base-converter" class="mobile-nav-link">进制转换</a>
+        <a href="#calendar" class="mobile-nav-link">万年历</a>
         <a href="#quick-start" class="mobile-nav-link">快速开始</a>
         <a href="#platforms" class="mobile-nav-link">支持平台</a>
         <a href="#api" class="mobile-nav-link">API 参考</a>
@@ -1649,6 +1651,22 @@
                 </div>
                 <div class="card glass reveal">
                     <div class="card-icon">
+                        <!-- Calendar -->
+                        <svg viewBox="0 0 24 24">
+                            <rect x="3" y="4" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                            <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="1.5"/>
+                            <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="1.5"/>
+                            <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="1.5"/>
+                            <circle cx="8" cy="15" r="1.5" fill="currentColor"/>
+                            <circle cx="12" cy="15" r="1.5" fill="currentColor"/>
+                            <circle cx="16" cy="15" r="1.5" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <h3 class="card-title">万年历</h3>
+                    <p class="card-text">查询任意日期是星期几，计算两日期之间的天数差，以及对日期加减天数</p>
+                </div>
+                <div class="card glass reveal">
+                    <div class="card-icon">
                         <!-- Adjustable sliders -->
                         <svg viewBox="0 0 24 24">
                             <line x1="4" y1="6" x2="20" y2="6"/>
@@ -1781,6 +1799,45 @@
                     </div>
                     <h3 class="card-title">交互式图表</h3>
                     <p class="card-text">Matplotlib 工具栏原生支持缩放、平移、导出 PNG，点击画布即可标记坐标</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="calendar">
+            <div class="section-header">
+                <div class="section-label">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="1.5"/><line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="1.5"/></svg>
+                    Perpetual Calendar
+                </div>
+                <h2 class="section-title">万年历</h2>
+                <p class="section-subtitle">查询星期、计算日期差、加减天数</p>
+            </div>
+            <div class="card glass reveal" style="max-width: 700px; margin: 0 auto;">
+                <div style="display:flex;flex-direction:column;gap:16px;">
+                    <div>
+                        <label style="display:block;font-size:14px;color:var(--text-muted);margin-bottom:8px;font-weight:500;">日期 (YYYY-MM-DD)</label>
+                        <div style="display:flex;gap:8px;">
+                            <input type="text" id="calDate1" placeholder="2026-01-01" 
+                                style="flex:1;padding:12px 16px;border-radius:12px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;outline:none;box-sizing:border-box;" />
+                            <button onclick="calToday()" style="padding:12px 20px;border-radius:12px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:14px;cursor:pointer;white-space:nowrap;min-width:80px;">今天</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:14px;color:var(--text-muted);margin-bottom:8px;font-weight:500;">结束日期 (YYYY-MM-DD)</label>
+                        <input type="text" id="calDate2" placeholder="2026-12-31" 
+                            style="width:100%;padding:12px 16px;border-radius:12px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;outline:none;box-sizing:border-box;" />
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:14px;color:var(--text-muted);margin-bottom:8px;font-weight:500;">加减天数</label>
+                        <input type="number" id="calDays" value="0" 
+                            style="width:100%;padding:12px 16px;border-radius:12px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;outline:none;box-sizing:border-box;" />
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button onclick="calDow()" style="flex:1;min-width:120px;padding:12px 16px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;">查询星期</button>
+                        <button onclick="calDiff()" style="flex:1;min-width:120px;padding:12px 16px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;">日期差</button>
+                        <button onclick="calAdd()" style="flex:1;min-width:120px;padding:12px 16px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;">加减天数</button>
+                    </div>
+                    <div id="calResult" style="padding:14px 18px;border-radius:12px;background:var(--glass-bg);border:1px solid var(--glass-border);color:var(--text-main);font-size:15px;font-family:monospace;min-height:24px;"></div>
                 </div>
             </div>
         </section>
@@ -2421,6 +2478,75 @@
                 if (e.key === 'Enter') { e.preventDefault(); convertBases(); }
             });
 
+        })();
+
+        // ------------------------------------------------------------------
+        //  Perpetual Calendar
+        // ------------------------------------------------------------------
+        (function() {
+            var dayNamesEn = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            var dayNamesZh = ['一', '二', '三', '四', '五', '六', '日'];
+            var isZh = (navigator.language || '').indexOf('zh') === 0;
+
+            function calParseDate(s) {
+                var m = /^(\d{1,4})-(\d{1,2})-(\d{1,2})$/.exec(s.trim());
+                if (!m) return null;
+                var y = +m[1], mo = +m[2], d = +m[3];
+                if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+                var dt = new Date(y, mo - 1, d);
+                if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+                return dt;
+            }
+
+            function dowStr(dt) {
+                var dow = dt.getDay();
+                var idx = dow === 0 ? 6 : dow - 1;
+                return isZh ? dayNamesZh[idx] : dayNamesEn[idx];
+            }
+
+            function fmt(dt) {
+                return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
+            }
+
+            window.calToday = function() {
+                document.getElementById('calDate1').value = fmt(new Date());
+            };
+
+            window.calDow = function() {
+                var dt = calParseDate(document.getElementById('calDate1').value);
+                var r = document.getElementById('calResult');
+                if (!dt) { r.textContent = isZh ? '无效日期' : 'Invalid date'; return; }
+                var msg = isZh
+                    ? dt.getFullYear() + '年' + (dt.getMonth()+1) + '月' + dt.getDate() + '日是星期' + dowStr(dt)
+                    : fmt(dt) + ' is a ' + dowStr(dt);
+                r.textContent = msg;
+            };
+
+            window.calDiff = function() {
+                var d1 = calParseDate(document.getElementById('calDate1').value);
+                var d2 = calParseDate(document.getElementById('calDate2').value);
+                var r = document.getElementById('calResult');
+                if (!d1 || !d2) { r.textContent = isZh ? '无效日期' : 'Invalid date'; return; }
+                var diff = Math.round((d2 - d1) / 86400000);
+                r.textContent = isZh ? '两日期相差：' + diff + ' 天' : 'Days between dates: ' + diff;
+            };
+
+            window.calAdd = function() {
+                var dt = calParseDate(document.getElementById('calDate1').value);
+                var r = document.getElementById('calResult');
+                if (!dt) { r.textContent = isZh ? '无效日期' : 'Invalid date'; return; }
+                var days = parseInt(document.getElementById('calDays').value, 10);
+                if (isNaN(days)) { r.textContent = isZh ? '请输入有效数字' : 'Enter a valid number'; return; }
+                var result = new Date(dt.getTime() + days * 86400000);
+                document.getElementById('calDate2').value = fmt(result);
+                r.textContent = isZh
+                    ? fmt(dt) + ' 加 ' + days + ' 天 = ' + fmt(result)
+                    : fmt(dt) + ' + ' + days + ' days = ' + fmt(result);
+            };
+
+            document.getElementById('calDays').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); calAdd(); }
+            });
         })();
     </script>
 </body>
