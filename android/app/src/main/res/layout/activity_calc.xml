@@ -461,6 +461,38 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="16dp">
+                    <TextView android:text="@string/base_converter" android:textSize="12sp" android:textColor="@color/spectral_evaluate" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                        <com.google.android.material.textfield.TextInputLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="@string/hint_base_input" style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" app:hintTextColor="@color/m3_outline" android:layout_marginEnd="4dp">
+                            <com.google.android.material.textfield.TextInputEditText android:id="@+id/base_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="255" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:singleLine="true" android:inputType="text" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                        <com.google.android.material.textfield.TextInputLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="@string/hint_base_from" style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense.ExposedDropdownMenu" app:hintTextColor="@color/m3_outline" android:layout_marginEnd="4dp">
+                            <AutoCompleteTextView android:id="@+id/base_from_dropdown" android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:inputType="none" android:text="10" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </LinearLayout>
+                    <com.google.android.material.button.MaterialButton android:id="@+id/btn_base_convert" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="match_parent" android:layout_height="40dp" android:text="@string/base_convert" android:fontFamily="@font/jetbrains_mono" android:textSize="12sp" app:cornerRadius="10dp" android:layout_marginBottom="8dp" app:strokeColor="@color/spectral_evaluate" app:strokeWidth="1dp" />
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+                        <TextView android:text="@string/base_binary" android:textSize="12sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/jetbrains_mono" android:layout_marginBottom="4dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                        <TextView android:id="@+id/base_bin_result" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:background="@color/result_bg" android:padding="8dp" android:layout_marginBottom="8dp" android:textIsSelectable="true" />
+                        <TextView android:text="@string/base_octal" android:textSize="12sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/jetbrains_mono" android:layout_marginBottom="4dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                        <TextView android:id="@+id/base_oct_result" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:background="@color/result_bg" android:padding="8dp" android:layout_marginBottom="8dp" android:textIsSelectable="true" />
+                        <TextView android:text="@string/base_decimal" android:textSize="12sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/jetbrains_mono" android:layout_marginBottom="4dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                        <TextView android:id="@+id/base_dec_result" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:background="@color/result_bg" android:padding="8dp" android:layout_marginBottom="8dp" android:textIsSelectable="true" />
+                        <TextView android:text="@string/base_hex" android:textSize="12sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/jetbrains_mono" android:layout_marginBottom="4dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                        <TextView android:id="@+id/base_hex_result" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:background="@color/result_bg" android:padding="8dp" android:textIsSelectable="true" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.SuperCalc.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
                     <TextView android:text="@string/unit_converter" android:textSize="12sp" android:textColor="@color/spectral_evaluate" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
                         <com.google.android.material.textfield.TextInputLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="@string/hint_category" style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense.ExposedDropdownMenu" app:hintTextColor="@color/m3_outline" android:layout_marginEnd="4dp">

@@ -66,6 +66,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
   - **Curve Fitting / Regression** — fit data to various models: Linear (y=ax+b), Polynomial (configurable degree), Exponential (y=ae^(bx)), Power (y=ax^b), and Logarithmic (y=a+b·ln(x)). Displays equation, R² goodness-of-fit, and scatter + fitted curve plot. Available on both desktop (Python/numpy) and Android (Java).
    - **Statistical Distribution Calculator** — compute PDF/PMF, CDF, and PPF (inverse CDF) for 6 common distributions: Normal (Gaussian), Student's t, Chi-squared, F, Binomial, and Poisson. Includes distribution plotting and parameter comparison visualization. Available on both desktop (Python) and Android (Java).
    - **Number Theory Calculator** — perform integer factorization, primality testing (trial division), GCD/LCM computation, Fibonacci sequence generation, modular exponentiation (fast binary exponentiation), and Euler's totient function φ(n). Available on both desktop (Python) and Android (Java).
+   - **Base Number Converter** — convert numbers between binary (2), octal (8), decimal (10), hexadecimal (16), and any base from 2 to 36. Supports both single-base conversion and simultaneous display of all common bases. Interactive demo available on the project landing page. Available on both desktop (Python) and Android (Java).
    - **Windows EXE** — standalone executable, no Python installation required
  - **Android App** — standalone APK with Material Design 3 UI and JNI bridge, now including 3D surface plotting with touch rotation and parametric curve support
  - **Chinese Language Support** — full Chinese (zh-CN) localization for both desktop (Python) and Android. Desktop auto-detects system locale or accepts `SUPERCALC_LANG=zh` env var. Android follows system language automatically.
@@ -167,6 +168,7 @@ SuperCalculator/
 
 ## What's New
 
+- **Base Number Converter** — convert numbers between binary, octal, decimal, and hexadecimal with support for any base from 2 to 36. Features simultaneous multi-base display, negative number support, and an interactive web demo. Available on both desktop (Python) and Android (Java).
 - **Statistical Distribution Calculator** — compute PDF/PMF, CDF, and PPF (inverse CDF) for 6 common probability distributions: Normal (Gaussian), Student's t, Chi-squared, F, Binomial, and Poisson. Features parameterized input, distribution plotting, and multi-parameter comparison visualization. Available on both desktop (Python) and Android (Java).
 - **Chinese Language Support** — full Chinese (zh-CN) localization for both desktop and Android. Desktop uses `locale_strings.py` with auto locale detection (`SUPERCALC_LANG` env var or system locale). Android uses standard `values-zh-rCN/` string resources and follows system language. All UI labels, buttons, error messages, and dialog texts are translated.
 - **Curve Fitting / Regression** — fit data to Linear, Polynomial, Exponential, Power, and Logarithmic models with R² goodness-of-fit. Scatter + curve plot visualization. Available on both desktop (Python/numpy) and Android (Java).
@@ -307,6 +309,13 @@ result = CalcEngine.power_regression(xs, ys)
 
 result = CalcEngine.logarithmic_regression(xs, ys)
 # result -> {'a': ..., 'b': ..., 'r_squared': ..., 'equation': '...', 'xs_fit': [...], 'ys_fit': [...]}
+
+# Base Number Conversion
+result = CalcEngine.convert_base("FF", 16, 10)    # -> "255"
+result = CalcEngine.convert_base("255", 10, 2)     # -> "11111111"
+result = CalcEngine.convert_base_all("255", 10)     # -> {'bin': '11111111', 'oct': '377', 'dec': '255', 'hex': 'FF'}
+value = CalcEngine.base_to_long("FF", 16)           # -> 255
+result = CalcEngine.long_to_base(255, 16)           # -> "FF"
 
 # Statistical Distribution Calculator
 from stat_dist import create_distribution, DISTRIBUTIONS

@@ -1139,6 +1139,51 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        .base-btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            font-family: inherit;
+        }
+
+        .base-btn:hover {
+            border-color: var(--glass-border-hover);
+            color: var(--text-main);
+        }
+
+        .base-btn.active {
+            background: linear-gradient(135deg, #4f8cff, #00c9a7);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 16px rgba(79, 140, 255, 0.3);
+        }
+
+        .base-result-card {
+            padding: 16px;
+            border-radius: 12px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            transition: border-color 0.3s;
+        }
+
+        .base-result-card:hover {
+            border-color: var(--glass-border-hover);
+        }
+
+        @media (max-width: 480px) {
+            #baseResults > div:first-child {
+                grid-template-columns: 1fr !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1158,6 +1203,7 @@
         </a>
         <nav class="nav" aria-label="主导航">
             <a href="#features" class="nav-link"><span>功能特性</span></a>
+            <a href="#base-converter" class="nav-link"><span>进制转换</span></a>
             <a href="#quick-start" class="nav-link"><span>快速开始</span></a>
             <a href="#platforms" class="nav-link"><span>支持平台</span></a>
             <a href="#api" class="nav-link"><span>API 参考</span></a>
@@ -1180,6 +1226,7 @@
 
     <nav class="mobile-nav" id="mobileNav" aria-label="移动端导航">
         <a href="#features" class="mobile-nav-link">功能特性</a>
+        <a href="#base-converter" class="mobile-nav-link">进制转换</a>
         <a href="#quick-start" class="mobile-nav-link">快速开始</a>
         <a href="#platforms" class="mobile-nav-link">支持平台</a>
         <a href="#api" class="mobile-nav-link">API 参考</a>
@@ -1582,6 +1629,23 @@
                     </div>
                     <h3 class="card-title">数论计算器</h3>
                     <p class="card-text">支持整数因式分解、素数判定、最大公约数/最小公倍数、Fibonacci 数列、模幂运算和欧拉函数 φ(n)，涵盖基础数论核心功能</p>
+                </div>
+                <div class="card glass reveal">
+                    <div class="card-icon">
+                        <!-- Base conversion arrows -->
+                        <svg viewBox="0 0 24 24">
+                            <text x="6" y="10" font-size="6" fill="currentColor" stroke="none" font-family="monospace" font-weight="bold">10</text>
+                            <text x="14" y="10" font-size="6" fill="currentColor" stroke="none" font-family="monospace" font-weight="bold">16</text>
+                            <path d="M8 13l4 0" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                            <path d="M11 11l2 2-2 2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                            <text x="6" y="20" font-size="6" fill="currentColor" stroke="none" font-family="monospace" font-weight="bold">01</text>
+                            <text x="14" y="20" font-size="6" fill="currentColor" stroke="none" font-family="monospace" font-weight="bold">A</text>
+                            <path d="M9 17l4 0" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                            <path d="M12 15l2 2-2 2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                        </svg>
+                    </div>
+                    <h3 class="card-title">进制转换器</h3>
+                    <p class="card-text">在二进制、八进制、十进制与十六进制之间实时转换数字，支持 2-36 任意进制，交互式网页演示</p>
                 </div>
                 <div class="card glass reveal">
                     <div class="card-icon">
@@ -2050,6 +2114,59 @@
                 </div>
             </div>
         </section>
+        <section class="section" id="base-converter">
+            <div class="section-header">
+                <div class="section-label">
+                    <svg viewBox="0 0 24 24"><path d="M4 6h18V4H4c-1.1 0-2 .9-2 2v11H0v3h14v-3H4V6z"/></svg>
+                    Base Converter
+                </div>
+                <h2 class="section-title">进制转换器</h2>
+                <p class="section-subtitle">在二进制、八进制、十进制与十六进制之间实时转换数字</p>
+            </div>
+            <div class="card glass reveal" style="max-width: 700px; margin: 0 auto;">
+                <div style="display:flex;flex-direction:column;gap:20px;">
+                    <div>
+                        <label style="display:block;font-size:14px;color:var(--text-muted);margin-bottom:8px;font-weight:500;">输入数字</label>
+                        <input type="text" id="baseInput" placeholder="例如: 255, FF, 11111111" 
+                            style="width:100%;padding:14px 18px;border-radius:12px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:18px;font-family:inherit;outline:none;transition:border-color 0.3s,box-shadow 0.3s;box-sizing:border-box;"
+                            onfocus="this.style.borderColor='var(--glow-primary)';this.style.boxShadow='0 0 20px var(--glow-primary)'"
+                            onblur="this.style.borderColor='var(--glass-border)';this.style.boxShadow='none'"
+                            oninput="convertBases()" autocomplete="off" spellcheck="false">
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:14px;color:var(--text-muted);margin-bottom:8px;font-weight:500;">源进制</label>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;" id="baseButtons">
+                            <button onclick="setFromBase(2)" data-base="2" class="base-btn">BIN (2)</button>
+                            <button onclick="setFromBase(8)" data-base="8" class="base-btn">OCT (8)</button>
+                            <button onclick="setFromBase(10)" data-base="10" class="base-btn active">DEC (10)</button>
+                            <button onclick="setFromBase(16)" data-base="16" class="base-btn">HEX (16)</button>
+                        </div>
+                    </div>
+                    <div id="baseResults" style="display:none;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div class="base-result-card" id="resBin">
+                                <div style="font-size:12px;color:var(--text-subtle);margin-bottom:4px;font-weight:600;">二进制 (2)</div>
+                                <div style="font-size:16px;color:var(--glow-accent);font-family:monospace;word-break:break-all;" id="resBinVal">—</div>
+                            </div>
+                            <div class="base-result-card" id="resOct">
+                                <div style="font-size:12px;color:var(--text-subtle);margin-bottom:4px;font-weight:600;">八进制 (8)</div>
+                                <div style="font-size:16px;color:var(--glow-accent);font-family:monospace;word-break:break-all;" id="resOctVal">—</div>
+                            </div>
+                            <div class="base-result-card" id="resDec">
+                                <div style="font-size:12px;color:var(--text-subtle);margin-bottom:4px;font-weight:600;">十进制 (10)</div>
+                                <div style="font-size:16px;color:var(--glow-primary);font-family:monospace;word-break:break-all;" id="resDecVal">—</div>
+                            </div>
+                            <div class="base-result-card" id="resHex">
+                                <div style="font-size:12px;color:var(--text-subtle);margin-bottom:4px;font-weight:600;">十六进制 (16)</div>
+                                <div style="font-size:16px;color:var(--glow-accent);font-family:monospace;word-break:break-all;" id="resHexVal">—</div>
+                            </div>
+                        </div>
+                        <div id="baseError" style="display:none;margin-top:12px;padding:12px 16px;border-radius:10px;background:rgba(255,80,80,0.12);border:1px solid rgba(255,80,80,0.3);color:#ff6b6b;font-size:14px;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <footer class="footer">
@@ -2221,6 +2338,89 @@
                 window.addEventListener('scroll', revealOnScroll, { passive: true });
                 revealOnScroll();
             }
+            // ---- Base Converter ----
+            var currentFromBase = 10;
+
+            function setFromBase(base) {
+                currentFromBase = base;
+                var btns = document.querySelectorAll('.base-btn');
+                for (var i = 0; i < btns.length; i++) {
+                    btns[i].classList.toggle('active', parseInt(btns[i].getAttribute('data-base')) === base);
+                }
+                convertBases();
+            }
+
+            function parseInBase(str, base) {
+                str = str.trim();
+                if (!str) return null;
+                var negative = false;
+                if (str[0] === '-') { negative = true; str = str.substring(1); }
+                else if (str[0] === '+') { str = str.substring(1); }
+                if (str.length === 0) return null;
+
+                var result = 0;
+                for (var i = 0; i < str.length; i++) {
+                    var ch = str[i].toUpperCase();
+                    var digit;
+                    if (ch >= '0' && ch <= '9') digit = ch.charCodeAt(0) - 48;
+                    else if (ch >= 'A' && ch <= 'Z') digit = ch.charCodeAt(0) - 55;
+                    else return null;
+                    if (digit >= base) return null;
+                    result = result * base + digit;
+                    if (result > 9007199254740991) return null;
+                }
+                return negative ? -result : result;
+            }
+
+            function toBaseString(num, base) {
+                if (num === 0) return '0';
+                var negative = num < 0;
+                if (negative) num = -num;
+                var digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                var result = '';
+                while (num > 0) {
+                    result = digits[num % base] + result;
+                    num = Math.floor(num / base);
+                }
+                return negative ? '-' + result : result;
+            }
+
+            function convertBases() {
+                var input = document.getElementById('baseInput').value.trim();
+                var resultsDiv = document.getElementById('baseResults');
+                var errorDiv = document.getElementById('baseError');
+
+                if (!input) {
+                    resultsDiv.style.display = 'none';
+                    return;
+                }
+
+                var value = parseInBase(input, currentFromBase);
+                if (value === null) {
+                    resultsDiv.style.display = 'block';
+                    errorDiv.style.display = 'block';
+                    errorDiv.textContent = currentFromBase === 16 ? '无效的十六进制输入' :
+                                          currentFromBase === 8 ? '无效的八进制输入' :
+                                          currentFromBase === 2 ? '无效的二进制输入' : '无效的十进制输入';
+                    document.getElementById('resBinVal').textContent = '—';
+                    document.getElementById('resOctVal').textContent = '—';
+                    document.getElementById('resDecVal').textContent = '—';
+                    document.getElementById('resHexVal').textContent = '—';
+                    return;
+                }
+
+                errorDiv.style.display = 'none';
+                resultsDiv.style.display = 'block';
+                document.getElementById('resBinVal').textContent = toBaseString(value, 2);
+                document.getElementById('resOctVal').textContent = toBaseString(value, 8);
+                document.getElementById('resDecVal').textContent = toBaseString(value, 10);
+                document.getElementById('resHexVal').textContent = toBaseString(value, 16);
+            }
+
+            document.getElementById('baseInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); convertBases(); }
+            });
+
         })();
     </script>
 </body>

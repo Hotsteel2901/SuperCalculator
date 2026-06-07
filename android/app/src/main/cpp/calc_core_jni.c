@@ -719,3 +719,87 @@ Java_com_supercalc_CalcEngine_solveSystem2d(JNIEnv* env, jclass clazz,
 
     return result;
 }
+
+/* ---- Base Conversion ---- */
+
+long long base_to_long(const char* str, int base);
+int long_to_base(long long n, int base, char* output, int max_out);
+
+JNIEXPORT jlong JNICALL
+Java_com_supercalc_CalcEngine_baseToLong(JNIEnv* env, jclass clazz,
+                                          jstring input, jint base) {
+    const char* str = (*env)->GetStringUTFChars(env, input, NULL);
+    if (!str) return 0;
+    long long result = base_to_long(str, base);
+    (*env)->ReleaseStringUTFChars(env, input, str);
+    return (jlong)result;
+}
+
+JNIEXPORT jstring JNICALL
+Java_com_supercalc_CalcEngine_longToBase(JNIEnv* env, jclass clazz,
+                                          jlong value, jint base) {
+    char buf[128];
+    int len = long_to_base((long long)value, base, buf, sizeof(buf));
+    if (len <= 0) return (*env)->NewStringUTF(env, "");
+    return (*env)->NewStringUTF(env, buf);
+}
+
+JNIEXPORT jstring JNICALL
+Java_com_supercalc_CalcEngine_convertBase(JNIEnv* env, jclass clazz,
+                                           jstring input, jint fromBase, jint toBase) {
+    const char* str = (*env)->GetStringUTFChars(env, input, NULL);
+    if (!str) return (*env)->NewStringUTF(env, "");
+
+    long long value = base_to_long(str, fromBase);
+    (*env)->ReleaseStringUTFChars(env, input, str);
+
+    char buf[128];
+    int len = long_to_base(value, toBase, buf, sizeof(buf));
+    if (len <= 0) return (*env)->NewStringUTF(env, "");
+    return (*env)->NewStringUTF(env, buf);
+}
+
+JNIEXPORT jobject JNICALL
+Java_com_supercalc_CalcEngine_convertBaseAll(JNIEnv* env, jclass clazz,
+                                              jstring input, jint fromBase) {
+    const char* str = (*env)->GetStringUTFChars(env, input, NULL);
+    if (!str) return NULL;
+
+    long long value = base_to_long(str, fromBase);
+    (*env)->ReleaseStringUTFChars(env, input, str);
+
+    char bufBin[128], bufOct[128], bufDec[128], bufHex[128];
+    long_to_base(value, 2, bufBin, sizeof(bufBin));
+    long_to_base(value, 8, bufOct, sizeof(bufOct));
+    long_to_base(value, 10, bufDec, sizeof(bufDec));
+    long_to_base(value, 16, bufHex, sizeof(bufHex));
+
+    jclass hashMapClass = (*env)->FindClass(env, "java/util/HashMap");
+    jmethodID initMethod = (*env)->GetMethodID(env, hashMapClass, "<init>", "(I)V");
+    jmethodID putMethod = (*env)->GetMethodID(env, hashMapClass, "put",
+        "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+
+    jobject result = (*env)->NewObject(env, hashMapClass, initMethod, 4);
+
+    jstring keyBin = (*env)->NewStringUTF(env, "bin");
+    jstring keyOct = (*env)->NewStringUTF(env, "oct");
+    jstring keyDec = (*env)->NewStringUTF(env, "dec");
+    jstring keyHex = (*env)->NewStringUTF(env, "hex");
+    jstring valBin = (*env)->NewStringUTF(env, bufBin);
+    jstring valOct = (*env)->NewStringUTF(env, bufOct);
+    jstring valDec = (*env)->NewStringUTF(env, bufDec);
+    jstring valHex = (*env)->NewStringUTF(env, bufHex);
+
+    (*env)->CallObjectMethod(env, result, putMethod, keyBin, valBin);
+    (*env)->CallObjectMethod(env, result, putMethod, keyOct, valOct);
+    (*env)->CallObjectMethod(env, result, putMethod, keyDec, valDec);
+    (*env)->CallObjectMethod(env, result, putMethod, keyHex, valHex);
+
+    (*env)->DeleteLocalRef(env, keyBin); (*env)->DeleteLocalRef(env, keyOct);
+    (*env)->DeleteLocalRef(env, keyDec); (*env)->DeleteLocalRef(env, keyHex);
+    (*env)->DeleteLocalRef(env, valBin); (*env)->DeleteLocalRef(env, valOct);
+    (*env)->DeleteLocalRef(env, valDec); (*env)->DeleteLocalRef(env, valHex);
+    (*env)->DeleteLocalRef(env, hashMapClass);
+
+    return result;
+}

@@ -225,11 +225,30 @@ _lib.area_between_curves.argtypes = [ctypes.c_char_p, ctypes.c_char_p,
 _lib.area_between_curves.restype = ctypes.c_double
 
 _lib.solve_system_2d.argtypes = [ctypes.c_char_p, ctypes.c_char_p,
-                                  ctypes.c_double, ctypes.c_double,
-                                  ctypes.c_double, ctypes.c_int,
-                                  ctypes.POINTER(ctypes.c_double),
-                                  ctypes.POINTER(ctypes.c_double)]
+                                   ctypes.c_double, ctypes.c_double,
+                                   ctypes.c_double, ctypes.c_int,
+                                   ctypes.POINTER(ctypes.c_double),
+                                   ctypes.POINTER(ctypes.c_double)]
 _lib.solve_system_2d.restype = ctypes.c_int
+
+# Base conversion functions
+_lib.base_to_long.argtypes = [ctypes.c_char_p, ctypes.c_int]
+_lib.base_to_long.restype = ctypes.c_longlong
+
+_lib.long_to_base.argtypes = [ctypes.c_longlong, ctypes.c_int,
+                               ctypes.c_char_p, ctypes.c_int]
+_lib.long_to_base.restype = ctypes.c_int
+
+_lib.convert_base.argtypes = [ctypes.c_char_p, ctypes.c_int, ctypes.c_int,
+                               ctypes.c_char_p, ctypes.c_int]
+_lib.convert_base.restype = ctypes.c_int
+
+_lib.convert_base_all.argtypes = [ctypes.c_char_p, ctypes.c_int,
+                                   ctypes.c_char_p, ctypes.c_int,
+                                   ctypes.c_char_p, ctypes.c_int,
+                                   ctypes.c_char_p, ctypes.c_int,
+                                   ctypes.c_char_p, ctypes.c_int]
+_lib.convert_base_all.restype = None
 
 
 def _is_invalid(x: float) -> bool:
@@ -1005,6 +1024,66 @@ class CalcEngine:
             }
         except Exception:
             return None
+
+    # Base conversion methods
+    @staticmethod
+    def convert_base(value: str, from_base: int, to_base: int) -> Optional[str]:
+        """Convert a number string from one base to another.
+
+        Args:
+            value: the number string to convert
+            from_base: source base (2-36)
+            to_base: target base (2-36)
+
+        Returns the converted string, or None on error.
+        """
+        buf = ctypes.create_string_buffer(128)
+        result = _lib.convert_base(value.encode("utf-8"), from_base, to_base,
+                                    buf, 128)
+        if result <= 0:
+            return None
+        return buf.value.decode("utf-8")
+
+    @staticmethod
+    def base_to_long(value: str, base: int) -> Optional[int]:
+        """Parse a number string in the given base and return its integer value."""
+        result = _lib.base_to_long(value.encode("utf-8"), base)
+        err = _lib.get_last_error()
+        if err and err.decode("utf-8"):
+            return None
+        return int(result)
+
+    @staticmethod
+    def long_to_base(n: int, base: int) -> Optional[str]:
+        """Convert an integer to a string in the given base."""
+        buf = ctypes.create_string_buffer(128)
+        result = _lib.long_to_base(n, base, buf, 128)
+        if result <= 0:
+            return None
+        return buf.value.decode("utf-8")
+
+    @staticmethod
+    def convert_base_all(value: str, from_base: int) -> Optional[dict]:
+        """Convert a number string to binary, octal, decimal, and hexadecimal.
+
+        Returns a dict with keys 'bin', 'oct', 'dec', 'hex', or None on error.
+        """
+        bin_buf = ctypes.create_string_buffer(128)
+        oct_buf = ctypes.create_string_buffer(128)
+        dec_buf = ctypes.create_string_buffer(128)
+        hex_buf = ctypes.create_string_buffer(128)
+        _lib.convert_base_all(value.encode("utf-8"), from_base,
+                               bin_buf, 128, oct_buf, 128,
+                               dec_buf, 128, hex_buf, 128)
+        err = _lib.get_last_error()
+        if err and err.decode("utf-8"):
+            return None
+        return {
+            'bin': bin_buf.value.decode("utf-8"),
+            'oct': oct_buf.value.decode("utf-8"),
+            'dec': dec_buf.value.decode("utf-8"),
+            'hex': hex_buf.value.decode("utf-8"),
+        }
 
     @staticmethod
     def logarithmic_regression(xs: List[float], ys: List[float]):

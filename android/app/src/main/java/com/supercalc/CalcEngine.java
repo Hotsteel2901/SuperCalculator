@@ -110,4 +110,18 @@ public class CalcEngine {
     /** Solve a system of two nonlinear equations f(x,y)=0, g(x,y)=0 using Newton's method for systems.
      *  Returns HashMap with "x" and "y" keys on success, or null on failure. */
     public static native HashMap<String, Object> solveSystem2d(String fExpr, String gExpr, double x0, double y0);
+
+    // Base conversion methods
+    /** Parse a number string in the given base and return its integer value. */
+    public static native long baseToLong(String input, int base);
+
+    /** Convert an integer to a string in the given base (2-36). */
+    public static native String longToBase(long value, int base);
+
+    /** Convert a number string from one base to another. Returns the converted string. */
+    public static native String convertBase(String input, int fromBase, int toBase);
+
+    /** Convert a number string to binary, octal, decimal, and hexadecimal.
+     *  Returns HashMap with "bin", "oct", "dec", "hex" keys. */
+    public static native HashMap<String, String> convertBaseAll(String input, int fromBase);
 }
