@@ -21,6 +21,8 @@ import com.github.mikephil.charting.components.YAxis;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 
 public class CalcActivity extends AppCompatActivity {
 
@@ -266,6 +268,9 @@ public class CalcActivity extends AppCompatActivity {
 
         // Base Converter
         setupBaseConverter();
+
+        // Perpetual Calendar
+        setupCalendar();
 
         // Statistical Distribution Calculator
         setupDistCalc();
@@ -2390,6 +2395,98 @@ public class CalcActivity extends AppCompatActivity {
         } else {
             return celsius;
         }
+    }
+
+    // ------------------------------------------------------------------
+    //  Perpetual Calendar / Date Calculator
+    // ------------------------------------------------------------------
+    private EditText calDate1Input, calDate2Input, calDaysInput;
+    private TextView calResultView;
+
+    private void setupCalendar() {
+        calDate1Input = findViewById(R.id.cal_date1_input);
+        calDate2Input = findViewById(R.id.cal_date2_input);
+        calDaysInput = findViewById(R.id.cal_days_input);
+        calResultView = findViewById(R.id.cal_result_view);
+
+        MaterialButton btnToday = findViewById(R.id.btn_cal_today);
+        btnToday.setOnClickListener(v -> onCalToday());
+
+        MaterialButton btnDow = findViewById(R.id.btn_cal_dow);
+        btnDow.setOnClickListener(v -> onCalDayOfWeek());
+
+        MaterialButton btnDiff = findViewById(R.id.btn_cal_diff);
+        btnDiff.setOnClickListener(v -> onCalDiff());
+
+        MaterialButton btnAdd = findViewById(R.id.btn_cal_add);
+        btnAdd.setOnClickListener(v -> onCalAddDays());
+    }
+
+    private LocalDate calParseDate(String text) {
+        if (text == null) return null;
+        String s = text.trim();
+        if (s.isEmpty()) return null;
+        try {
+            return LocalDate.parse(s);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void onCalToday() {
+        calDate1Input.setText(LocalDate.now().toString());
+    }
+
+    private void onCalDayOfWeek() {
+        LocalDate d = calParseDate(calDate1Input.getText().toString());
+        if (d == null) {
+            toast(getString(R.string.toast_cal_invalid_date));
+            return;
+        }
+        String[] daysEn = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
+        String[] daysZh = {"一", "二", "三", "四", "五", "六", "日"};
+        int dow = d.getDayOfWeek().getValue() - 1;
+        boolean isZh = getResources().getConfiguration().locale.getLanguage().equals("zh");
+        String dowStr = isZh ? daysZh[dow] : daysEn[dow];
+        String msg = isZh
+            ? d.getYear() + "年" + d.getMonthValue() + "月" + d.getDayOfMonth() + "日是星期" + dowStr
+            : d + " is a " + dowStr;
+        calResultView.setText(msg);
+    }
+
+    private void onCalDiff() {
+        LocalDate d1 = calParseDate(calDate1Input.getText().toString());
+        LocalDate d2 = calParseDate(calDate2Input.getText().toString());
+        if (d1 == null || d2 == null) {
+            toast(getString(R.string.toast_cal_invalid_date));
+            return;
+        }
+        long diff = ChronoUnit.DAYS.between(d1, d2);
+        boolean isZh = getResources().getConfiguration().locale.getLanguage().equals("zh");
+        String msg = isZh ? "两日期相差：" + diff + " 天" : "Days between dates: " + diff;
+        calResultView.setText(msg);
+    }
+
+    private void onCalAddDays() {
+        LocalDate d = calParseDate(calDate1Input.getText().toString());
+        if (d == null) {
+            toast(getString(R.string.toast_cal_invalid_date));
+            return;
+        }
+        int add;
+        try {
+            add = Integer.parseInt(calDaysInput.getText().toString().trim());
+        } catch (NumberFormatException e) {
+            toast(getString(R.string.toast_cal_invalid_input));
+            return;
+        }
+        LocalDate result = d.plusDays(add);
+        calDate2Input.setText(result.toString());
+        boolean isZh = getResources().getConfiguration().locale.getLanguage().equals("zh");
+        String msg = isZh
+            ? d.toString() + " 加 " + add + " 天 = " + result
+            : d + " + " + add + " days = " + result;
+        calResultView.setText(msg);
     }
 
     // ------------------------------------------------------------------

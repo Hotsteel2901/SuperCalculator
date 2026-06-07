@@ -284,4 +284,14 @@
     <string name="hint_base_input">Input number</string>
     <string name="hint_base_from">From base</string>
     <string name="toast_base_invalid">Invalid input for the given base</string>
+    <string name="cal_title">Perpetual Calendar</string>
+    <string name="cal_today">Today</string>
+    <string name="cal_day_of_week">Day of Week</string>
+    <string name="cal_diff">Difference</string>
+    <string name="cal_add_days">Add Days</string>
+    <string name="hint_cal_date1">Date (YYYY-MM-DD)</string>
+    <string name="hint_cal_date2">End date (YYYY-MM-DD)</string>
+    <string name="hint_cal_days">Days to add</string>
+    <string name="toast_cal_invalid_date">Invalid date. Check year, month, and day.</string>
+    <string name="toast_cal_invalid_input">Invalid input. Enter valid numbers.</string>
 </resources>
