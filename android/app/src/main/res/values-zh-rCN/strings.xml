@@ -294,4 +294,131 @@
     <string name="hint_cal_days">加上天数</string>
     <string name="toast_cal_invalid_date">无效日期，请检查年、月、日。</string>
     <string name="toast_cal_invalid_input">无效输入，请输入有效数字。</string>
+
+    <!-- Result/output labels -->
+    <string name="result_error_prefix">错误：</string>
+    <string name="result_points_plotted">已绘制%d个点</string>
+    <string name="result_fx">f(%.10g)</string>
+    <string name="result_f_prime_x">f\'(%.10g)</string>
+    <string name="result_f_double_prime_x">f\'\'(%.10g)</string>
+    <string name="result_integral">I[%.10g, %.10g]</string>
+    <string name="result_root">根：%.10g</string>
+    <string name="result_root_fval">f(根) = %.10g</string>
+    <string name="result_min">最小值：(%.10g, %.10g)</string>
+    <string name="result_max">最大值：(%.10g, %.10g)</string>
+
+    <!-- Scan roots -->
+    <string name="scan_roots_error">扫描根：错误：%s</string>
+    <string name="scan_roots_no_roots">扫描根：在[%.4g, %.4g]中未找到根</string>
+    <string name="scan_roots_found">扫描根：在[%.4g, %.4g]中找到%d个根</string>
+
+    <!-- Tangent/Normal -->
+    <string name="tangent_label">x=%.6g处切线：y = %.6g(x - %.6g) + %.6g</string>
+    <string name="normal_label">x=%.6g处法线：y = %.6g(x - %.6g) + %.6g</string>
+    <string name="tangent_error">切线：错误：%s</string>
+    <string name="normal_error">法线：错误：%s</string>
+
+    <!-- Arc length -->
+    <string name="arc_length_error">弧长：错误：%s</string>
+    <string name="arc_length_result">从%.4g到%.4g的弧长：%.10g</string>
+
+    <!-- Area between curves -->
+    <string name="area_between_error">曲线间面积：错误：%s</string>
+    <string name="area_between_result">f(x)=%.4g..%.4g与g(x)=%.4g..%.4g之间的面积：%.10g</string>
+
+    <!-- System solver -->
+    <string name="system_solver_error">方程组求解器：错误：%s</string>
+    <string name="system_solver_invalid">方程组求解器：结果无效</string>
+    <string name="system_solution_label">解：\n%s</string>
+    <string name="system_residuals_label">残差：\n%s</string>
+    <string name="system_solved_toast">方程组已解：x=%.6g, y=%.6g</string>
+
+    <!-- FFT -->
+    <string name="fft_dominant_freq">主频率：f=%.6g Hz</string>
+    <string name="fft_header">频率\t\t振幅\t\t相位</string>
+    <string name="fft_toast">FFT已计算：%d个点</string>
+
+    <!-- Limit -->
+    <string name="limit_result">lim(x→%.6g) f(x) = %.10g</string>
+    <string name="limit_two_sided_not_exist">双侧极限不存在。\n左极限：%.10g，右极限：%.10g</string>
+
+    <!-- Taylor -->
+    <string name="taylor_error">泰勒级数：错误：%s</string>
+    <string name="taylor_result">在a=%.4g处的泰勒级数（%d阶）：\n%s</string>
+    <string name="taylor_toast">已在a=%.4g处绘制泰勒级数</string>
+
+    <!-- ODE -->
+    <string name="ode_error">ODE错误：%s</string>
+    <string name="ode_error_invalid">ODE错误：求解器返回无效结果</string>
+    <string name="ode_result">ODE在[%.4g, %.4g]上求解，共%d步（RK4）\ny(%.4g) = %.10g</string>
+    <string name="ode_toast">ODE已求解：%d个点</string>
+
+    <!-- Statistics -->
+    <string name="stats_header">%d个数据点的统计结果</string>
+    <string name="stats_sum">求和：%.10g</string>
+    <string name="stats_mean">均值：%.10g</string>
+    <string name="stats_median">中位数：%.10g</string>
+    <string name="stats_min">最小值：%.10g</string>
+    <string name="stats_max">最大值：%.10g</string>
+    <string name="stats_range">极差：%.10g</string>
+    <string name="stats_q1">Q1：%.10g</string>
+    <string name="stats_q3">Q3：%.10g</string>
+    <string name="stats_iqr">IQR：%.10g</string>
+    <string name="stats_var">方差：%.10g</string>
+    <string name="stats_std">标准差：%.10g</string>
+    <string name="stats_toast">统计：n=%d，均值=%.6g，标准差=%.6g</string>
+
+    <!-- Matrix -->
+    <string name="mat_add_result">已计算矩阵A + B</string>
+    <string name="mat_sub_result">已计算矩阵A - B</string>
+    <string name="mat_mul_result">已计算矩阵A * B</string>
+    <string name="mat_det_result">det(A) = %.10g</string>
+    <string name="mat_inv_result">已计算逆矩阵</string>
+    <string name="mat_transpose_result">已计算转置矩阵</string>
+    <string name="mat_rref_result">已计算行最简形</string>
+    <string name="mat_rank_result">rank(A) = %d</string>
+    <string name="mat_eigen_result">特征值：%.10g，%.10g\n%d×%d矩阵的特征向量未显示</string>
+
+    <!-- Histogram -->
+    <string name="histogram_title">直方图（%d个区间）</string>
+    <string name="histogram_stats">均值=%.4g  中位数=%.4g</string>
+    <string name="histogram_toast">直方图：%d个区间，均值=%.4g</string>
+
+    <!-- Regression -->
+    <string name="regression_prefix">方程：</string>
+    <string name="regression_linear">线性回归</string>
+    <string name="regression_poly">多项式回归（%d阶）</string>
+    <string name="regression_exponential">指数回归</string>
+    <string name="regression_power">幂回归</string>
+    <string name="regression_logarithmic">对数回归</string>
+
+    <!-- Parametric/Polar/Table -->
+    <string name="parametric_error">参数曲线：错误：%s</string>
+    <string name="polar_error">极坐标曲线：错误：%s</string>
+    <string name="table_error">表格：错误：%s</string>
+    <string name="table_valid_count">有效：%d / %d</string>
+    <string name="table_generated">已生成表格：%d/%d个有效点</string>
+    <string name="table_share">分享表格</string>
+
+    <!-- Number theory -->
+    <string name="nt_prime_result">%d是素数</string>
+    <string name="nt_composite_result">%d是合数 = %s</string>
+    <string name="nt_gcd_result">gcd(%d, %d) = %d</string>
+    <string name="nt_lcm_result">lcm(%d, %d) = %d</string>
+    <string name="nt_fibonacci_result">Fibonacci(%d) = %d</string>
+    <string name="nt_factorize_result">%d = %s</string>
+    <string name="nt_factorize_showing">（显示前20个，共%d个因子）</string>
+    <string name="nt_modpow_result">%d^%d mod %d = %d</string>
+    <string name="nt_totient_result">φ(%d) = %d</string>
+
+    <!-- Surface 3D -->
+    <string name="no_3d_data">暂无3D数据</string>
+
+    <!-- Distribution names -->
+    <string name="dist_normal">正态</string>
+    <string name="dist_t">t分布</string>
+    <string name="dist_chi2">卡方</string>
+    <string name="dist_f">F</string>
+    <string name="dist_binomial">二项</string>
+    <string name="dist_poisson">泊松</string>
 </resources>

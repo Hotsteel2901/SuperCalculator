@@ -395,8 +395,10 @@ Java_com_supercalc_CalcEngine_odeSolveRk4(JNIEnv* env, jclass clazz,
             return NULL;
         }
 
-        (*env)->CallObjectMethod(env, result, putMethod, xsKey, xs_array);
-        (*env)->CallObjectMethod(env, result, putMethod, ysKey, ys_array);
+        jobject old1 = (*env)->CallObjectMethod(env, result, putMethod, xsKey, xs_array);
+        if (old1) (*env)->DeleteLocalRef(env, old1);
+        jobject old2 = (*env)->CallObjectMethod(env, result, putMethod, ysKey, ys_array);
+        if (old2) (*env)->DeleteLocalRef(env, old2);
 
         /* Put count as Integer */
         jclass integerClass = (*env)->FindClass(env, "java/lang/Integer");
@@ -795,6 +797,14 @@ Java_com_supercalc_CalcEngine_convertBaseAll(JNIEnv* env, jclass clazz,
     jstring valHex = (*env)->NewStringUTF(env, bufHex);
 
     if (!keyBin || !keyOct || !keyDec || !keyHex || !valBin || !valOct || !valDec || !valHex) {
+        if (keyBin) (*env)->DeleteLocalRef(env, keyBin);
+        if (keyOct) (*env)->DeleteLocalRef(env, keyOct);
+        if (keyDec) (*env)->DeleteLocalRef(env, keyDec);
+        if (keyHex) (*env)->DeleteLocalRef(env, keyHex);
+        if (valBin) (*env)->DeleteLocalRef(env, valBin);
+        if (valOct) (*env)->DeleteLocalRef(env, valOct);
+        if (valDec) (*env)->DeleteLocalRef(env, valDec);
+        if (valHex) (*env)->DeleteLocalRef(env, valHex);
         (*env)->DeleteLocalRef(env, result);
         (*env)->DeleteLocalRef(env, hashMapClass);
         return NULL;

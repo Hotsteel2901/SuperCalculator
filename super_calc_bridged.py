@@ -4091,7 +4091,10 @@ class SuperCalcApp:
         z = self._parse_complex(self._var_complex_z.get())
         if z is not None:
             result = CalcEngine.complex_abs(z)
-            self._show_complex_result(f"|z| = {result:.10g}")
+            if result is not None:
+                self._show_complex_result(f"|z| = {result:.10g}")
+            else:
+                self._show_complex_result("Error")
 
     def _on_complex_conj(self):
         z = self._parse_complex(self._var_complex_z.get())

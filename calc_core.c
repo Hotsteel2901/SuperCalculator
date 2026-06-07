@@ -367,7 +367,7 @@ static int eval_rpn(RPN* rpn, int nrpn, double x, double y, double* result) {
             else if (t.op == '!') {
                 if (sp < 1) { set_error("Invalid expression"); return -1; }
                 double a = stack[--sp];
-                if (a < 0 || floor(a) != a) { set_error("Factorial requires non-negative integer"); stack[sp++] = NAN; }
+                if (a < 0 || floor(a) != a) { set_error("Factorial requires non-negative integer"); return -1; }
                 else if (a > 170) { set_error("Factorial overflow (max 170!)"); stack[sp++] = INFINITY; }
                 else {
                     double r = 1.0;
@@ -492,6 +492,7 @@ EXPORT double derivative2(const char* expr, double x, double h) {
 
 EXPORT double integrate(const char* expr, double a, double b, int n) {
     if (n < 2 || n % 2 != 0) { set_error("n must be even and >= 2"); return NAN; }
+    if (n > 1000000) { set_error("n too large (max 1000000)"); return NAN; }
     if (a > b) { set_error("Invalid interval: a must be <= b"); return NAN; }
     if (a == b) return 0.0;
     clear_error();
@@ -949,6 +950,8 @@ static Complex complex_pow(Complex base, Complex exp) {
     if (base.im == 0.0 && base.re == 0.0) {
         if (exp.re > 0.0 || exp.im != 0.0)
             return complex_make(0.0, 0.0);
+        else if (exp.re < 0.0 && exp.im == 0.0)
+            return complex_make(INFINITY, 0.0);
         else
             return complex_make(INFINITY, INFINITY);
     }
@@ -1000,11 +1003,17 @@ static int parse_complex(const char* s, Complex* result) {
             result->im = (sign == '+') ? 1.0 : -1.0;
             return 0;
         }
-        double im = strtod(end, &end);
-        if (*end == 'i' || *end == 'I') {
+        char* im_end;
+        double im = strtod(end, &im_end);
+        if (im_end == end) { set_error("Incomplete complex number"); return -1; }
+        if (*im_end == 'i' || *im_end == 'I') {
+            im_end++;
+            if (*im_end != '\0') { set_error("Invalid complex number format"); return -1; }
             result->im = (sign == '+') ? im : -im;
             return 0;
         }
+        set_error("Missing 'i' in complex number");
+        return -1;
     } else if (*end == 'i' || *end == 'I') {
         result->re = 0.0;
         result->im = re;
