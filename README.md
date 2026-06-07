@@ -1,12 +1,13 @@
 # Super Function Graphing Calculator
 
+> A high-performance function graphing calculator using the **Bridge Pattern**:
+C for computation, Python for the GUI, and `ctypes` as the bridge.
+
 [![Build Windows EXE](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-windows-exe.yml/badge.svg)](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-windows-exe.yml)
 
 [![Build Android APK](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-android-apk.yml/badge.svg)](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-android-apk.yml)
 
 [中文](README_CN.md) | **English**
-A high-performance function graphing calculator using the **Bridge Pattern**:
-C for computation, Python for the GUI, and `ctypes` as the bridge.
 
 Also includes an **Android APK** build (aarch64) with a Material Design 3 UI.
 
