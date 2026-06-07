@@ -120,14 +120,38 @@ public class PlotActivity extends AppCompatActivity {
             ArrayList<String> savedParamTMin = savedInstanceState.getStringArrayList("param_t_min");
             ArrayList<String> savedParamTMax = savedInstanceState.getStringArrayList("param_t_max");
             if (savedParamTMin != null && savedParamTMax != null) {
-                for (String s : savedParamTMin) parametricTMin.add(Double.parseDouble(s));
-                for (String s : savedParamTMax) parametricTMax.add(Double.parseDouble(s));
+                for (String s : savedParamTMin) {
+                    try {
+                        parametricTMin.add(Double.parseDouble(s));
+                    } catch (NumberFormatException e) {
+                        parametricTMin.add(0.0);
+                    }
+                }
+                for (String s : savedParamTMax) {
+                    try {
+                        parametricTMax.add(Double.parseDouble(s));
+                    } catch (NumberFormatException e) {
+                        parametricTMax.add(2 * Math.PI);
+                    }
+                }
             }
             ArrayList<String> savedPolarThetaMin = savedInstanceState.getStringArrayList("polar_theta_min");
             ArrayList<String> savedPolarThetaMax = savedInstanceState.getStringArrayList("polar_theta_max");
             if (savedPolarThetaMin != null && savedPolarThetaMax != null) {
-                for (String s : savedPolarThetaMin) polarThetaMin.add(Double.parseDouble(s));
-                for (String s : savedPolarThetaMax) polarThetaMax.add(Double.parseDouble(s));
+                for (String s : savedPolarThetaMin) {
+                    try {
+                        polarThetaMin.add(Double.parseDouble(s));
+                    } catch (NumberFormatException e) {
+                        polarThetaMin.add(0.0);
+                    }
+                }
+                for (String s : savedPolarThetaMax) {
+                    try {
+                        polarThetaMax.add(Double.parseDouble(s));
+                    } catch (NumberFormatException e) {
+                        polarThetaMax.add(2 * Math.PI);
+                    }
+                }
             }
         }
         

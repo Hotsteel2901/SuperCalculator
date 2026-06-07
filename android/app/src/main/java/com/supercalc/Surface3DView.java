@@ -174,7 +174,7 @@ public class Surface3DView extends View {
         canvas.drawColor(Color.parseColor("#181825"));
 
         if (zValues == null || zValues.length == 0 || zValues[0].length == 0 || colors == null) {
-            canvas.drawText("No 3D data", getWidth() / 2f - 60, getHeight() / 2f, textPaint);
+            canvas.drawText(getContext().getString(R.string.no_3d_data), getWidth() / 2f - 60, getHeight() / 2f, textPaint);
             return;
         }
 

@@ -1,5 +1,7 @@
 package com.supercalc;
 
+import android.content.Context;
+
 /**
  * Statistical Distribution Calculator for Android.
  * Implements common probability distributions:
@@ -16,33 +18,48 @@ public class StatDistCalc {
         NORMAL, T, CHI2, F, BINOMIAL, POISSON
     }
 
-    public static String[] getDistributionNames() {
+    public static String[] getDistributionNames(Context context) {
         return new String[]{
-            "Normal", "Student's t", "Chi-squared", "F", "Binomial", "Poisson"
+            context.getString(R.string.dist_normal),
+            context.getString(R.string.dist_t),
+            context.getString(R.string.dist_chi2),
+            context.getString(R.string.dist_f),
+            context.getString(R.string.dist_binomial),
+            context.getString(R.string.dist_poisson)
         };
     }
 
-    public static DistType fromName(String name) {
-        switch (name) {
-            case "Normal": return DistType.NORMAL;
-            case "Student's t": return DistType.T;
-            case "Chi-squared": return DistType.CHI2;
-            case "F": return DistType.F;
-            case "Binomial": return DistType.BINOMIAL;
-            case "Poisson": return DistType.POISSON;
-            default: return DistType.NORMAL;
-        }
+    public static DistType fromName(Context context, String name) {
+        if (name.equals(context.getString(R.string.dist_normal))) return DistType.NORMAL;
+        if (name.equals(context.getString(R.string.dist_t))) return DistType.T;
+        if (name.equals(context.getString(R.string.dist_chi2))) return DistType.CHI2;
+        if (name.equals(context.getString(R.string.dist_f))) return DistType.F;
+        if (name.equals(context.getString(R.string.dist_binomial))) return DistType.BINOMIAL;
+        if (name.equals(context.getString(R.string.dist_poisson))) return DistType.POISSON;
+        return DistType.NORMAL;
     }
 
     // PDF / PMF
     public static double pdf(DistType type, double x, double... params) {
         switch (type) {
-            case NORMAL: return normalPdf(x, params[0], params[1]);
-            case T: return tPdf(x, (int) params[0]);
-            case CHI2: return chi2Pdf(x, (int) params[0]);
-            case F: return fPdf(x, params[0], params[1]);
-            case BINOMIAL: return binomialPmf((int) x, (int) params[0], params[1]);
-            case POISSON: return poissonPmf((int) x, params[0]);
+            case NORMAL:
+                if (params.length < 2) return Double.NaN;
+                return normalPdf(x, params[0], params[1]);
+            case T:
+                if (params.length < 1) return Double.NaN;
+                return tPdf(x, (int) params[0]);
+            case CHI2:
+                if (params.length < 1) return Double.NaN;
+                return chi2Pdf(x, (int) params[0]);
+            case F:
+                if (params.length < 2) return Double.NaN;
+                return fPdf(x, params[0], params[1]);
+            case BINOMIAL:
+                if (params.length < 2) return Double.NaN;
+                return binomialPmf((int) x, (int) params[0], params[1]);
+            case POISSON:
+                if (params.length < 1) return Double.NaN;
+                return poissonPmf((int) x, params[0]);
             default: return Double.NaN;
         }
     }
@@ -50,23 +67,37 @@ public class StatDistCalc {
     // CDF
     public static double cdf(DistType type, double x, double... params) {
         switch (type) {
-            case NORMAL: return normalCdf(x, params[0], params[1]);
-            case T: return tCdf(x, (int) params[0]);
-            case CHI2: return chi2Cdf(x, (int) params[0]);
-            case F: return fCdf(x, params[0], params[1]);
-            case BINOMIAL: return binomialCdf((int) x, (int) params[0], params[1]);
-            case POISSON: return poissonCdf((int) x, params[0]);
+            case NORMAL:
+                if (params.length < 2) return Double.NaN;
+                return normalCdf(x, params[0], params[1]);
+            case T:
+                if (params.length < 1) return Double.NaN;
+                return tCdf(x, (int) params[0]);
+            case CHI2:
+                if (params.length < 1) return Double.NaN;
+                return chi2Cdf(x, (int) params[0]);
+            case F:
+                if (params.length < 2) return Double.NaN;
+                return fCdf(x, params[0], params[1]);
+            case BINOMIAL:
+                if (params.length < 2) return Double.NaN;
+                return binomialCdf((int) x, (int) params[0], params[1]);
+            case POISSON:
+                if (params.length < 1) return Double.NaN;
+                return poissonCdf((int) x, params[0]);
             default: return Double.NaN;
         }
     }
 
     // --- Normal Distribution ---
     private static double normalPdf(double x, double mu, double sigma) {
+        if (sigma <= 0) return Double.NaN;
         double z = (x - mu) / sigma;
         return Math.exp(-0.5 * z * z) / (sigma * Math.sqrt(2 * Math.PI));
     }
 
     private static double normalCdf(double x, double mu, double sigma) {
+        if (sigma <= 0) return Double.NaN;
         return 0.5 * (1.0 + erf((x - mu) / (sigma * Math.sqrt(2))));
     }
 

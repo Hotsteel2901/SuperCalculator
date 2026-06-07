@@ -119,7 +119,7 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
                     if (nearestDist < threshold) {
                         markedPoints.remove(nearestIdx);
                         refreshMarkedPoints();
-                        coordinateDisplay.setText("Deleted marked point");
+                        coordinateDisplay.setText(getString(R.string.toast_deleted_mark));
                     }
                 }
             }
@@ -136,7 +136,7 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
                 
                 markedPoints.add(new Entry(x, y));
                 refreshMarkedPoints();
-                coordinateDisplay.setText(String.format("Marked point: (%.4g, %.4g)", x, y));
+                coordinateDisplay.setText(String.format(getString(R.string.toast_marked_point), x, y));
             }
             
             @Override
@@ -191,7 +191,7 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
             return;
         }
         
-        for (int i = 0; i < expressions.length; i++) {
+        for (int i = 0; i < expressions.length && i < entriesData.length; i++) {
             allExpressions.add(expressions[i]);
             if (colors != null && i < colors.length) {
                 curveColors.add(colors[i]);
