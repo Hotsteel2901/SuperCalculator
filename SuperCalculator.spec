@@ -33,6 +33,7 @@ a = Analysis(
         'tkinter',
         'calc_bridge',
         'locale_strings',
+        'stat_dist',
     ],
     hookspath=[],
     hooksconfig={},

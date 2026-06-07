@@ -29,6 +29,7 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
+#include <limits.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -203,6 +204,7 @@ static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
             prev_was_op_or_lp = 1;
         } else if (t.kind == T_COMMA) {
             while (sp > 0 && stack[sp-1].kind != T_LPAREN) {
+                if (out_n >= max_out) { set_error("Expression too long"); return -1; }
                 Token top = stack[--sp];
                 if (top.kind == T_OP) {
                     output[out_n].tag=2; output[out_n].op=top.op; out_n++;
@@ -220,6 +222,7 @@ static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
             
             if (t.op == '!') {
                 while (sp > 0) {
+                    if (out_n >= max_out) { set_error("Expression too long"); return -1; }
                     Token top = stack[sp-1];
                     if (top.kind == T_OP) {
                         int top_prec = precedence(top.op);
@@ -249,6 +252,7 @@ static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
                 int prec = precedence(t.op);
                 int ra   = is_right_assoc(t.op);
                 while (sp > 0) {
+                    if (out_n >= max_out) { set_error("Expression too long"); return -1; }
                     Token top = stack[sp-1];
                     if (top.kind == T_OP) {
                         int top_prec = precedence(top.op);
@@ -274,6 +278,7 @@ static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
             prev_was_op_or_lp = 1;
         } else if (t.kind == T_RPAREN || t.kind == T_END) {
             while (sp > 0 && stack[sp-1].kind != T_LPAREN) {
+                if (out_n >= max_out) { set_error("Expression too long"); return -1; }
                 Token top = stack[--sp];
                 if (top.kind == T_OP) {
                     output[out_n].tag=2; output[out_n].op=top.op; out_n++;
@@ -288,12 +293,14 @@ static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
             }
             if (t.kind == T_RPAREN || t.kind == T_END) {
                 while (sp > 0 && stack[sp-1].kind == T_OP && stack[sp-1].op == '!') {
+                    if (out_n >= max_out) { set_error("Expression too long"); return -1; }
                     Token top = stack[--sp];
                     output[out_n].tag=2; output[out_n].op=top.op; out_n++;
                 }
             }
             if (t.kind == T_END) {
                 while (sp > 0) {
+                    if (out_n >= max_out) { set_error("Expression too long"); return -1; }
                     Token top = stack[--sp];
                     if (top.kind == T_OP) {
                         output[out_n].tag=2; output[out_n].op=top.op; out_n++;
@@ -392,7 +399,7 @@ static int eval_rpn(RPN* rpn, int nrpn, double x, double y, double* result) {
 }
 
 static int parse_and_eval(const char* expr, double x, double y, double* result) {
-    g_error[0] = '\0';
+    clear_error();
     Token toks[MAX_TOKENS];
     RPN   rpn[MAX_RPN];
     int nt = tokenize(expr, toks, MAX_TOKENS);
@@ -467,6 +474,7 @@ EXPORT void evaluate_xy_array(const char* expr, const double* xs, const double* 
 EXPORT double derivative(const char* expr, double x, double h) {
     double fp, fm;
     clear_error();
+    if (h == 0.0) { set_error("Step size h cannot be zero"); return NAN; }
     if (parse_and_eval(expr, x+h, 0.0, &fp) != 0) return NAN;
     if (parse_and_eval(expr, x-h, 0.0, &fm) != 0) return NAN;
     return (fp - fm) / (2.0 * h);
@@ -475,6 +483,7 @@ EXPORT double derivative(const char* expr, double x, double h) {
 EXPORT double derivative2(const char* expr, double x, double h) {
     double fc, fp, fm;
     clear_error();
+    if (h == 0.0) { set_error("Step size h cannot be zero"); return NAN; }
     if (parse_and_eval(expr, x,   0.0, &fc) != 0) return NAN;
     if (parse_and_eval(expr, x+h, 0.0, &fp) != 0) return NAN;
     if (parse_and_eval(expr, x-h, 0.0, &fm) != 0) return NAN;
@@ -1292,6 +1301,10 @@ EXPORT long long base_to_long(const char* str, int base) {
             set_error("Invalid digit for the given base");
             return 0;
         }
+        if (result > (LLONG_MAX - digit) / base) {
+            set_error("Integer overflow in base conversion");
+            return negative ? LLONG_MIN : LLONG_MAX;
+        }
         result = result * base + digit;
         p++;
     }
@@ -1309,7 +1322,7 @@ EXPORT int long_to_base(long long n, int base, char* output, int max_out) {
     int negative = 0;
     unsigned long long un;
 
-    if (n < 0) { negative = 1; un = (unsigned long long)(-n); }
+    if (n < 0) { negative = 1; un = -(unsigned long long)n; }
     else { un = (unsigned long long)n; }
 
     if (un == 0) {
@@ -1322,8 +1335,13 @@ EXPORT int long_to_base(long long n, int base, char* output, int max_out) {
         }
     }
 
-    if (negative && i < max_out - 1) {
-        temp[i++] = '-';
+    if (negative) {
+        if (i < max_out - 1) {
+            temp[i++] = '-';
+        } else {
+            set_error("Output buffer too small for negative sign");
+            return 0;
+        }
     }
 
     int len = i;

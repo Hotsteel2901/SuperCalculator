@@ -285,6 +285,8 @@ class CalcEngine:
     def evaluate_array(expr: str, xs: List[float]) -> List[Optional[float]]:
         """Evaluate expression at multiple x values (batched)."""
         n = len(xs)
+        if n == 0:
+            return []
         arr_x = (ctypes.c_double * n)(*xs)
         arr_y = (ctypes.c_double * n)()
         _lib.evaluate_array(expr.encode("utf-8"), arr_x, arr_y, n)
@@ -639,7 +641,8 @@ class CalcEngine:
     @staticmethod
     def complex_abs(z: complex) -> float:
         """Compute absolute value (modulus) of a complex number."""
-        return _lib.complex_abs_value(z.real, z.imag)
+        result = _lib.complex_abs_value(z.real, z.imag)
+        return None if _is_invalid(result) else result
 
     @staticmethod
     def complex_conj(z: complex) -> complex:
@@ -669,13 +672,23 @@ class CalcEngine:
         arr_im = (ctypes.c_double * n)()
         _lib.complex_array_evaluate(expr.encode("utf-8"), arr_x, arr_y,
                                     arr_re, arr_im, n)
-        return [complex(arr_re[i], arr_im[i]) for i in range(n)]
+        result = []
+        for i in range(n):
+            re_val = arr_re[i]
+            im_val = arr_im[i]
+            if _is_invalid(re_val) or _is_invalid(im_val):
+                result.append(None)
+            else:
+                result.append(complex(re_val, im_val))
+        return result
 
     @staticmethod
     def arc_length(expr: str, a: float, b: float, n: int = 5000) -> Optional[float]:
         """Approximate arc length of f(x) over [a,b] using chord summation."""
         if a >= b:
             return 0.0 if a == b else None
+        if n < 1:
+            return None
         import math as _math
         h = (b - a) / n
         xs = [a + i * h for i in range(n + 1)]
