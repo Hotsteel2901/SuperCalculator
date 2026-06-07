@@ -96,6 +96,13 @@ pip install numpy matplotlib
 python super_calc_bridged.py
 ```
 
+## 📖 使用教程
+
+**第一次使用？** 查看我们详细的保姆级教程：
+
+- **[中文使用教程](docs/usage_cn.md)** — 涵盖所有功能的详细使用方法，从安装到高级操作
+- **[English Usage Guide](docs/usage_en.md)** — Comprehensive tutorial covering all features, from installation to advanced usage
+
 ## 环境要求
 
 - **Python 3.9+** 并安装以下包：`numpy`、`matplotlib`
