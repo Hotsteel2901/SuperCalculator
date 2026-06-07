@@ -94,6 +94,13 @@ pip install numpy matplotlib
 python super_calc_bridged.py
 ```
 
+## 📖 Usage Guide
+
+**New to SuperCalculator?** Check out our detailed step-by-step usage tutorials:
+
+- **[English Usage Guide](docs/usage_en.md)** — Comprehensive tutorial covering all features, from installation to advanced usage
+- **[中文使用教程](docs/usage_cn.md)** — 保姆级详细教程，涵盖所有功能的使用方法
+
 ## Prerequisites
 
 - **Python 3.9+** with packages: `numpy`, `matplotlib`
