@@ -32,34 +32,35 @@
 5. [3D Function Plotting](#5-3d-function-plotting)
 6. [Parametric Curve Plotting](#6-parametric-curve-plotting)
 7. [Polar Coordinate Plotting](#7-polar-coordinate-plotting)
-8. [Numerical Computation](#8-numerical-computation)
-   - [8.1 Evaluation](#81-evaluation)
-   - [8.2 Numerical Derivatives](#82-numerical-derivatives)
-   - [8.3 Numerical Integration](#83-numerical-integration)
-   - [8.4 Equation Solving](#84-equation-solving)
-   - [8.5 Nonlinear System Solver](#85-nonlinear-system-solver)
-   - [8.6 Extremum Finder](#86-extremum-finder)
-   - [8.7 Limit Computation](#87-limit-computation)
-   - [8.8 Auto Root Scanner](#88-auto-root-scanner)
-   - [8.9 Curve Intersection Finder](#89-curve-intersection-finder)
-   - [8.10 Arc Length](#810-arc-length)
-   - [8.11 Area Between Curves](#811-area-between-curves)
-9. [Tangent & Normal Lines](#9-tangent--normal-lines)
-10. [Taylor Series Expansion](#10-taylor-series-expansion)
-11. [ODE Solver (RK4)](#11-ode-solver-rk4)
-12. [Fourier Transform & Spectrum Analysis](#12-fourier-transform--spectrum-analysis)
-13. [Statistics Calculator](#13-statistics-calculator)
-14. [Statistical Distribution Calculator](#14-statistical-distribution-calculator)
-15. [Curve Fitting / Regression](#15-curve-fitting--regression)
-16. [Matrix Operations (Linear Algebra)](#16-matrix-operations-linear-algebra)
-17. [Complex Number Calculator](#17-complex-number-calculator)
-18. [Unit Converter](#18-unit-converter)
-19. [Number Theory Calculator](#19-number-theory-calculator)
-20. [Function Table & CSV Export](#20-function-table--csv-export)
-21. [Quick Input Panel](#21-quick-input-panel)
-22. [Language Switching (Chinese/English)](#22-language-switching-chineseenglish)
-23. [Android-Specific Guide](#23-android-specific-guide)
-24. [FAQ](#24-faq)
+8. [Implicit Function Plotting](#8-implicit-function-plotting)
+ 9. [Numerical Computation](#9-numerical-computation)
+   - [9.1 Evaluation](#91-evaluation)
+   - [9.2 Numerical Derivatives](#92-numerical-derivatives)
+   - [9.3 Numerical Integration](#93-numerical-integration)
+   - [9.4 Equation Solving](#94-equation-solving)
+   - [9.5 Nonlinear System Solver](#95-nonlinear-system-solver)
+   - [9.6 Extremum Finder](#96-extremum-finder)
+   - [9.7 Limit Computation](#97-limit-computation)
+   - [9.8 Auto Root Scanner](#98-auto-root-scanner)
+   - [9.9 Curve Intersection Finder](#99-curve-intersection-finder)
+   - [9.10 Arc Length](#910-arc-length)
+   - [9.11 Area Between Curves](#911-area-between-curves)
+ 10. [Tangent & Normal Lines](#10-tangent--normal-lines)
+ 11. [Taylor Series Expansion](#11-taylor-series-expansion)
+ 12. [ODE Solver (RK4)](#12-ode-solver-rk4)
+ 13. [Fourier Transform & Spectrum Analysis](#13-fourier-transform--spectrum-analysis)
+ 14. [Statistics Calculator](#14-statistics-calculator)
+ 15. [Statistical Distribution Calculator](#15-statistical-distribution-calculator)
+ 16. [Curve Fitting / Regression](#16-curve-fitting--regression)
+ 17. [Matrix Operations (Linear Algebra)](#17-matrix-operations-linear-algebra)
+ 18. [Complex Number Calculator](#18-complex-number-calculator)
+ 19. [Unit Converter](#19-unit-converter)
+ 20. [Number Theory Calculator](#20-number-theory-calculator)
+ 21. [Function Table & CSV Export](#21-function-table--csv-export)
+ 22. [Quick Input Panel](#22-quick-input-panel)
+ 23. [Language Switching (Chinese/English)](#23-language-switching-chineseenglish)
+ 24. [Android-Specific Guide](#24-android-specific-guide)
+ 25. [FAQ](#25-faq)
 
 ---
 
@@ -420,9 +421,48 @@ Click: Polar Plot
 
 ---
 
-## 8. Numerical Computation
+## 8. Implicit Function Plotting
 
-### 8.1 Evaluation
+Implicit curves plot equations of the form **f(x,y) = 0** (e.g., circles, ellipses, hyperbolas, cardioids).
+
+**How to use:**
+
+1. Check **"Enable implicit curve"**
+2. Enter an expression using both `x` and `y` (e.g., `x^2+y^2-1`)
+3. Adjust the resolution (default 200)
+4. Click **"+ Add Curve"** or **"Plot"**
+
+**Built-in Presets:**
+- Circle: `x^2+y^2-1`
+- Ellipse: `x^2/4+y^2-1`
+- Hyperbola: `x^2-y^2-1`
+- Parabola: `y-x^2`
+- Lemniscate: `(x^2+y^2)^2-(x^2-y^2)`
+- Cardioid: `(x^2+y^2-x)^2-(x^2+y^2)`
+- Folium: `x^3+y^3-3*x*y`
+- Cubic: `y^2-x^3+x`
+
+**Example: Draw a circle**
+
+```
+Check "Enable implicit curve"
+Input: x^2+y^2-1
+Click: Plot
+```
+
+**Example: Draw a cardioid**
+
+```
+Check "Enable implicit curve"
+Input: (x^2+y^2-x)^2-(x^2+y^2)
+Click: Plot
+```
+
+---
+
+## 24. Numerical Computation
+
+### 9.1 Evaluation
 
 **Evaluate function at a specific point:**
 
@@ -431,7 +471,7 @@ Click: Polar Plot
 3. Click **"Evaluate"**
 4. Result: approximately `1.0`
 
-### 8.2 Numerical Derivatives
+### 9.2 Numerical Derivatives
 
 **Compute first derivative f'(x):**
 
@@ -452,7 +492,7 @@ Click: Polar Plot
 2. Enter order (e.g., 5)
 3. Click **"nth Derivative"**
 
-### 8.3 Numerical Integration
+### 9.3 Numerical Integration
 
 **Compute definite integral ∫f(x)dx:**
 
@@ -471,7 +511,7 @@ Upper: 3.14159
 Result: approximately 2.0
 ```
 
-### 8.4 Equation Solving
+### 9.4 Equation Solving
 
 **Find root of f(x) = 0:**
 
@@ -488,7 +528,7 @@ Initial guess: 1
 Result: approximately 0.524 (= π/6)
 ```
 
-### 8.5 Nonlinear System Solver
+### 9.5 Nonlinear System Solver
 
 **Solve a system of two equations:**
 
@@ -502,7 +542,7 @@ For example:
 4. Click **"Solve System"**
 5. Result: x ≈ 0.7071, y ≈ 0.7071
 
-### 8.6 Extremum Finder
+### 9.6 Extremum Finder
 
 **Find local minimum:**
 
@@ -518,7 +558,7 @@ For example:
 3. Click **"Find Maximum"**
 4. Result: approximately `1.571` (≈ π/2, where sin reaches max)
 
-### 8.7 Limit Computation
+### 9.7 Limit Computation
 
 **Compute two-sided limit:**
 
@@ -545,7 +585,7 @@ Click: Right Limit
 Result: +inf (positive infinity)
 ```
 
-### 8.8 Auto Root Scanner
+### 9.8 Auto Root Scanner
 
 **Automatically find all roots in an interval:**
 
@@ -557,7 +597,7 @@ Result: +inf (positive infinity)
 **Example:** Scan `sin(x)` on `[0, 10]`:
 - Results: 0, 3.1416, 6.2832, 9.4248 (i.e., 0, π, 2π, 3π)
 
-### 8.9 Curve Intersection Finder
+### 9.9 Curve Intersection Finder
 
 **Find all intersection points of two curves:**
 
@@ -570,7 +610,7 @@ Result: +inf (positive infinity)
 **Example:** `sin(x)` and `cos(x)` on `[0, 6]`:
 - Results: x ≈ 0.785 (= π/4) and x ≈ 3.927 (= 5π/4)
 
-### 8.10 Arc Length
+### 9.10 Arc Length
 
 **Compute arc length of a curve:**
 
@@ -579,7 +619,7 @@ Result: +inf (positive infinity)
 3. Click **"Arc Length"**
 4. Result: approximately `3.820`
 
-### 8.11 Area Between Curves
+### 9.11 Area Between Curves
 
 **Compute enclosed area between two curves:**
 
@@ -591,7 +631,7 @@ Result: +inf (positive infinity)
 
 ---
 
-## 9. Tangent & Normal Lines
+## 24. Tangent & Normal Lines
 
 **Draw tangent and normal lines at a point on the curve:**
 
@@ -607,7 +647,7 @@ Result: +inf (positive infinity)
 
 ---
 
-## 10. Taylor Series Expansion
+## 24. Taylor Series Expansion
 
 **Expand a function into a Taylor polynomial:**
 
@@ -631,7 +671,7 @@ Polynomial: x - x³/6 + x⁵/120
 
 ---
 
-## 11. ODE Solver (RK4)
+## 24. ODE Solver (RK4)
 
 **Solve first-order ODE initial value problems:**
 
@@ -657,7 +697,7 @@ Result: Numerical solution of y = e^(-x)
 
 ---
 
-## 12. Fourier Transform & Spectrum Analysis
+## 24. Fourier Transform & Spectrum Analysis
 
 **Perform FFT spectrum analysis on a function:**
 
@@ -682,7 +722,7 @@ Results:
 
 ---
 
-## 13. Statistics Calculator
+## 24. Statistics Calculator
 
 **Enter a dataset and compute statistics:**
 
@@ -713,7 +753,7 @@ Results:
 
 ---
 
-## 14. Statistical Distribution Calculator
+## 24. Statistical Distribution Calculator
 
 **Compute values for probability distributions:**
 
@@ -750,7 +790,7 @@ Result: approximately 1.96
 
 ---
 
-## 15. Curve Fitting / Regression
+## 24. Curve Fitting / Regression
 
 **Perform regression analysis on a dataset:**
 
@@ -785,7 +825,7 @@ Result: y = 0.6x + 2.2, R² = 0.739
 
 ---
 
-## 16. Matrix Operations (Linear Algebra)
+## 24. Matrix Operations (Linear Algebra)
 
 **Input format:** Rows separated by `;`, columns by `,`
 
@@ -815,7 +855,7 @@ Inverse: -2, 1; 1.5, -0.5
 
 ---
 
-## 17. Complex Number Calculator
+## 24. Complex Number Calculator
 
 **Complex number operations:**
 
@@ -838,7 +878,7 @@ Inverse: -2, 1; 1.5, -0.5
 
 ---
 
-## 18. Unit Converter
+## 24. Unit Converter
 
 **9 unit categories supported:**
 
@@ -873,7 +913,7 @@ Result: 37.78°C
 
 ---
 
-## 19. Number Theory Calculator
+## 24. Number Theory Calculator
 
 **Supported functions:**
 
@@ -896,7 +936,7 @@ Result: 2³ × 3² × 5
 
 ---
 
-## 20. Function Table & CSV Export
+## 24. Function Table & CSV Export
 
 **Generate x-f(x) data table:**
 
@@ -912,7 +952,7 @@ Result: 2³ × 3² × 5
 
 ---
 
-## 21. Quick Input Panel
+## 24. Quick Input Panel
 
 Click the **"Quick Input"** button to open a popup keypad:
 
@@ -934,7 +974,7 @@ Click any button to insert the corresponding character into the expression input
 
 ---
 
-## 22. Language Switching (Chinese/English)
+## 24. Language Switching (Chinese/English)
 
 **Desktop:**
 
@@ -956,7 +996,7 @@ SUPERCALC_LANG=en python super_calc_bridged.py
 
 ---
 
-## 23. Android-Specific Guide
+## 24. Android-Specific Guide
 
 ### 23.1 Main Interface (CalcActivity)
 

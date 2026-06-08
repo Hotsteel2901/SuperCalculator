@@ -241,6 +241,21 @@ public class CalcActivity extends AppCompatActivity {
             thetaMaxInput.setText("6.2832");
         });
 
+        // Implicit plotting
+        EditText implicitExprInput = findViewById(R.id.implicit_expr_input);
+        EditText implicitResInput = findViewById(R.id.implicit_resolution_input);
+        MaterialButton btnPlotImplicit = findViewById(R.id.btn_plot_implicit);
+        Chip chipImplicitCircle = findViewById(R.id.chip_implicit_circle);
+        Chip chipImplicitHyperbola = findViewById(R.id.chip_implicit_hyperbola);
+
+        btnPlotImplicit.setOnClickListener(v -> onPlotImplicit());
+        chipImplicitCircle.setOnClickListener(v -> {
+            implicitExprInput.setText("x^2+y^2-1");
+        });
+        chipImplicitHyperbola.setOnClickListener(v -> {
+            implicitExprInput.setText("x^2-y^2-1");
+        });
+
         // Preset chips — set expression text and auto-evaluate
         Chip chipSin = findViewById(R.id.chip_sin);
         Chip chipCos = findViewById(R.id.chip_cos);
@@ -1871,6 +1886,32 @@ public class CalcActivity extends AppCompatActivity {
         intent.putExtra("is_polar", true);
         intent.putExtra("t_min", thetaMin);
         intent.putExtra("t_max", thetaMax);
+        startActivity(intent);
+    }
+
+    private void onPlotImplicit() {
+        EditText implicitExprInput = findViewById(R.id.implicit_expr_input);
+        EditText implicitResInput = findViewById(R.id.implicit_resolution_input);
+        String impExpr = implicitExprInput.getText().toString().trim();
+        if (impExpr.isEmpty()) {
+            toast(getString(R.string.toast_enter_implicit));
+            return;
+        }
+        int resolution = 200;
+        try {
+            resolution = Integer.parseInt(implicitResInput.getText().toString().trim());
+            if (resolution < 50) resolution = 50;
+            if (resolution > 500) resolution = 500;
+        } catch (NumberFormatException ex) {
+            resolution = 200;
+        }
+
+        Intent intent = new Intent(this, PlotActivity.class);
+        intent.putExtra("implicit_expr", impExpr);
+        intent.putExtra("implicit_resolution", resolution);
+        intent.putExtra("is_implicit", true);
+        intent.putExtra("x_min", -10.0);
+        intent.putExtra("x_max", 10.0);
         startActivity(intent);
     }
 

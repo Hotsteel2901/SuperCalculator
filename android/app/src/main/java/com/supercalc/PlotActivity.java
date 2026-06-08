@@ -193,6 +193,17 @@ public class PlotActivity extends AppCompatActivity {
             }
         }
         
+        // Handle implicit curve from intent
+        if (intent != null && intent.getBooleanExtra("is_implicit", false)) {
+            String impExpr = intent.getStringExtra("implicit_expr");
+            int resolution = intent.getIntExtra("implicit_resolution", 200);
+            double xMin = intent.getDoubleExtra("x_min", -10.0);
+            double xMax = intent.getDoubleExtra("x_max", 10.0);
+            if (impExpr != null) {
+                plotImplicitCurve(impExpr, resolution, xMin, xMax);
+            }
+        }
+        
         // Handle ODE solution plot from intent
         if (intent != null && intent.getBooleanExtra("is_ode", false)) {
             double[] odeXs = intent.getDoubleArrayExtra("ode_xs");
@@ -387,6 +398,120 @@ public class PlotActivity extends AppCompatActivity {
             lineChart.invalidate();
         }
         toast(getString(R.string.toast_polar_plotted));
+    }
+    
+    private void plotImplicitCurve(String impExpr, int resolution, double xMin, double xMax) {
+        ArrayList<Entry> entries = new ArrayList<>();
+        double yMin = -10.0;
+        double yMax = 10.0;
+        
+        double dx = (xMax - xMin) / resolution;
+        double dy = (yMax - yMin) / resolution;
+        
+        double[][] grid = new double[resolution + 1][resolution + 1];
+        for (int i = 0; i <= resolution; i++) {
+            double y = yMin + i * dy;
+            for (int j = 0; j <= resolution; j++) {
+                double x = xMin + j * dx;
+                double val = CalcEngine.evaluateXY(impExpr, x, y);
+                grid[i][j] = (!Double.isNaN(val) && !Double.isInfinite(val)) ? val : Double.NaN;
+            }
+        }
+        
+        for (int i = 0; i < resolution; i++) {
+            for (int j = 0; j < resolution; j++) {
+                double v00 = grid[i][j];
+                double v10 = grid[i][j + 1];
+                double v01 = grid[i + 1][j];
+                double v11 = grid[i + 1][j + 1];
+                
+                if (Double.isNaN(v00) || Double.isNaN(v10) || Double.isNaN(v01) || Double.isNaN(v11)) {
+                    continue;
+                }
+                
+                int idx = 0;
+                if (v00 < 0) idx |= 1;
+                if (v10 < 0) idx |= 2;
+                if (v11 < 0) idx |= 4;
+                if (v01 < 0) idx |= 8;
+                
+                if (idx == 0 || idx == 15) continue;
+                
+                double x0 = xMin + j * dx;
+                double y0 = yMin + i * dy;
+                double ix, iy;
+                
+                List<double[]> segs = new ArrayList<>();
+                switch (idx) {
+                    case 1: case 14:
+                        iy = y0 + dy * (-v00 / (v01 - v00));
+                        ix = x0 + dx * (-v00 / (v10 - v00));
+                        segs.add(new double[]{x0, iy, ix, y0});
+                        break;
+                    case 2: case 13:
+                        ix = x0 + dx * (-v00 / (v10 - v00));
+                        iy = y0 + dy * (-v10 / (v11 - v10));
+                        segs.add(new double[]{ix, y0, x0 + dx, iy});
+                        break;
+                    case 3: case 12:
+                        iy = y0 + dy * (-v00 / (v01 - v00));
+                        double iy2 = y0 + dy * (-v10 / (v11 - v10));
+                        segs.add(new double[]{x0, iy, x0 + dx, iy2});
+                        break;
+                    case 4: case 11:
+                        iy = y0 + dy * (-v10 / (v11 - v10));
+                        double ix2 = x0 + dx * (-v01 / (v11 - v01));
+                        segs.add(new double[]{x0 + dx, iy, ix2, y0 + dy});
+                        break;
+                    case 5: case 10:
+                        iy = y0 + dy * (-v00 / (v01 - v00));
+                        ix = x0 + dx * (-v00 / (v10 - v00));
+                        double iy2b = y0 + dy * (-v10 / (v11 - v10));
+                        double ix2b = x0 + dx * (-v01 / (v11 - v01));
+                        segs.add(new double[]{x0, iy, x0 + dx, iy2b});
+                        segs.add(new double[]{ix, y0, ix2b, y0 + dy});
+                        break;
+                    case 6: case 9:
+                        ix = x0 + dx * (-v00 / (v10 - v00));
+                        iy = y0 + dy * (-v01 / (v11 - v01));
+                        segs.add(new double[]{ix, y0, x0 + dx * (-v01 / (v11 - v01)), y0 + dy});
+                        break;
+                    case 7: case 8:
+                        iy = y0 + dy * (-v00 / (v01 - v00));
+                        ix = x0 + dx * (-v01 / (v11 - v01));
+                        segs.add(new double[]{x0, iy, ix, y0 + dy});
+                        break;
+                }
+                
+                for (double[] seg : segs) {
+                    entries.add(new Entry((float) seg[0], (float) seg[1]));
+                    entries.add(new Entry((float) seg[2], (float) seg[3]));
+                    entries.add(new Entry(Float.NaN, Float.NaN));
+                }
+            }
+        }
+        
+        curveTypes.clear();
+        allEntries.add(entries);
+        String label = "Imp: " + impExpr + " = 0";
+        allExpressions.add(label);
+        curveColors.add(getNextColor());
+        curveTypes.add("implicit");
+        
+        List<ILineDataSet> dataSets = new ArrayList<>();
+        LineDataSet dataSet = new LineDataSet(entries, label);
+        dataSet.setColor(curveColors.get(0));
+        dataSet.setLineWidth(2f);
+        dataSet.setDrawCircles(false);
+        dataSet.setDrawValues(false);
+        dataSets.add(dataSet);
+        
+        if (!dataSets.isEmpty()) {
+            LineData lineData = new LineData(dataSets);
+            lineChart.setData(lineData);
+            lineChart.invalidate();
+        }
+        toast(getString(R.string.toast_implicit_plotted) + ": " + impExpr + " = 0");
     }
     
     private void plotOdeSolution(double[] xs, double[] ys, String expr) {
@@ -850,7 +975,7 @@ public class PlotActivity extends AppCompatActivity {
         ArrayList<ArrayList<Entry>> savedOdeTaylorEntries = new ArrayList<>();
         for (int i = 0; i < curveTypes.size(); i++) {
             String type = curveTypes.get(i);
-            if (("ode".equals(type) || "taylor".equals(type)) && i < allEntries.size()) {
+            if (("ode".equals(type) || "taylor".equals(type) || "implicit".equals(type)) && i < allEntries.size()) {
                 savedOdeTaylorEntries.add(new ArrayList<>(allEntries.get(i)));
             } else {
                 savedOdeTaylorEntries.add(null);
@@ -932,6 +1057,10 @@ public class PlotActivity extends AppCompatActivity {
                     // Data was lost (e.g., allEntries cleared by onAddCurve), try to preserve what we can
                     allEntries.add(new ArrayList<Entry>());
                 }
+            } else if ("implicit".equals(type)) {
+                // Re-plot implicit curve
+                // For now, add empty entries (implicit curves are complex to re-plot)
+                allEntries.add(new ArrayList<Entry>());
             } else {
                 // Regular expression curve
                 String expr = allExpressions.get(curveIdx);
