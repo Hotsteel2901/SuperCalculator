@@ -28,6 +28,10 @@
     <string name="compute">Compute</string>
     <string name="plot_parametric">Plot Parametric</string>
     <string name="plot_polar">Plot Polar</string>
+    <string name="implicit_label">Implicit Curve f(x,y)=0</string>
+    <string name="hint_implicit_expr">f(x,y) e.g. x^2+y^2-1</string>
+    <string name="hint_implicit_resolution">Resolution</string>
+    <string name="plot_implicit">Plot Implicit</string>
     <string name="find_min">Find Min</string>
     <string name="find_max">Find Max</string>
     <string name="clear">Clear</string>
@@ -218,6 +222,7 @@
     <string name="toast_invalid_t_range">Invalid t range</string>
     <string name="toast_t_range">t min must be less than t max</string>
     <string name="toast_enter_rtheta">Enter an r(theta) expression</string>
+    <string name="toast_enter_implicit">Enter an implicit expression f(x,y)</string>
     <string name="toast_invalid_theta_range">Invalid theta range</string>
     <string name="toast_theta_range">theta min must be less than theta max</string>
     <string name="toast_table_range">a must be less than b for table range</string>
@@ -229,6 +234,7 @@
     <string name="toast_no_valid_points">No valid points to plot</string>
     <string name="toast_parametric_plotted">Parametric curve plotted</string>
     <string name="toast_polar_plotted">Polar curve plotted</string>
+    <string name="toast_implicit_plotted">Implicit curve plotted</string>
     <string name="toast_no_ode_points">No valid ODE points to plot</string>
     <string name="toast_ode_plotted">ODE solution plotted</string>
     <string name="toast_taylor_plotted">Taylor series (order {0}) plotted at a={1}</string>

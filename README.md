@@ -34,6 +34,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
 - **3D Function Plotting** — plot surfaces for expressions with both `x` and `y`
 - **Parametric Curve Plotting** — plot curves defined as x(t) and y(t), with 10 built-in presets (circle, ellipse, Lissajous, spiral, cardioid, heart, etc.)
 - **Polar Coordinate Plotting** — plot curves defined as r(theta), with 12 built-in presets (cardioid, rose curves, clover, spiral, lemniscate, etc.)
+- **Implicit Function Plotting** — plot implicit equations of the form f(x,y)=0 (e.g., circles, ellipses, hyperbolas, cardioids, lemniscates, folium of Descartes) using contour-based rendering with 8 built-in presets and adjustable resolution
 - **Multi-Curve Overlay** — plot multiple functions simultaneously with different colors
 - **Numerical Derivatives** — first and second derivative via central difference
 - **Numerical Integration** — adaptive Simpson's rule for definite integrals

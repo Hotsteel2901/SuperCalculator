@@ -176,21 +176,29 @@ class CurveModel:
     __slots__ = ("expression", "color", "linewidth", "linestyle",
                  "visible", "label", "is_3d", "parameters",
                  "is_parametric", "x_param_expr", "y_param_expr",
-                 "is_polar", "r_param_expr")
+                 "is_polar", "r_param_expr",
+                 "is_implicit", "implicit_expr", "implicit_resolution")
 
     def __init__(self, expr, color, label="", lw=2, ls="-",
                  is_parametric=False, x_param_expr="", y_param_expr="",
-                 is_polar=False, r_param_expr=""):
+                 is_polar=False, r_param_expr="",
+                 is_implicit=False, implicit_expr="", implicit_resolution=200):
         self.is_parametric = is_parametric
         self.x_param_expr = x_param_expr
         self.y_param_expr = y_param_expr
         self.is_polar = is_polar
         self.r_param_expr = r_param_expr
+        self.is_implicit = is_implicit
+        self.implicit_expr = implicit_expr
+        self.implicit_resolution = implicit_resolution
         if is_parametric:
             self.expression = f"x(t)={x_param_expr}, y(t)={y_param_expr}"
             self.is_3d = False
         elif is_polar:
             self.expression = f"r(theta)={r_param_expr}"
+            self.is_3d = False
+        elif is_implicit:
+            self.expression = implicit_expr
             self.is_3d = False
         else:
             self.expression = expr
@@ -201,8 +209,9 @@ class CurveModel:
         self.visible = True
         self.label = label or self.expression
         self.parameters = self._detect_parameters(
-            expr if not is_parametric and not is_polar else
-            (x_param_expr + " " + y_param_expr if is_parametric else r_param_expr))
+            expr if not is_parametric and not is_polar and not is_implicit else
+            (x_param_expr + " " + y_param_expr if is_parametric else
+             r_param_expr if is_polar else implicit_expr))
 
     def _detect_3d(self, expr: str) -> bool:
         expr_lower = expr.lower()
@@ -444,6 +453,58 @@ class SuperCalcApp:
 
         # Initially hide polar inputs
         self._on_polar_toggle()
+
+        # --- Implicit Mode ---
+        self._var_implicit = tk.BooleanVar(value=False)
+        frm_implicit = ttk.LabelFrame(scroll_frame, text=t("sec_implicit"),
+                                      style="Dark.TLabelframe")
+        frm_implicit.pack(fill=tk.X, padx=8, pady=4)
+
+        itog = ttk.Frame(frm_implicit, style="Dark.TFrame")
+        itog.pack(fill=tk.X, padx=6, pady=(4, 2))
+        ttk.Checkbutton(itog, text=t("btn_enable_implicit"),
+                        variable=self._var_implicit,
+                        command=self._on_implicit_toggle).pack(side=tk.LEFT)
+
+        self._frame_implicit_inputs = ttk.Frame(frm_implicit, style="Dark.TFrame")
+        self._frame_implicit_inputs.pack(fill=tk.X, padx=6, pady=2)
+
+        ir1 = ttk.Frame(self._frame_implicit_inputs, style="Dark.TFrame")
+        ir1.pack(fill=tk.X, pady=2)
+        ttk.Label(ir1, text=t("label_implicit_expr"), style="Dark.TLabel", width=8).pack(side=tk.LEFT)
+        self._var_implicit_expr = tk.StringVar(value="x^2+y^2-1")
+        ttk.Entry(ir1, textvariable=self._var_implicit_expr, width=22).pack(side=tk.LEFT, padx=2)
+
+        ir2 = ttk.Frame(self._frame_implicit_inputs, style="Dark.TFrame")
+        ir2.pack(fill=tk.X, pady=2)
+        ttk.Label(ir2, text=t("label_implicit_resolution"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_implicit_res = tk.StringVar(value="200")
+        ttk.Entry(ir2, textvariable=self._var_implicit_res, width=8).pack(side=tk.LEFT, padx=2)
+
+        # Implicit presets
+        ir3 = ttk.Frame(self._frame_implicit_inputs, style="Dark.TFrame")
+        ir3.pack(fill=tk.X, pady=(4, 2))
+        ttk.Label(ir3, text=t("label_preset"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_implicit_preset = tk.StringVar()
+        implicit_preset_list = [
+            "Circle: x^2+y^2-1",
+            "Ellipse: x^2/4+y^2-1",
+            "Hyperbola: x^2-y^2-1",
+            "Parabola: y-x^2",
+            "Lemniscate: (x^2+y^2)^2-(x^2-y^2)",
+            "Cardioid: (x^2+y^2-x)^2-(x^2+y^2)",
+            "Folium: x^3+y^3-3*x*y",
+            "Cubic: y^2-x^3+x",
+        ]
+        implicit_combo = ttk.Combobox(ir3, textvariable=self._var_implicit_preset,
+                                      values=implicit_preset_list,
+                                      state="readonly", font=("Consolas", 10), width=20)
+        implicit_combo.pack(side=tk.LEFT, padx=4)
+        implicit_combo.bind("<<ComboboxSelected>>",
+                            lambda e: self._on_implicit_preset(self._var_implicit_preset.get()))
+
+        # Initially hide implicit inputs
+        self._on_implicit_toggle()
 
         # --- Parameter Inputs ---
         self.frm_params = ttk.LabelFrame(scroll_frame, text=t("sec_parameters"),
@@ -1628,6 +1689,22 @@ class SuperCalcApp:
             self._var_polar.set(True)
             self._on_polar_toggle()
 
+    def _on_implicit_toggle(self):
+        """Show or hide implicit input fields."""
+        if self._var_implicit.get():
+            for child in self._frame_implicit_inputs.winfo_children():
+                child.pack()
+        else:
+            for child in self._frame_implicit_inputs.winfo_children():
+                child.pack_forget()
+
+    def _on_implicit_preset(self, name: str):
+        """Load an implicit preset into the input fields."""
+        expr = name.split(": ", 1)[1] if ": " in name else name
+        self._var_implicit_expr.set(expr)
+        self._var_implicit.set(True)
+        self._on_implicit_toggle()
+
     def _resolve_t_range(self, expr: str) -> str:
         """Resolve 'pi' and 'e' references in t-range expressions."""
         result = expr.strip()
@@ -1688,6 +1765,25 @@ class SuperCalcApp:
                                r_param_expr=r_expr)
             self.curves.append(curve)
             self.listbox_curves.insert(tk.END, f"  [Pol] {label}")
+            self.listbox_curves.itemconfig(tk.END, fg=color)
+            self._plot_all()
+        elif self._var_implicit.get():
+            imp_expr = self._var_implicit_expr.get().strip()
+            if not imp_expr:
+                messagebox.showwarning(t("err_input"), t("msg_enter_implicit_expr"))
+                return
+            try:
+                imp_res = int(self._var_implicit_res.get())
+                imp_res = max(50, min(500, imp_res))
+            except ValueError:
+                imp_res = 200
+            color = DEFAULT_COLORS[self.color_index % len(DEFAULT_COLORS)]
+            self.color_index += 1
+            label = t("implicit_curve_label", imp_expr)
+            curve = CurveModel("", color, label=label, is_implicit=True,
+                               implicit_expr=imp_expr, implicit_resolution=imp_res)
+            self.curves.append(curve)
+            self.listbox_curves.insert(tk.END, f"  [Imp] {label}")
             self.listbox_curves.itemconfig(tk.END, fg=color)
             self._plot_all()
         else:
@@ -1782,6 +1878,26 @@ class SuperCalcApp:
                 self.listbox_curves.insert(tk.END, f"  [Pol] {label}")
                 self.listbox_curves.itemconfig(tk.END, fg=color)
                 self._update_param_inputs()
+        elif self._var_implicit.get():
+            imp_expr = self._var_implicit_expr.get().strip()
+            if not imp_expr:
+                messagebox.showwarning(t("err_input"), t("msg_enter_implicit_expr"))
+                return
+            label = t("implicit_curve_label", imp_expr)
+            if not any(c.is_implicit and c.label == label for c in self.curves):
+                try:
+                    imp_res = int(self._var_implicit_res.get())
+                    imp_res = max(50, min(500, imp_res))
+                except ValueError:
+                    imp_res = 200
+                color = DEFAULT_COLORS[self.color_index % len(DEFAULT_COLORS)]
+                self.color_index += 1
+                curve = CurveModel("", color, label=label, is_implicit=True,
+                                   implicit_expr=imp_expr, implicit_resolution=imp_res)
+                self.curves.append(curve)
+                self.listbox_curves.insert(tk.END, f"  [Imp] {label}")
+                self.listbox_curves.itemconfig(tk.END, fg=color)
+                self._update_param_inputs()
         else:
             expr = self.entry_expr.get().strip()
             if expr:
@@ -1856,9 +1972,10 @@ class SuperCalcApp:
             self.status_var.set(t("status_no_curves"))
             return
 
-        has_2d = any((not c.is_3d and not c.is_polar and c.visible) or 
+        has_2d = any((not c.is_3d and not c.is_polar and not c.is_implicit and c.visible) or 
                      (c.is_parametric and c.visible) or 
-                     (c.is_polar and c.visible) for c in self.curves)
+                     (c.is_polar and c.visible) or
+                     (c.is_implicit and c.visible) for c in self.curves)
         has_3d = any(c.is_3d and c.visible for c in self.curves)
         
         if has_2d:
@@ -1937,6 +2054,26 @@ class SuperCalcApp:
                 self.ax_2d.plot(x_arr, y_arr, color=curve.color,
                              linewidth=curve.linewidth, linestyle=curve.linestyle,
                              label=curve.label, alpha=0.9)
+            elif curve.is_implicit:
+                try:
+                    imp_expr = self._substitute_params(curve.implicit_expr)
+                    res = curve.implicit_resolution
+                    x_range = np.linspace(self.x_min, self.x_max, res)
+                    y_range = np.linspace(self.y_min, self.y_max, res)
+                    X, Y = np.meshgrid(x_range, y_range)
+                    # Evaluate f(x,y) on the grid using evaluate_xy_array
+                    flat_x = X.ravel().tolist()
+                    flat_y = Y.ravel().tolist()
+                    flat_z = CalcEngine.evaluate_xy_array(imp_expr, flat_x, flat_y)
+                    Z = np.array([v if v is not None else np.nan for v in flat_z]).reshape(X.shape)
+                    # Use contour to plot the zero level set
+                    cs = self.ax_2d.contour(X, Y, Z, levels=[0], colors=[curve.color],
+                                            linewidths=[curve.linewidth])
+                    # Add a proxy artist for legend
+                    self.ax_2d.plot([], [], color=curve.color, linewidth=curve.linewidth,
+                                   label=curve.label)
+                except Exception:
+                    pass
             else:
                 expr = self._substitute_params(curve.expression)
                 ys = CalcEngine.evaluate_array(expr, xs_list)

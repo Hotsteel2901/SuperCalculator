@@ -28,6 +28,10 @@
     <string name="compute">计算</string>
     <string name="plot_parametric">绘制参数曲线</string>
     <string name="plot_polar">绘制极坐标曲线</string>
+    <string name="implicit_label">隐函数曲线 f(x,y)=0</string>
+    <string name="hint_implicit_expr">f(x,y) 例如 x^2+y^2-1</string>
+    <string name="hint_implicit_resolution">分辨率</string>
+    <string name="plot_implicit">绘制隐函数</string>
     <string name="find_min">求最小值</string>
     <string name="find_max">求最大值</string>
     <string name="clear">清除</string>
@@ -218,6 +222,7 @@
     <string name="toast_invalid_t_range">t范围无效</string>
     <string name="toast_t_range">t最小值必须小于t最大值</string>
     <string name="toast_enter_rtheta">请输入r(theta)表达式</string>
+    <string name="toast_enter_implicit">请输入隐函数表达式 f(x,y)</string>
     <string name="toast_invalid_theta_range">theta范围无效</string>
     <string name="toast_theta_range">theta最小值必须小于theta最大值</string>
     <string name="toast_table_range">表格范围的a必须小于b</string>
@@ -229,6 +234,7 @@
     <string name="toast_no_valid_points">没有有效点可绘制</string>
     <string name="toast_parametric_plotted">参数曲线已绘制</string>
     <string name="toast_polar_plotted">极坐标曲线已绘制</string>
+    <string name="toast_implicit_plotted">隐函数曲线已绘制</string>
     <string name="toast_no_ode_points">没有有效ODE点可绘制</string>
     <string name="toast_ode_plotted">ODE解已绘制</string>
     <string name="toast_taylor_plotted">泰勒级数（{0}阶）已在a={1}处绘制</string>

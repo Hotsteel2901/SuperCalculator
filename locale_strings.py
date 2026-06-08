@@ -2160,6 +2160,40 @@ STRINGS = {
         "en": "Year must be 1-9999, Month 1-12, Day 1-31.",
         "zh": "年份1-9999，月份1-12，日期1-31。",
     },
+
+    # ---- Implicit Function Plotting ----
+    "sec_implicit": {
+        "en": "Implicit Mode f(x,y)=0",
+        "zh": "隐函数模式 f(x,y)=0",
+    },
+    "btn_enable_implicit": {
+        "en": "Enable implicit curve",
+        "zh": "启用隐函数曲线",
+    },
+    "label_implicit_expr": {
+        "en": "f(x,y) =",
+        "zh": "f(x,y) =",
+    },
+    "label_implicit_resolution": {
+        "en": "Resolution:",
+        "zh": "分辨率：",
+    },
+    "msg_enter_implicit_expr": {
+        "en": "Please enter an implicit equation f(x,y) = 0.",
+        "zh": "请输入隐函数方程 f(x,y) = 0。",
+    },
+    "msg_implicit_empty": {
+        "en": "Implicit curve expression cannot be empty.",
+        "zh": "隐函数曲线表达式不能为空。",
+    },
+    "status_implicit_plotted": {
+        "en": "Implicit curve plotted: f(x,y)=0 [{0}×{1} grid]",
+        "zh": "隐函数曲线已绘制：f(x,y)=0 [{0}×{1} 网格]",
+    },
+    "implicit_curve_label": {
+        "en": "Implicit: {0} = 0",
+        "zh": "隐函数：{0} = 0",
+    },
 }
 
 
