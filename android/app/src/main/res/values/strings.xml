@@ -417,6 +417,27 @@
     <string name="nt_modpow_result">%d^%d mod %d = %d</string>
     <string name="nt_totient_result">φ(%d) = %d</string>
 
+    <!-- Bitwise Operations -->
+    <string name="bitwise_title">Bitwise Operations</string>
+    <string name="bitwise_operand_a">Operand A (decimal)</string>
+    <string name="bitwise_operand_b">Operand B (decimal)</string>
+    <string name="bitwise_operation">Operation</string>
+    <string name="bitwise_width">Bit width</string>
+    <string name="bitwise_and">AND</string>
+    <string name="bitwise_or">OR</string>
+    <string name="bitwise_xor">XOR</string>
+    <string name="bitwise_not">NOT</string>
+    <string name="bitwise_lshift">&lt;&lt;</string>
+    <string name="bitwise_rshift">&gt;&gt;</string>
+    <string name="bitwise_calc">Calculate</string>
+    <string name="bitwise_clear">Clear</string>
+    <string name="bitwise_result_bin">Binary:</string>
+    <string name="bitwise_result_hex">Hex:</string>
+    <string name="bitwise_result_oct">Octal:</string>
+    <string name="bitwise_result_dec">Decimal:</string>
+    <string name="bitwise_error">Please enter valid integers.</string>
+    <string name="bitwise_result_fmt">%s %s %s = %d</string>
+
     <!-- Surface 3D -->
     <string name="no_3d_data">No 3D data</string>
 

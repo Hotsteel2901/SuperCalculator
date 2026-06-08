@@ -205,6 +205,40 @@ public class CalcActivity extends AppCompatActivity {
         btnNtModPow.setOnClickListener(v -> onNtModPow(ntModpowBaseInput, ntModpowExpInput, ntModpowModInput));
         btnNtTotient.setOnClickListener(v -> onNtTotient(ntNInput));
 
+        // Bitwise Operations Calculator
+        EditText bwAInput = findViewById(R.id.bw_a_input);
+        EditText bwBInput = findViewById(R.id.bw_b_input);
+        AutoCompleteTextView bwOpDropdown = findViewById(R.id.bw_op_dropdown);
+        AutoCompleteTextView bwWidthDropdown = findViewById(R.id.bw_width_dropdown);
+        MaterialButton btnBwCalc = findViewById(R.id.btn_bw_calc);
+        MaterialButton btnBwClear = findViewById(R.id.btn_bw_clear);
+        TextView bwResBin = findViewById(R.id.bw_res_bin);
+        TextView bwResHex = findViewById(R.id.bw_res_hex);
+        TextView bwResOct = findViewById(R.id.bw_res_oct);
+        TextView bwResDec = findViewById(R.id.bw_res_dec);
+
+        String[] bwOps = {"AND", "OR", "XOR", "NOT", "<<", ">>"};
+        bwOpDropdown.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, bwOps));
+        bwOpDropdown.setText("AND", false);
+        bwOpDropdown.setOnItemClickListener((parent, view, position, id) -> {
+            String op = bwOps[position];
+            bwBInput.setEnabled(!op.equals("NOT"));
+        });
+
+        String[] bwWidths = {"8", "16", "32"};
+        bwWidthDropdown.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, bwWidths));
+        bwWidthDropdown.setText("16", false);
+
+        btnBwCalc.setOnClickListener(v -> onBitwiseCalc(bwAInput, bwBInput, bwOpDropdown, bwWidthDropdown, bwResBin, bwResHex, bwResOct, bwResDec));
+        btnBwClear.setOnClickListener(v -> {
+            bwAInput.setText("0");
+            bwBInput.setText("0");
+            bwResBin.setText("");
+            bwResHex.setText("");
+            bwResOct.setText("");
+            bwResDec.setText("");
+        });
+
         // Parametric plotting
         MaterialButton btnPlotParametric = findViewById(R.id.btn_plot_parametric);
         Chip chipCircle = findViewById(R.id.chip_circle);
@@ -2731,5 +2765,69 @@ public class CalcActivity extends AppCompatActivity {
         catch (NumberFormatException e) { toast(getString(R.string.toast_nt_invalid_n)); return; }
         if (n <= 0) { toast(getString(R.string.toast_nt_invalid_n)); return; }
         resultView.append(String.format(getString(R.string.nt_totient_result), n, ntTotient(n)) + "\n");
+    }
+
+    // ------------------------------------------------------------------
+    //  Bitwise Operations Calculator
+    // ------------------------------------------------------------------
+    private int bwMask(int val, int width) {
+        int mask = (1 << width) - 1;
+        return val & mask;
+    }
+
+    private int bwToSigned(int val, int width) {
+        int bit = width - 1;
+        if ((val & (1 << bit)) != 0) {
+            return val - (1 << width);
+        }
+        return val;
+    }
+
+    private String bwToBinPadded(int val, int width) {
+        return String.format("%" + width + "s", Integer.toBinaryString(bwMask(val, width))).replace(' ', '0');
+    }
+
+    private void onBitwiseCalc(EditText aInput, EditText bInput, AutoCompleteTextView opDropdown,
+                                AutoCompleteTextView widthDropdown, TextView resBin,
+                                TextView resHex, TextView resOct, TextView resDec) {
+        int a, b = 0, width;
+        try {
+            a = Integer.parseInt(aInput.getText().toString().trim());
+            width = Integer.parseInt(widthDropdown.getText().toString().trim());
+        } catch (NumberFormatException e) {
+            toast(getString(R.string.bitwise_error));
+            return;
+        }
+
+        String op = opDropdown.getText().toString().trim();
+        if (!op.equals("NOT")) {
+            try {
+                b = Integer.parseInt(bInput.getText().toString().trim());
+            } catch (NumberFormatException e) {
+                toast(getString(R.string.bitwise_error));
+                return;
+            }
+        }
+
+        int aMasked = bwMask(a, width);
+        int bMasked = op.equals("NOT") ? 0 : bwMask(b, width);
+        int mask = (1 << width) - 1;
+        int result;
+
+        switch (op) {
+            case "AND":  result = aMasked & bMasked; break;
+            case "OR":   result = aMasked | bMasked; break;
+            case "XOR":  result = aMasked ^ bMasked; break;
+            case "NOT":  result = (~aMasked) & mask; break;
+            case "<<":   result = (aMasked << bMasked) & mask; break;
+            case ">>":   result = aMasked >>> bMasked; break;
+            default:     result = 0;
+        }
+
+        resBin.setText(bwToBinPadded(result, width));
+        resHex.setText(String.format("%X", bwMask(result, width)));
+        resOct.setText(String.format("%o", bwMask(result, width)));
+        resDec.setText(String.valueOf(bwToSigned(result, width)));
+        resultView.append(String.format(getString(R.string.bitwise_result_fmt), op, aInput.getText().toString().trim(), bInput.getText().toString().trim(), bwToSigned(result, width)) + "\n");
     }
 }

@@ -1222,6 +1222,78 @@ class SuperCalcApp:
         ttk.Button(nt_row5, text=t("btn_nt_clear"),
                    command=self._on_nt_clear).pack(side=tk.LEFT, padx=2)
 
+        # --- Bitwise Operations Calculator ---
+        frm_bw = ttk.LabelFrame(scroll_frame, text=t("sec_bitwise"),
+                                style="Dark.TLabelframe")
+        frm_bw.pack(fill=tk.X, padx=8, pady=4)
+
+        # Row 1: Bit width selector
+        bw_row1 = ttk.Frame(frm_bw, style="Dark.TFrame")
+        bw_row1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(bw_row1, text=t("label_bw_width"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_bw_width = tk.StringVar(value="16")
+        bw_width_combo = ttk.Combobox(bw_row1, textvariable=self._var_bw_width,
+                                       values=["8", "16", "32"], width=5,
+                                       state="readonly", font=("Consolas", 10))
+        bw_width_combo.pack(side=tk.LEFT, padx=4)
+
+        ttk.Label(bw_row1, text=t("label_bw_op"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(12, 0))
+        self._var_bw_op = tk.StringVar(value="AND")
+        bw_op_combo = ttk.Combobox(bw_row1, textvariable=self._var_bw_op,
+                                    values=["AND", "OR", "XOR", "NOT", "<<", ">>"], width=5,
+                                    state="readonly", font=("Consolas", 10))
+        bw_op_combo.pack(side=tk.LEFT, padx=4)
+
+        # Row 2: Operand A
+        bw_row2 = ttk.Frame(frm_bw, style="Dark.TFrame")
+        bw_row2.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(bw_row2, text=t("label_bw_a"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_bw_a = tk.StringVar(value="12")
+        ttk.Entry(bw_row2, textvariable=self._var_bw_a, width=15,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
+        ttk.Label(bw_row2, text="(Dec)", style="Dark.TLabel").pack(side=tk.LEFT)
+
+        # Row 3: Operand B
+        bw_row3 = ttk.Frame(frm_bw, style="Dark.TFrame")
+        bw_row3.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(bw_row3, text=t("label_bw_b"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_bw_b = tk.StringVar(value="5")
+        ttk.Entry(bw_row3, textvariable=self._var_bw_b, width=15,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
+        ttk.Label(bw_row3, text="(Dec)", style="Dark.TLabel").pack(side=tk.LEFT)
+
+        # Row 4: Calculate + Clear
+        bw_row4 = ttk.Frame(frm_bw, style="Dark.TFrame")
+        bw_row4.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Button(bw_row4, text=t("btn_bw_calc"),
+                   command=self._on_bw_calc).pack(side=tk.LEFT, padx=2)
+        ttk.Button(bw_row4, text=t("btn_bw_clear"),
+                   command=self._on_bw_clear).pack(side=tk.LEFT, padx=2)
+
+        # Row 5: Result (binary)
+        bw_row5 = ttk.Frame(frm_bw, style="Dark.TFrame")
+        bw_row5.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(bw_row5, text=t("label_bw_res_bin"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_bw_res_bin = tk.StringVar(value="")
+        ttk.Entry(bw_row5, textvariable=self._var_bw_res_bin, width=35,
+                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+
+        # Row 6: Result (hex, oct, dec)
+        bw_row6 = ttk.Frame(frm_bw, style="Dark.TFrame")
+        bw_row6.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Label(bw_row6, text=t("label_bw_res_hex"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_bw_res_hex = tk.StringVar(value="")
+        ttk.Entry(bw_row6, textvariable=self._var_bw_res_hex, width=10,
+                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2)
+        ttk.Label(bw_row6, text=t("label_bw_res_oct"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(8, 0))
+        self._var_bw_res_oct = tk.StringVar(value="")
+        ttk.Entry(bw_row6, textvariable=self._var_bw_res_oct, width=10,
+                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2)
+        ttk.Label(bw_row6, text=t("label_bw_res_dec"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(8, 0))
+        self._var_bw_res_dec = tk.StringVar(value="")
+        ttk.Entry(bw_row6, textvariable=self._var_bw_res_dec, width=10,
+                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2)
+
         # --- Unit Converter ---
         UNIT_CATEGORIES = {
             "Length": {
@@ -4461,6 +4533,73 @@ class SuperCalcApp:
 
     def _on_nt_clear(self):
         self._var_nt_result.set("")
+
+    # ------------------------------------------------------------------
+    #  Bitwise Operations Calculator
+    # ------------------------------------------------------------------
+    def _bw_mask(self, val, width):
+        mask_val = (1 << width) - 1
+        return val & mask_val
+
+    def _bw_to_signed(self, val, width):
+        bit = width - 1
+        if val & (1 << bit):
+            return val - (1 << width)
+        return val
+
+    def _bw_to_bin_padded(self, val, width):
+        bits = format(self._bw_mask(val, width), f'0{width}b')
+        return bits
+
+    def _on_bw_calc(self):
+        try:
+            a = int(self._var_bw_a.get().strip())
+            width = int(self._var_bw_width.get())
+        except ValueError:
+            messagebox.showerror(t("err_bw_input"), t("msg_bw_invalid"))
+            return
+
+        op = self._var_bw_op.get()
+        b = 0
+        if op != "NOT":
+            try:
+                b = int(self._var_bw_b.get().strip())
+            except ValueError:
+                messagebox.showerror(t("err_bw_input"), t("msg_bw_invalid"))
+                return
+
+        a_masked = self._bw_mask(a, width)
+        if op != "NOT":
+            b_masked = self._bw_mask(b, width)
+
+        if op == "AND":
+            result = a_masked & b_masked
+        elif op == "OR":
+            result = a_masked | b_masked
+        elif op == "XOR":
+            result = a_masked ^ b_masked
+        elif op == "NOT":
+            result = (~a_masked) & ((1 << width) - 1)
+        elif op == "<<":
+            result = (a_masked << b_masked) & ((1 << width) - 1)
+        elif op == ">>":
+            result = a_masked >> b_masked
+        else:
+            result = 0
+
+        self._var_bw_res_bin.set(self._bw_to_bin_padded(result, width))
+        self._var_bw_res_hex.set(format(self._bw_mask(result, width), 'X'))
+        self._var_bw_res_oct.set(format(self._bw_mask(result, width), 'o'))
+        self._var_bw_res_dec.set(str(self._bw_to_signed(result, width)))
+        self.status_var.set(f"A {op} B = {self._bw_to_signed(result, width)} (dec)")
+
+    def _on_bw_clear(self):
+        self._var_bw_a.set("0")
+        self._var_bw_b.set("0")
+        self._var_bw_res_bin.set("")
+        self._var_bw_res_hex.set("")
+        self._var_bw_res_oct.set("")
+        self._var_bw_res_dec.set("")
 
     # ------------------------------------------------------------------
     #  Unit Converter Operations

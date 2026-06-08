@@ -417,6 +417,27 @@
     <string name="nt_modpow_result">%d^%d mod %d = %d</string>
     <string name="nt_totient_result">φ(%d) = %d</string>
 
+    <!-- Bitwise Operations -->
+    <string name="bitwise_title">位运算计算器</string>
+    <string name="bitwise_operand_a">操作数 A（十进制）</string>
+    <string name="bitwise_operand_b">操作数 B（十进制）</string>
+    <string name="bitwise_operation">运算</string>
+    <string name="bitwise_width">位宽</string>
+    <string name="bitwise_and">AND</string>
+    <string name="bitwise_or">OR</string>
+    <string name="bitwise_xor">XOR</string>
+    <string name="bitwise_not">NOT</string>
+    <string name="bitwise_lshift">&lt;&lt;</string>
+    <string name="bitwise_rshift">&gt;&gt;</string>
+    <string name="bitwise_calc">计算</string>
+    <string name="bitwise_clear">清除</string>
+    <string name="bitwise_result_bin">二进制：</string>
+    <string name="bitwise_result_hex">十六进制：</string>
+    <string name="bitwise_result_oct">八进制：</string>
+    <string name="bitwise_result_dec">十进制：</string>
+    <string name="bitwise_error">请输入有效的整数。</string>
+    <string name="bitwise_result_fmt">%s %s %s = %d</string>
+
     <!-- Surface 3D -->
     <string name="no_3d_data">暂无3D数据</string>
 
