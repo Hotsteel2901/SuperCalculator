@@ -2005,6 +2005,88 @@ STRINGS = {
         "zh": "n 太大（因式分解最大支持 10^12）。",
     },
 
+    # ---- Bitwise Operations Calculator ----
+    "sec_bitwise": {
+        "en": "Bitwise Operations",
+        "zh": "位运算计算器",
+    },
+    "label_bw_a": {
+        "en": "Operand A:",
+        "zh": "操作数 A：",
+    },
+    "label_bw_b": {
+        "en": "Operand B:",
+        "zh": "操作数 B：",
+    },
+    "label_bw_width": {
+        "en": "Bit width:",
+        "zh": "位宽：",
+    },
+    "label_bw_op": {
+        "en": "Operation:",
+        "zh": "运算：",
+    },
+    "btn_bw_and": {
+        "en": "AND",
+        "zh": "AND",
+    },
+    "btn_bw_or": {
+        "en": "OR",
+        "zh": "OR",
+    },
+    "btn_bw_xor": {
+        "en": "XOR",
+        "zh": "XOR",
+    },
+    "btn_bw_not": {
+        "en": "NOT",
+        "zh": "NOT",
+    },
+    "btn_bw_lshift": {
+        "en": "<<",
+        "zh": "<<",
+    },
+    "btn_bw_rshift": {
+        "en": ">>",
+        "zh": ">>",
+    },
+    "btn_bw_calc": {
+        "en": "Calculate",
+        "zh": "计算",
+    },
+    "btn_bw_clear": {
+        "en": "Clear",
+        "zh": "清除",
+    },
+    "label_bw_result": {
+        "en": "Result:",
+        "zh": "结果：",
+    },
+    "label_bw_res_bin": {
+        "en": "Binary:",
+        "zh": "二进制：",
+    },
+    "label_bw_res_oct": {
+        "en": "Octal:",
+        "zh": "八进制：",
+    },
+    "label_bw_res_dec": {
+        "en": "Decimal:",
+        "zh": "十进制：",
+    },
+    "label_bw_res_hex": {
+        "en": "Hex:",
+        "zh": "十六进制：",
+    },
+    "err_bw_input": {
+        "en": "Bitwise Error",
+        "zh": "位运算错误",
+    },
+    "msg_bw_invalid": {
+        "en": "Please enter valid integers for operands.",
+        "zh": "请输入有效的整数操作数。",
+    },
+
     # ---- Base Number Converter ----
     "sec_base_converter": {
         "en": "Base Number Converter",
