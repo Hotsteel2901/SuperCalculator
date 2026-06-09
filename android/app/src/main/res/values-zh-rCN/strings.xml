@@ -478,4 +478,32 @@
     <string name="prob_invalid_input">请输入有效的值。</string>
     <string name="prob_r_gt_n">r 不能大于 n。</string>
     <string name="prob_pb_zero">P(B) 不能为零。</string>
+
+    <!-- Finance Calculator -->
+    <string name="fin_title">金融计算器</string>
+    <string name="fin_hint_principal">贷款金额</string>
+    <string name="fin_hint_rate">年利率 (%)</string>
+    <string name="fin_hint_months">期数（月）</string>
+    <string name="fin_hint_years">年数</string>
+    <string name="fin_hint_flows">现金流</string>
+    <string name="fin_loan">贷款</string>
+    <string name="fin_fv">终值</string>
+    <string name="fin_pv">现值</string>
+    <string name="fin_npv">净现值</string>
+    <string name="fin_irr">内部收益率</string>
+    <string name="fin_depr">折旧</string>
+    <string name="fin_bond">债券</string>
+    <string name="fin_retire">退休</string>
+    <string name="fin_result_loan">月供: %.2f\n总额: %.2f\n利息: %.2f</string>
+    <string name="fin_result_fv">终值: %.6g</string>
+    <string name="fin_result_pv">现值: %.6g</string>
+    <string name="fin_result_npv">净现值: %.6g</string>
+    <string name="fin_result_irr">内部收益率: %.6g%%</string>
+    <string name="fin_result_depr">年折旧: %.2f\n月折旧: %.2f</string>
+    <string name="fin_result_bond">债券价格: %.6g</string>
+    <string name="fin_result_retire">终值: %.2f\n总投入: %.2f\n总收益: %.2f</string>
+    <string name="fin_error">金融计算错误</string>
+    <string name="fin_invalid_input">请输入有效的值。</string>
+    <string name="fin_invalid_flows">请输入至少2个逗号分隔的现金流。</string>
+    <string name="fin_depr_invalid">残值须小于原值，使用寿命须大于0。</string>
 </resources>

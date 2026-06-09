@@ -1324,6 +1324,7 @@
             <a href="#probability" class="nav-link"><span>概率计算</span></a>
             <a href="#bitwise-calculator" class="nav-link"><span>位运算</span></a>
             <a href="#calendar" class="nav-link"><span>万年历</span></a>
+            <a href="#finance-calculator" class="nav-link"><span>金融计算</span></a>
             <a href="#quick-start" class="nav-link"><span>快速开始</span></a>
             <a href="#platforms" class="nav-link"><span>支持平台</span></a>
             <a href="#api" class="nav-link"><span>API 参考</span></a>
@@ -1350,6 +1351,7 @@
         <a href="#probability" class="mobile-nav-link">概率计算</a>
         <a href="#bitwise-calculator" class="mobile-nav-link">位运算</a>
         <a href="#calendar" class="mobile-nav-link">万年历</a>
+        <a href="#finance-calculator" class="mobile-nav-link">金融计算</a>
         <a href="#quick-start" class="mobile-nav-link">快速开始</a>
         <a href="#platforms" class="mobile-nav-link">支持平台</a>
         <a href="#api" class="mobile-nav-link">API 参考</a>
@@ -2546,6 +2548,126 @@
             </div>
         </section>
 
+        <!-- Finance Calculator Section -->
+        <section class="section" id="finance-calculator">
+            <div class="section-header">
+                <div class="section-label">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+                    </svg>
+                    Finance Calculator
+                </div>
+                <h2 class="section-title">金融计算器</h2>
+                <p class="section-subtitle">贷款月供、复利终值/现值、NPV/IRR、债券定价、退休储蓄规划</p>
+            </div>
+            <div class="card glass reveal" style="max-width: 700px; margin: 0 auto;">
+                <div style="display:flex;flex-direction:column;gap:16px;">
+                    <!-- Mode selector -->
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button class="chip active" onclick="setFinMode('loan')" id="finChipLoan">贷款</button>
+                        <button class="chip" onclick="setFinMode('compound')" id="finChipCompound">复利</button>
+                        <button class="chip" onclick="setFinMode('npv')" id="finChipNpv">NPV/IRR</button>
+                        <button class="chip" onclick="setFinMode('bond')" id="finChipBond">债券</button>
+                        <button class="chip" onclick="setFinMode('retire')" id="finChipRetire">退休储蓄</button>
+                    </div>
+                    <!-- Loan inputs -->
+                    <div id="finLoanInputs">
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                            <div style="flex:1;min-width:120px;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">贷款金额</label>
+                                <input type="number" id="finLoanPrincipal" value="100000" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeFinLoan()">
+                            </div>
+                            <div style="flex:1;min-width:100px;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">年利率 (%)</label>
+                                <input type="number" id="finLoanRate" value="5.0" step="0.1" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeFinLoan()">
+                            </div>
+                            <div style="flex:1;min-width:80px;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">期数(月)</label>
+                                <input type="number" id="finLoanMonths" value="360" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeFinLoan()">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Compound inputs -->
+                    <div id="finCompoundInputs" style="display:none;">
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                            <div style="flex:1;min-width:100px;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">金额</label>
+                                <input type="number" id="finCompoundPV" value="10000" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeFinCompound()">
+                            </div>
+                            <div style="flex:1;min-width:80px;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">年利率(%)</label>
+                                <input type="number" id="finCompoundRate" value="5.0" step="0.1" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeFinCompound()">
+                            </div>
+                            <div style="flex:1;min-width:60px;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">年数</label>
+                                <input type="number" id="finCompoundYears" value="10" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeFinCompound()">
+                            </div>
+                            <div style="flex:1;min-width:80px;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">年复利次数</label>
+                                <input type="number" id="finCompoundN" value="12" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeFinCompound()">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- NPV/IRR inputs -->
+                    <div id="finNpvInputs" style="display:none;">
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                            <div style="flex:1;min-width:100px;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">折现率 (%)</label>
+                                <input type="number" id="finNpvRate" value="10" step="0.1" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeFinNPV()">
+                            </div>
+                            <div style="flex:2;min-width:200px;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">现金流 (逗号分隔, 如: -1000,300,420,680)</label>
+                                <input type="text" id="finNpvFlows" value="-1000,300,420,680" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeFinNPV()">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Bond inputs -->
+                    <div id="finBondInputs" style="display:none;">
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                            <div style="flex:1;min-width:80px;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">面值</label>
+                                <input type="number" id="finBondFace" value="1000" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeFinBond()">
+                            </div>
+                            <div style="flex:1;min-width:80px;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">票面利率(%)</label>
+                                <input type="number" id="finBondCoupon" value="6.0" step="0.1" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeFinBond()">
+                            </div>
+                            <div style="flex:1;min-width:80px;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">收益率(%)</label>
+                                <input type="number" id="finBondYield" value="5.0" step="0.1" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeFinBond()">
+                            </div>
+                            <div style="flex:1;min-width:60px;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">到期年限</label>
+                                <input type="number" id="finBondYears" value="10" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeFinBond()">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Retirement inputs -->
+                    <div id="finRetireInputs" style="display:none;">
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                            <div style="flex:1;min-width:100px;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">每月定投</label>
+                                <input type="number" id="finRetireMonthly" value="1000" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeFinRetire()">
+                            </div>
+                            <div style="flex:1;min-width:80px;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">年回报率(%)</label>
+                                <input type="number" id="finRetireRate" value="7.0" step="0.1" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeFinRetire()">
+                            </div>
+                            <div style="flex:1;min-width:60px;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">年数</label>
+                                <input type="number" id="finRetireYears" value="30" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeFinRetire()">
+                            </div>
+                            <div style="flex:1;min-width:100px;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">当前存款</label>
+                                <input type="number" id="finRetireCurrent" value="0" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeFinRetire()">
+                            </div>
+                        </div>
+                    </div>
+                    <div id="finResults" style="padding:16px;border-radius:12px;background:var(--glass-bg);border:1px solid var(--glass-border);font-family:monospace;font-size:15px;color:var(--glow-accent);line-height:1.8;word-break:break-all;"></div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <footer class="footer">
@@ -3156,6 +3278,151 @@
             };
 
             computeProb();
+        })();
+
+        // ------------------------------------------------------------------
+        //  Finance Calculator
+        // ------------------------------------------------------------------
+        (function() {
+            var isZh = (navigator.language || '').indexOf('zh') === 0;
+
+            function fmt(v) {
+                if (isNaN(v) || !isFinite(v)) return '—';
+                return v.toLocaleString(undefined, {maximumFractionDigits: 6});
+            }
+
+            function fmtMoney(v) {
+                if (isNaN(v) || !isFinite(v)) return '—';
+                return v.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+
+            window.setFinMode = function(mode) {
+                document.getElementById('finLoanInputs').style.display = mode === 'loan' ? '' : 'none';
+                document.getElementById('finCompoundInputs').style.display = mode === 'compound' ? '' : 'none';
+                document.getElementById('finNpvInputs').style.display = mode === 'npv' ? '' : 'none';
+                document.getElementById('finBondInputs').style.display = mode === 'bond' ? '' : 'none';
+                document.getElementById('finRetireInputs').style.display = mode === 'retire' ? '' : 'none';
+                ['Loan','Compound','Npv','Bond','Retire'].forEach(function(c) {
+                    document.getElementById('finChip' + c).classList.remove('active');
+                });
+                var map = {loan:'Loan',compound:'Compound',npv:'Npv',bond:'Bond',retire:'Retire'};
+                document.getElementById('finChip' + map[mode]).classList.add('active');
+                var computeMap = {loan: computeFinLoan, compound: computeFinCompound, npv: computeFinNPV, bond: computeFinBond, retire: computeFinRetire};
+                if (computeMap[mode]) computeMap[mode]();
+            };
+
+            window.computeFinLoan = function() {
+                var p = parseFloat(document.getElementById('finLoanPrincipal').value);
+                var rate = parseFloat(document.getElementById('finLoanRate').value);
+                var months = parseInt(document.getElementById('finLoanMonths').value);
+                var res = document.getElementById('finResults');
+                if (isNaN(p) || isNaN(rate) || isNaN(months) || p <= 0 || months <= 0) { res.innerHTML = ''; return; }
+                var r = rate / 100 / 12;
+                var pmt;
+                if (rate === 0) { pmt = p / months; }
+                else { var f = Math.pow(1 + r, months); pmt = p * r * f / (f - 1); }
+                var total = pmt * months;
+                var interest = total - p;
+                res.innerHTML = '<div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '月供' : 'Monthly Payment') + ' = </span><span style="color:var(--glow-primary);font-size:18px;">' + fmtMoney(pmt) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '还款总额' : 'Total Payment') + ' = </span><span style="color:var(--glow-primary);">' + fmtMoney(total) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '总利息' : 'Total Interest') + ' = </span><span style="color:var(--glow-primary);">' + fmtMoney(interest) + '</span></div>' +
+                    '</div>';
+            };
+
+            window.computeFinCompound = function() {
+                var pv = parseFloat(document.getElementById('finCompoundPV').value);
+                var rate = parseFloat(document.getElementById('finCompoundRate').value);
+                var years = parseInt(document.getElementById('finCompoundYears').value);
+                var n = parseInt(document.getElementById('finCompoundN').value);
+                var res = document.getElementById('finResults');
+                if (isNaN(pv) || isNaN(rate) || isNaN(years) || isNaN(n) || pv <= 0 || years < 0 || n <= 0) { res.innerHTML = ''; return; }
+                var r = rate / 100;
+                var fv = pv * Math.pow(1 + r / n, n * years);
+                var pvBack = fv / Math.pow(1 + r / n, n * years);
+                res.innerHTML = '<div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '终值 (FV)' : 'Future Value (FV)') + ' = </span><span style="color:var(--glow-primary);font-size:18px;">' + fmt(fv) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '现值 (PV)' : 'Present Value (PV)') + ' = </span><span style="color:var(--glow-primary);">' + fmt(pvBack) + '</span></div>' +
+                    '</div>';
+            };
+
+            window.computeFinNPV = function() {
+                var rate = parseFloat(document.getElementById('finNpvRate').value);
+                var flowsStr = document.getElementById('finNpvFlows').value;
+                var res = document.getElementById('finResults');
+                var parts = flowsStr.split(',').map(function(s){return s.trim();}).filter(function(s){return s !== '';});
+                if (isNaN(rate) || parts.length < 2) { res.innerHTML = ''; return; }
+                var r = rate / 100;
+                var npv = 0;
+                for (var t = 0; t < parts.length; t++) {
+                    var cf = parseFloat(parts[t]);
+                    if (isNaN(cf)) { res.innerHTML = ''; return; }
+                    npv += cf / Math.pow(1 + r, t);
+                }
+                // IRR via Newton-Raphson
+                var irrVal = NaN;
+                var rGuess = 0.1;
+                for (var iter = 0; iter < 200; iter++) {
+                    var pv = 0, dpv = 0;
+                    for (var j = 0; j < parts.length; j++) {
+                        pv += parseFloat(parts[j]) / Math.pow(1 + rGuess, j);
+                        if (j > 0) dpv += -j * parseFloat(parts[j]) / Math.pow(1 + rGuess, j + 1);
+                    }
+                    if (Math.abs(dpv) < 1e-18) break;
+                    var rNew = rGuess - pv / dpv;
+                    if (Math.abs(rNew - rGuess) < 1e-10) { irrVal = rNew * 100; break; }
+                    rGuess = rNew;
+                }
+                if (isNaN(irrVal) && Math.abs(pv) < 0.01) irrVal = rGuess * 100;
+                res.innerHTML = '<div>' +
+                    '<div><span style="color:var(--text-muted);">NPV = </span><span style="color:var(--glow-primary);font-size:18px;">' + fmt(npv) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">IRR = </span><span style="color:var(--glow-primary);">' + (isNaN(irrVal) ? '—' : fmt(irrVal) + '%') + '</span></div>' +
+                    '</div>';
+            };
+
+            window.computeFinBond = function() {
+                var face = parseFloat(document.getElementById('finBondFace').value);
+                var coupon = parseFloat(document.getElementById('finBondCoupon').value);
+                var yld = parseFloat(document.getElementById('finBondYield').value);
+                var years = parseInt(document.getElementById('finBondYears').value);
+                var res = document.getElementById('finResults');
+                if (isNaN(face) || isNaN(coupon) || isNaN(yld) || isNaN(years) || face <= 0 || years <= 0) { res.innerHTML = ''; return; }
+                var m = 2;
+                var c = face * coupon / 100 / m;
+                var y = yld / 100 / m;
+                var n = years * m;
+                var pvCoupons = 0;
+                for (var t = 1; t <= n; t++) { pvCoupons += c / Math.pow(1 + y, t); }
+                var pvFace = face / Math.pow(1 + y, n);
+                var price = pvCoupons + pvFace;
+                res.innerHTML = '<div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '债券价格' : 'Bond Price') + ' = </span><span style="color:var(--glow-primary);font-size:18px;">' + fmt(price) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '溢价/折价' : 'Premium/Discount') + ' = </span><span style="color:var(--glow-primary);">' + fmt(price - face) + '</span></div>' +
+                    '</div>';
+            };
+
+            window.computeFinRetire = function() {
+                var monthly = parseFloat(document.getElementById('finRetireMonthly').value);
+                var rate = parseFloat(document.getElementById('finRetireRate').value);
+                var years = parseInt(document.getElementById('finRetireYears').value);
+                var current = parseFloat(document.getElementById('finRetireCurrent').value) || 0;
+                var res = document.getElementById('finResults');
+                if (isNaN(monthly) || isNaN(rate) || isNaN(years) || monthly < 0 || years <= 0) { res.innerHTML = ''; return; }
+                var r = rate / 100 / 12;
+                var n = years * 12;
+                var fv;
+                if (r === 0) { fv = current + monthly * n; }
+                else { var f = Math.pow(1 + r, n); fv = current * f + monthly * (f - 1) / r; }
+                var contributions = current + monthly * n;
+                var interest = fv - contributions;
+                res.innerHTML = '<div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '终值' : 'Future Value') + ' = </span><span style="color:var(--glow-primary);font-size:18px;">' + fmtMoney(fv) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '总投入' : 'Total Contributions') + ' = </span><span style="color:var(--glow-primary);">' + fmtMoney(contributions) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '总收益' : 'Total Interest') + ' = </span><span style="color:var(--glow-primary);">' + fmtMoney(interest) + '</span></div>' +
+                    '</div>';
+            };
+
+            computeFinLoan();
         })();
     </script>
 </body>

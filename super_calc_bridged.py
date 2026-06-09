@@ -1677,6 +1677,177 @@ class SuperCalcApp:
         # Initially show only combinatorics frame
         self._on_prob_mode_change()
 
+        # --- Finance Calculator ---
+        frm_fin = ttk.LabelFrame(scroll_frame, text=t("sec_finance"),
+                                  style="Dark.TLabelframe")
+        frm_fin.pack(fill=tk.X, padx=8, pady=4)
+
+        # Mode selector
+        fin_mode_row = ttk.Frame(frm_fin, style="Dark.TFrame")
+        fin_mode_row.pack(fill=tk.X, padx=6, pady=(4, 2))
+        ttk.Label(fin_mode_row, text=t("label_preset"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_fin_mode = tk.StringVar(value="loan")
+        fin_modes = [
+            ("Loan", "loan"),
+            ("Compound Interest", "compound"),
+            ("NPV / IRR", "npv_irr"),
+            ("Depreciation", "depreciation"),
+            ("Bond Pricing", "bond"),
+            ("Retirement Savings", "retirement"),
+        ]
+        fin_combo = ttk.Combobox(fin_mode_row, textvariable=self._var_fin_mode,
+                                  values=[m[0] for m in fin_modes],
+                                  state="readonly", font=("Consolas", 10), width=22)
+        fin_combo.pack(side=tk.LEFT, padx=4)
+        self._fin_mode_map = {m[0]: m[1] for m in fin_modes}
+        fin_combo.bind("<<ComboboxSelected>>",
+                       lambda e: self._on_fin_mode_change())
+
+        # --- Loan frame ---
+        self._frame_fin_loan = ttk.Frame(frm_fin, style="Dark.TFrame")
+        fl_row1 = ttk.Frame(self._frame_fin_loan, style="Dark.TFrame")
+        fl_row1.pack(fill=tk.X, pady=2)
+        ttk.Label(fl_row1, text=t("label_fin_loan_principal"), style="Dark.TLabel", width=16).pack(side=tk.LEFT)
+        self._var_fin_loan_principal = tk.StringVar(value="100000")
+        ttk.Entry(fl_row1, textvariable=self._var_fin_loan_principal, width=12).pack(side=tk.LEFT, padx=2)
+        ttk.Label(fl_row1, text=t("label_fin_loan_rate"), style="Dark.TLabel", width=14).pack(side=tk.LEFT, padx=(8,0))
+        self._var_fin_loan_rate = tk.StringVar(value="5.0")
+        ttk.Entry(fl_row1, textvariable=self._var_fin_loan_rate, width=8).pack(side=tk.LEFT, padx=2)
+        fl_row2 = ttk.Frame(self._frame_fin_loan, style="Dark.TFrame")
+        fl_row2.pack(fill=tk.X, pady=2)
+        ttk.Label(fl_row2, text=t("label_fin_loan_months"), style="Dark.TLabel", width=16).pack(side=tk.LEFT)
+        self._var_fin_loan_months = tk.StringVar(value="360")
+        ttk.Entry(fl_row2, textvariable=self._var_fin_loan_months, width=8).pack(side=tk.LEFT, padx=2)
+        fl_row3 = ttk.Frame(self._frame_fin_loan, style="Dark.TFrame")
+        fl_row3.pack(fill=tk.X, pady=2)
+        ttk.Button(fl_row3, text=t("btn_fin_loan_calc"),
+                   command=self._on_fin_loan).pack(side=tk.LEFT, padx=2)
+
+        # --- Compound Interest frame ---
+        self._frame_fin_compound = ttk.Frame(frm_fin, style="Dark.TFrame")
+        fc_row1 = ttk.Frame(self._frame_fin_compound, style="Dark.TFrame")
+        fc_row1.pack(fill=tk.X, pady=2)
+        ttk.Label(fc_row1, text=t("label_fin_fv_pv"), style="Dark.TLabel", width=16).pack(side=tk.LEFT)
+        self._var_fin_compound_pv = tk.StringVar(value="10000")
+        ttk.Entry(fc_row1, textvariable=self._var_fin_compound_pv, width=12).pack(side=tk.LEFT, padx=2)
+        ttk.Label(fc_row1, text=t("label_fin_compound_rate"), style="Dark.TLabel", width=14).pack(side=tk.LEFT, padx=(8,0))
+        self._var_fin_compound_rate = tk.StringVar(value="5.0")
+        ttk.Entry(fc_row1, textvariable=self._var_fin_compound_rate, width=8).pack(side=tk.LEFT, padx=2)
+        fc_row2 = ttk.Frame(self._frame_fin_compound, style="Dark.TFrame")
+        fc_row2.pack(fill=tk.X, pady=2)
+        ttk.Label(fc_row2, text=t("label_fin_compound_years"), style="Dark.TLabel", width=16).pack(side=tk.LEFT)
+        self._var_fin_compound_years = tk.StringVar(value="10")
+        ttk.Entry(fc_row2, textvariable=self._var_fin_compound_years, width=8).pack(side=tk.LEFT, padx=2)
+        ttk.Label(fc_row2, text=t("label_fin_compound_n"), style="Dark.TLabel", width=16).pack(side=tk.LEFT, padx=(8,0))
+        self._var_fin_compound_n = tk.StringVar(value="12")
+        ttk.Entry(fc_row2, textvariable=self._var_fin_compound_n, width=8).pack(side=tk.LEFT, padx=2)
+        fc_row3 = ttk.Frame(self._frame_fin_compound, style="Dark.TFrame")
+        fc_row3.pack(fill=tk.X, pady=2)
+        ttk.Button(fc_row3, text=t("btn_fin_fv"),
+                   command=self._on_fin_fv).pack(side=tk.LEFT, padx=2)
+        ttk.Button(fc_row3, text=t("btn_fin_pv"),
+                   command=self._on_fin_pv).pack(side=tk.LEFT, padx=2)
+
+        # --- NPV / IRR frame ---
+        self._frame_fin_npv = ttk.Frame(frm_fin, style="Dark.TFrame")
+        fn_row1 = ttk.Frame(self._frame_fin_npv, style="Dark.TFrame")
+        fn_row1.pack(fill=tk.X, pady=2)
+        ttk.Label(fn_row1, text=t("label_fin_npv_rate"), style="Dark.TLabel", width=16).pack(side=tk.LEFT)
+        self._var_fin_npv_rate = tk.StringVar(value="10")
+        ttk.Entry(fn_row1, textvariable=self._var_fin_npv_rate, width=8).pack(side=tk.LEFT, padx=2)
+        fn_row2 = ttk.Frame(self._frame_fin_npv, style="Dark.TFrame")
+        fn_row2.pack(fill=tk.X, pady=2)
+        ttk.Label(fn_row2, text=t("label_fin_npv_flows"), style="Dark.TLabel", width=16).pack(side=tk.LEFT)
+        self._var_fin_npv_flows = tk.StringVar(value="-1000, 300, 420, 680")
+        ttk.Entry(fn_row2, textvariable=self._var_fin_npv_flows, width=30).pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+        fn_row3 = ttk.Frame(self._frame_fin_npv, style="Dark.TFrame")
+        fn_row3.pack(fill=tk.X, pady=2)
+        ttk.Button(fn_row3, text=t("btn_fin_npv"),
+                   command=self._on_fin_npv).pack(side=tk.LEFT, padx=2)
+        ttk.Button(fn_row3, text=t("btn_fin_irr"),
+                   command=self._on_fin_irr).pack(side=tk.LEFT, padx=2)
+
+        # --- Depreciation frame ---
+        self._frame_fin_depr = ttk.Frame(frm_fin, style="Dark.TFrame")
+        fd_row1 = ttk.Frame(self._frame_fin_depr, style="Dark.TFrame")
+        fd_row1.pack(fill=tk.X, pady=2)
+        ttk.Label(fd_row1, text=t("label_fin_depr_cost"), style="Dark.TLabel", width=16).pack(side=tk.LEFT)
+        self._var_fin_depr_cost = tk.StringVar(value="100000")
+        ttk.Entry(fd_row1, textvariable=self._var_fin_depr_cost, width=12).pack(side=tk.LEFT, padx=2)
+        ttk.Label(fd_row1, text=t("label_fin_depr_salvage"), style="Dark.TLabel", width=14).pack(side=tk.LEFT, padx=(8,0))
+        self._var_fin_depr_salvage = tk.StringVar(value="10000")
+        ttk.Entry(fd_row1, textvariable=self._var_fin_depr_salvage, width=8).pack(side=tk.LEFT, padx=2)
+        fd_row2 = ttk.Frame(self._frame_fin_depr, style="Dark.TFrame")
+        fd_row2.pack(fill=tk.X, pady=2)
+        ttk.Label(fd_row2, text=t("label_fin_depr_life"), style="Dark.TLabel", width=16).pack(side=tk.LEFT)
+        self._var_fin_depr_life = tk.StringVar(value="5")
+        ttk.Entry(fd_row2, textvariable=self._var_fin_depr_life, width=8).pack(side=tk.LEFT, padx=2)
+        fd_row3 = ttk.Frame(self._frame_fin_depr, style="Dark.TFrame")
+        fd_row3.pack(fill=tk.X, pady=2)
+        ttk.Button(fd_row3, text=t("btn_fin_depr_sl"),
+                   command=self._on_fin_depr_sl).pack(side=tk.LEFT, padx=2)
+        ttk.Button(fd_row3, text=t("btn_fin_depr_ddb"),
+                   command=self._on_fin_depr_ddb).pack(side=tk.LEFT, padx=2)
+
+        # --- Bond frame ---
+        self._frame_fin_bond = ttk.Frame(frm_fin, style="Dark.TFrame")
+        fb_row1 = ttk.Frame(self._frame_fin_bond, style="Dark.TFrame")
+        fb_row1.pack(fill=tk.X, pady=2)
+        ttk.Label(fb_row1, text=t("label_fin_bond_face"), style="Dark.TLabel", width=16).pack(side=tk.LEFT)
+        self._var_fin_bond_face = tk.StringVar(value="1000")
+        ttk.Entry(fb_row1, textvariable=self._var_fin_bond_face, width=10).pack(side=tk.LEFT, padx=2)
+        ttk.Label(fb_row1, text=t("label_fin_bond_coupon"), style="Dark.TLabel", width=14).pack(side=tk.LEFT, padx=(8,0))
+        self._var_fin_bond_coupon = tk.StringVar(value="6.0")
+        ttk.Entry(fb_row1, textvariable=self._var_fin_bond_coupon, width=8).pack(side=tk.LEFT, padx=2)
+        fb_row2 = ttk.Frame(self._frame_fin_bond, style="Dark.TFrame")
+        fb_row2.pack(fill=tk.X, pady=2)
+        ttk.Label(fb_row2, text=t("label_fin_bond_yield"), style="Dark.TLabel", width=16).pack(side=tk.LEFT)
+        self._var_fin_bond_yield = tk.StringVar(value="5.0")
+        ttk.Entry(fb_row2, textvariable=self._var_fin_bond_yield, width=8).pack(side=tk.LEFT, padx=2)
+        ttk.Label(fb_row2, text=t("label_fin_bond_years"), style="Dark.TLabel", width=16).pack(side=tk.LEFT, padx=(8,0))
+        self._var_fin_bond_years = tk.StringVar(value="10")
+        ttk.Entry(fb_row2, textvariable=self._var_fin_bond_years, width=8).pack(side=tk.LEFT, padx=2)
+        fb_row3 = ttk.Frame(self._frame_fin_bond, style="Dark.TFrame")
+        fb_row3.pack(fill=tk.X, pady=2)
+        ttk.Button(fb_row3, text=t("btn_fin_bond_price"),
+                   command=self._on_fin_bond).pack(side=tk.LEFT, padx=2)
+
+        # --- Retirement frame ---
+        self._frame_fin_retire = ttk.Frame(frm_fin, style="Dark.TFrame")
+        fr_row1 = ttk.Frame(self._frame_fin_retire, style="Dark.TFrame")
+        fr_row1.pack(fill=tk.X, pady=2)
+        ttk.Label(fr_row1, text=t("label_fin_retire_monthly"), style="Dark.TLabel", width=16).pack(side=tk.LEFT)
+        self._var_fin_retire_monthly = tk.StringVar(value="1000")
+        ttk.Entry(fr_row1, textvariable=self._var_fin_retire_monthly, width=10).pack(side=tk.LEFT, padx=2)
+        ttk.Label(fr_row1, text=t("label_fin_retire_rate"), style="Dark.TLabel", width=14).pack(side=tk.LEFT, padx=(8,0))
+        self._var_fin_retire_rate = tk.StringVar(value="7.0")
+        ttk.Entry(fr_row1, textvariable=self._var_fin_retire_rate, width=8).pack(side=tk.LEFT, padx=2)
+        fr_row2 = ttk.Frame(self._frame_fin_retire, style="Dark.TFrame")
+        fr_row2.pack(fill=tk.X, pady=2)
+        ttk.Label(fr_row2, text=t("label_fin_retire_years"), style="Dark.TLabel", width=16).pack(side=tk.LEFT)
+        self._var_fin_retire_years = tk.StringVar(value="30")
+        ttk.Entry(fr_row2, textvariable=self._var_fin_retire_years, width=8).pack(side=tk.LEFT, padx=2)
+        ttk.Label(fr_row2, text=t("label_fin_retire_current"), style="Dark.TLabel", width=16).pack(side=tk.LEFT, padx=(8,0))
+        self._var_fin_retire_current = tk.StringVar(value="0")
+        ttk.Entry(fr_row2, textvariable=self._var_fin_retire_current, width=10).pack(side=tk.LEFT, padx=2)
+        fr_row3 = ttk.Frame(self._frame_fin_retire, style="Dark.TFrame")
+        fr_row3.pack(fill=tk.X, pady=2)
+        ttk.Button(fr_row3, text=t("btn_fin_retire"),
+                   command=self._on_fin_retire).pack(side=tk.LEFT, padx=2)
+
+        # Finance result
+        fin_res_row = ttk.Frame(frm_fin, style="Dark.TFrame")
+        fin_res_row.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Label(fin_res_row, text=t("label_result"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_fin_result = tk.StringVar(value="")
+        ttk.Entry(fin_res_row, textvariable=self._var_fin_result, width=38,
+                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+        ttk.Button(fin_res_row, text=t("btn_prob_clear"),
+                   command=lambda: self._var_fin_result.set("")).pack(side=tk.LEFT, padx=2)
+
+        # Initially show only loan frame
+        self._on_fin_mode_change()
+
         # --- Status ---
         self.status_var = tk.StringVar(value=t("status_ready"))
         status_bar = ttk.Label(scroll_frame, textvariable=self.status_var,
@@ -5180,6 +5351,204 @@ class SuperCalcApp:
         result = hypergeometric_probability(N, K, n, k)
         self._var_prob_result.set(t("status_prob_hypergeo", result, N, K, k, n))
         self.status_var.set(t("status_prob_hypergeo", result, N, K, k, n))
+
+    # ---- Finance Calculator Handlers ----
+
+    def _on_fin_mode_change(self):
+        mode_name = self._var_fin_mode.get()
+        mode = self._fin_mode_map.get(mode_name, "loan")
+        all_frames = [
+            self._frame_fin_loan,
+            self._frame_fin_compound,
+            self._frame_fin_npv,
+            self._frame_fin_depr,
+            self._frame_fin_bond,
+            self._frame_fin_retire,
+        ]
+        for f in all_frames:
+            for child in f.winfo_children():
+                child.pack_forget()
+        mode_to_frame = {
+            "loan": self._frame_fin_loan,
+            "compound": self._frame_fin_compound,
+            "npv_irr": self._frame_fin_npv,
+            "depreciation": self._frame_fin_depr,
+            "bond": self._frame_fin_bond,
+            "retirement": self._frame_fin_retire,
+        }
+        target = mode_to_frame.get(mode, self._frame_fin_loan)
+        for child in target.winfo_children():
+            child.pack(fill=tk.X, pady=2)
+
+    def _fin_parse_float(self, s: str, name: str) -> Optional[float]:
+        try:
+            return float(s.strip())
+        except (ValueError, TypeError):
+            messagebox.showerror(t("err_finance"), t("msg_fin_invalid_input"))
+            return None
+
+    def _fin_parse_int(self, s: str, name: str) -> Optional[int]:
+        try:
+            return int(s.strip())
+        except (ValueError, TypeError):
+            messagebox.showerror(t("err_finance"), t("msg_fin_invalid_input"))
+            return None
+
+    def _on_fin_loan(self):
+        from finance_calc import loan_monthly_payment, loan_total_payment, loan_total_interest
+        principal = self._fin_parse_float(self._var_fin_loan_principal.get(), "principal")
+        rate = self._fin_parse_float(self._var_fin_loan_rate.get(), "rate")
+        months = self._fin_parse_int(self._var_fin_loan_months.get(), "months")
+        if principal is None or rate is None or months is None:
+            return
+        pmt = loan_monthly_payment(principal, rate, months)
+        total = loan_total_payment(principal, rate, months)
+        interest = loan_total_interest(principal, rate, months)
+        if pmt is None:
+            messagebox.showerror(t("err_finance"), t("msg_fin_invalid_input"))
+            return
+        self._var_fin_result.set(t("status_fin_loan", pmt, total, interest))
+        self.status_var.set(t("status_fin_loan", pmt, total, interest))
+
+    def _on_fin_fv(self):
+        from finance_calc import compound_future_value
+        pv = self._fin_parse_float(self._var_fin_compound_pv.get(), "PV")
+        rate = self._fin_parse_float(self._var_fin_compound_rate.get(), "rate")
+        years = self._fin_parse_float(self._var_fin_compound_years.get(), "years")
+        n = self._fin_parse_int(self._var_fin_compound_n.get(), "n")
+        if pv is None or rate is None or years is None or n is None:
+            return
+        result = compound_future_value(pv, rate, years, n)
+        if result is None:
+            messagebox.showerror(t("err_finance"), t("msg_fin_invalid_input"))
+            return
+        self._var_fin_result.set(t("status_fin_fv", result))
+        self.status_var.set(t("status_fin_fv", result))
+
+    def _on_fin_pv(self):
+        from finance_calc import compound_present_value
+        fv = self._fin_parse_float(self._var_fin_compound_pv.get(), "FV")
+        rate = self._fin_parse_float(self._var_fin_compound_rate.get(), "rate")
+        years = self._fin_parse_float(self._var_fin_compound_years.get(), "years")
+        n = self._fin_parse_int(self._var_fin_compound_n.get(), "n")
+        if fv is None or rate is None or years is None or n is None:
+            return
+        result = compound_present_value(fv, rate, years, n)
+        if result is None:
+            messagebox.showerror(t("err_finance"), t("msg_fin_invalid_input"))
+            return
+        self._var_fin_result.set(t("status_fin_pv", result))
+        self.status_var.set(t("status_fin_pv", result))
+
+    def _on_fin_npv(self):
+        from finance_calc import npv
+        rate = self._fin_parse_float(self._var_fin_npv_rate.get(), "rate")
+        flows_str = self._var_fin_npv_flows.get().strip()
+        if rate is None:
+            return
+        try:
+            flows = [float(x.strip()) for x in flows_str.split(",") if x.strip()]
+        except ValueError:
+            messagebox.showerror(t("err_finance"), t("msg_fin_invalid_flows"))
+            return
+        if len(flows) < 2:
+            messagebox.showerror(t("err_finance"), t("msg_fin_invalid_flows"))
+            return
+        result = npv(rate, flows)
+        if result is None:
+            messagebox.showerror(t("err_finance"), t("msg_fin_invalid_input"))
+            return
+        self._var_fin_result.set(t("status_fin_npv", result))
+        self.status_var.set(t("status_fin_npv", result))
+
+    def _on_fin_irr(self):
+        from finance_calc import irr
+        flows_str = self._var_fin_npv_flows.get().strip()
+        try:
+            flows = [float(x.strip()) for x in flows_str.split(",") if x.strip()]
+        except ValueError:
+            messagebox.showerror(t("err_finance"), t("msg_fin_invalid_flows"))
+            return
+        if len(flows) < 2:
+            messagebox.showerror(t("err_finance"), t("msg_fin_invalid_flows"))
+            return
+        result = irr(flows)
+        if result is None:
+            messagebox.showerror(t("err_finance"), t("msg_fin_invalid_input"))
+            return
+        self._var_fin_result.set(t("status_fin_irr", result))
+        self.status_var.set(t("status_fin_irr", result))
+
+    def _on_fin_depr_sl(self):
+        from finance_calc import depreciation_straight_line
+        cost = self._fin_parse_float(self._var_fin_depr_cost.get(), "cost")
+        salvage = self._fin_parse_float(self._var_fin_depr_salvage.get(), "salvage")
+        life = self._fin_parse_int(self._var_fin_depr_life.get(), "life")
+        if cost is None or salvage is None or life is None:
+            return
+        result = depreciation_straight_line(cost, salvage, life)
+        if result is None:
+            messagebox.showerror(t("err_finance"), t("msg_fin_depr_invalid"))
+            return
+        self._var_fin_result.set(t("status_fin_depr_sl",
+                                    result['annual_depreciation'],
+                                    result['monthly_depreciation']))
+        self.status_var.set(t("status_fin_depr_sl",
+                               result['annual_depreciation'],
+                               result['monthly_depreciation']))
+
+    def _on_fin_depr_ddb(self):
+        from finance_calc import depreciation_double_declining
+        cost = self._fin_parse_float(self._var_fin_depr_cost.get(), "cost")
+        salvage = self._fin_parse_float(self._var_fin_depr_salvage.get(), "salvage")
+        life = self._fin_parse_int(self._var_fin_depr_life.get(), "life")
+        if cost is None or salvage is None or life is None:
+            return
+        result = depreciation_double_declining(cost, salvage, life)
+        if result is None:
+            messagebox.showerror(t("err_finance"), t("msg_fin_depr_invalid"))
+            return
+        lines = ["Year  Depreciation  Book Value"]
+        for row in result:
+            lines.append(f"  {row['year']:>4d}  {row['depreciation']:>12.2f}  {row['book_value']:>10.2f}")
+        self._var_fin_result.set("\n".join(lines))
+        self.status_var.set(t("status_fin_depr_sl", result[0]['depreciation'], result[0]['depreciation'] / 12))
+
+    def _on_fin_bond(self):
+        from finance_calc import bond_price
+        face = self._fin_parse_float(self._var_fin_bond_face.get(), "face")
+        coupon = self._fin_parse_float(self._var_fin_bond_coupon.get(), "coupon")
+        yld = self._fin_parse_float(self._var_fin_bond_yield.get(), "yield")
+        years = self._fin_parse_int(self._var_fin_bond_years.get(), "years")
+        if face is None or coupon is None or yld is None or years is None:
+            return
+        result = bond_price(face, coupon, yld, years)
+        if result is None:
+            messagebox.showerror(t("err_finance"), t("msg_fin_invalid_input"))
+            return
+        self._var_fin_result.set(t("status_fin_bond", result))
+        self.status_var.set(t("status_fin_bond", result))
+
+    def _on_fin_retire(self):
+        from finance_calc import retirement_savings
+        monthly = self._fin_parse_float(self._var_fin_retire_monthly.get(), "monthly")
+        rate = self._fin_parse_float(self._var_fin_retire_rate.get(), "rate")
+        years = self._fin_parse_int(self._var_fin_retire_years.get(), "years")
+        current = self._fin_parse_float(self._var_fin_retire_current.get(), "current")
+        if monthly is None or rate is None or years is None or current is None:
+            return
+        result = retirement_savings(monthly, rate, years, current)
+        if result is None:
+            messagebox.showerror(t("err_finance"), t("msg_fin_invalid_input"))
+            return
+        self._var_fin_result.set(t("status_fin_retire",
+                                    result['future_value'],
+                                    result['total_contributions'],
+                                    result['total_interest']))
+        self.status_var.set(t("status_fin_retire",
+                               result['future_value'],
+                               result['total_contributions'],
+                               result['total_interest']))
 
 
 # ---------------------------------------------------------------------------

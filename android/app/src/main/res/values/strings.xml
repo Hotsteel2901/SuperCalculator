@@ -478,4 +478,32 @@
     <string name="prob_invalid_input">Please enter valid values.</string>
     <string name="prob_r_gt_n">r must be ≤ n.</string>
     <string name="prob_pb_zero">P(B) cannot be zero.</string>
+
+    <!-- Finance Calculator -->
+    <string name="fin_title">Finance Calculator</string>
+    <string name="fin_hint_principal">Loan Amount</string>
+    <string name="fin_hint_rate">Rate (%)</string>
+    <string name="fin_hint_months">Months</string>
+    <string name="fin_hint_years">Years</string>
+    <string name="fin_hint_flows">Cash Flows</string>
+    <string name="fin_loan">Loan</string>
+    <string name="fin_fv">FV</string>
+    <string name="fin_pv">PV</string>
+    <string name="fin_npv">NPV</string>
+    <string name="fin_irr">IRR</string>
+    <string name="fin_depr">Depreciation</string>
+    <string name="fin_bond">Bond</string>
+    <string name="fin_retire">Retire</string>
+    <string name="fin_result_loan">Monthly: %.2f\nTotal: %.2f\nInterest: %.2f</string>
+    <string name="fin_result_fv">Future Value: %.6g</string>
+    <string name="fin_result_pv">Present Value: %.6g</string>
+    <string name="fin_result_npv">NPV: %.6g</string>
+    <string name="fin_result_irr">IRR: %.6g%%</string>
+    <string name="fin_result_depr">Annual: %.2f\nMonthly: %.2f</string>
+    <string name="fin_result_bond">Bond Price: %.6g</string>
+    <string name="fin_result_retire">FV: %.2f\nContributions: %.2f\nInterest: %.2f</string>
+    <string name="fin_error">Finance Error</string>
+    <string name="fin_invalid_input">Please enter valid values.</string>
+    <string name="fin_invalid_flows">Enter at least 2 comma-separated cash flows.</string>
+    <string name="fin_depr_invalid">Salvage must be less than cost, life > 0.</string>
 </resources>
