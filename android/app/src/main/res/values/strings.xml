@@ -448,4 +448,34 @@
     <string name="dist_f">F</string>
     <string name="dist_binomial">Binomial</string>
     <string name="dist_poisson">Poisson</string>
+
+    <!-- Probability Calculator -->
+    <string name="prob_title">Probability Calculator</string>
+    <string name="prob_hint_n">n</string>
+    <string name="prob_hint_r">r</string>
+    <string name="prob_hint_p">p (0-1)</string>
+    <string name="prob_hint_pba">P(B|A)</string>
+    <string name="prob_hint_pa">P(A)</string>
+    <string name="prob_hint_pbna">P(B|A\')</string>
+    <string name="prob_combo">C(n,r)</string>
+    <string name="prob_perm">P(n,r)</string>
+    <string name="prob_union">P(A∪B)</string>
+    <string name="prob_intersect">P(A∩B)</string>
+    <string name="prob_complement">P(A\')</string>
+    <string name="prob_conditional">P(A|B)</string>
+    <string name="prob_bayes">Bayes</string>
+    <string name="prob_binom">Binomial</string>
+    <string name="prob_poisson">Poisson</string>
+    <string name="prob_result_combo">C(%d, %d) = %s</string>
+    <string name="prob_result_perm">P(%d, %d) = %s</string>
+    <string name="prob_result_union">P(A∪B) = %.6g</string>
+    <string name="prob_result_intersect">P(A∩B) = %.6g</string>
+    <string name="prob_result_complement">P(A\') = %.6g</string>
+    <string name="prob_result_conditional">P(A|B) = %.6g</string>
+    <string name="prob_result_bayes">P(A|B) = %.6g\nP(B|A)=%.4g, P(A)=%.4g</string>
+    <string name="prob_result_binom">P(X=%d) = %.6g [Binomial(%d, p=%.4g)]</string>
+    <string name="prob_error">Probability Error</string>
+    <string name="prob_invalid_input">Please enter valid values.</string>
+    <string name="prob_r_gt_n">r must be ≤ n.</string>
+    <string name="prob_pb_zero">P(B) cannot be zero.</string>
 </resources>

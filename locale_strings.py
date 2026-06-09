@@ -2276,6 +2276,232 @@ STRINGS = {
         "en": "Implicit: {0} = 0",
         "zh": "隐函数：{0} = 0",
     },
+
+    # ---- Probability Calculator ----
+    "sec_probability": {
+        "en": "Probability Calculator",
+        "zh": "概率计算器",
+    },
+    "label_prob_n": {
+        "en": "n:",
+        "zh": "n：",
+    },
+    "label_prob_r": {
+        "en": "r:",
+        "zh": "r：",
+    },
+    "label_prob_k": {
+        "en": "k:",
+        "zh": "k：",
+    },
+    "label_prob_p": {
+        "en": "p (0-1):",
+        "zh": "概率p (0-1)：",
+    },
+    "label_prob_pa": {
+        "en": "P(A):",
+        "zh": "P(A)：",
+    },
+    "label_prob_pb": {
+        "en": "P(B):",
+        "zh": "P(B)：",
+    },
+    "label_prob_pa_and_b": {
+        "en": "P(A∩B):",
+        "zh": "P(A∩B)：",
+    },
+    "label_prob_pb_given_a": {
+        "en": "P(B|A):",
+        "zh": "P(B|A)：",
+    },
+    "label_prob_pb_given_not_a": {
+        "en": "P(B|A'):",
+        "zh": "P(B|A')：",
+    },
+    "label_prob_pa_given_b": {
+        "en": "P(A|B):",
+        "zh": "P(A|B)：",
+    },
+    "label_prob_lambda": {
+        "en": "λ (lambda):",
+        "zh": "λ (lambda)：",
+    },
+    "label_prob_pop_n": {
+        "en": "N (population):",
+        "zh": "N (总体)：",
+    },
+    "label_prob_pop_k": {
+        "en": "K (successes):",
+        "zh": "K (成功数)：",
+    },
+    "label_prob_sample_n": {
+        "en": "n (sample):",
+        "zh": "n (样本)：",
+    },
+    "label_prob_sample_k": {
+        "en": "k (observed):",
+        "zh": "k (观测)：",
+    },
+    "btn_prob_combo": {
+        "en": "C(n,r)",
+        "zh": "组合C(n,r)",
+    },
+    "btn_prob_perm": {
+        "en": "P(n,r)",
+        "zh": "排列P(n,r)",
+    },
+    "btn_prob_union": {
+        "en": "P(A∪B)",
+        "zh": "P(A∪B)",
+    },
+    "btn_prob_intersect": {
+        "en": "P(A∩B)",
+        "zh": "P(A∩B)",
+    },
+    "btn_prob_complement": {
+        "en": "P(A')",
+        "zh": "P(A')",
+    },
+    "btn_prob_conditional": {
+        "en": "P(A|B)",
+        "zh": "P(A|B)",
+    },
+    "btn_prob_bayes": {
+        "en": "Bayes P(A|B)",
+        "zh": "贝叶斯P(A|B)",
+    },
+    "btn_prob_binom_pmf": {
+        "en": "P(X=k)",
+        "zh": "P(X=k)",
+    },
+    "btn_prob_binom_cdf": {
+        "en": "P(X≤k)",
+        "zh": "P(X≤k)",
+    },
+    "btn_prob_poisson": {
+        "en": "Poisson P(X=k)",
+        "zh": "泊松P(X=k)",
+    },
+    "btn_prob_geometric": {
+        "en": "Geometric P(X=k)",
+        "zh": "几何P(X=k)",
+    },
+    "btn_prob_hypergeo": {
+        "en": "Hypergeo P(X=k)",
+        "zh": "超几何P(X=k)",
+    },
+    "btn_prob_clear": {
+        "en": "Clear",
+        "zh": "清除",
+    },
+    "label_prob_mode_combo": {
+        "en": "Mode: Combinatorics",
+        "zh": "模式：组合数学",
+    },
+    "label_prob_mode_event": {
+        "en": "Mode: Event Probability",
+        "zh": "模式：事件概率",
+    },
+    "label_prob_mode_bayes": {
+        "en": "Mode: Bayes Theorem",
+        "zh": "模式：贝叶斯定理",
+    },
+    "label_prob_mode_binomial": {
+        "en": "Mode: Binomial Distribution",
+        "zh": "模式：二项分布",
+    },
+    "label_prob_mode_poisson": {
+        "en": "Mode: Poisson Distribution",
+        "zh": "模式：泊松分布",
+    },
+    "label_prob_mode_geometric": {
+        "en": "Mode: Geometric Distribution",
+        "zh": "模式：几何分布",
+    },
+    "label_prob_mode_hypergeo": {
+        "en": "Mode: Hypergeometric Distribution",
+        "zh": "模式：超几何分布",
+    },
+    "label_prob_independent": {
+        "en": "Independent events",
+        "zh": "独立事件",
+    },
+    "status_prob_combo": {
+        "en": "C({0}, {1}) = {2}",
+        "zh": "C({0}, {1}) = {2}",
+    },
+    "status_prob_perm": {
+        "en": "P({0}, {1}) = {2}",
+        "zh": "P({0}, {1}) = {2}",
+    },
+    "status_prob_union": {
+        "en": "P(A∪B) = {0}",
+        "zh": "P(A∪B) = {0}",
+    },
+    "status_prob_intersect": {
+        "en": "P(A∩B) = {0}",
+        "zh": "P(A∩B) = {0}",
+    },
+    "status_prob_complement": {
+        "en": "P(A') = {0}",
+        "zh": "P(A') = {0}",
+    },
+    "status_prob_conditional": {
+        "en": "P(A|B) = {0}",
+        "zh": "P(A|B) = {0}",
+    },
+    "status_prob_bayes": {
+        "en": "P(A|B) = {0}\nP(B|A)={1}, P(A)={2}, P(B)={3}",
+        "zh": "P(A|B) = {0}\nP(B|A)={1}, P(A)={2}, P(B)={3}",
+    },
+    "status_prob_binom_pmf": {
+        "en": "P(X={2}) = {0}  [Binomial({1}, p={3})]",
+        "zh": "P(X={2}) = {0}  [二项({1}, p={3})]",
+    },
+    "status_prob_binom_cdf": {
+        "en": "P(X≤{2}) = {0}  [Binomial({1}, p={3})]",
+        "zh": "P(X≤{2}) = {0}  [二项({1}, p={3})]",
+    },
+    "status_prob_poisson": {
+        "en": "P(X={1}) = {0}  [Poisson(λ={2})]",
+        "zh": "P(X={1}) = {0}  [泊松(λ={2})]",
+    },
+    "status_prob_geometric": {
+        "en": "P(X={1}) = {0}  [Geometric(p={2})]",
+        "zh": "P(X={1}) = {0}  [几何(p={2})]",
+    },
+    "status_prob_hypergeo": {
+        "en": "P(X={3}) = {0}  [Hypergeo(N={1}, K={2}, n={4})]",
+        "zh": "P(X={3}) = {0}  [超几何(N={1}, K={2}, n={4})]",
+    },
+    "err_prob": {
+        "en": "Probability Error",
+        "zh": "概率错误",
+    },
+    "msg_prob_invalid_n": {
+        "en": "Please enter a valid non-negative integer for n.",
+        "zh": "请输入有效的非负整数 n。",
+    },
+    "msg_prob_invalid_r": {
+        "en": "Please enter a valid non-negative integer for r (r ≤ n).",
+        "zh": "请输入有效的非负整数 r（r ≤ n）。",
+    },
+    "msg_prob_invalid_p": {
+        "en": "Please enter a valid probability p (0 ≤ p ≤ 1).",
+        "zh": "请输入有效的概率 p（0 ≤ p ≤ 1）。",
+    },
+    "msg_prob_invalid_pa_pb": {
+        "en": "Please enter valid probabilities P(A) and P(B) (0 to 1).",
+        "zh": "请输入有效的概率 P(A) 和 P(B)（0 到 1）。",
+    },
+    "msg_prob_invalid_bayes": {
+        "en": "Please enter valid values for P(B|A), P(A), and P(B|A').",
+        "zh": "请输入有效的 P(B|A)、P(A) 和 P(B|A')。",
+    },
+    "msg_prob_pb_zero": {
+        "en": "P(B) cannot be zero for conditional probability.",
+        "zh": "P(B) 不能为零（条件概率分母）。",
+    },
 }
 
 

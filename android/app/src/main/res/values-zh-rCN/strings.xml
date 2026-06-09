@@ -448,4 +448,34 @@
     <string name="dist_f">F</string>
     <string name="dist_binomial">二项</string>
     <string name="dist_poisson">泊松</string>
+
+    <!-- Probability Calculator -->
+    <string name="prob_title">概率计算器</string>
+    <string name="prob_hint_n">n</string>
+    <string name="prob_hint_r">r</string>
+    <string name="prob_hint_p">概率p (0-1)</string>
+    <string name="prob_hint_pba">P(B|A)</string>
+    <string name="prob_hint_pa">P(A)</string>
+    <string name="prob_hint_pbna">P(B|A\')</string>
+    <string name="prob_combo">组合C(n,r)</string>
+    <string name="prob_perm">排列P(n,r)</string>
+    <string name="prob_union">P(A∪B)</string>
+    <string name="prob_intersect">P(A∩B)</string>
+    <string name="prob_complement">P(A\')</string>
+    <string name="prob_conditional">P(A|B)</string>
+    <string name="prob_bayes">贝叶斯</string>
+    <string name="prob_binom">二项分布</string>
+    <string name="prob_poisson">泊松分布</string>
+    <string name="prob_result_combo">C(%d, %d) = %s</string>
+    <string name="prob_result_perm">P(%d, %d) = %s</string>
+    <string name="prob_result_union">P(A∪B) = %.6g</string>
+    <string name="prob_result_intersect">P(A∩B) = %.6g</string>
+    <string name="prob_result_complement">P(A\') = %.6g</string>
+    <string name="prob_result_conditional">P(A|B) = %.6g</string>
+    <string name="prob_result_bayes">P(A|B) = %.6g\nP(B|A)=%.4g, P(A)=%.4g</string>
+    <string name="prob_result_binom">P(X=%d) = %.6g [二项(%d, p=%.4g)]</string>
+    <string name="prob_error">概率错误</string>
+    <string name="prob_invalid_input">请输入有效的值。</string>
+    <string name="prob_r_gt_n">r 不能大于 n。</string>
+    <string name="prob_pb_zero">P(B) 不能为零。</string>
 </resources>

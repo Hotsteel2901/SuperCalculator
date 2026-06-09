@@ -1321,6 +1321,7 @@
         <nav class="nav" aria-label="主导航">
             <a href="#features" class="nav-link"><span>功能特性</span></a>
             <a href="#base-converter" class="nav-link"><span>进制转换</span></a>
+            <a href="#probability" class="nav-link"><span>概率计算</span></a>
             <a href="#bitwise-calculator" class="nav-link"><span>位运算</span></a>
             <a href="#calendar" class="nav-link"><span>万年历</span></a>
             <a href="#quick-start" class="nav-link"><span>快速开始</span></a>
@@ -1346,6 +1347,7 @@
     <nav class="mobile-nav" id="mobileNav" aria-label="移动端导航">
         <a href="#features" class="mobile-nav-link">功能特性</a>
         <a href="#base-converter" class="mobile-nav-link">进制转换</a>
+        <a href="#probability" class="mobile-nav-link">概率计算</a>
         <a href="#bitwise-calculator" class="mobile-nav-link">位运算</a>
         <a href="#calendar" class="mobile-nav-link">万年历</a>
         <a href="#quick-start" class="mobile-nav-link">快速开始</a>
@@ -2455,6 +2457,95 @@
             </div>
         </section>
 
+        <section class="section" id="probability">
+            <div class="section-header">
+                <div class="section-label">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    Probability Calculator
+                </div>
+                <h2 class="section-title">概率计算器</h2>
+                <p class="section-subtitle">组合数、排列数、事件概率、条件概率、贝叶斯定理与二项分布</p>
+            </div>
+            <div class="card glass reveal" style="max-width: 700px; margin: 0 auto;">
+                <div style="display:flex;flex-direction:column;gap:16px;">
+                    <div>
+                        <label style="display:block;font-size:13px;color:var(--text-muted);margin-bottom:6px;font-weight:500;">模式</label>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;" id="probModeBtns">
+                            <button onclick="setProbMode('combo')" data-mode="combo" class="base-btn active">C(n,r) / P(n,r)</button>
+                            <button onclick="setProbMode('event')" data-mode="event" class="base-btn">事件概率</button>
+                            <button onclick="setProbMode('bayes')" data-mode="bayes" class="base-btn">贝叶斯</button>
+                            <button onclick="setProbMode('binom')" data-mode="binom" class="base-btn">二项分布</button>
+                        </div>
+                    </div>
+                    <!-- Combinatorics inputs -->
+                    <div id="probComboInputs">
+                        <div style="display:flex;gap:12px;">
+                            <div style="flex:1;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">n</label>
+                                <input type="number" id="probN" value="10" min="0" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeProb()">
+                            </div>
+                            <div style="flex:1;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">r</label>
+                                <input type="number" id="probR" value="3" min="0" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeProb()">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Event probability inputs -->
+                    <div id="probEventInputs" style="display:none;">
+                        <div style="display:flex;gap:12px;">
+                            <div style="flex:1;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">P(A)</label>
+                                <input type="number" id="probPA" value="0.5" min="0" max="1" step="0.01" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeProbEvent()">
+                            </div>
+                            <div style="flex:1;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">P(B)</label>
+                                <input type="number" id="probPB" value="0.3" min="0" max="1" step="0.01" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeProbEvent()">
+                            </div>
+                            <div style="flex:1;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">P(A∩B)</label>
+                                <input type="number" id="probPAB" value="0.1" min="0" max="1" step="0.01" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeProbEvent()">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Bayes inputs -->
+                    <div id="probBayesInputs" style="display:none;">
+                        <div style="display:flex;gap:12px;">
+                            <div style="flex:1;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">P(B|A)</label>
+                                <input type="number" id="probPBA" value="0.9" min="0" max="1" step="0.01" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeProbBayes()">
+                            </div>
+                            <div style="flex:1;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">P(A)</label>
+                                <input type="number" id="probBayesPA" value="0.01" min="0" max="1" step="0.01" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeProbBayes()">
+                            </div>
+                            <div style="flex:1;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">P(B|A')</label>
+                                <input type="number" id="probPBNA" value="0.1" min="0" max="1" step="0.01" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeProbBayes()">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Binomial inputs -->
+                    <div id="probBinomInputs" style="display:none;">
+                        <div style="display:flex;gap:12px;">
+                            <div style="flex:1;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">n</label>
+                                <input type="number" id="probBinomN" value="20" min="0" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeProbBinom()">
+                            </div>
+                            <div style="flex:1;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">k</label>
+                                <input type="number" id="probBinomK" value="5" min="0" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeProbBinom()">
+                            </div>
+                            <div style="flex:1;">
+                                <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">p</label>
+                                <input type="number" id="probBinomP" value="0.3" min="0" max="1" step="0.01" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeProbBinom()">
+                            </div>
+                        </div>
+                    </div>
+                    <div id="probResults" style="display:none;padding:16px;border-radius:12px;background:var(--glass-bg);border:1px solid var(--glass-border);font-family:monospace;font-size:15px;color:var(--glow-accent);line-height:1.8;word-break:break-all;"></div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <footer class="footer">
@@ -2945,6 +3036,123 @@
             });
 
             calcBitwise();
+        })();
+
+        // ------------------------------------------------------------------
+        //  Probability Calculator
+        // ------------------------------------------------------------------
+        (function() {
+            var isZh = (navigator.language || '').indexOf('zh') === 0;
+            var currentMode = 'combo';
+
+            function comb(n, r) {
+                if (r > n) return 0;
+                if (r === 0 || r === n) return 1;
+                if (r > n - r) r = n - r;
+                var result = 1;
+                for (var i = 0; i < r; i++) {
+                    result = result * (n - i) / (i + 1);
+                }
+                return Math.round(result);
+            }
+
+            function perm(n, r) {
+                if (r > n) return 0;
+                var result = 1;
+                for (var i = 0; i < r; i++) {
+                    result *= (n - i);
+                }
+                return result;
+            }
+
+            function binomPMF(n, k, p) {
+                return comb(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k);
+            }
+
+            function fmtNum(v) {
+                if (typeof v === 'bigint') return v.toString();
+                if (Number.isInteger(v) && Math.abs(v) < 1e15) return v.toLocaleString();
+                return v.toPrecision(8).replace(/\.?0+$/, '');
+            }
+
+            window.setProbMode = function(mode) {
+                currentMode = mode;
+                var btns = document.querySelectorAll('#probModeBtns .base-btn');
+                for (var i = 0; i < btns.length; i++) {
+                    btns[i].classList.toggle('active', btns[i].getAttribute('data-mode') === mode);
+                }
+                document.getElementById('probComboInputs').style.display = (mode === 'combo') ? '' : 'none';
+                document.getElementById('probEventInputs').style.display = (mode === 'event') ? '' : 'none';
+                document.getElementById('probBayesInputs').style.display = (mode === 'bayes') ? '' : 'none';
+                document.getElementById('probBinomInputs').style.display = (mode === 'binom') ? '' : 'none';
+                document.getElementById('probResults').style.display = 'none';
+                if (mode === 'combo') computeProb();
+                else if (mode === 'event') computeProbEvent();
+                else if (mode === 'bayes') computeProbBayes();
+                else if (mode === 'binom') computeProbBinom();
+            };
+
+            window.computeProb = function() {
+                var n = parseInt(document.getElementById('probN').value, 10);
+                var r = parseInt(document.getElementById('probR').value, 10);
+                var res = document.getElementById('probResults');
+                if (isNaN(n) || isNaN(r) || n < 0 || r < 0) { res.style.display = 'none'; return; }
+                var c = comb(n, r);
+                var p = perm(n, r);
+                res.style.display = 'block';
+                res.innerHTML = '<div style="margin-bottom:8px;"><span style="color:var(--text-muted);">' + (isZh ? '组合数' : 'Combination') + ' C(' + n + ',' + r + ') = </span><span style="color:var(--glow-primary);font-size:18px;">' + fmtNum(c) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '排列数' : 'Permutation') + ' P(' + n + ',' + r + ') = </span><span style="color:var(--glow-primary);font-size:18px;">' + fmtNum(p) + '</span></div>';
+            };
+
+            window.computeProbEvent = function() {
+                var pa = parseFloat(document.getElementById('probPA').value);
+                var pb = parseFloat(document.getElementById('probPB').value);
+                var pab = parseFloat(document.getElementById('probPAB').value);
+                var res = document.getElementById('probResults');
+                if (isNaN(pa) || isNaN(pb) || isNaN(pab)) { res.style.display = 'none'; return; }
+                var union = Math.max(0, Math.min(1, pa + pb - pab));
+                var inter = pa * pb;
+                var compA = 1 - pa;
+                var cond = pb > 0 ? pab / pb : NaN;
+                res.style.display = 'block';
+                res.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+                    '<div><span style="color:var(--text-muted);">P(A∪B) = </span><span style="color:var(--glow-primary);">' + fmtNum(union) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">P(A∩B) = </span><span style="color:var(--glow-primary);">' + fmtNum(pa * pb) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">P(A\') = </span><span style="color:var(--glow-primary);">' + fmtNum(compA) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">P(B\') = </span><span style="color:var(--glow-primary);">' + fmtNum(1 - pb) + '</span></div>' +
+                    '</div>';
+            };
+
+            window.computeProbBayes = function() {
+                var pba = parseFloat(document.getElementById('probPBA').value);
+                var pa = parseFloat(document.getElementById('probBayesPA').value);
+                var pbna = parseFloat(document.getElementById('probPBNA').value);
+                var res = document.getElementById('probResults');
+                if (isNaN(pba) || isNaN(pa) || isNaN(pbna)) { res.style.display = 'none'; return; }
+                var pNotA = 1 - pa;
+                var pB = pba * pa + pbna * pNotA;
+                if (pB === 0) { res.style.display = 'block'; res.textContent = isZh ? 'P(B) 不能为零' : 'P(B) cannot be zero'; return; }
+                var pAB = (pba * pa) / pB;
+                res.style.display = 'block';
+                res.innerHTML = '<div style="margin-bottom:8px;"><span style="color:var(--text-muted);">' + (isZh ? '后验概率' : 'Posterior') + ' P(A|B) = </span><span style="color:var(--glow-primary);font-size:20px;">' + fmtNum(pAB) + '</span></div>' +
+                    '<div style="color:var(--text-subtle);font-size:13px;">P(B|A)=' + fmtNum(pba) + ', P(A)=' + fmtNum(pa) + ', P(B)=' + fmtNum(pB) + '</div>';
+            };
+
+            window.computeProbBinom = function() {
+                var n = parseInt(document.getElementById('probBinomN').value, 10);
+                var k = parseInt(document.getElementById('probBinomK').value, 10);
+                var p = parseFloat(document.getElementById('probBinomP').value);
+                var res = document.getElementById('probResults');
+                if (isNaN(n) || isNaN(k) || isNaN(p) || n < 0 || k < 0 || k > n || p < 0 || p > 1) { res.style.display = 'none'; return; }
+                var pmf = binomPMF(n, k, p);
+                var mean = n * p;
+                var variance = n * p * (1 - p);
+                res.style.display = 'block';
+                res.innerHTML = '<div style="margin-bottom:8px;"><span style="color:var(--text-muted);">P(X=' + k + ') = </span><span style="color:var(--glow-primary);font-size:18px;">' + fmtNum(pmf) + '</span></div>' +
+                    '<div style="color:var(--text-subtle);font-size:13px;">Binomial(' + n + ', p=' + p + ')  E[X]=' + fmtNum(mean) + '  Var=' + fmtNum(variance) + '</div>';
+            };
+
+            computeProb();
         })();
     </script>
 </body>
