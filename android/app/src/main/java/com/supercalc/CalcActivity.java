@@ -323,6 +323,9 @@ public class CalcActivity extends AppCompatActivity {
 
         // Statistical Distribution Calculator
         setupDistCalc();
+
+        // Probability Calculator
+        setupProbability();
     }
 
     private String getExpr()  { return exprInput.getText().toString().trim(); }
@@ -2559,6 +2562,160 @@ public class CalcActivity extends AppCompatActivity {
             ? d.toString() + " 加 " + add + " 天 = " + result
             : d + " + " + add + " days = " + result;
         calResultView.setText(msg);
+    }
+
+    // ------------------------------------------------------------------
+    //  Probability Calculator
+    // ------------------------------------------------------------------
+    private EditText probNInput, probRInput, probPInput;
+    private EditText probPbaInput, probPaInput, probPbnaInput;
+    private TextView probResultView;
+
+    private void setupProbability() {
+        probNInput = findViewById(R.id.prob_n_input);
+        probRInput = findViewById(R.id.prob_r_input);
+        probPInput = findViewById(R.id.prob_p_input);
+        probPbaInput = findViewById(R.id.prob_pba_input);
+        probPaInput = findViewById(R.id.prob_pa_input);
+        probPbnaInput = findViewById(R.id.prob_pbna_input);
+        probResultView = findViewById(R.id.prob_result_view);
+
+        MaterialButton btnCombo = findViewById(R.id.btn_prob_combo);
+        btnCombo.setOnClickListener(v -> onProbCombo());
+
+        MaterialButton btnPerm = findViewById(R.id.btn_prob_perm);
+        btnPerm.setOnClickListener(v -> onProbPerm());
+
+        MaterialButton btnBayes = findViewById(R.id.btn_prob_bayes);
+        btnBayes.setOnClickListener(v -> onProbBayes());
+
+        MaterialButton btnBinom = findViewById(R.id.btn_prob_binom);
+        btnBinom.setOnClickListener(v -> onProbBinom());
+
+        MaterialButton btnUnion = findViewById(R.id.btn_prob_union);
+        btnUnion.setOnClickListener(v -> onProbUnion());
+
+        MaterialButton btnIntersect = findViewById(R.id.btn_prob_intersect);
+        btnIntersect.setOnClickListener(v -> onProbIntersect());
+
+        MaterialButton btnComplement = findViewById(R.id.btn_prob_complement);
+        btnComplement.setOnClickListener(v -> onProbComplement());
+
+        MaterialButton btnConditional = findViewById(R.id.btn_prob_conditional);
+        btnConditional.setOnClickListener(v -> onProbConditional());
+    }
+
+    private long probParseLong(EditText e) {
+        return Long.parseLong(e.getText().toString().trim());
+    }
+
+    private double probParseDouble(EditText e) {
+        return Double.parseDouble(e.getText().toString().trim());
+    }
+
+    private void onProbCombo() {
+        try {
+            long n = probParseLong(probNInput);
+            long r = probParseLong(probRInput);
+            if (r > n) { toast(getString(R.string.prob_r_gt_n)); return; }
+            long result = comb(n, r);
+            probResultView.setText(String.format(getString(R.string.prob_result_combo), n, r, result));
+        } catch (Exception ex) { toast(getString(R.string.prob_invalid_input)); }
+    }
+
+    private void onProbPerm() {
+        try {
+            long n = probParseLong(probNInput);
+            long r = probParseLong(probRInput);
+            if (r > n) { toast(getString(R.string.prob_r_gt_n)); return; }
+            long result = perm(n, r);
+            probResultView.setText(String.format(getString(R.string.prob_result_perm), n, r, result));
+        } catch (Exception ex) { toast(getString(R.string.prob_invalid_input)); }
+    }
+
+    private void onProbUnion() {
+        try {
+            double pa = probParseDouble(probPaInput);
+            double pb = probParseDouble(probRInput);
+            double pab = probParseDouble(probPInput);
+            double result = Math.max(0, Math.min(1, pa + pb - pab));
+            probResultView.setText(String.format(getString(R.string.prob_result_union), result));
+        } catch (Exception ex) { toast(getString(R.string.prob_invalid_input)); }
+    }
+
+    private void onProbIntersect() {
+        try {
+            double pa = probParseDouble(probPaInput);
+            double pb = probParseDouble(probRInput);
+            double result = pa * pb;
+            probResultView.setText(String.format(getString(R.string.prob_result_intersect), result));
+        } catch (Exception ex) { toast(getString(R.string.prob_invalid_input)); }
+    }
+
+    private void onProbComplement() {
+        try {
+            double pa = probParseDouble(probPaInput);
+            double result = 1.0 - pa;
+            probResultView.setText(String.format(getString(R.string.prob_result_complement), result));
+        } catch (Exception ex) { toast(getString(R.string.prob_invalid_input)); }
+    }
+
+    private void onProbConditional() {
+        try {
+            double pab = probParseDouble(probPInput);
+            double pb = probParseDouble(probRInput);
+            if (pb == 0) { toast(getString(R.string.prob_pb_zero)); return; }
+            double result = pab / pb;
+            probResultView.setText(String.format(getString(R.string.prob_result_conditional), result));
+        } catch (Exception ex) { toast(getString(R.string.prob_invalid_input)); }
+    }
+
+    private void onProbBayes() {
+        try {
+            double pba = probParseDouble(probPbaInput);
+            double pa = probParseDouble(probPaInput);
+            double pbna = probParseDouble(probPbnaInput);
+            double pNotA = 1.0 - pa;
+            double pB = pba * pa + pbna * pNotA;
+            if (pB == 0) { toast(getString(R.string.prob_pb_zero)); return; }
+            double pAB = (pba * pa) / pB;
+            probResultView.setText(String.format(getString(R.string.prob_result_bayes), pAB, pba, pa));
+        } catch (Exception ex) { toast(getString(R.string.prob_invalid_input)); }
+    }
+
+    private void onProbBinom() {
+        try {
+            long n = probParseLong(probNInput);
+            long k = probParseLong(probRInput);
+            double p = probParseDouble(probPInput);
+            if (k > n) { toast(getString(R.string.prob_r_gt_n)); return; }
+            double result = binomialPMF(n, k, p);
+            probResultView.setText(String.format(getString(R.string.prob_result_binom), k, result, n, p));
+        } catch (Exception ex) { toast(getString(R.string.prob_invalid_input)); }
+    }
+
+    private long comb(long n, long r) {
+        if (r > n) return 0;
+        if (r == 0 || r == n) return 1;
+        if (r > n - r) r = n - r;
+        long result = 1;
+        for (long i = 0; i < r; i++) {
+            result = result * (n - i) / (i + 1);
+        }
+        return result;
+    }
+
+    private long perm(long n, long r) {
+        if (r > n) return 0;
+        long result = 1;
+        for (long i = 0; i < r; i++) {
+            result *= (n - i);
+        }
+        return result;
+    }
+
+    private double binomialPMF(long n, long k, double p) {
+        return comb(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k);
     }
 
     // ------------------------------------------------------------------

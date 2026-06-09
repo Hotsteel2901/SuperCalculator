@@ -70,7 +70,8 @@
     - **数论计算器** — 支持整数因式分解、素数判定（试除法）、最大公约数/最小公倍数、Fibonacci 数列、模幂运算（快速二进制幂）和欧拉函数 φ(n)。桌面端（Python）与 Android 端（Java）均已同步。
     - **进制转换器** — 支持二进制（2）、八进制（8）、十进制（10）、十六进制（16）以及 2-36 任意进制之间的数字转换。支持同时显示所有常用进制的转换结果，支持负数。项目主页提供交互式网页演示。桌面端（Python）与 Android 端（Java）均已同步。
     - **位运算计算器** — 支持 AND、OR、XOR、NOT、左移（<<）、右移（>>）运算，可配置位宽（8/16/32），实时显示二进制、八进制、十进制和十六进制结果。项目主页提供交互式二进制位图演示。桌面端（Python）与 Android 端（Java）均已同步。
-    - **万年历** — 查询任意日期（YYYY-MM-DD）是星期几，计算两个日期之间的精确天数差，以及对任意日期加减指定天数。支持公元 1 年至 9999 年的日期。桌面端（Python）与 Android 端（Java）均已同步。
+     - **万年历** — 查询任意日期（YYYY-MM-DD）是星期几，计算两个日期之间的精确天数差，以及对任意日期加减指定天数。支持公元 1 年至 9999 年的日期。桌面端（Python）与 Android 端（Java）均已同步。
+     - **概率计算器** — 计算组合数 C(n,r)、排列数 P(n,r)、事件概率（并集 P(A∪B)、交集 P(A∩B)、补集 P(A')）、条件概率 P(A|B)、贝叶斯定理及完整后验概率计算、二项分布 P(X=k) 及均值/方差。项目主页提供交互式网页演示。桌面端（Python）与 Android 端（Java）均已同步。
     - **Windows EXE** — 提供独立 Windows 可执行文件，无需安装 Python
  - **Android 应用** — 独立 APK，Material Design 3 界面 + JNI 桥接，现已支持 3D 曲面绘图与触控旋转及参数曲线绘制
  - **中文语言支持** — 桌面端（Python）与 Android 端均支持完整中文 (zh-CN) 本地化。桌面端自动检测系统语言或通过环境变量 `SUPERCALC_LANG=zh` 指定。Android 端跟随系统语言自动切换。
@@ -161,6 +162,7 @@ SuperCalculator/
   super_calc_bridged.py    GUI 主程序 (Tkinter + Matplotlib)
   locale_strings.py        国际化模块 (英文 + 中文，自动语言检测)
   stat_dist.py             统计分布计算器 (正态、t、卡方、F、二项、泊松分布)
+  probability_calc.py      概率计算器 (组合、排列、贝叶斯、二项分布)
   SuperCalculator.ico      Windows EXE 图标
   SuperCalculator.spec     PyInstaller 构建配置 (Windows EXE)
   android/                 Android 项目 (Gradle + JNI + M3 UI)
@@ -172,6 +174,7 @@ SuperCalculator/
 
 ## 更新日志
 
+- **概率计算器** — 计算组合数 C(n,r)、排列数 P(n,r)、事件概率（并集 P(A∪B)、交集 P(A∩B)、补集 P(A')）、条件概率 P(A|B)、贝叶斯定理及完整后验概率计算、二项分布 P(X=k) 及均值/方差。项目主页提供交互式网页演示。桌面端（Python）与 Android 端（Java）均已同步。
 - **位运算计算器** — 支持 AND、OR、XOR、NOT、左移（<<）、右移（>>）运算，可配置位宽（8/16/32），实时显示二进制、八进制、十进制和十六进制结果。项目主页提供交互式二进制位图演示。桌面端（Python）与 Android 端（Java）均已同步。
 - **进制转换器** — 支持二进制、八进制、十进制与十六进制之间的数字转换，同时支持 2-36 任意进制。支持同时显示所有常用进制的转换结果，支持负数，项目主页提供交互式网页演示。桌面端（Python）与 Android 端（Java）均已同步。
 - **万年历** — 查询任意日期是星期几，计算两个日期之间的精确天数差，以及对任意日期加减指定天数。支持公元 1 年至 9999 年。桌面端（Python）与 Android 端（Java）均已同步。

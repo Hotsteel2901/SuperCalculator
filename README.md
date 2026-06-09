@@ -70,6 +70,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
    - **Base Number Converter** — convert numbers between binary (2), octal (8), decimal (10), hexadecimal (16), and any base from 2 to 36. Supports both single-base conversion and simultaneous display of all common bases. Interactive demo available on the project landing page. Available on both desktop (Python) and Android (Java).
    - **Bitwise Operations Calculator** — perform bitwise AND, OR, XOR, NOT, left shift (<<), and right shift (>>) operations with configurable bit width (8/16/32). Real-time display of results in binary, octal, decimal, and hexadecimal. Interactive binary bit grid on the web landing page. Available on both desktop (Python) and Android (Java).
    - **Perpetual Calendar** — look up the day of the week for any date (YYYY-MM-DD), calculate the exact number of days between two dates, and add or subtract a given number of days from a date. Supports dates from year 1 to 9999. Available on both desktop (Python) and Android (Java).
+   - **Probability Calculator** — compute combinations C(n,r), permutations P(n,r), event probabilities (union, intersection, complement), conditional probability P(A|B), Bayes' theorem, and binomial distribution P(X=k). Available on both desktop (Python) and Android (Java).
    - **Windows EXE** — standalone executable, no Python installation required
  - **Android App** — standalone APK with Material Design 3 UI and JNI bridge, now including 3D surface plotting with touch rotation and parametric curve support
  - **Chinese Language Support** — full Chinese (zh-CN) localization for both desktop (Python) and Android. Desktop auto-detects system locale or accepts `SUPERCALC_LANG=zh` env var. Android follows system language automatically.
@@ -160,6 +161,7 @@ SuperCalculator/
   super_calc_bridged.py    GUI main program (Tkinter + Matplotlib)
   locale_strings.py        i18n module (English + Chinese, auto locale detection)
   stat_dist.py             Statistical distribution calculator (Normal, t, Chi2, F, Binomial, Poisson)
+  probability_calc.py      Probability calculator (combinations, permutations, Bayes, binomial)
   SuperCalculator.ico      Windows EXE icon
   SuperCalculator.spec     PyInstaller spec for Windows EXE build
   android/                 Android project (Gradle + JNI + M3 UI)
@@ -171,6 +173,7 @@ SuperCalculator/
 
 ## What's New
 
+- **Probability Calculator** — compute combinations C(n,r), permutations P(n,r), event probabilities (union P(A∪B), intersection P(A∩B), complement P(A')), conditional probability P(A|B), Bayes' theorem with full posterior calculation, and binomial distribution P(X=k) with mean/variance. Interactive demo on the project landing page. Available on both desktop (Python) and Android (Java).
 - **Bitwise Operations Calculator** — perform bitwise AND, OR, XOR, NOT, left shift (<<), and right shift (>>) operations with configurable bit width (8/16/32). Real-time multi-base result display (binary, octal, decimal, hex). Interactive binary bit grid on the web landing page. Available on both desktop (Python) and Android (Java).
 - **Base Number Converter** — convert numbers between binary, octal, decimal, and hexadecimal with support for any base from 2 to 36. Features simultaneous multi-base display, negative number support, and an interactive web demo. Available on both desktop (Python) and Android (Java).
 - **Perpetual Calendar** — look up the day of the week for any date, calculate the exact number of days between two dates, and add or subtract days from a date. Supports dates from year 1 to 9999. Available on both desktop (Python) and Android (Java).

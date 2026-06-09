@@ -1480,6 +1480,197 @@ class SuperCalcApp:
         ttk.Entry(cal_row5, textvariable=self._var_cal_result, width=35,
                   font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
 
+        # --- Probability Calculator ---
+        frm_prob = ttk.LabelFrame(scroll_frame, text=t("sec_probability"),
+                                   style="Dark.TLabelframe")
+        frm_prob.pack(fill=tk.X, padx=8, pady=4)
+
+        # Mode selector
+        prob_mode_row = ttk.Frame(frm_prob, style="Dark.TFrame")
+        prob_mode_row.pack(fill=tk.X, padx=6, pady=(4, 2))
+        ttk.Label(prob_mode_row, text=t("label_preset"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_prob_mode = tk.StringVar(value="combo")
+        prob_modes = [
+            ("C(n,r)/P(n,r)", "combo"),
+            ("P(A∪B)/P(A∩B)/P(A')", "event"),
+            ("P(A|B) Conditional", "conditional"),
+            ("Bayes P(A|B)", "bayes"),
+            ("Binomial", "binomial"),
+            ("Poisson", "poisson"),
+            ("Geometric", "geometric"),
+            ("Hypergeometric", "hypergeo"),
+        ]
+        prob_combo = ttk.Combobox(prob_mode_row, textvariable=self._var_prob_mode,
+                                   values=[m[0] for m in prob_modes],
+                                   state="readonly", font=("Consolas", 10), width=22)
+        prob_combo.pack(side=tk.LEFT, padx=4)
+        self._prob_mode_map = {m[0]: m[1] for m in prob_modes}
+        prob_combo.bind("<<ComboboxSelected>>",
+                        lambda e: self._on_prob_mode_change())
+
+        # Combinatorics frame (n, r)
+        self._frame_prob_combo = ttk.Frame(frm_prob, style="Dark.TFrame")
+        self._frame_prob_combo.pack(fill=tk.X, padx=6, pady=2)
+        c_row1 = ttk.Frame(self._frame_prob_combo, style="Dark.TFrame")
+        c_row1.pack(fill=tk.X, pady=2)
+        ttk.Label(c_row1, text=t("label_prob_n"), style="Dark.TLabel", width=4).pack(side=tk.LEFT)
+        self._var_prob_n = tk.StringVar(value="10")
+        ttk.Entry(c_row1, textvariable=self._var_prob_n, width=8).pack(side=tk.LEFT, padx=2)
+        ttk.Label(c_row1, text=t("label_prob_r"), style="Dark.TLabel", width=4).pack(side=tk.LEFT, padx=(8,0))
+        self._var_prob_r = tk.StringVar(value="3")
+        ttk.Entry(c_row1, textvariable=self._var_prob_r, width=8).pack(side=tk.LEFT, padx=2)
+        c_row2 = ttk.Frame(self._frame_prob_combo, style="Dark.TFrame")
+        c_row2.pack(fill=tk.X, pady=2)
+        ttk.Button(c_row2, text=t("btn_prob_combo"),
+                   command=self._on_prob_combo).pack(side=tk.LEFT, padx=2)
+        ttk.Button(c_row2, text=t("btn_prob_perm"),
+                   command=self._on_prob_perm).pack(side=tk.LEFT, padx=2)
+
+        # Event probability frame (P(A), P(B), P(A∩B))
+        self._frame_prob_event = ttk.Frame(frm_prob, style="Dark.TFrame")
+        e_row1 = ttk.Frame(self._frame_prob_event, style="Dark.TFrame")
+        e_row1.pack(fill=tk.X, pady=2)
+        ttk.Label(e_row1, text=t("label_prob_pa"), style="Dark.TLabel", width=8).pack(side=tk.LEFT)
+        self._var_prob_pa = tk.StringVar(value="0.5")
+        ttk.Entry(e_row1, textvariable=self._var_prob_pa, width=8).pack(side=tk.LEFT, padx=2)
+        ttk.Label(e_row1, text=t("label_prob_pb"), style="Dark.TLabel", width=8).pack(side=tk.LEFT, padx=(8,0))
+        self._var_prob_pb = tk.StringVar(value="0.3")
+        ttk.Entry(e_row1, textvariable=self._var_prob_pb, width=8).pack(side=tk.LEFT, padx=2)
+        e_row2 = ttk.Frame(self._frame_prob_event, style="Dark.TFrame")
+        e_row2.pack(fill=tk.X, pady=2)
+        ttk.Label(e_row2, text=t("label_prob_pa_and_b"), style="Dark.TLabel", width=12).pack(side=tk.LEFT)
+        self._var_prob_pa_and_b = tk.StringVar(value="0.1")
+        ttk.Entry(e_row2, textvariable=self._var_prob_pa_and_b, width=8).pack(side=tk.LEFT, padx=2)
+        e_row3 = ttk.Frame(self._frame_prob_event, style="Dark.TFrame")
+        e_row3.pack(fill=tk.X, pady=2)
+        ttk.Button(e_row3, text=t("btn_prob_union"),
+                   command=self._on_prob_union).pack(side=tk.LEFT, padx=2)
+        ttk.Button(e_row3, text=t("btn_prob_intersect"),
+                   command=self._on_prob_intersect).pack(side=tk.LEFT, padx=2)
+        ttk.Button(e_row3, text=t("btn_prob_complement"),
+                   command=self._on_prob_complement_a).pack(side=tk.LEFT, padx=2)
+
+        # Conditional probability frame (P(A|B))
+        self._frame_prob_cond = ttk.Frame(frm_prob, style="Dark.TFrame")
+        con_row1 = ttk.Frame(self._frame_prob_cond, style="Dark.TFrame")
+        con_row1.pack(fill=tk.X, pady=2)
+        ttk.Label(con_row1, text=t("label_prob_pa_and_b"), style="Dark.TLabel", width=12).pack(side=tk.LEFT)
+        self._var_prob_cond_a_and_b = tk.StringVar(value="0.1")
+        ttk.Entry(con_row1, textvariable=self._var_prob_cond_a_and_b, width=8).pack(side=tk.LEFT, padx=2)
+        ttk.Label(con_row1, text=t("label_prob_pb"), style="Dark.TLabel", width=8).pack(side=tk.LEFT, padx=(8,0))
+        self._var_prob_cond_pb = tk.StringVar(value="0.3")
+        ttk.Entry(con_row1, textvariable=self._var_prob_cond_pb, width=8).pack(side=tk.LEFT, padx=2)
+        con_row2 = ttk.Frame(self._frame_prob_cond, style="Dark.TFrame")
+        con_row2.pack(fill=tk.X, pady=2)
+        ttk.Button(con_row2, text=t("btn_prob_conditional"),
+                   command=self._on_prob_conditional).pack(side=tk.LEFT, padx=2)
+
+        # Bayes frame (P(B|A), P(A), P(B|A'))
+        self._frame_prob_bayes = ttk.Frame(frm_prob, style="Dark.TFrame")
+        bay_row1 = ttk.Frame(self._frame_prob_bayes, style="Dark.TFrame")
+        bay_row1.pack(fill=tk.X, pady=2)
+        ttk.Label(bay_row1, text=t("label_prob_pb_given_a"), style="Dark.TLabel", width=12).pack(side=tk.LEFT)
+        self._var_prob_bayes_pba = tk.StringVar(value="0.9")
+        ttk.Entry(bay_row1, textvariable=self._var_prob_bayes_pba, width=8).pack(side=tk.LEFT, padx=2)
+        ttk.Label(bay_row1, text=t("label_prob_pa"), style="Dark.TLabel", width=8).pack(side=tk.LEFT, padx=(8,0))
+        self._var_prob_bayes_pa = tk.StringVar(value="0.01")
+        ttk.Entry(bay_row1, textvariable=self._var_prob_bayes_pa, width=8).pack(side=tk.LEFT, padx=2)
+        bay_row2 = ttk.Frame(self._frame_prob_bayes, style="Dark.TFrame")
+        bay_row2.pack(fill=tk.X, pady=2)
+        ttk.Label(bay_row2, text=t("label_prob_pb_given_not_a"), style="Dark.TLabel", width=12).pack(side=tk.LEFT)
+        self._var_prob_bayes_pbna = tk.StringVar(value="0.1")
+        ttk.Entry(bay_row2, textvariable=self._var_prob_bayes_pbna, width=8).pack(side=tk.LEFT, padx=2)
+        bay_row3 = ttk.Frame(self._frame_prob_bayes, style="Dark.TFrame")
+        bay_row3.pack(fill=tk.X, pady=2)
+        ttk.Button(bay_row3, text=t("btn_prob_bayes"),
+                   command=self._on_prob_bayes).pack(side=tk.LEFT, padx=2)
+
+        # Binomial frame (n, k, p)
+        self._frame_prob_binom = ttk.Frame(frm_prob, style="Dark.TFrame")
+        bin_row1 = ttk.Frame(self._frame_prob_binom, style="Dark.TFrame")
+        bin_row1.pack(fill=tk.X, pady=2)
+        ttk.Label(bin_row1, text=t("label_prob_n"), style="Dark.TLabel", width=4).pack(side=tk.LEFT)
+        self._var_prob_binom_n = tk.StringVar(value="20")
+        ttk.Entry(bin_row1, textvariable=self._var_prob_binom_n, width=8).pack(side=tk.LEFT, padx=2)
+        ttk.Label(bin_row1, text=t("label_prob_k"), style="Dark.TLabel", width=4).pack(side=tk.LEFT, padx=(8,0))
+        self._var_prob_binom_k = tk.StringVar(value="5")
+        ttk.Entry(bin_row1, textvariable=self._var_prob_binom_k, width=8).pack(side=tk.LEFT, padx=2)
+        ttk.Label(bin_row1, text=t("label_prob_p"), style="Dark.TLabel", width=10).pack(side=tk.LEFT, padx=(8,0))
+        self._var_prob_binom_p = tk.StringVar(value="0.3")
+        ttk.Entry(bin_row1, textvariable=self._var_prob_binom_p, width=8).pack(side=tk.LEFT, padx=2)
+        bin_row2 = ttk.Frame(self._frame_prob_binom, style="Dark.TFrame")
+        bin_row2.pack(fill=tk.X, pady=2)
+        ttk.Button(bin_row2, text=t("btn_prob_binom_pmf"),
+                   command=self._on_prob_binom_pmf).pack(side=tk.LEFT, padx=2)
+        ttk.Button(bin_row2, text=t("btn_prob_binom_cdf"),
+                   command=self._on_prob_binom_cdf).pack(side=tk.LEFT, padx=2)
+
+        # Poisson frame (lambda, k)
+        self._frame_prob_poisson = ttk.Frame(frm_prob, style="Dark.TFrame")
+        poi_row1 = ttk.Frame(self._frame_prob_poisson, style="Dark.TFrame")
+        poi_row1.pack(fill=tk.X, pady=2)
+        ttk.Label(poi_row1, text=t("label_prob_lambda"), style="Dark.TLabel", width=10).pack(side=tk.LEFT)
+        self._var_prob_poisson_lam = tk.StringVar(value="5")
+        ttk.Entry(poi_row1, textvariable=self._var_prob_poisson_lam, width=8).pack(side=tk.LEFT, padx=2)
+        ttk.Label(poi_row1, text=t("label_prob_k"), style="Dark.TLabel", width=4).pack(side=tk.LEFT, padx=(8,0))
+        self._var_prob_poisson_k = tk.StringVar(value="3")
+        ttk.Entry(poi_row1, textvariable=self._var_prob_poisson_k, width=8).pack(side=tk.LEFT, padx=2)
+        poi_row2 = ttk.Frame(self._frame_prob_poisson, style="Dark.TFrame")
+        poi_row2.pack(fill=tk.X, pady=2)
+        ttk.Button(poi_row2, text=t("btn_prob_poisson"),
+                   command=self._on_prob_poisson).pack(side=tk.LEFT, padx=2)
+
+        # Geometric frame (p, k)
+        self._frame_prob_geometric = ttk.Frame(frm_prob, style="Dark.TFrame")
+        geo_row1 = ttk.Frame(self._frame_prob_geometric, style="Dark.TFrame")
+        geo_row1.pack(fill=tk.X, pady=2)
+        ttk.Label(geo_row1, text=t("label_prob_p"), style="Dark.TLabel", width=10).pack(side=tk.LEFT)
+        self._var_prob_geo_p = tk.StringVar(value="0.5")
+        ttk.Entry(geo_row1, textvariable=self._var_prob_geo_p, width=8).pack(side=tk.LEFT, padx=2)
+        ttk.Label(geo_row1, text=t("label_prob_k"), style="Dark.TLabel", width=4).pack(side=tk.LEFT, padx=(8,0))
+        self._var_prob_geo_k = tk.StringVar(value="3")
+        ttk.Entry(geo_row1, textvariable=self._var_prob_geo_k, width=8).pack(side=tk.LEFT, padx=2)
+        geo_row2 = ttk.Frame(self._frame_prob_geometric, style="Dark.TFrame")
+        geo_row2.pack(fill=tk.X, pady=2)
+        ttk.Button(geo_row2, text=t("btn_prob_geometric"),
+                   command=self._on_prob_geometric).pack(side=tk.LEFT, padx=2)
+
+        # Hypergeometric frame (N, K, n, k)
+        self._frame_prob_hypergeo = ttk.Frame(frm_prob, style="Dark.TFrame")
+        hyp_row1 = ttk.Frame(self._frame_prob_hypergeo, style="Dark.TFrame")
+        hyp_row1.pack(fill=tk.X, pady=2)
+        ttk.Label(hyp_row1, text=t("label_prob_pop_n"), style="Dark.TLabel", width=14).pack(side=tk.LEFT)
+        self._var_prob_hyp_N = tk.StringVar(value="50")
+        ttk.Entry(hyp_row1, textvariable=self._var_prob_hyp_N, width=6).pack(side=tk.LEFT, padx=2)
+        ttk.Label(hyp_row1, text=t("label_prob_pop_k"), style="Dark.TLabel", width=14).pack(side=tk.LEFT, padx=(4,0))
+        self._var_prob_hyp_K = tk.StringVar(value="10")
+        ttk.Entry(hyp_row1, textvariable=self._var_prob_hyp_K, width=6).pack(side=tk.LEFT, padx=2)
+        hyp_row2 = ttk.Frame(self._frame_prob_hypergeo, style="Dark.TFrame")
+        hyp_row2.pack(fill=tk.X, pady=2)
+        ttk.Label(hyp_row2, text=t("label_prob_sample_n"), style="Dark.TLabel", width=14).pack(side=tk.LEFT)
+        self._var_prob_hyp_n = tk.StringVar(value="5")
+        ttk.Entry(hyp_row2, textvariable=self._var_prob_hyp_n, width=6).pack(side=tk.LEFT, padx=2)
+        ttk.Label(hyp_row2, text=t("label_prob_sample_k"), style="Dark.TLabel", width=14).pack(side=tk.LEFT, padx=(4,0))
+        self._var_prob_hyp_k = tk.StringVar(value="2")
+        ttk.Entry(hyp_row2, textvariable=self._var_prob_hyp_k, width=6).pack(side=tk.LEFT, padx=2)
+        hyp_row3 = ttk.Frame(self._frame_prob_hypergeo, style="Dark.TFrame")
+        hyp_row3.pack(fill=tk.X, pady=2)
+        ttk.Button(hyp_row3, text=t("btn_prob_hypergeo"),
+                   command=self._on_prob_hypergeo).pack(side=tk.LEFT, padx=2)
+
+        # Result
+        prob_res_row = ttk.Frame(frm_prob, style="Dark.TFrame")
+        prob_res_row.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Label(prob_res_row, text=t("label_result"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_prob_result = tk.StringVar(value="")
+        ttk.Entry(prob_res_row, textvariable=self._var_prob_result, width=38,
+                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+        ttk.Button(prob_res_row, text=t("btn_prob_clear"),
+                   command=lambda: self._var_prob_result.set("")).pack(side=tk.LEFT, padx=2)
+
+        # Initially show only combinatorics frame
+        self._on_prob_mode_change()
+
         # --- Status ---
         self.status_var = tk.StringVar(value=t("status_ready"))
         status_bar = ttk.Label(scroll_frame, textvariable=self.status_var,
@@ -4768,6 +4959,219 @@ class SuperCalcApp:
         self._var_cal_date2.set(f"{dt2.year:04d}-{dt2.month:02d}-{dt2.day:02d}")
         self._var_cal_result.set(t("status_cal_add", dt1.isoformat(), add, dt2.isoformat()))
         self.status_var.set(t("status_cal_add", dt1.isoformat(), add, dt2.isoformat()))
+
+    # ------------------------------------------------------------------
+    #  Probability Calculator
+    # ------------------------------------------------------------------
+    def _on_prob_mode_change(self):
+        """Show/hide probability sub-sections based on selected mode."""
+        mode_name = self._var_prob_mode.get()
+        mode = self._prob_mode_map.get(mode_name, "combo")
+        all_frames = [
+            self._frame_prob_combo,
+            self._frame_prob_event,
+            self._frame_prob_cond,
+            self._frame_prob_bayes,
+            self._frame_prob_binom,
+            self._frame_prob_poisson,
+            self._frame_prob_geometric,
+            self._frame_prob_hypergeo,
+        ]
+        for f in all_frames:
+            for child in f.winfo_children():
+                child.pack_forget()
+
+        mode_to_frame = {
+            "combo": self._frame_prob_combo,
+            "event": self._frame_prob_event,
+            "conditional": self._frame_prob_cond,
+            "bayes": self._frame_prob_bayes,
+            "binomial": self._frame_prob_binom,
+            "poisson": self._frame_prob_poisson,
+            "geometric": self._frame_prob_geometric,
+            "hypergeo": self._frame_prob_hypergeo,
+        }
+        target = mode_to_frame.get(mode, self._frame_prob_combo)
+        for child in target.winfo_children():
+            child.pack(fill=tk.X, pady=2)
+
+    def _prob_parse_int(self, val, name="n"):
+        try:
+            v = int(val.strip())
+            if v < 0:
+                raise ValueError
+            return v
+        except ValueError:
+            messagebox.showerror(t("err_prob"), t("msg_prob_invalid_n"))
+            return None
+
+    def _prob_parse_float(self, val, name="p"):
+        try:
+            return float(val.strip())
+        except ValueError:
+            messagebox.showerror(t("err_prob"), t("msg_prob_invalid_p"))
+            return None
+
+    def _prob_parse_prob(self, val, name="p"):
+        try:
+            v = float(val.strip())
+            if not (0 <= v <= 1):
+                raise ValueError
+            return v
+        except ValueError:
+            messagebox.showerror(t("err_prob"), t("msg_prob_invalid_p"))
+            return None
+
+    def _on_prob_combo(self):
+        from probability_calc import combinations
+        n = self._prob_parse_int(self._var_prob_n.get(), "n")
+        r = self._prob_parse_int(self._var_prob_r.get(), "r")
+        if n is None or r is None:
+            return
+        if r > n:
+            messagebox.showerror(t("err_prob"), t("msg_prob_invalid_r"))
+            return
+        result = combinations(n, r)
+        self._var_prob_result.set(t("status_prob_combo", n, r, result))
+        self.status_var.set(t("status_prob_combo", n, r, result))
+
+    def _on_prob_perm(self):
+        from probability_calc import permutations
+        n = self._prob_parse_int(self._var_prob_n.get(), "n")
+        r = self._prob_parse_int(self._var_prob_r.get(), "r")
+        if n is None or r is None:
+            return
+        if r > n:
+            messagebox.showerror(t("err_prob"), t("msg_prob_invalid_r"))
+            return
+        result = permutations(n, r)
+        self._var_prob_result.set(t("status_prob_perm", n, r, result))
+        self.status_var.set(t("status_prob_perm", n, r, result))
+
+    def _on_prob_union(self):
+        from probability_calc import event_union
+        pa = self._prob_parse_prob(self._var_prob_pa.get(), "P(A)")
+        pb = self._prob_parse_prob(self._var_prob_pb.get(), "P(B)")
+        pab = self._prob_parse_prob(self._var_prob_pa_and_b.get(), "P(A∩B)")
+        if pa is None or pb is None or pab is None:
+            return
+        result = event_union(pa, pb, pab)
+        if result is None:
+            messagebox.showerror(t("err_prob"), t("msg_prob_invalid_pa_pb"))
+            return
+        self._var_prob_result.set(t("status_prob_union", result))
+        self.status_var.set(t("status_prob_union", result))
+
+    def _on_prob_intersect(self):
+        from probability_calc import event_intersection
+        pa = self._prob_parse_prob(self._var_prob_pa.get(), "P(A)")
+        pb = self._prob_parse_prob(self._var_prob_pb.get(), "P(B)")
+        if pa is None or pb is None:
+            return
+        result = event_intersection(pa, pb, independent=True)
+        self._var_prob_result.set(t("status_prob_intersect", result))
+        self.status_var.set(t("status_prob_intersect", result))
+
+    def _on_prob_complement_a(self):
+        from probability_calc import event_complement
+        pa = self._prob_parse_prob(self._var_prob_pa.get(), "P(A)")
+        if pa is None:
+            return
+        result = event_complement(pa)
+        self._var_prob_result.set(t("status_prob_complement", result))
+        self.status_var.set(t("status_prob_complement", result))
+
+    def _on_prob_conditional(self):
+        from probability_calc import conditional_probability
+        pab = self._prob_parse_prob(self._var_prob_cond_a_and_b.get(), "P(A∩B)")
+        pb = self._prob_parse_prob(self._var_prob_cond_pb.get(), "P(B)")
+        if pab is None or pb is None:
+            return
+        if pb == 0:
+            messagebox.showerror(t("err_prob"), t("msg_prob_pb_zero"))
+            return
+        result = conditional_probability(pab, pb)
+        self._var_prob_result.set(t("status_prob_conditional", result))
+        self.status_var.set(t("status_prob_conditional", result))
+
+    def _on_prob_bayes(self):
+        from probability_calc import bayes_theorem_full
+        pba = self._prob_parse_prob(self._var_prob_bayes_pba.get(), "P(B|A)")
+        pa = self._prob_parse_prob(self._var_prob_bayes_pa.get(), "P(A)")
+        pbna = self._prob_parse_prob(self._var_prob_bayes_pbna.get(), "P(B|A')")
+        if pba is None or pa is None or pbna is None:
+            return
+        result = bayes_theorem_full(pba, pa, pbna)
+        if result is None:
+            messagebox.showerror(t("err_prob"), t("msg_prob_invalid_bayes"))
+            return
+        self._var_prob_result.set(
+            t("status_prob_bayes", result['p_a_given_b'], pba, pa, result['p_b']))
+        self.status_var.set(
+            t("status_prob_bayes", result['p_a_given_b'], pba, pa, result['p_b']))
+
+    def _on_prob_binom_pmf(self):
+        from probability_calc import binomial_probability
+        n = self._prob_parse_int(self._var_prob_binom_n.get(), "n")
+        k = self._prob_parse_int(self._var_prob_binom_k.get(), "k")
+        p = self._prob_parse_prob(self._var_prob_binom_p.get(), "p")
+        if n is None or k is None or p is None:
+            return
+        if k > n:
+            messagebox.showerror(t("err_prob"), t("msg_prob_invalid_r"))
+            return
+        result = binomial_probability(n, k, p)
+        self._var_prob_result.set(t("status_prob_binom_pmf", result, n, k, p))
+        self.status_var.set(t("status_prob_binom_pmf", result, n, k, p))
+
+    def _on_prob_binom_cdf(self):
+        from probability_calc import binomial_cdf
+        n = self._prob_parse_int(self._var_prob_binom_n.get(), "n")
+        k = self._prob_parse_int(self._var_prob_binom_k.get(), "k")
+        p = self._prob_parse_prob(self._var_prob_binom_p.get(), "p")
+        if n is None or k is None or p is None:
+            return
+        result = binomial_cdf(n, k, p)
+        self._var_prob_result.set(t("status_prob_binom_cdf", result, n, k, p))
+        self.status_var.set(t("status_prob_binom_cdf", result, n, k, p))
+
+    def _on_prob_poisson(self):
+        from probability_calc import poisson_probability
+        lam = self._prob_parse_float(self._var_prob_poisson_lam.get(), "lambda")
+        k = self._prob_parse_int(self._var_prob_poisson_k.get(), "k")
+        if lam is None or k is None:
+            return
+        if lam < 0:
+            messagebox.showerror(t("err_prob"), t("msg_prob_invalid_p"))
+            return
+        result = poisson_probability(lam, k)
+        self._var_prob_result.set(t("status_prob_poisson", result, k, lam))
+        self.status_var.set(t("status_prob_poisson", result, k, lam))
+
+    def _on_prob_geometric(self):
+        from probability_calc import geometric_probability
+        p = self._prob_parse_prob(self._var_prob_geo_p.get(), "p")
+        k = self._prob_parse_int(self._var_prob_geo_k.get(), "k")
+        if p is None or k is None:
+            return
+        if k < 1:
+            messagebox.showerror(t("err_prob"), t("msg_prob_invalid_r"))
+            return
+        result = geometric_probability(p, k)
+        self._var_prob_result.set(t("status_prob_geometric", result, k, p))
+        self.status_var.set(t("status_prob_geometric", result, k, p))
+
+    def _on_prob_hypergeo(self):
+        from probability_calc import hypergeometric_probability
+        N = self._prob_parse_int(self._var_prob_hyp_N.get(), "N")
+        K = self._prob_parse_int(self._var_prob_hyp_K.get(), "K")
+        n = self._prob_parse_int(self._var_prob_hyp_n.get(), "n")
+        k = self._prob_parse_int(self._var_prob_hyp_k.get(), "k")
+        if N is None or K is None or n is None or k is None:
+            return
+        result = hypergeometric_probability(N, K, n, k)
+        self._var_prob_result.set(t("status_prob_hypergeo", result, N, K, k, n))
+        self.status_var.set(t("status_prob_hypergeo", result, N, K, k, n))
 
 
 # ---------------------------------------------------------------------------
