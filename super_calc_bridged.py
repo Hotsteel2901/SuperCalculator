@@ -4578,10 +4578,10 @@ class SuperCalcApp:
         if n <= 0:
             return 0
         if n == 1:
-            return 0
+            return 1
         if n == 2:
             return 1
-        a, b = 0, 1
+        a, b = 1, 1
         for _ in range(2, n):
             a, b = b, a + b
         return b
@@ -4904,7 +4904,15 @@ class SuperCalcApp:
             messagebox.showerror(t("err_cal"), t("msg_cal_invalid_date"))
             return
         y, m, day = d1
-        if m < 1 or m > 12 or day < 1 or day > 31:
+        if m < 1 or m > 12:
+            messagebox.showerror(t("err_cal"), t("msg_cal_date_range"))
+            return
+        try:
+            max_day = self._cal_days_in_month(y, m)
+        except ValueError:
+            messagebox.showerror(t("err_cal"), t("msg_cal_date_range"))
+            return
+        if day < 1 or day > max_day:
             messagebox.showerror(t("err_cal"), t("msg_cal_date_range"))
             return
         try:

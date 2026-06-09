@@ -540,7 +540,7 @@ EXPORT double solve_equation(const char* expr, double guess,
             x = mid;
         } else {
             double nx = x - f/df;
-            if (isnan(nx)) { set_error("Newton step produced NaN"); return NAN; }
+            if (isnan(nx) || isinf(nx)) { set_error("Newton step produced NaN/Inf"); return NAN; }
             if (nx < xmin || nx > xmax) {
                 double fa; if (parse_and_eval(expr, xmin, 0.0, &fa) != 0) return NAN;
                 if (isnan(fa)) { set_error("Function returned NaN at interval endpoint"); return NAN; }
@@ -619,6 +619,7 @@ EXPORT int ode_solve_rk4(const char* expr, double x0, double y0, double x_end,
                           int n_steps, double* out_x, double* out_y, int max_out) {
     if (!expr || !out_x || !out_y) { set_error("NULL pointer argument"); return -1; }
     if (n_steps < 1) { set_error("n_steps must be >= 1"); return -1; }
+    if (n_steps > 10000000) { set_error("n_steps too large (max 10000000)"); return -1; }
     if (max_out < n_steps + 1) { set_error("Output buffer too small"); return -1; }
     clear_error();
 
@@ -742,7 +743,7 @@ static double _central_diff_nth(const char* expr, double x, int n, double h) {
      * Requires n+1 function evaluations instead of 2^n. */
     int np1 = n + 1;
     double* fvals = (double*)malloc(np1 * sizeof(double));
-    if (!fvals) return NAN;
+    if (!fvals) { set_error("Memory allocation failed"); return NAN; }
 
     for (int k = 0; k <= n; k++) {
         fvals[k] = _eval_or_nan(expr, x + (2.0 * k - n) * h);
@@ -766,6 +767,7 @@ static double _central_diff_nth(const char* expr, double x, int n, double h) {
 
 EXPORT double nth_derivative(const char* expr, double x, int n, double h) {
     if (n < 0) { set_error("Derivative order must be non-negative"); return NAN; }
+    if (n > 1000) { set_error("Derivative order too large (max 1000)"); return NAN; }
     clear_error();
     if (n == 0) {
         double r;
@@ -792,6 +794,7 @@ EXPORT double nth_derivative(const char* expr, double x, int n, double h) {
 
 EXPORT int taylor_coefficients(const char* expr, double a, int order, double* out_coeffs, int max_out) {
     if (order < 0) { set_error("Order must be non-negative"); return -1; }
+    if (order > 1000) { set_error("Order too large (max 1000)"); return -1; }
     if (!out_coeffs || max_out < order + 1) { set_error("Output buffer too small"); return -1; }
     clear_error();
 
@@ -953,7 +956,7 @@ static Complex complex_pow(Complex base, Complex exp) {
         else if (exp.re < 0.0 && exp.im == 0.0)
             return complex_make(INFINITY, 0.0);
         else
-            return complex_make(INFINITY, INFINITY);
+            return complex_make(0.0, 0.0);
     }
     Complex log_base = complex_ln(base);
     Complex product = complex_mul(exp, log_base);
@@ -1252,6 +1255,11 @@ EXPORT int solve_system_2d(const char* f_expr, const char* g_expr,
         if (parse_and_eval(g_expr, x, y + h, &G_yph) != 0) { set_error("Jacobian evaluation failed"); return 0; }
         if (parse_and_eval(g_expr, x, y - h, &G_ymh) != 0) { set_error("Jacobian evaluation failed"); return 0; }
 
+        if (isnan(F_xph) || isnan(F_xmh) || isnan(F_yph) || isnan(F_ymh) ||
+            isnan(G_xph) || isnan(G_xmh) || isnan(G_yph) || isnan(G_ymh)) {
+            set_error("Jacobian evaluation returned NaN"); return 0;
+        }
+
         double J11 = (F_xph - F_xmh) / (2.0 * h);  /* dF/dx */
         double J12 = (F_yph - F_ymh) / (2.0 * h);  /* dF/dy */
         double J21 = (G_xph - G_xmh) / (2.0 * h);  /* dG/dx */
@@ -1318,7 +1326,7 @@ EXPORT long long base_to_long(const char* str, int base) {
         p++;
     }
 
-    return negative ? -result : result;
+    return negative ? (long long)(-(unsigned long long)result) : result;
 }
 
 EXPORT int long_to_base(long long n, int base, char* output, int max_out) {
@@ -1326,7 +1334,7 @@ EXPORT int long_to_base(long long n, int base, char* output, int max_out) {
     if (base < 2 || base > 36) { set_error("Base must be between 2 and 36"); return 0; }
     clear_error();
 
-    char temp[66];
+    char temp[67];
     int i = 0;
     int negative = 0;
     unsigned long long un;
