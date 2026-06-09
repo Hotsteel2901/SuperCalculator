@@ -2506,6 +2506,180 @@ STRINGS = {
         "en": "P(B) cannot be zero for conditional probability.",
         "zh": "P(B) 不能为零（条件概率分母）。",
     },
+
+    # ---- Finance Calculator ----
+    "sec_finance": {
+        "en": "Finance Calculator",
+        "zh": "金融计算器",
+    },
+    "label_fin_loan_principal": {
+        "en": "Loan Amount",
+        "zh": "贷款金额",
+    },
+    "label_fin_loan_rate": {
+        "en": "Annual Rate (%)",
+        "zh": "年利率 (%)",
+    },
+    "label_fin_loan_months": {
+        "en": "Months",
+        "zh": "期数（月）",
+    },
+    "btn_fin_loan_calc": {
+        "en": "Calculate Loan",
+        "zh": "计算贷款",
+    },
+    "btn_fin_loan_schedule": {
+        "en": "Amortization",
+        "zh": "还款计划",
+    },
+    "label_fin_fv_pv": {
+        "en": "Amount",
+        "zh": "金额",
+    },
+    "label_fin_compound_rate": {
+        "en": "Annual Rate (%)",
+        "zh": "年利率 (%)",
+    },
+    "label_fin_compound_years": {
+        "en": "Years",
+        "zh": "年数",
+    },
+    "label_fin_compound_n": {
+        "en": "Compounds/Year",
+        "zh": "每年复利次数",
+    },
+    "btn_fin_fv": {
+        "en": "Future Value",
+        "zh": "计算终值",
+    },
+    "btn_fin_pv": {
+        "en": "Present Value",
+        "zh": "计算现值",
+    },
+    "label_fin_npv_rate": {
+        "en": "Discount Rate (%)",
+        "zh": "折现率 (%)",
+    },
+    "label_fin_npv_flows": {
+        "en": "Cash Flows (comma)",
+        "zh": "现金流（逗号分隔）",
+    },
+    "btn_fin_npv": {
+        "en": "NPV",
+        "zh": "净现值",
+    },
+    "btn_fin_irr": {
+        "en": "IRR",
+        "zh": "内部收益率",
+    },
+    "label_fin_depr_cost": {
+        "en": "Cost",
+        "zh": "资产原值",
+    },
+    "label_fin_depr_salvage": {
+        "en": "Salvage Value",
+        "zh": "残值",
+    },
+    "label_fin_depr_life": {
+        "en": "Useful Life (years)",
+        "zh": "使用寿命（年）",
+    },
+    "btn_fin_depr_sl": {
+        "en": "Straight-Line",
+        "zh": "直线折旧",
+    },
+    "btn_fin_depr_ddb": {
+        "en": "Double Declining",
+        "zh": "双倍余额递减",
+    },
+    "label_fin_bond_face": {
+        "en": "Face Value",
+        "zh": "面值",
+    },
+    "label_fin_bond_coupon": {
+        "en": "Coupon Rate (%)",
+        "zh": "票面利率 (%)",
+    },
+    "label_fin_bond_yield": {
+        "en": "Yield (%)",
+        "zh": "收益率 (%)",
+    },
+    "label_fin_bond_years": {
+        "en": "Years to Maturity",
+        "zh": "到期年限",
+    },
+    "btn_fin_bond_price": {
+        "en": "Bond Price",
+        "zh": "债券价格",
+    },
+    "label_fin_retire_monthly": {
+        "en": "Monthly Contribution",
+        "zh": "每月定投",
+    },
+    "label_fin_retire_rate": {
+        "en": "Annual Return (%)",
+        "zh": "年回报率 (%)",
+    },
+    "label_fin_retire_years": {
+        "en": "Years",
+        "zh": "年数",
+    },
+    "label_fin_retire_current": {
+        "en": "Current Savings",
+        "zh": "当前存款",
+    },
+    "btn_fin_retire": {
+        "en": "Calculate Savings",
+        "zh": "计算储蓄",
+    },
+    "status_fin_loan": {
+        "en": "Monthly Payment: {0:.2f}\nTotal Payment: {1:.2f}\nTotal Interest: {2:.2f}",
+        "zh": "月供: {0:.2f}\n还款总额: {1:.2f}\n总利息: {2:.2f}",
+    },
+    "status_fin_fv": {
+        "en": "Future Value: {0:.6g}",
+        "zh": "终值: {0:.6g}",
+    },
+    "status_fin_pv": {
+        "en": "Present Value: {0:.6g}",
+        "zh": "现值: {0:.6g}",
+    },
+    "status_fin_npv": {
+        "en": "NPV: {0:.6g}",
+        "zh": "净现值: {0:.6g}",
+    },
+    "status_fin_irr": {
+        "en": "IRR: {0:.6g}%",
+        "zh": "内部收益率: {0:.6g}%",
+    },
+    "status_fin_depr_sl": {
+        "en": "Annual Depreciation: {0:.2f}\nMonthly Depreciation: {1:.2f}",
+        "zh": "年折旧额: {0:.2f}\n月折旧额: {1:.2f}",
+    },
+    "status_fin_bond": {
+        "en": "Bond Price: {0:.6g}",
+        "zh": "债券价格: {0:.6g}",
+    },
+    "status_fin_retire": {
+        "en": "Future Value: {0:.2f}\nTotal Contributions: {1:.2f}\nTotal Interest: {2:.2f}",
+        "zh": "终值: {0:.2f}\n总投入: {1:.2f}\n总收益: {2:.2f}",
+    },
+    "err_finance": {
+        "en": "Finance Error",
+        "zh": "金融计算错误",
+    },
+    "msg_fin_invalid_input": {
+        "en": "Please enter valid numeric values.",
+        "zh": "请输入有效的数值。",
+    },
+    "msg_fin_invalid_flows": {
+        "en": "Please enter at least 2 comma-separated cash flows.",
+        "zh": "请输入至少2个逗号分隔的现金流。",
+    },
+    "msg_fin_depr_invalid": {
+        "en": "Salvage value must be less than cost, and useful life > 0.",
+        "zh": "残值必须小于原值，使用寿命须大于0。",
+    },
 }
 
 

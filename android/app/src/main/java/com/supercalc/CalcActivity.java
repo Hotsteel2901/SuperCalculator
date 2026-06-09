@@ -326,6 +326,9 @@ public class CalcActivity extends AppCompatActivity {
 
         // Probability Calculator
         setupProbability();
+
+        // Finance Calculator
+        setupFinance();
     }
 
     private String getExpr()  { return exprInput.getText().toString().trim(); }
@@ -2716,6 +2719,195 @@ public class CalcActivity extends AppCompatActivity {
 
     private double binomialPMF(long n, long k, double p) {
         return comb(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k);
+    }
+
+    // ------------------------------------------------------------------
+    //  Finance Calculator
+    // ------------------------------------------------------------------
+    private EditText finPrincipalInput, finRateInput, finMonthsInput;
+    private EditText finYearsInput, finFlowsInput;
+    private TextView finResultView;
+
+    private void setupFinance() {
+        finPrincipalInput = findViewById(R.id.fin_principal_input);
+        finRateInput = findViewById(R.id.fin_rate_input);
+        finMonthsInput = findViewById(R.id.fin_months_input);
+        finYearsInput = findViewById(R.id.fin_years_input);
+        finFlowsInput = findViewById(R.id.fin_flows_input);
+        finResultView = findViewById(R.id.fin_result_view);
+
+        MaterialButton btnLoan = findViewById(R.id.btn_fin_loan);
+        btnLoan.setOnClickListener(v -> onFinLoan());
+
+        MaterialButton btnFv = findViewById(R.id.btn_fin_fv);
+        btnFv.setOnClickListener(v -> onFinFV());
+
+        MaterialButton btnPv = findViewById(R.id.btn_fin_pv);
+        btnPv.setOnClickListener(v -> onFinPV());
+
+        MaterialButton btnNpv = findViewById(R.id.btn_fin_npv);
+        btnNpv.setOnClickListener(v -> onFinNPV());
+
+        MaterialButton btnIrr = findViewById(R.id.btn_fin_irr);
+        btnIrr.setOnClickListener(v -> onFinIRR());
+
+        MaterialButton btnDepr = findViewById(R.id.btn_fin_depr);
+        btnDepr.setOnClickListener(v -> onFinDepr());
+
+        MaterialButton btnBond = findViewById(R.id.btn_fin_bond);
+        btnBond.setOnClickListener(v -> onFinBond());
+
+        MaterialButton btnRetire = findViewById(R.id.btn_fin_retire);
+        btnRetire.setOnClickListener(v -> onFinRetire());
+    }
+
+    private void onFinLoan() {
+        try {
+            double principal = Double.parseDouble(finPrincipalInput.getText().toString().trim());
+            double rate = Double.parseDouble(finRateInput.getText().toString().trim());
+            int months = Integer.parseInt(finMonthsInput.getText().toString().trim());
+            if (principal <= 0 || months <= 0) { toast(getString(R.string.fin_invalid_input)); return; }
+            double r = rate / 100.0 / 12.0;
+            double pmt;
+            if (rate == 0) {
+                pmt = principal / months;
+            } else {
+                double factor = Math.pow(1 + r, months);
+                pmt = principal * r * factor / (factor - 1);
+            }
+            double total = pmt * months;
+            double interest = total - principal;
+            finResultView.setText(String.format(getString(R.string.fin_result_loan), pmt, total, interest));
+        } catch (Exception ex) { toast(getString(R.string.fin_invalid_input)); }
+    }
+
+    private void onFinFV() {
+        try {
+            double pv = Double.parseDouble(finPrincipalInput.getText().toString().trim());
+            double rate = Double.parseDouble(finRateInput.getText().toString().trim());
+            int years = Integer.parseInt(finYearsInput.getText().toString().trim());
+            int n = 12;
+            try { n = Integer.parseInt(finMonthsInput.getText().toString().trim()); } catch (Exception ignored) {}
+            if (pv <= 0 || years < 0 || n <= 0) { toast(getString(R.string.fin_invalid_input)); return; }
+            double r = rate / 100.0;
+            double fv = pv * Math.pow(1 + r / n, n * years);
+            finResultView.setText(String.format(getString(R.string.fin_result_fv), fv));
+        } catch (Exception ex) { toast(getString(R.string.fin_invalid_input)); }
+    }
+
+    private void onFinPV() {
+        try {
+            double fv = Double.parseDouble(finPrincipalInput.getText().toString().trim());
+            double rate = Double.parseDouble(finRateInput.getText().toString().trim());
+            int years = Integer.parseInt(finYearsInput.getText().toString().trim());
+            int n = 12;
+            try { n = Integer.parseInt(finMonthsInput.getText().toString().trim()); } catch (Exception ignored) {}
+            if (fv <= 0 || years < 0 || n <= 0) { toast(getString(R.string.fin_invalid_input)); return; }
+            double r = rate / 100.0;
+            double pv = fv / Math.pow(1 + r / n, n * years);
+            finResultView.setText(String.format(getString(R.string.fin_result_pv), pv));
+        } catch (Exception ex) { toast(getString(R.string.fin_invalid_input)); }
+    }
+
+    private void onFinNPV() {
+        try {
+            double rate = Double.parseDouble(finRateInput.getText().toString().trim());
+            String flowsStr = finFlowsInput.getText().toString().trim();
+            String[] parts = flowsStr.split(",");
+            if (parts.length < 2) { toast(getString(R.string.fin_invalid_flows)); return; }
+            double r = rate / 100.0;
+            double npv = 0;
+            for (int t = 0; t < parts.length; t++) {
+                double cf = Double.parseDouble(parts[t].trim());
+                npv += cf / Math.pow(1 + r, t);
+            }
+            finResultView.setText(String.format(getString(R.string.fin_result_npv), npv));
+        } catch (Exception ex) { toast(getString(R.string.fin_invalid_input)); }
+    }
+
+    private void onFinIRR() {
+        try {
+            String flowsStr = finFlowsInput.getText().toString().trim();
+            String[] parts = flowsStr.split(",");
+            if (parts.length < 2) { toast(getString(R.string.fin_invalid_flows)); return; }
+            double[] cf = new double[parts.length];
+            for (int i = 0; i < parts.length; i++) {
+                cf[i] = Double.parseDouble(parts[i].trim());
+            }
+            // Newton-Raphson
+            double r = 0.1;
+            for (int iter = 0; iter < 200; iter++) {
+                double pv = 0, dpv = 0;
+                for (int t = 0; t < cf.length; t++) {
+                    pv += cf[t] / Math.pow(1 + r, t);
+                    if (t > 0) dpv += -t * cf[t] / Math.pow(1 + r, t + 1);
+                }
+                if (Math.abs(dpv) < 1e-18) break;
+                double rNew = r - pv / dpv;
+                if (Math.abs(rNew - r) < 1e-10) { r = rNew; break; }
+                r = rNew;
+            }
+            double irr = r * 100;
+            finResultView.setText(String.format(getString(R.string.fin_result_irr), irr));
+        } catch (Exception ex) { toast(getString(R.string.fin_invalid_input)); }
+    }
+
+    private void onFinDepr() {
+        try {
+            double cost = Double.parseDouble(finPrincipalInput.getText().toString().trim());
+            double salvage = Double.parseDouble(finRateInput.getText().toString().trim());
+            int life = Integer.parseInt(finYearsInput.getText().toString().trim());
+            if (cost <= 0 || salvage < 0 || life <= 0 || salvage >= cost) {
+                toast(getString(R.string.fin_depr_invalid)); return;
+            }
+            double annual = (cost - salvage) / life;
+            double monthly = annual / 12;
+            finResultView.setText(String.format(getString(R.string.fin_result_depr), annual, monthly));
+        } catch (Exception ex) { toast(getString(R.string.fin_invalid_input)); }
+    }
+
+    private void onFinBond() {
+        try {
+            double face = Double.parseDouble(finPrincipalInput.getText().toString().trim());
+            double coupon = Double.parseDouble(finRateInput.getText().toString().trim());
+            double yld = Double.parseDouble(finYearsInput.getText().toString().trim());
+            int years = Integer.parseInt(finMonthsInput.getText().toString().trim());
+            if (face <= 0 || years <= 0) { toast(getString(R.string.fin_invalid_input)); return; }
+            int m = 2;
+            double c = face * coupon / 100.0 / m;
+            double y = yld / 100.0 / m;
+            int n = years * m;
+            double pvCoupons = 0;
+            for (int t = 1; t <= n; t++) {
+                pvCoupons += c / Math.pow(1 + y, t);
+            }
+            double pvFace = face / Math.pow(1 + y, n);
+            double price = pvCoupons + pvFace;
+            finResultView.setText(String.format(getString(R.string.fin_result_bond), price));
+        } catch (Exception ex) { toast(getString(R.string.fin_invalid_input)); }
+    }
+
+    private void onFinRetire() {
+        try {
+            double monthly = Double.parseDouble(finPrincipalInput.getText().toString().trim());
+            double rate = Double.parseDouble(finRateInput.getText().toString().trim());
+            int years = Integer.parseInt(finYearsInput.getText().toString().trim());
+            double current = 0;
+            try { current = Double.parseDouble(finMonthsInput.getText().toString().trim()); } catch (Exception ignored) {}
+            if (monthly < 0 || years <= 0) { toast(getString(R.string.fin_invalid_input)); return; }
+            double r = rate / 100.0 / 12;
+            int n = years * 12;
+            double fv;
+            if (r == 0) {
+                fv = current + monthly * n;
+            } else {
+                double factor = Math.pow(1 + r, n);
+                fv = current * factor + monthly * (factor - 1) / r;
+            }
+            double contributions = current + monthly * n;
+            double interest = fv - contributions;
+            finResultView.setText(String.format(getString(R.string.fin_result_retire), fv, contributions, interest));
+        } catch (Exception ex) { toast(getString(R.string.fin_invalid_input)); }
     }
 
     // ------------------------------------------------------------------
