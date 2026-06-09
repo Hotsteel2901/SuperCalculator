@@ -21,6 +21,8 @@ Features:
   - Polar coordinate plotting r(theta) with preset library
 """
 
+from __future__ import annotations
+
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from typing import Optional, List, Any
