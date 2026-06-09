@@ -305,7 +305,7 @@ public class PlotActivity extends AppCompatActivity {
         
         List<ILineDataSet> dataSets = new ArrayList<>();
         LineDataSet dataSet = new LineDataSet(entries, label);
-        dataSet.setColor(curveColors.get(0));
+        dataSet.setColor(curveColors.get(curveColors.size() - 1));
         dataSet.setLineWidth(2f);
         dataSet.setDrawCircles(false);
         dataSet.setDrawValues(false);
@@ -386,7 +386,7 @@ public class PlotActivity extends AppCompatActivity {
         
         List<ILineDataSet> dataSets = new ArrayList<>();
         LineDataSet dataSet = new LineDataSet(entries, label);
-        dataSet.setColor(curveColors.get(0));
+        dataSet.setColor(curveColors.get(curveColors.size() - 1));
         dataSet.setLineWidth(2f);
         dataSet.setDrawCircles(false);
         dataSet.setDrawValues(false);
@@ -491,7 +491,6 @@ public class PlotActivity extends AppCompatActivity {
             }
         }
         
-        curveTypes.clear();
         allEntries.add(entries);
         String label = "Imp: " + impExpr + " = 0";
         allExpressions.add(label);
@@ -500,7 +499,7 @@ public class PlotActivity extends AppCompatActivity {
         
         List<ILineDataSet> dataSets = new ArrayList<>();
         LineDataSet dataSet = new LineDataSet(entries, label);
-        dataSet.setColor(curveColors.get(0));
+        dataSet.setColor(curveColors.get(curveColors.size() - 1));
         dataSet.setLineWidth(2f);
         dataSet.setDrawCircles(false);
         dataSet.setDrawValues(false);

@@ -412,6 +412,7 @@ static int parse_and_eval(const char* expr, double x, double y, double* result) 
 EXPORT double evaluate(const char* expr, double x) {
     double r;
     clear_error();
+    if (!expr) { set_error("NULL expression"); return NAN; }
     if (parse_and_eval(expr, x, 0.0, &r) != 0) return NAN;
     return r;
 }
@@ -419,6 +420,7 @@ EXPORT double evaluate(const char* expr, double x) {
 EXPORT double evaluate_xy(const char* expr, double x, double y) {
     double r;
     clear_error();
+    if (!expr) { set_error("NULL expression"); return NAN; }
     if (parse_and_eval(expr, x, y, &r) != 0) return NAN;
     return r;
 }
@@ -474,6 +476,7 @@ EXPORT void evaluate_xy_array(const char* expr, const double* xs, const double* 
 EXPORT double derivative(const char* expr, double x, double h) {
     double fp, fm;
     clear_error();
+    if (!expr) { set_error("NULL expression"); return NAN; }
     if (h == 0.0) { set_error("Step size h cannot be zero"); return NAN; }
     if (parse_and_eval(expr, x+h, 0.0, &fp) != 0) return NAN;
     if (parse_and_eval(expr, x-h, 0.0, &fm) != 0) return NAN;
@@ -483,6 +486,7 @@ EXPORT double derivative(const char* expr, double x, double h) {
 EXPORT double derivative2(const char* expr, double x, double h) {
     double fc, fp, fm;
     clear_error();
+    if (!expr) { set_error("NULL expression"); return NAN; }
     if (h == 0.0) { set_error("Step size h cannot be zero"); return NAN; }
     if (parse_and_eval(expr, x,   0.0, &fc) != 0) return NAN;
     if (parse_and_eval(expr, x+h, 0.0, &fp) != 0) return NAN;
@@ -491,10 +495,11 @@ EXPORT double derivative2(const char* expr, double x, double h) {
 }
 
 EXPORT double integrate(const char* expr, double a, double b, int n) {
+    if (!expr) { set_error("NULL expression"); return NAN; }
     if (n < 2 || n % 2 != 0) { set_error("n must be even and >= 2"); return NAN; }
     if (n > 1000000) { set_error("n too large (max 1000000)"); return NAN; }
     if (a > b) { set_error("Invalid interval: a must be <= b"); return NAN; }
-    if (a == b) return 0.0;
+    if (a == b) { clear_error(); return 0.0; }
     clear_error();
     double h = (b - a) / n;
     double fa, fb;
@@ -512,6 +517,7 @@ EXPORT double integrate(const char* expr, double a, double b, int n) {
 EXPORT double solve_equation(const char* expr, double guess,
                               double xmin, double xmax,
                               double tol, int max_iter) {
+    if (!expr) { set_error("NULL expression"); return NAN; }
     if (xmin >= xmax) { set_error("Invalid interval: xmin must be < xmax"); return NAN; }
     clear_error();
     double x = guess;
@@ -558,6 +564,7 @@ EXPORT double solve_equation(const char* expr, double guess,
 
 EXPORT double solve_bisection(const char* expr, double a, double b,
                                double tol, int max_iter) {
+    if (!expr) { set_error("NULL expression"); return NAN; }
     if (a >= b) { set_error("Invalid interval: a must be < b"); return NAN; }
     clear_error();
     double fa, fb, fc, c;
@@ -567,8 +574,6 @@ EXPORT double solve_bisection(const char* expr, double a, double b,
     if (isnan(fb)) { set_error("Function returned NaN at interval endpoint"); return NAN; }
     if (fabs(fa) < tol) return a;
     if (fabs(fb) < tol) return b;
-    if (fa == 0.0) return a;
-    if (fb == 0.0) return b;
     if (signbit(fa) == signbit(fb)) { set_error("f(a) and f(b) must have opposite signs"); return NAN; }
     for (int i = 0; i < max_iter; i++) {
         c = (a+b)/2.0;
@@ -583,8 +588,9 @@ EXPORT double solve_bisection(const char* expr, double a, double b,
 }
 
 EXPORT double integrate_adaptive(const char* expr, double a, double b, double tol) {
+    if (!expr) { set_error("NULL expression"); return NAN; }
     if (a > b) { set_error("Invalid interval: a must be <= b"); return NAN; }
-    if (a == b) return 0.0;
+    if (a == b) { clear_error(); return 0.0; }
     clear_error();
     int n = 64;
     double prev, cur;
@@ -668,7 +674,7 @@ EXPORT int ode_solve_rk4(const char* expr, double x0, double y0, double x_end,
 
 static double richardson_limit(const char* expr, double a, double dir, int max_level) {
     double h0 = 0.1;
-    double table[16][16];
+    double table[16][16] = {{0}};
     int n = max_level < 16 ? max_level : 16;
 
     for (int i = 0; i < n; i++) {
@@ -691,18 +697,21 @@ static double richardson_limit(const char* expr, double a, double dir, int max_l
 }
 
 EXPORT double limit_left(const char* expr, double a, int max_level) {
+    if (!expr) { set_error("NULL expression"); return NAN; }
     if (max_level <= 0) max_level = 10;
     clear_error();
     return richardson_limit(expr, a, -1.0, max_level);
 }
 
 EXPORT double limit_right(const char* expr, double a, int max_level) {
+    if (!expr) { set_error("NULL expression"); return NAN; }
     if (max_level <= 0) max_level = 10;
     clear_error();
     return richardson_limit(expr, a, 1.0, max_level);
 }
 
 EXPORT double limit(const char* expr, double a, double tol, int max_level) {
+    if (!expr) { set_error("NULL expression"); return NAN; }
     if (max_level <= 0) max_level = 10;
     if (tol <= 0.0) tol = 1e-8;
     clear_error();
@@ -766,6 +775,7 @@ static double _central_diff_nth(const char* expr, double x, int n, double h) {
 }
 
 EXPORT double nth_derivative(const char* expr, double x, int n, double h) {
+    if (!expr) { set_error("NULL expression"); return NAN; }
     if (n < 0) { set_error("Derivative order must be non-negative"); return NAN; }
     if (n > 1000) { set_error("Derivative order too large (max 1000)"); return NAN; }
     clear_error();
@@ -793,6 +803,7 @@ EXPORT double nth_derivative(const char* expr, double x, int n, double h) {
  * -------------------------------------------------------------------------- */
 
 EXPORT int taylor_coefficients(const char* expr, double a, int order, double* out_coeffs, int max_out) {
+    if (!expr) { set_error("NULL expression"); return -1; }
     if (order < 0) { set_error("Order must be non-negative"); return -1; }
     if (order > 1000) { set_error("Order too large (max 1000)"); return -1; }
     if (!out_coeffs || max_out < order + 1) { set_error("Output buffer too small"); return -1; }
@@ -811,6 +822,7 @@ EXPORT int taylor_coefficients(const char* expr, double a, int order, double* ou
 }
 
 EXPORT double find_maximum(const char* expr, double a, double b, double tol, int max_iter) {
+    if (!expr) { set_error("NULL expression"); return NAN; }
     if (a >= b) { set_error("Invalid interval: a must be < b"); return NAN; }
     clear_error();
     const double resphi = GOLDEN_RATIO_RES;
@@ -843,6 +855,7 @@ EXPORT double find_maximum(const char* expr, double a, double b, double tol, int
 }
 
 EXPORT double find_minimum(const char* expr, double a, double b, double tol, int max_iter) {
+    if (!expr) { set_error("NULL expression"); return NAN; }
     if (a >= b) { set_error("Invalid interval: a must be < b"); return NAN; }
     clear_error();
     const double resphi = GOLDEN_RATIO_RES;
@@ -1326,7 +1339,7 @@ EXPORT long long base_to_long(const char* str, int base) {
         p++;
     }
 
-    return negative ? (long long)(-(unsigned long long)result) : result;
+    return negative ? -((long long)result) : result;
 }
 
 EXPORT int long_to_base(long long n, int base, char* output, int max_out) {

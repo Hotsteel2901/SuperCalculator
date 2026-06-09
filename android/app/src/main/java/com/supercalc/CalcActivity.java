@@ -1272,19 +1272,36 @@ public class CalcActivity extends AppCompatActivity {
         int n = m.length;
         if (n == 1) return m[0][0];
         if (n == 2) return m[0][0]*m[1][1] - m[0][1]*m[1][0];
-        double d = 0;
+        // LU decomposition with partial pivoting for O(n³) complexity
+        double[][] lu = new double[n][n];
+        for (int i = 0; i < n; i++)
+            System.arraycopy(m[i], 0, lu[i], 0, n);
+        int[] piv = new int[n];
+        for (int i = 0; i < n; i++) piv[i] = i;
+        double det = 1.0;
         for (int j = 0; j < n; j++) {
-            double[][] sub = new double[n-1][n-1];
-            for (int i = 1; i < n; i++) {
-                int col = 0;
-                for (int k = 0; k < n; k++) {
-                    if (k == j) continue;
-                    sub[i-1][col++] = m[i][k];
+            int maxRow = j;
+            double maxVal = Math.abs(lu[j][j]);
+            for (int i = j + 1; i < n; i++) {
+                if (Math.abs(lu[i][j]) > maxVal) {
+                    maxVal = Math.abs(lu[i][j]);
+                    maxRow = i;
                 }
             }
-            d += Math.pow(-1, j) * m[0][j] * det(sub);
+            if (maxRow != j) {
+                double[] tmp = lu[j]; lu[j] = lu[maxRow]; lu[maxRow] = tmp;
+                det = -det;
+            }
+            if (Math.abs(lu[j][j]) < 1e-15) return 0.0;
+            det *= lu[j][j];
+            for (int i = j + 1; i < n; i++) {
+                lu[i][j] /= lu[j][j];
+                for (int k = j + 1; k < n; k++) {
+                    lu[i][k] -= lu[i][j] * lu[j][k];
+                }
+            }
         }
-        return d;
+        return det;
     }
 
     private void onMatrixInv() {
@@ -2701,20 +2718,31 @@ public class CalcActivity extends AppCompatActivity {
         if (r > n) return 0;
         if (r == 0 || r == n) return 1;
         if (r > n - r) r = n - r;
-        long result = 1;
+        // Use BigInteger to avoid overflow
+        java.math.BigInteger result = java.math.BigInteger.ONE;
         for (long i = 0; i < r; i++) {
-            result = result * (n - i) / (i + 1);
+            result = result.multiply(java.math.BigInteger.valueOf(n - i));
+            result = result.divide(java.math.BigInteger.valueOf(i + 1));
         }
-        return result;
+        try {
+            return result.longValueExact();
+        } catch (ArithmeticException e) {
+            // Result too large for long
+            return Long.MAX_VALUE;
+        }
     }
 
     private long perm(long n, long r) {
         if (r > n) return 0;
-        long result = 1;
+        java.math.BigInteger result = java.math.BigInteger.ONE;
         for (long i = 0; i < r; i++) {
-            result *= (n - i);
+            result = result.multiply(java.math.BigInteger.valueOf(n - i));
         }
-        return result;
+        try {
+            return result.longValueExact();
+        } catch (ArithmeticException e) {
+            return Long.MAX_VALUE;
+        }
     }
 
     private double binomialPMF(long n, long k, double p) {
@@ -2982,7 +3010,7 @@ public class CalcActivity extends AppCompatActivity {
         if (exp < 0) {
             // Compute modular inverse first
             long inv = ntModInverse(base, mod);
-            if (inv == -1) throw new ArithmeticException("No modular inverse exists");
+            if (inv == 0) throw new ArithmeticException("No modular inverse exists");
             base = inv;
             exp = -exp;
         }
@@ -3013,6 +3041,9 @@ public class CalcActivity extends AppCompatActivity {
         
         if (m == 1) return 0;
         
+        a = a % m;
+        if (a < 0) a += m;
+        
         while (a > 1) {
             long q = a / m;
             long t = m;
@@ -3022,6 +3053,8 @@ public class CalcActivity extends AppCompatActivity {
             y = x - q * y;
             x = t;
         }
+        
+        if (a != 1) return 0; // No modular inverse exists
         
         if (x < 0) x += m0;
         
@@ -3120,11 +3153,13 @@ public class CalcActivity extends AppCompatActivity {
     //  Bitwise Operations Calculator
     // ------------------------------------------------------------------
     private int bwMask(int val, int width) {
+        if (width >= 32) return val;
         int mask = (1 << width) - 1;
         return val & mask;
     }
 
     private int bwToSigned(int val, int width) {
+        if (width >= 32) return val;
         int bit = width - 1;
         if ((val & (1 << bit)) != 0) {
             return val - (1 << width);
@@ -3160,7 +3195,7 @@ public class CalcActivity extends AppCompatActivity {
 
         int aMasked = bwMask(a, width);
         int bMasked = op.equals("NOT") ? 0 : bwMask(b, width);
-        int mask = (1 << width) - 1;
+        int mask = width >= 32 ? -1 : (1 << width) - 1;
         int result;
 
         switch (op) {

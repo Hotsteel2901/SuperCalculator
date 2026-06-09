@@ -286,11 +286,18 @@ class SuperCalcApp:
 
     def _on_main_close(self):
         """Clean up child plot windows before exiting."""
+        import matplotlib.pyplot as plt
         if self.window_2d is not None and self.window_2d.winfo_exists():
+            try: plt.close(self.fig_2d)
+            except Exception: pass
             self.window_2d.destroy()
         if self.window_3d is not None and self.window_3d.winfo_exists():
+            try: plt.close(self.fig_3d)
+            except Exception: pass
             self.window_3d.destroy()
         if self.window_fft is not None and self.window_fft.winfo_exists():
+            try: plt.close(self.fig_fft)
+            except Exception: pass
             self.window_fft.destroy()
         self.root.destroy()
 
@@ -2438,7 +2445,8 @@ class SuperCalcApp:
     def _plot_2d(self):
         if self.ax_2d is None:
             return
-        self.ax_2d.clear()
+        self.fig_2d.clear()
+        self.ax_2d = self.fig_2d.add_subplot(111)
         self._setup_axes(self.ax_2d, is_3d=False)
 
         if self.x_min >= self.x_max or self.step_size <= 0:

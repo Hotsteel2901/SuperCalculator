@@ -524,12 +524,13 @@ class PoissonDist:
             return 0
         total = 0.0
         k = 0
+        cap = max(1000, int(self.lam * 4) + 100)
         while True:
             total += float(self.pmf(k))
             if total >= q:
                 return k
             k += 1
-            if k > 1000:
+            if k > cap:
                 return k
 
     def mean(self) -> float:
