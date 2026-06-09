@@ -16,6 +16,10 @@ def _detect_language():
     try:
         default = locale.getlocale()[0]
         if default:
+            lower = default.lower()
+            # Windows may return 'Chinese (Simplified)_China' instead of 'zh_CN'
+            if "zh" in lower or "chinese" in lower:
+                return "zh"
             lang = default.split("_")[0].lower()
             return lang
     except Exception:
