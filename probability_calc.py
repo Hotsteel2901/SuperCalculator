@@ -90,7 +90,7 @@ def bayes_theorem(p_b_given_a: float, p_a: float, p_b: float) -> Optional[float]
 
 
 def bayes_theorem_full(p_b_given_a: float, p_a: float,
-                       p_b_given_not_a: float) -> Optional[Dict]:
+                       p_b_given_not_a: float) -> Optional[Dict[str, float]]:
     """Compute full Bayes' theorem with prior and evidence.
     
     Given:
@@ -191,10 +191,10 @@ def hypergeometric_probability(N: int, K: int, n: int, k: int) -> Optional[float
     """
     if not all(x == int(x) and x >= 0 for x in [N, K, n, k]):
         return None
-    N, K, n, k = int(N), int(K), int(n), int(k)
-    if K > N or n > N or k > min(K, n) or k < max(0, n - (N - K)):
+    _N, _K, _n, _k = int(N), int(K), int(n), int(k)
+    if _K > _N or _n > _N or _k > min(_K, _n) or _k < max(0, _n - (_N - _K)):
         return 0.0
-    return (math.comb(K, k) * math.comb(N - K, n - k)) / math.comb(N, n)
+    return (math.comb(_K, _k) * math.comb(_N - _K, _n - _k)) / math.comb(_N, _n)
 
 
 def expected_value(values: List[float], probabilities: List[float]) -> Optional[float]:

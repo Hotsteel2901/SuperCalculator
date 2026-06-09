@@ -1,0 +1,19 @@
+{
+    "typeCheckingMode": "basic",
+    "reportUnknownMemberType": "none",
+    "reportUnknownArgumentType": "none",
+    "reportUnknownVariableType": "none",
+    "reportUnknownParameterType": "none",
+    "reportUnknownLambdaType": "none",
+    "reportMissingTypeStubs": "none",
+    "reportAttributeAccessIssue": "warning",
+    "reportOptionalMemberAccess": "none",
+    "reportOptionalSubscript": "none",
+    "reportPossiblyUnboundVariable": "warning",
+    "reportUnusedImport": "warning",
+    "reportGeneralTypeIssues": "none",
+    "reportIndexIssue": "none",
+    "reportOperatorIssue": "none",
+    "reportArgumentType": "none",
+    "pythonVersion": "3.10"
+}

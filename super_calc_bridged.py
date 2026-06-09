@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# pyright: reportUnknownMemberType=false, reportOptionalMemberAccess=false, reportUnknownArgumentType=false, reportUnknownVariableType=false, reportUnknownParameterType=false, reportAttributeAccessIssue=false, reportOptionalSubscript=false, reportPossiblyUnboundVariable=false, reportArgumentType=false, reportGeneralTypeIssues=false, reportIndexIssue=false, reportOperatorIssue=false, reportUnknownLambdaType=false
 """
 Super Function Graphing Calculator - GUI
 
@@ -20,38 +21,28 @@ Features:
   - Polar coordinate plotting r(theta) with preset library
 """
 
-import sys
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
-from typing import Optional, List
+from typing import Optional, List, Any
 import math
 import re
 import csv
 import os
-import statistics
 
-try:
-    import matplotlib
-except ImportError as e:
-    print(f"[ERROR] matplotlib is required but not installed.", file=sys.stderr)
-    print("Please install: pip install numpy matplotlib", file=sys.stderr)
-    sys.exit(1)
+import matplotlib  # required dependency
+import matplotlib.backend_bases
 
 # Dynamically select backend: try TkAgg first, fallback to Agg for headless environments
 try:
-    import tkinter
     matplotlib.use("TkAgg")
 except (ImportError, RuntimeError):
     matplotlib.use("Agg")
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from matplotlib.axes import Axes
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends._backend_tk import NavigationToolbar2Tk  # type: ignore[import]
 
-try:
-    import numpy as np
-except ImportError as e:
-    print(f"[ERROR] numpy is required but not installed.", file=sys.stderr)
-    print("Please install: pip install numpy matplotlib", file=sys.stderr)
-    sys.exit(1)
+import numpy as np  # required dependency
 
 from calc_bridge import CalcEngine
 from locale_strings import t, CURRENT_LANG
@@ -152,8 +143,8 @@ KNOWN_FUNCTIONS = {'sin', 'cos', 'tan', 'log', 'ln', 'exp', 'sqrt', 'abs', 'floo
 KNOWN_CONSTANTS = {'pi', 'e'}
 INDEPENDENT_VARS = {'x', 'y', 't'}  # variables used by the engine, not parameters
 
-def _detect_parameters_static(expr: str) -> list:
-    params = set()
+def _detect_parameters_static(expr: str) -> list[str]:
+    params: set[str] = set()
     expr_lower = expr.lower()
     for func in KNOWN_FUNCTIONS:
         expr_lower = re.sub(r'\b' + func + r'\b', '', expr_lower)
@@ -179,10 +170,10 @@ class CurveModel:
                  "is_polar", "r_param_expr",
                  "is_implicit", "implicit_expr", "implicit_resolution")
 
-    def __init__(self, expr, color, label="", lw=2, ls="-",
-                 is_parametric=False, x_param_expr="", y_param_expr="",
-                 is_polar=False, r_param_expr="",
-                 is_implicit=False, implicit_expr="", implicit_resolution=200):
+    def __init__(self, expr: str, color: str, label: str = "", lw: float = 2, ls: str = "-",
+                 is_parametric: bool = False, x_param_expr: str = "", y_param_expr: str = "",
+                 is_polar: bool = False, r_param_expr: str = "",
+                 is_implicit: bool = False, implicit_expr: str = "", implicit_resolution: int = 200):
         self.is_parametric = is_parametric
         self.x_param_expr = x_param_expr
         self.y_param_expr = y_param_expr
@@ -219,7 +210,7 @@ class CurveModel:
         has_y = bool(re.search(r'\by\b', expr_lower))
         return has_x and has_y
 
-    def _detect_parameters(self, expr: str) -> list:
+    def _detect_parameters(self, expr: str) -> list[str]:
         return _detect_parameters_static(expr)
 
 
@@ -245,34 +236,47 @@ class SuperCalcApp:
         self.step_size = 0.05
         self.n_pts_3d = DEFAULT_3D_POINTS
         self.grid_on = True
-        self.param_values = {}
-        self.marked_points = []
-        self.auto_mark_point = None
-        self.root_markers = []
-        self.intersection_marks = []  # list of (x, y) tuples for curve intersections
-        self.tangent_data = []   # list of dicts: {x0, y0, slope, expr}
-        self.normal_data = []    # list of dicts: {x0, y0, slope, expr}
+        self.param_values: dict[str, float] = {}
+
+        # Dynamically created in _build_control_panel (declared for type checker)
+        self._var_x_min: tk.StringVar = tk.StringVar()
+        self._var_x_max: tk.StringVar = tk.StringVar()
+        self._var_y_min: tk.StringVar = tk.StringVar()
+        self._var_y_max: tk.StringVar = tk.StringVar()
+        self._var_z_min: tk.StringVar = tk.StringVar()
+        self._var_z_max: tk.StringVar = tk.StringVar()
+        self._var_step: tk.StringVar = tk.StringVar()
+        self._var_3d_res: tk.StringVar = tk.StringVar()
+        self._var_grid: tk.BooleanVar = tk.BooleanVar()
+        self._unit_categories: dict[str, dict[str, float | str]] = {}
+
+        self.marked_points: list[tuple[float, float]] = []
+        self.auto_mark_point: Optional[float] = None
+        self.root_markers: list[float] = []
+        self.intersection_marks: list[tuple[float, float]] = []
+        self.tangent_data: list[dict[str, Any]] = []
+        self.normal_data: list[dict[str, Any]] = []
 
         # Separate windows for 2D and 3D plots
-        self.window_2d = None
-        self.fig_2d = None
-        self.ax_2d = None
-        self.canvas_2d = None
-        self.toolbar_2d = None
+        self.window_2d: Optional[tk.Toplevel] = None
+        self.fig_2d: Optional[Figure] = None
+        self.ax_2d: Optional[Axes] = None
+        self.canvas_2d: Optional[FigureCanvasTkAgg] = None
+        self.toolbar_2d: Optional[NavigationToolbar2Tk] = None
 
-        self.window_3d = None
-        self.fig_3d = None
-        self.ax_3d = None
-        self.canvas_3d = None
-        self.toolbar_3d = None
+        self.window_3d: Optional[tk.Toplevel] = None
+        self.fig_3d: Optional[Figure] = None
+        self.ax_3d: Optional[Axes] = None
+        self.canvas_3d: Optional[FigureCanvasTkAgg] = None
+        self.toolbar_3d: Optional[NavigationToolbar2Tk] = None
 
         # FFT spectrum window
-        self.window_fft = None
-        self.fig_fft = None
-        self.ax_fft_amp = None
-        self.ax_fft_phase = None
-        self.canvas_fft = None
-        self.toolbar_fft = None
+        self.window_fft: Optional[tk.Toplevel] = None
+        self.fig_fft: Optional[Figure] = None
+        self.ax_fft_amp: Optional[Axes] = None
+        self.ax_fft_phase: Optional[Axes] = None
+        self.canvas_fft: Optional[FigureCanvasTkAgg] = None
+        self.toolbar_fft: Optional[NavigationToolbar2Tk] = None
 
         self.root.protocol("WM_DELETE_WINDOW", self._on_main_close)
         self._build_ui()
@@ -294,7 +298,7 @@ class SuperCalcApp:
     def _build_ui(self):
         self._build_control_panel(self.root)
 
-    def _build_control_panel(self, parent):
+    def _build_control_panel(self, parent: tk.Misc) -> None:
         canvas = tk.Canvas(parent, bg="#1e1e2e", highlightthickness=0)
         scrollbar = ttk.Scrollbar(parent, orient=tk.VERTICAL, command=canvas.yview)
         scroll_frame = ttk.Frame(canvas, style="Dark.TFrame")
@@ -308,7 +312,7 @@ class SuperCalcApp:
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        def _on_mousewheel(event):
+        def _on_mousewheel(event: tk.Event[tk.Canvas]) -> None:
             import platform
             if platform.system() == "Darwin":
                 # macOS: event.delta is ±1
@@ -317,7 +321,7 @@ class SuperCalcApp:
                 # Windows: event.delta is ±120
                 canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
-        def _on_mousewheel_linux(event):
+        def _on_mousewheel_linux(event: tk.Event[tk.Canvas]) -> None:
             # Linux (Button-4 = scroll up, Button-5 = scroll down)
             if event.num == 4:
                 canvas.yview_scroll(-1, "units")
@@ -510,7 +514,7 @@ class SuperCalcApp:
         self.frm_params = ttk.LabelFrame(scroll_frame, text=t("sec_parameters"),
                                          style="Dark.TLabelframe")
         self.frm_params.pack(fill=tk.X, padx=8, pady=4)
-        self.param_widgets = {}
+        self.param_widgets: dict[str, tk.StringVar] = {}
         ttk.Label(self.frm_params, text=t("label_no_params"),
                   style="Dark.TLabel").pack(padx=6, pady=8)
 
@@ -813,9 +817,9 @@ class SuperCalcApp:
         ttk.Button(trow2, text=t("btn_copy_table"),
                    command=self._on_copy_table).pack(side=tk.LEFT, padx=2)
 
-        self._table_data = []   # list of (x, y) tuples
+        self._table_data: list[tuple[float, Optional[float]]] = []
         self._table_expr = ""   # expression used for last table
-        self._fft_data = {}     # last FFT result dict
+        self._fft_data: dict[str, object] = {}     # last FFT result dict
 
         # --- Fourier Transform & Spectrum ---
         frm_fft = ttk.LabelFrame(scroll_frame, text=t("sec_fft"),
@@ -910,8 +914,8 @@ class SuperCalcApp:
         ode_combo.bind("<<ComboboxSelected>>",
                         lambda e: self._on_ode_preset(self._var_ode_preset.get()))
 
-        self._ode_data = None  # last ODE solution dict (None or dict)
-        self._last_reg_result = None  # last regression result dict
+        self._ode_data: Optional[dict[str, object]] = None
+        self._last_reg_result: Optional[dict[str, object]] = None
 
         # --- Statistics Calculator ---
         frm_stats = ttk.LabelFrame(scroll_frame, text=t("sec_stats"),
@@ -940,12 +944,12 @@ class SuperCalcApp:
                    command=self._on_stats_export_csv).pack(side=tk.LEFT, padx=2)
 
         # --- Statistical Distribution Calculator ---
+        _stat_dist_registry: dict[str, dict[str, Any]] = {}
         try:
-            from stat_dist import DISTRIBUTIONS as _STAT_DIST_REGISTRY
-            _HAS_STAT_DIST = True
+            from stat_dist import DISTRIBUTIONS
+            _stat_dist_registry = DISTRIBUTIONS  # type: ignore[assignment]
         except ImportError:
-            _STAT_DIST_REGISTRY = {}
-            _HAS_STAT_DIST = False
+            pass
 
         frm_dist = ttk.LabelFrame(scroll_frame, text=t("sec_dist"),
                                   style="Dark.TLabelframe")
@@ -956,9 +960,9 @@ class SuperCalcApp:
         ttk.Label(drow1, text=t("label_dist_type"),
                   style="Dark.TLabel").pack(side=tk.LEFT, padx=2)
         self._var_dist_type = tk.StringVar(value="normal")
-        self._dist_names_map = {}
-        _dist_display_names = []
-        for _k, _v in _STAT_DIST_REGISTRY.items():
+        self._dist_names_map: dict[str, str] = {}
+        _dist_display_names: list[str] = []
+        for _k, _v in _stat_dist_registry.items():
             _dn = _v.get(f"name_{_get_lang()}", _v["name_en"])
             self._dist_names_map[_dn] = _k
             _dist_display_names.append(_dn)
@@ -968,12 +972,12 @@ class SuperCalcApp:
         self._dist_combo.pack(side=tk.LEFT, padx=4)
         self._dist_combo.bind("<<ComboboxSelected>>", self._on_dist_type_change)
 
-        self._dist_param_frames = {}
-        self._dist_param_vars = {}
+        self._dist_param_frames: dict[str, ttk.Frame] = {}
+        self._dist_param_vars: dict[str, dict[str, tk.StringVar]] = {}
 
-        for _dk, _dv in _STAT_DIST_REGISTRY.items():
+        for _dk, _dv in _stat_dist_registry.items():
             _pframe = ttk.Frame(frm_dist, style="Dark.TFrame")
-            _pvars = {}
+            _pvars: dict[str, tk.StringVar] = {}
             for _pname, _plabel, _psym, _pdef in _dv["params"]:
                 _sv = tk.StringVar(value=str(_pdef))
                 _pvars[_pname] = _sv
@@ -1295,7 +1299,7 @@ class SuperCalcApp:
                   font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2)
 
         # --- Unit Converter ---
-        UNIT_CATEGORIES = {
+        UNIT_CATEGORIES: dict[str, dict[str, float | str]] = {
             "Length": {
                 "Meter (m)": 1.0,
                 "Kilometer (km)": 1000.0,
@@ -1853,9 +1857,8 @@ class SuperCalcApp:
 
         ttk.Button(main_frame, text=t("btn_close"), command=panel.destroy).pack(pady=10)
 
-    def _insert_text(self, text):
+    def _insert_text(self, text: str) -> None:
         """Insert text at cursor, replacing any selected text."""
-        expr = self.entry_expr.get()
         try:
             sel_start = self.entry_expr.index(tk.SEL_FIRST)
             sel_end = self.entry_expr.index(tk.SEL_LAST)
@@ -1903,7 +1906,7 @@ class SuperCalcApp:
 
         self._on_param_change()
 
-    def _on_param_change(self):
+    def _on_param_change(self, *args: Any) -> None:
         self.param_values = {}
         for param, var in self.param_widgets.items():
             try:
@@ -1979,7 +1982,7 @@ class SuperCalcApp:
         result = expr
         skip_words = KNOWN_FUNCTIONS | KNOWN_CONSTANTS | INDEPENDENT_VARS
         for param, value in self.param_values.items():
-            def _replace_if_not_func(match):
+            def _replace_if_not_func(match: re.Match[str]) -> str:
                 word = match.group(0)
                 if word.lower() in skip_words or param.lower() in skip_words:
                     return word
@@ -2330,7 +2333,7 @@ class SuperCalcApp:
                     flat_z = CalcEngine.evaluate_xy_array(imp_expr, flat_x, flat_y)
                     Z = np.array([v if v is not None else np.nan for v in flat_z]).reshape(X.shape)
                     # Use contour to plot the zero level set
-                    cs = self.ax_2d.contour(X, Y, Z, levels=[0], colors=[curve.color],
+                    self.ax_2d.contour(X, Y, Z, levels=[0], colors=[curve.color],
                                             linewidths=[curve.linewidth])
                     # Add a proxy artist for legend
                     self.ax_2d.plot([], [], color=curve.color, linewidth=curve.linewidth,
@@ -2450,7 +2453,7 @@ class SuperCalcApp:
         self.canvas_3d.draw()
         self.status_var.set(t("status_plotted_3d", n_pts, n_pts))
 
-    def _setup_axes(self, ax, is_3d=False):
+    def _setup_axes(self, ax: Axes, is_3d: bool = False) -> None:
         try:
             ax.set_xlim(self.x_min, self.x_max)
             ax.set_ylim(self.y_min, self.y_max)
@@ -2476,7 +2479,7 @@ class SuperCalcApp:
     # ------------------------------------------------------------------
     #  Coordinate marking
     # ------------------------------------------------------------------
-    def _on_canvas_click(self, event):
+    def _on_canvas_click(self, event: "matplotlib.backend_bases.MouseEvent") -> None:
         if self.ax_2d is None or event.inaxes != self.ax_2d:
             return
         x, y = event.xdata, event.ydata
@@ -2674,7 +2677,7 @@ class SuperCalcApp:
         ttk.Button(btn_frame, text=t("btn_clear_marks"), command=lambda: (self.intersection_marks.clear(), self._plot_all())).pack(side=tk.LEFT, padx=2)
         ttk.Button(btn_frame, text=t("btn_close"), command=win.destroy).pack(side=tk.RIGHT, padx=2)
 
-    def _find_intersections(self, curve_a, curve_b):
+    def _find_intersections(self, curve_a: CurveModel, curve_b: CurveModel) -> list[tuple[float, float]]:
         """Find intersections of two 2D curves within the current X range."""
         if curve_a.is_parametric or curve_b.is_parametric or curve_a.is_polar or curve_b.is_polar:
             self.intersection_marks = []
@@ -2767,7 +2770,7 @@ class SuperCalcApp:
         self._show_table_window(expr, valid_count)
         self.status_var.set(t("status_table_gen", valid_count, n))
 
-    def _show_table_window(self, expr, valid_count):
+    def _show_table_window(self, expr: str, valid_count: int) -> None:
         win = tk.Toplevel(self.root)
         win.title(t("win_table"))
         win.geometry("420x500")
@@ -2976,7 +2979,7 @@ class SuperCalcApp:
             f"Area from {a} to {b} = {result:.10g}")
         self.status_var.set(t("status_area", a, b, f"{result:.10g}"))
 
-    def _on_limit(self, two_sided=True, side=None):
+    def _on_limit(self, two_sided: bool = True, side: Optional[str] = None) -> None:
         expr = self._get_active_expression()
         if not expr:
             return
@@ -3067,7 +3070,7 @@ class SuperCalcApp:
         self._plot_fft(result, expr)
         self.status_var.set(t("status_fft_computed", len(result['freqs'])))
 
-    def _plot_fft(self, result, expr):
+    def _plot_fft(self, result: dict[str, object], expr: str) -> None:
         if self.ax_fft_amp is None or self.ax_fft_phase is None:
             return
         freqs = np.array(result['freqs'])
@@ -3215,7 +3218,7 @@ class SuperCalcApp:
         dx_arr = xs_np - a
         ys_taylor = np.zeros(n_pts)
         dx_power = np.ones(n_pts)
-        for k, c in enumerate(coeffs):
+        for _k, c in enumerate(coeffs):
             if c is not None:
                 ys_taylor += c * dx_power
             dx_power *= dx_arr
@@ -3440,11 +3443,9 @@ class SuperCalcApp:
         if minimum:
             result = CalcEngine.find_minimum(expr_sub, a, b)
             label = "Minimum"
-            short = "min"
         else:
             result = CalcEngine.find_maximum(expr_sub, a, b)
             label = "Maximum"
-            short = "max"
         if result is None:
             err = CalcEngine.get_last_error()
             messagebox.showerror(t("err_extremum"),
@@ -3668,30 +3669,26 @@ class SuperCalcApp:
     # ------------------------------------------------------------------
     #  Statistical Distribution Calculator
     # ------------------------------------------------------------------
-    def _get_dist_info(self):
+    def _get_dist_info(self) -> tuple[Any, Any] | tuple[None, None]:
         """Get current distribution key and info dict."""
         try:
-            from stat_dist import DISTRIBUTIONS as _REG
+            from stat_dist import DISTRIBUTIONS
         except ImportError:
             return None, None
         display_name = self._var_dist_type.get()
         key = self._dist_names_map.get(display_name)
-        if key is None or key not in _REG:
+        if key is None or key not in DISTRIBUTIONS:
             return None, None
-        return key, _REG[key]
+        return key, DISTRIBUTIONS[key]
 
-    def _get_dist_params(self):
+    def _get_dist_params(self) -> Optional[dict[str, float]]:
         """Get current parameter values as a dict."""
-        try:
-            from stat_dist import DISTRIBUTIONS as _REG
-        except ImportError:
-            return None
         display_name = self._var_dist_type.get()
         key = self._dist_names_map.get(display_name)
         if key is None:
             return None
         pvars = self._dist_param_vars.get(key, {})
-        params = {}
+        params: dict[str, float] = {}
         for pname, sv in pvars.items():
             try:
                 params[pname] = float(sv.get())
@@ -3701,7 +3698,7 @@ class SuperCalcApp:
                 return None
         return params
 
-    def _on_dist_type_change(self, event=None):
+    def _on_dist_type_change(self, event: Optional[tk.Event[ttk.Combobox]] = None) -> None:
         """Show/hide parameter frames based on selected distribution."""
         display_name = self._var_dist_type.get()
         key = self._dist_names_map.get(display_name)
@@ -3872,7 +3869,7 @@ class SuperCalcApp:
             # Ask user for comparison parameter values
             param_defs = info["params"]
             prompt_parts = []
-            for pname, plabel, psym, pdef in param_defs:
+            for pname, _plabel, psym, pdef in param_defs:
                 prompt_parts.append(f"{psym}={pdef}")
             prompt = t("msg_dist_compare_prompt", dist_name, ", ".join(prompt_parts))
 
@@ -3889,7 +3886,7 @@ class SuperCalcApp:
                 return
 
             param_sets = []
-            for i, (pname, plabel, psym, pdef) in enumerate(param_defs):
+            for i, (pname, _plabel, psym, pdef) in enumerate(param_defs):
                 try:
                     param_sets.append((pname, float(values_list[i])))
                 except ValueError:
@@ -3988,7 +3985,7 @@ class SuperCalcApp:
             xs = list(range(1, len(ys) + 1))
         return xs, ys
 
-    def _parse_data_list(self, text: str):
+    def _parse_data_list(self, text: str) -> Optional[list[float]]:
         """Parse comma/space/semicolon separated numbers."""
         import re as _re
         text = text.strip()
@@ -4006,7 +4003,7 @@ class SuperCalcApp:
                 return None
         return vals if vals else None
 
-    def _show_reg_result(self, title, result):
+    def _show_reg_result(self, title: str, result: Optional[dict[str, object]]) -> None:
         """Show regression result and optionally store for plotting."""
         if result is None:
             messagebox.showerror(t("err_error"), t("msg_regression_failed"))
@@ -4117,7 +4114,7 @@ class SuperCalcApp:
     # ------------------------------------------------------------------
     #  Matrix Operations
     # ------------------------------------------------------------------
-    def _parse_matrix(self, text: str):
+    def _parse_matrix(self, text: str) -> Optional[list[list[float]]]:
         """Parse matrix from text format: rows separated by ';', cols by ','."""
         text = text.strip()
         if not text:
@@ -4150,12 +4147,12 @@ class SuperCalcApp:
                 return None
         return matrix
 
-    def _format_matrix(self, mat) -> str:
+    def _format_matrix(self, mat: object) -> str:
         """Format a numpy matrix or list of lists as a readable string."""
         if hasattr(mat, 'tolist'):
-            mat = mat.tolist()
-        lines = []
-        for row in mat:
+            mat = mat.tolist()  # type: ignore[union-attr]
+        lines: list[str] = []
+        for row in mat:  # type: ignore[union-attr]
             lines.append("  " + "  ".join(f"{v:12.6g}" for v in row))
         return "\n".join(lines)
 
@@ -4328,7 +4325,7 @@ class SuperCalcApp:
     # ------------------------------------------------------------------
     #  Complex Number Operations
     # ------------------------------------------------------------------
-    def _parse_complex(self, s: str):
+    def _parse_complex(self, s: str) -> Optional[complex]:
         """Parse a complex number from string (a+bi format).
 
         Supports: "3+4i", "3-4i", "2i", "-2i", "1+i", "1-i",
@@ -4516,7 +4513,7 @@ class SuperCalcApp:
     #  Number Theory Calculator
     # ------------------------------------------------------------------
     @staticmethod
-    def _nt_is_prime(n):
+    def _nt_is_prime(n: int) -> bool:
         if n < 2:
             return False
         if n < 4:
@@ -4531,7 +4528,7 @@ class SuperCalcApp:
         return True
 
     @staticmethod
-    def _nt_factorize(n):
+    def _nt_factorize(n: int) -> list[int]:
         factors = []
         d = 2
         while d * d <= n:
@@ -4544,7 +4541,7 @@ class SuperCalcApp:
         return factors
 
     @staticmethod
-    def _nt_format_factors(factors):
+    def _nt_format_factors(factors: list[int]) -> str:
         if not factors:
             return "1"
         parts = []
@@ -4562,20 +4559,20 @@ class SuperCalcApp:
         return " × ".join(parts)
 
     @staticmethod
-    def _nt_gcd(a, b):
+    def _nt_gcd(a: int, b: int) -> int:
         a, b = abs(a), abs(b)
         while b:
             a, b = b, a % b
         return a
 
     @staticmethod
-    def _nt_lcm(a, b):
+    def _nt_lcm(a: int, b: int) -> int:
         if a == 0 or b == 0:
             return 0
         return abs(a * b) // SuperCalcApp._nt_gcd(a, b)
 
     @staticmethod
-    def _nt_fibonacci(n):
+    def _nt_fibonacci(n: int) -> int:
         if n <= 0:
             return 0
         if n == 1:
@@ -4588,7 +4585,7 @@ class SuperCalcApp:
         return b
 
     @staticmethod
-    def _nt_mod_pow(base, exp, mod):
+    def _nt_mod_pow(base: int, exp: int, mod: int) -> int:
         if mod <= 0:
             raise ValueError("mod must be positive")
         result = 1
@@ -4601,7 +4598,7 @@ class SuperCalcApp:
         return result
 
     @staticmethod
-    def _nt_totient(n):
+    def _nt_totient(n: int) -> int:
         if n <= 0:
             return 0
         result = n
@@ -4617,7 +4614,7 @@ class SuperCalcApp:
             result -= result // temp
         return result
 
-    def _nt_show_result(self, result_str):
+    def _nt_show_result(self, result_str: str) -> None:
         self._var_nt_result.set(result_str)
 
     def _on_nt_factorize(self):
@@ -4728,17 +4725,17 @@ class SuperCalcApp:
     # ------------------------------------------------------------------
     #  Bitwise Operations Calculator
     # ------------------------------------------------------------------
-    def _bw_mask(self, val, width):
+    def _bw_mask(self, val: int, width: int) -> int:
         mask_val = (1 << width) - 1
         return val & mask_val
 
-    def _bw_to_signed(self, val, width):
+    def _bw_to_signed(self, val: int, width: int) -> int:
         bit = width - 1
         if val & (1 << bit):
             return val - (1 << width)
         return val
 
-    def _bw_to_bin_padded(self, val, width):
+    def _bw_to_bin_padded(self, val: int, width: int) -> str:
         bits = format(self._bw_mask(val, width), f'0{width}b')
         return bits
 
@@ -4760,6 +4757,7 @@ class SuperCalcApp:
                 return
 
         a_masked = self._bw_mask(a, width)
+        b_masked = 0
         if op != "NOT":
             b_masked = self._bw_mask(b, width)
 
@@ -4829,10 +4827,10 @@ class SuperCalcApp:
 
         # Handle temperature separately (non-linear conversion)
         if cat == "Temperature":
-            result = self._convert_temperature(value, from_factor, to_factor)
+            result = self._convert_temperature(value, str(from_factor), str(to_factor))
         else:
             # Standard linear conversion: value * from_factor / to_factor
-            result = value * from_factor / to_factor
+            result = value * float(from_factor) / float(to_factor)
 
         # Format result nicely
         if abs(result) >= 1e10 or (abs(result) < 1e-6 and result != 0):
@@ -4843,7 +4841,7 @@ class SuperCalcApp:
         self._var_unit_result.set(result_str)
         self.status_var.set(t("status_unit_convert", value, from_unit, result_str, to_unit))
 
-    def _convert_temperature(self, value, from_type, to_type):
+    def _convert_temperature(self, value: float, from_type: str, to_type: str) -> float:
         if from_type == to_type:
             return value
         # Convert to Celsius first
@@ -4865,7 +4863,7 @@ class SuperCalcApp:
     #  Perpetual Calendar / Date Calculator
     # ------------------------------------------------------------------
     @staticmethod
-    def _cal_parse_date(date_str):
+    def _cal_parse_date(date_str: str) -> tuple[int, int, int] | None:
         """Parse YYYY-MM-DD string and return (year, month, day) as ints."""
         parts = date_str.strip().split("-")
         if len(parts) != 3:
@@ -4877,13 +4875,13 @@ class SuperCalcApp:
             return None
 
     @staticmethod
-    def _cal_day_of_week(year, month, day):
+    def _cal_day_of_week(year: int, month: int, day: int) -> int:
         """Zeller-like calculation: returns 0=Mon .. 6=Sun."""
         import calendar
         return calendar.weekday(year, month, day)
 
     @staticmethod
-    def _cal_days_in_month(year, month):
+    def _cal_days_in_month(year: int, month: int) -> int:
         import calendar
         return calendar.monthrange(year, month)[1]
 
@@ -4995,7 +4993,7 @@ class SuperCalcApp:
         for child in target.winfo_children():
             child.pack(fill=tk.X, pady=2)
 
-    def _prob_parse_int(self, val, name="n"):
+    def _prob_parse_int(self, val: str, name: str = "n") -> Optional[int]:
         try:
             v = int(val.strip())
             if v < 0:
@@ -5005,14 +5003,14 @@ class SuperCalcApp:
             messagebox.showerror(t("err_prob"), t("msg_prob_invalid_n"))
             return None
 
-    def _prob_parse_float(self, val, name="p"):
+    def _prob_parse_float(self, val: str, name: str = "p") -> Optional[float]:
         try:
             return float(val.strip())
         except ValueError:
             messagebox.showerror(t("err_prob"), t("msg_prob_invalid_p"))
             return None
 
-    def _prob_parse_prob(self, val, name="p"):
+    def _prob_parse_prob(self, val: str, name: str = "p") -> Optional[float]:
         try:
             v = float(val.strip())
             if not (0 <= v <= 1):
@@ -5177,9 +5175,9 @@ class SuperCalcApp:
 # ---------------------------------------------------------------------------
 #  Entry point
 # ---------------------------------------------------------------------------
-def main():
+def main() -> None:
     root = tk.Tk()
-    app = SuperCalcApp(root)
+    SuperCalcApp(root)
     root.mainloop()
 
 

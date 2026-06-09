@@ -2505,7 +2505,7 @@ STRINGS = {
 }
 
 
-def t(key, *args):
+def t(key: str, *args: object) -> str:
     """Return the translated string for *key* in the current locale.
 
     Positional *args* are interpolated via ``str.format()`` using
@@ -2517,10 +2517,7 @@ def t(key, *args):
     if entry is None:
         return key
 
-    if isinstance(entry, dict):
-        text = entry.get(CURRENT_LANG, entry.get("en", key))
-    else:
-        text = str(entry)
+    text = entry.get(CURRENT_LANG, entry.get("en", key))
 
     if args:
         try:

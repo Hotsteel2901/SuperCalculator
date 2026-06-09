@@ -18,7 +18,10 @@ Each distribution provides:
 """
 
 import numpy as np
-from typing import Tuple, Optional, Dict
+from typing import Any
+
+# Type alias for array-like inputs (ndarray, scalar float, or list of floats)
+ArrayLike = np.ndarray | float | list[float]
 
 
 # ---------------------------------------------------------------------------
@@ -71,7 +74,7 @@ def _beta_inc_reg(a: float, b: float, x: float) -> float:
     n = 500  # number of subintervals (must be even)
     h = x / n
     # Simpson's rule: h/3 * (f(0) + 4*f(h) + 2*f(2h) + ... + 4*f((n-1)h) + f(x))
-    def integrand(t):
+    def integrand(t: float) -> float:
         if t <= 0.0 or t >= 1.0:
             return 0.0
         return np.exp((a - 1) * np.log(t) + (b - 1) * np.log(1.0 - t) - lbeta)
@@ -98,7 +101,7 @@ def _igamma(a: float, x: float) -> float:
         ap = a
         summation = 1.0 / a
         delta = summation
-        for n in range(1, 300):
+        for _ in range(1, 300):
             ap += 1.0
             delta *= x / ap
             summation += delta
@@ -141,17 +144,17 @@ class NormalDist:
         if self.sigma == 0:
             raise ValueError("sigma must be positive")
 
-    def pdf(self, x) -> np.ndarray:
+    def pdf(self, x: ArrayLike) -> np.ndarray:
         x = np.asarray(x, dtype=np.float64)
         z = (x - self.mu) / self.sigma
         return np.exp(-0.5 * z * z) / (self.sigma * np.sqrt(2 * np.pi))
 
-    def cdf(self, x) -> np.ndarray:
+    def cdf(self, x: ArrayLike) -> np.ndarray:
         x = np.asarray(x, dtype=np.float64)
         z = (x - self.mu) / (self.sigma * np.sqrt(2))
-        return 0.5 * (1.0 + np.vectorize(lambda t: _erf_approx(t))(z))
+        return 0.5 * (1.0 + np.vectorize(_erf_approx)(z))
 
-    def ppf(self, q) -> float:
+    def ppf(self, q: float) -> float:
         q = float(q)
         if q <= 0 or q >= 1:
             raise ValueError("q must be in (0, 1)")
@@ -212,18 +215,19 @@ class StudentTDist:
         if self.nu <= 0:
             raise ValueError("nu must be positive")
 
-    def pdf(self, x) -> np.ndarray:
+    def pdf(self, x: ArrayLike) -> np.ndarray:
         x = np.asarray(x, dtype=np.float64)
         nu = self.nu
         coeff = _gamma_scalar((nu + 1) / 2) / \
                 (np.sqrt(nu * np.pi) * _gamma_scalar(nu / 2))
         return coeff * (1.0 + x * x / nu) ** (-(nu + 1) / 2)
 
-    def cdf(self, x) -> np.ndarray:
+    def cdf(self, x: ArrayLike) -> np.ndarray:
         x = np.asarray(x, dtype=np.float64)
         result = np.zeros_like(x)
-        for i, xi in enumerate(np.nditer(x)):
-            xi_val = float(xi)
+        x_flat = x.ravel()
+        for i in range(x_flat.size):
+            xi_val = float(x_flat[i])
             if xi_val < -15:
                 result.flat[i] = 0.0
             elif xi_val > 15:
@@ -254,19 +258,19 @@ class StudentTDist:
                     result.flat[i] = 0.5 - total * h
         return result
 
-    def ppf(self, q) -> float:
+    def ppf(self, q: float) -> float:
         q = float(q)
         if q <= 0 or q >= 1:
             raise ValueError("q must be in (0, 1)")
         # Use bisection with CDF, dynamically expanding range
         lo, hi = -10.0, 10.0
-        while float(self.cdf(lo)) > q:
+        while float(self.cdf(np.array([lo]))[0]) > q:
             lo *= 2
-        while float(self.cdf(hi)) < q:
+        while float(self.cdf(np.array([hi]))[0]) < q:
             hi *= 2
         for _ in range(100):
             mid = (lo + hi) / 2.0
-            if float(self.cdf(mid)) < q:
+            if float(self.cdf(np.array([mid]))[0]) < q:
                 lo = mid
             else:
                 hi = mid
@@ -295,7 +299,7 @@ class ChiSquaredDist:
         if self.k <= 0:
             raise ValueError("k must be positive")
 
-    def pdf(self, x) -> np.ndarray:
+    def pdf(self, x: ArrayLike) -> np.ndarray:
         x = np.asarray(x, dtype=np.float64)
         k = self.k
         result = np.zeros_like(x)
@@ -306,27 +310,28 @@ class ChiSquaredDist:
         result[mask] = np.exp(log_pdf)
         return result
 
-    def cdf(self, x) -> np.ndarray:
+    def cdf(self, x: ArrayLike) -> np.ndarray:
         x = np.asarray(x, dtype=np.float64)
         result = np.zeros_like(x)
-        for i, xi in enumerate(np.nditer(x)):
-            xi_val = float(xi)
+        x_flat = x.ravel()
+        for i in range(x_flat.size):
+            xi_val = float(x_flat[i])
             if xi_val <= 0:
                 result.flat[i] = 0.0
             else:
                 result.flat[i] = _igamma(self.k / 2, xi_val / 2)
         return result
 
-    def ppf(self, q) -> float:
+    def ppf(self, q: float) -> float:
         q = float(q)
         if q <= 0 or q >= 1:
             raise ValueError("q must be in (0, 1)")
         lo, hi = 0.0, 1.0
-        while float(self.cdf(hi)) < q:
+        while float(self.cdf(np.array([hi]))[0]) < q:
             hi *= 2
         for _ in range(100):
             mid = (lo + hi) / 2.0
-            if float(self.cdf(mid)) < q:
+            if float(self.cdf(np.array([mid]))[0]) < q:
                 lo = mid
             else:
                 hi = mid
@@ -352,7 +357,7 @@ class FDist:
         if self.d1 <= 0 or self.d2 <= 0:
             raise ValueError("d1 and d2 must be positive")
 
-    def pdf(self, x) -> np.ndarray:
+    def pdf(self, x: ArrayLike) -> np.ndarray:
         x = np.asarray(x, dtype=np.float64)
         d1, d2 = self.d1, self.d2
         result = np.zeros_like(x)
@@ -367,11 +372,12 @@ class FDist:
         result[mask] = np.exp(log_pdf)
         return result
 
-    def cdf(self, x) -> np.ndarray:
+    def cdf(self, x: ArrayLike) -> np.ndarray:
         x = np.asarray(x, dtype=np.float64)
         result = np.zeros_like(x)
-        for i, xi in enumerate(np.nditer(x)):
-            xi_val = float(xi)
+        x_flat = x.ravel()
+        for i in range(x_flat.size):
+            xi_val = float(x_flat[i])
             if xi_val <= 0:
                 result.flat[i] = 0.0
             else:
@@ -379,16 +385,16 @@ class FDist:
                 result.flat[i] = _beta_inc_reg(self.d1 / 2, self.d2 / 2, z)
         return result
 
-    def ppf(self, q) -> float:
+    def ppf(self, q: float) -> float:
         q = float(q)
         if q <= 0 or q >= 1:
             raise ValueError("q must be in (0, 1)")
         lo, hi = 0.0, 1.0
-        while float(self.cdf(hi)) < q:
+        while float(self.cdf(np.array([hi]))[0]) < q:
             hi *= 2
         for _ in range(100):
             mid = (lo + hi) / 2.0
-            if float(self.cdf(mid)) < q:
+            if float(self.cdf(np.array([mid]))[0]) < q:
                 lo = mid
             else:
                 hi = mid
@@ -413,11 +419,12 @@ class BinomialDist:
         if self.n < 0 or not (0 <= self.p <= 1):
             raise ValueError("n must be non-negative and p in [0, 1]")
 
-    def pmf(self, k) -> np.ndarray:
+    def pmf(self, k: ArrayLike) -> np.ndarray:
         k = np.asarray(k, dtype=np.float64)
         result = np.zeros_like(k)
-        for i, ki in enumerate(np.nditer(k)):
-            ki_val = int(round(float(ki)))
+        k_flat = k.ravel()
+        for i in range(k_flat.size):
+            ki_val = int(round(float(k_flat[i])))
             if 0 <= ki_val <= self.n:
                 if self.p == 0.0:
                     result.flat[i] = 1.0 if ki_val == 0 else 0.0
@@ -432,11 +439,12 @@ class BinomialDist:
                     result.flat[i] = np.exp(log_pmf)
         return result
 
-    def cdf(self, x) -> np.ndarray:
+    def cdf(self, x: ArrayLike) -> np.ndarray:
         x = np.asarray(x, dtype=np.float64)
         result = np.zeros_like(x)
-        for i, xi in enumerate(np.nditer(x)):
-            xi_val = int(np.floor(float(xi)))
+        x_flat = x.ravel()
+        for i in range(x_flat.size):
+            xi_val = int(np.floor(float(x_flat[i])))
             if xi_val < 0:
                 result.flat[i] = 0.0
             elif xi_val >= self.n:
@@ -444,11 +452,11 @@ class BinomialDist:
             else:
                 total = 0.0
                 for k in range(xi_val + 1):
-                    total += float(self.pmf(k))
+                    total += float(self.pmf(np.array([k], dtype=np.float64))[0])
                 result.flat[i] = min(total, 1.0)
         return result
 
-    def ppf(self, q) -> int:
+    def ppf(self, q: float) -> int:
         q = float(q)
         if q <= 0:
             return 0
@@ -480,11 +488,12 @@ class PoissonDist:
         if self.lam < 0:
             raise ValueError("lambda must be non-negative")
 
-    def pmf(self, k) -> np.ndarray:
+    def pmf(self, k: ArrayLike) -> np.ndarray:
         k = np.asarray(k, dtype=np.float64)
         result = np.zeros_like(k)
-        for i, ki in enumerate(np.nditer(k)):
-            ki_val = int(round(float(ki)))
+        k_flat = k.ravel()
+        for i in range(k_flat.size):
+            ki_val = int(round(float(k_flat[i])))
             if ki_val >= 0:
                 if self.lam == 0.0:
                     result.flat[i] = 1.0 if ki_val == 0 else 0.0
@@ -494,21 +503,22 @@ class PoissonDist:
                     result.flat[i] = np.exp(log_pmf)
         return result
 
-    def cdf(self, x) -> np.ndarray:
+    def cdf(self, x: ArrayLike) -> np.ndarray:
         x = np.asarray(x, dtype=np.float64)
         result = np.zeros_like(x)
-        for i, xi in enumerate(np.nditer(x)):
-            xi_val = int(np.floor(float(xi)))
+        x_flat = x.ravel()
+        for i in range(x_flat.size):
+            xi_val = int(np.floor(float(x_flat[i])))
             if xi_val < 0:
                 result.flat[i] = 0.0
             else:
                 total = 0.0
                 for k in range(xi_val + 1):
-                    total += float(self.pmf(k))
+                    total += float(self.pmf(np.array([k], dtype=np.float64))[0])
                 result.flat[i] = min(total, 1.0)
         return result
 
-    def ppf(self, q) -> int:
+    def ppf(self, q: float) -> int:
         q = float(q)
         if q <= 0:
             return 0
@@ -533,7 +543,7 @@ class PoissonDist:
 #  Distribution registry
 # ---------------------------------------------------------------------------
 
-DISTRIBUTIONS = {
+DISTRIBUTIONS: dict[str, dict[str, Any]] = {
     "normal": {
         "name_en": "Normal (Gaussian)",
         "name_zh": "正态分布（高斯）",
@@ -585,7 +595,7 @@ DISTRIBUTIONS = {
 }
 
 
-def create_distribution(name: str, **params):
+def create_distribution(name: str, **params: Any) -> Any:
     """Create a distribution instance by name."""
     if name not in DISTRIBUTIONS:
         raise ValueError(f"Unknown distribution: {name}")
@@ -594,32 +604,31 @@ def create_distribution(name: str, **params):
     return dist_class(**params)
 
 
-def get_distribution_names(lang: str = "en") -> list:
+def get_distribution_names(lang: str = "en") -> list[tuple[str, str]]:
     """Get list of distribution names for display."""
     return [(k, v[f"name_{lang}"] if f"name_{lang}" in v else v["name_en"])
             for k, v in DISTRIBUTIONS.items()]
 
 
-def get_pdf_x_range(dist_name: str, params: dict, n_points: int = 500) -> np.ndarray:
+def get_pdf_x_range(dist_name: str, params: dict[str, Any], n_points: int = 500) -> np.ndarray:
     """Get appropriate x-range for plotting a distribution's PDF/PMF."""
-    dist = create_distribution(dist_name, **params)
     if dist_name == "normal":
-        mu, sigma = params.get("mu", 0), abs(params.get("sigma", 1))
+        mu: float = float(params.get("mu", 0))
+        sigma: float = abs(float(params.get("sigma", 1)))
         return np.linspace(mu - 4 * sigma, mu + 4 * sigma, n_points)
     elif dist_name == "t":
-        nu = params.get("nu", 5)
-        return np.linspace(-6, 6, n_points)
+        return np.linspace(-6.0, 6.0, n_points)
     elif dist_name == "chi2":
-        k = params.get("k", 3)
-        return np.linspace(0, max(k + 4 * np.sqrt(2 * k), 1), n_points)
+        k = float(params.get("k", 3))
+        return np.linspace(0.0, max(k + 4 * np.sqrt(2 * k), 1.0), n_points)  # type: ignore
     elif dist_name == "f":
-        d1, d2 = params.get("d1", 5), params.get("d2", 10)
-        return np.linspace(0.01, min(d2 / max(d2 - 2, 0.1) + 3, 10), n_points)
+        d2 = float(params.get("d2", 10))
+        return np.linspace(0.01, min(d2 / max(d2 - 2.0, 0.1) + 3.0, 10.0), n_points)
     elif dist_name == "binomial":
-        n = params.get("n", 20)
+        n: int = int(params.get("n", 20))
         return np.arange(0, n + 1, dtype=np.float64)
     elif dist_name == "poisson":
-        lam = params.get("lam", 5)
+        lam: float = float(params.get("lam", 5))
         return np.arange(0, int(lam + 4 * np.sqrt(lam)) + 1, dtype=np.float64)
     else:
-        return np.linspace(-5, 5, n_points)
+        return np.linspace(-5.0, 5.0, n_points)

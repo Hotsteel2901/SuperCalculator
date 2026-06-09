@@ -9,7 +9,7 @@ import ctypes
 import os
 import sys
 import math as _math
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 # ---------------------------------------------------------------------------
 #  Library loading
@@ -19,7 +19,7 @@ def _find_lib() -> str:
     """Locate the compiled shared library next to this file."""
     base = os.path.dirname(os.path.abspath(__file__))
 
-    def _try_find(names):
+    def _try_find(names: List[str]) -> Optional[str]:
         for n in names:
             p = os.path.join(base, n)
             if os.path.exists(p):
@@ -409,7 +409,7 @@ class CalcEngine:
         return None if _is_invalid(result) else result
 
     @staticmethod
-    def taylor_coefficients(expr: str, a: float, order: int) -> Optional[List[float]]:
+    def taylor_coefficients(expr: str, a: float, order: int) -> Optional[List[Optional[float]]]:
         """Compute Taylor series coefficients c_k = f^(k)(a)/k! for k=0..order.
 
         Returns a list of (order+1) coefficients, or None on error.
@@ -442,7 +442,7 @@ class CalcEngine:
 
     @staticmethod
     def ode_solve_rk4(expr: str, x0: float, y0: float, x_end: float,
-                       n_steps: int = 1000):
+                       n_steps: int = 1000) -> Optional[Dict[str, object]]:
         """Solve ODE dy/dx = f(x, y) with initial condition y(x0) = y0
         using 4th-order Runge-Kutta method over [x0, x_end].
 
@@ -639,7 +639,7 @@ class CalcEngine:
         return complex(re_val, im_val)
 
     @staticmethod
-    def complex_abs(z: complex) -> float:
+    def complex_abs(z: complex) -> Optional[float]:
         """Compute absolute value (modulus) of a complex number."""
         result = _lib.complex_abs_value(z.real, z.imag)
         return None if _is_invalid(result) else result
@@ -658,7 +658,7 @@ class CalcEngine:
         return complex(re_val, im_val)
 
     @staticmethod
-    def complex_array_evaluate(expr: str, zs: List[complex]):
+    def complex_array_evaluate(expr: str, zs: List[complex]) -> List[Optional[complex]]:
         """Evaluate expression at multiple complex points.
         
         Returns a list of complex numbers.
@@ -672,7 +672,7 @@ class CalcEngine:
         arr_im = (ctypes.c_double * n)()
         _lib.complex_array_evaluate(expr.encode("utf-8"), arr_x, arr_y,
                                     arr_re, arr_im, n)
-        result = []
+        result: List[Optional[complex]] = []
         for i in range(n):
             re_val = arr_re[i]
             im_val = arr_im[i]
@@ -718,7 +718,7 @@ class CalcEngine:
     @staticmethod
     def solve_system_2d(f_expr: str, g_expr: str, x0: float = 0.0,
                         y0: float = 0.0, tol: float = 1e-10,
-                        max_iter: int = 100) -> Optional[dict]:
+                        max_iter: int = 100) -> Optional[Dict[str, float]]:
         """Solve a system of two nonlinear equations in two unknowns:
             f(x,y) = 0
             g(x,y) = 0
@@ -751,7 +751,7 @@ class CalcEngine:
 
     @staticmethod
     def evaluate_parametric(expr_x: str, expr_y: str, t_min: float,
-                            t_max: float, n: int = 500):
+                            t_max: float, n: int = 500) -> Optional[Dict[str, object]]:
         """Evaluate parametric curve x(t), y(t) over [t_min, t_max].
 
         Returns a dict with keys:
@@ -773,20 +773,22 @@ class CalcEngine:
             y_expr_sub = _re.sub(r'\bt\b', 'x', expr_y)
             xs = CalcEngine.evaluate_array(x_expr_sub, ts)
             ys = CalcEngine.evaluate_array(y_expr_sub, ts)
-            valid_xs = []
-            valid_ys = []
-            valid_ts = []
+            valid_xs: List[float] = []
+            valid_ys: List[float] = []
+            valid_ts: List[float] = []
             for i in range(n):
-                if xs[i] is not None and ys[i] is not None:
-                    valid_xs.append(xs[i])
-                    valid_ys.append(ys[i])
+                x_val = xs[i]
+                y_val = ys[i]
+                if x_val is not None and y_val is not None:
+                    valid_xs.append(x_val)
+                    valid_ys.append(y_val)
                     valid_ts.append(ts[i])
             return {'xs': valid_xs, 'ys': valid_ys, 'ts': valid_ts}
         except Exception:
             return None
 
     @staticmethod
-    def fft_spectrum(expr: str, a: float, b: float, n: int = 1024):
+    def fft_spectrum(expr: str, a: float, b: float, n: int = 1024) -> Optional[Dict[str, object]]:
         """Compute FFT amplitude and phase spectrum for f(x) over [a,b].
 
         Returns a dict with keys:
@@ -827,7 +829,7 @@ class CalcEngine:
             return None
 
     @staticmethod
-    def linear_regression(xs: List[float], ys: List[float]):
+    def linear_regression(xs: List[float], ys: List[float]) -> Optional[Dict[str, object]]:
         """Compute linear regression y = a*x + b for data points.
 
         Returns a dict with keys:
@@ -848,7 +850,6 @@ class CalcEngine:
             x_arr, y_arr = x_arr[mask], y_arr[mask]
             if len(x_arr) < 2:
                 return None
-            n = len(x_arr)
             x_mean = np.mean(x_arr)
             y_mean = np.mean(y_arr)
             ss_xy = np.sum((x_arr - x_mean) * (y_arr - y_mean))
@@ -876,7 +877,7 @@ class CalcEngine:
             return None
 
     @staticmethod
-    def polynomial_regression(xs: List[float], ys: List[float], degree: int = 2):
+    def polynomial_regression(xs: List[float], ys: List[float], degree: int = 2) -> Optional[Dict[str, object]]:
         """Compute polynomial regression y = c_n*x^n + ... + c_1*x + c_0.
 
         Returns a dict with keys:
@@ -908,7 +909,7 @@ class CalcEngine:
             x_sorted = np.sort(x_arr)
             y_sorted = poly(x_sorted)
             # Build equation string
-            terms = []
+            terms: List[str] = []
             for i, c in enumerate(coeffs):
                 power = degree - i
                 if abs(c) < 1e-12:
@@ -931,7 +932,7 @@ class CalcEngine:
             return None
 
     @staticmethod
-    def exponential_regression(xs: List[float], ys: List[float]):
+    def exponential_regression(xs: List[float], ys: List[float]) -> Optional[Dict[str, object]]:
         """Compute exponential fit y = a * e^(b*x) via linearization: ln(y) = ln(a) + b*x.
 
         Returns a dict with keys:
@@ -954,7 +955,6 @@ class CalcEngine:
             if len(x_arr) < 2:
                 return None
             ln_y = np.log(y_arr)
-            n = len(x_arr)
             x_mean = np.mean(x_arr)
             ln_mean = np.mean(ln_y)
             ss_xy = np.sum((x_arr - x_mean) * (ln_y - ln_mean))
@@ -971,7 +971,6 @@ class CalcEngine:
             r_squared = 1.0 - ss_res / ss_tot if ss_tot != 0 else 0.0
             x_sorted = np.sort(x_arr)
             y_sorted = a * np.exp(b * x_sorted)
-            sign = "+" if b >= 0 else "-"
             eq = f"y = {a:.6g} * e^({b:.6g}*x)"
             return {
                 'a': float(a),
@@ -985,7 +984,7 @@ class CalcEngine:
             return None
 
     @staticmethod
-    def power_regression(xs: List[float], ys: List[float]):
+    def power_regression(xs: List[float], ys: List[float]) -> Optional[Dict[str, object]]:
         """Compute power fit y = a * x^b via linearization: ln(y) = ln(a) + b*ln(x).
 
         Returns a dict with keys:
@@ -1009,7 +1008,6 @@ class CalcEngine:
                 return None
             ln_x = np.log(x_arr)
             ln_y = np.log(y_arr)
-            n = len(x_arr)
             ln_x_mean = np.mean(ln_x)
             ln_y_mean = np.mean(ln_y)
             ss_xy = np.sum((ln_x - ln_x_mean) * (ln_y - ln_y_mean))
@@ -1076,7 +1074,7 @@ class CalcEngine:
         return buf.value.decode("utf-8")
 
     @staticmethod
-    def convert_base_all(value: str, from_base: int) -> Optional[dict]:
+    def convert_base_all(value: str, from_base: int) -> Optional[Dict[str, str]]:
         """Convert a number string to binary, octal, decimal, and hexadecimal.
 
         Returns a dict with keys 'bin', 'oct', 'dec', 'hex', or None on error.
@@ -1099,7 +1097,7 @@ class CalcEngine:
         }
 
     @staticmethod
-    def logarithmic_regression(xs: List[float], ys: List[float]):
+    def logarithmic_regression(xs: List[float], ys: List[float]) -> Optional[Dict[str, object]]:
         """Compute logarithmic fit y = a + b * ln(x).
 
         Returns a dict with keys:
@@ -1122,7 +1120,6 @@ class CalcEngine:
             if len(x_arr) < 2:
                 return None
             ln_x = np.log(x_arr)
-            n = len(x_arr)
             ln_x_mean = np.mean(ln_x)
             y_mean = np.mean(y_arr)
             ss_xy = np.sum((ln_x - ln_x_mean) * (y_arr - y_mean))
