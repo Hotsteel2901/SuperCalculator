@@ -2680,6 +2680,182 @@ STRINGS = {
         "en": "Salvage value must be less than cost, and useful life > 0.",
         "zh": "残值必须小于原值，使用寿命须大于0。",
     },
+    "btn_mat_add": {
+        "en": "A + B",
+        "zh": "A + B",
+    },
+    "btn_mat_sub": {
+        "en": "A - B",
+        "zh": "A - B",
+    },
+    "btn_mat_mul": {
+        "en": "A * B",
+        "zh": "A × B",
+    },
+    "btn_mat_det": {
+        "en": "det(A)",
+        "zh": "det(A)",
+    },
+    "btn_mat_inv": {
+        "en": "inv(A)",
+        "zh": "inv(A)",
+    },
+    "btn_mat_trans": {
+        "en": "A^T",
+        "zh": "A^T",
+    },
+    "btn_mat_rank": {
+        "en": "rank(A)",
+        "zh": "rank(A)",
+    },
+    "btn_mat_rref": {
+        "en": "rref(A)",
+        "zh": "rref(A)",
+    },
+    "btn_mat_eigen": {
+        "en": "eig(A)",
+        "zh": "eig(A)",
+    },
+    "btn_mat_clear": {
+        "en": "Clear",
+        "zh": "清除",
+    },
+    "btn_complex_add": {
+        "en": "z1 + z2",
+        "zh": "z1 + z2",
+    },
+    "btn_complex_sub": {
+        "en": "z1 - z2",
+        "zh": "z1 - z2",
+    },
+    "btn_complex_mul": {
+        "en": "z1 * z2",
+        "zh": "z1 × z2",
+    },
+    "btn_complex_div": {
+        "en": "z1 / z2",
+        "zh": "z1 / z2",
+    },
+    "btn_complex_pow": {
+        "en": "z1 ^ z2",
+        "zh": "z1 ^ z2",
+    },
+    "btn_complex_sin": {
+        "en": "sin(z)",
+        "zh": "sin(z)",
+    },
+    "btn_complex_cos": {
+        "en": "cos(z)",
+        "zh": "cos(z)",
+    },
+    "btn_complex_tan": {
+        "en": "tan(z)",
+        "zh": "tan(z)",
+    },
+    "btn_complex_exp": {
+        "en": "exp(z)",
+        "zh": "exp(z)",
+    },
+    "btn_complex_ln": {
+        "en": "ln(z)",
+        "zh": "ln(z)",
+    },
+    "btn_complex_sqrt": {
+        "en": "sqrt(z)",
+        "zh": "sqrt(z)",
+    },
+    "btn_complex_abs": {
+        "en": "|z|",
+        "zh": "|z|",
+    },
+    "btn_complex_conj": {
+        "en": "conj(z)",
+        "zh": "conj(z)",
+    },
+    "btn_complex_re": {
+        "en": "Re(z)",
+        "zh": "Re(z)",
+    },
+    "btn_complex_im": {
+        "en": "Im(z)",
+        "zh": "Im(z)",
+    },
+    "mat_title_add": {
+        "en": "A + B",
+        "zh": "A + B",
+    },
+    "mat_title_sub": {
+        "en": "A - B",
+        "zh": "A - B",
+    },
+    "mat_title_mul": {
+        "en": "A * B",
+        "zh": "A × B",
+    },
+    "mat_title_det": {
+        "en": "det(A)",
+        "zh": "det(A)",
+    },
+    "mat_title_inv": {
+        "en": "inv(A)",
+        "zh": "inv(A)",
+    },
+    "mat_title_trans": {
+        "en": "A^T (Transpose)",
+        "zh": "A^T (转置)",
+    },
+    "mat_title_rank": {
+        "en": "rank(A)",
+        "zh": "rank(A)",
+    },
+    "mat_title_rref": {
+        "en": "RREF(A)",
+        "zh": "RREF(A)",
+    },
+    "mat_title_eigen": {
+        "en": "Eigenvalues & Eigenvectors",
+        "zh": "特征值和特征向量",
+    },
+    "mat_eigen_header": {
+        "en": "Eigenvalues:",
+        "zh": "特征值:",
+    },
+    "mat_eigen_vec_header": {
+        "en": "Eigenvectors (columns):",
+        "zh": "特征向量 (列):",
+    },
+    "mat_result_det": {
+        "en": "det(A) = {0:.10g}",
+        "zh": "det(A) = {0:.10g}",
+    },
+    "mat_result_rank": {
+        "en": "rank(A) = {0}",
+        "zh": "rank(A) = {0}",
+    },
+    "mat_result_rref": {
+        "en": "Rank = {0}",
+        "zh": "Rank = {0}",
+    },
+    "complex_result_abs": {
+        "en": "|z| = {0:.10g}",
+        "zh": "|z| = {0:.10g}",
+    },
+    "complex_result_conj": {
+        "en": "conj(z) = {0}",
+        "zh": "conj(z) = {0}",
+    },
+    "complex_result_re": {
+        "en": "Re(z) = {0:.10g}",
+        "zh": "Re(z) = {0:.10g}",
+    },
+    "complex_result_im": {
+        "en": "Im(z) = {0:.10g}",
+        "zh": "Im(z) = {0:.10g}",
+    },
+    "complex_result_error": {
+        "en": "Error",
+        "zh": "错误",
+    },
 }
 
 

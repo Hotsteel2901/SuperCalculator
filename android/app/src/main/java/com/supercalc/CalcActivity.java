@@ -347,7 +347,7 @@ public class CalcActivity extends AppCompatActivity {
         if (Double.isNaN(value)) {
             line += getString(R.string.result_error_prefix) + CalcEngine.getLastError();
         } else if (Double.isInfinite(value)) {
-            line += (value > 0 ? "+Inf" : "-Inf");
+            line += (value > 0 ? getString(R.string.result_inf_pos) : getString(R.string.result_inf_neg));
         } else {
             line += String.format("%.10g", value);
         }
@@ -384,7 +384,7 @@ public class CalcActivity extends AppCompatActivity {
         String e = getExpr(); if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
         double root = CalcEngine.solve(e, getGuess(), getA(), getB());
         if (Double.isNaN(root)) {
-            appendResult("Root", Double.NaN);
+            appendResult(getString(R.string.label_root), Double.NaN);
         } else {
             resultView.append(String.format(getString(R.string.result_root), root) + "\n");
             resultView.append(String.format(getString(R.string.result_root_fval), CalcEngine.evaluate(e, root)) + "\n");
@@ -402,7 +402,7 @@ public class CalcActivity extends AppCompatActivity {
             result = CalcEngine.findMaximum(e, a, b);
         }
         if (Double.isNaN(result)) {
-            appendResult(minimum ? "Min" : "Max", Double.NaN);
+            appendResult(minimum ? getString(R.string.label_min) : getString(R.string.label_max), Double.NaN);
         } else {
             resultView.append(String.format(getString(minimum ? R.string.result_min : R.string.result_max), result, CalcEngine.evaluate(e, result)) + "\n");
         }
@@ -477,7 +477,7 @@ public class CalcActivity extends AppCompatActivity {
                 resultView.append("  x" + (i + 1) + " = " + fmt(r) + "  (f=" + vStr + ")\n");
             }
             if (uniqueRoots.size() > 20) {
-                resultView.append("  ... and " + (uniqueRoots.size() - 20) + " more\n");
+                resultView.append(String.format(getString(R.string.result_and_more), (uniqueRoots.size() - 20)) + "\n");
             }
         }
     }
@@ -505,7 +505,7 @@ public class CalcActivity extends AppCompatActivity {
             resultView.append(String.format(getString(R.string.tangent_label), x0, slope, x0, y0) + "\n");
         } else {
             if (Math.abs(slope) < 1e-12) {
-                resultView.append("Normal: vertical line x = " + fmt(x0) + "\n");
+                resultView.append(String.format(getString(R.string.result_normal_vert), x0) + "\n");
             } else {
                 double ns = -1.0 / slope;
                 resultView.append(String.format(getString(R.string.normal_label), x0, ns, x0, y0) + "\n");
@@ -557,7 +557,7 @@ public class CalcActivity extends AppCompatActivity {
         double result = CalcEngine.areaBetweenCurves(eF, eG, a, b);
         if (Double.isNaN(result)) {
             String err = CalcEngine.getLastError();
-            resultView.append(String.format(getString(R.string.area_between_error), (err.isEmpty() ? "computation failed" : err)) + "\n");
+            resultView.append(String.format(getString(R.string.area_between_error), (err.isEmpty() ? getString(R.string.result_computation_failed) : err)) + "\n");
             return;
         }
         resultView.append(String.format(getString(R.string.area_between_result), a, b, a, b, result) + "\n");
@@ -583,7 +583,7 @@ public class CalcActivity extends AppCompatActivity {
         HashMap<String, Object> result = CalcEngine.solveSystem2d(fExpr, gExpr, x0, y0);
         if (result == null) {
             String err = CalcEngine.getLastError();
-            resultView.append(String.format(getString(R.string.system_solver_error), (err.isEmpty() ? "computation failed" : err)) + "\n");
+            resultView.append(String.format(getString(R.string.system_solver_error), (err.isEmpty() ? getString(R.string.result_computation_failed) : err)) + "\n");
             return;
         }
 
@@ -600,14 +600,14 @@ public class CalcActivity extends AppCompatActivity {
         double gVal = CalcEngine.evaluateXY(gExpr, xSol, ySol);
 
         StringBuilder sb = new StringBuilder();
-        sb.append("f(x,y) = ").append(fExpr).append("\n");
-        sb.append("g(x,y) = ").append(gExpr).append("\n\n");
+        sb.append(String.format(getString(R.string.system_func_f), fExpr)).append("\n");
+        sb.append(String.format(getString(R.string.system_func_g), gExpr)).append("\n\n");
         sb.append(getString(R.string.system_solution_label));
-        sb.append("  x = ").append(fmt(xSol)).append("\n");
-        sb.append("  y = ").append(fmt(ySol)).append("\n\n");
+        sb.append(String.format(getString(R.string.system_sol_x), fmt(xSol))).append("\n");
+        sb.append(String.format(getString(R.string.system_sol_y), fmt(ySol))).append("\n\n");
         sb.append(getString(R.string.system_residuals_label));
-        sb.append("  f(x,y) = ").append(Double.isNaN(fVal) ? "N/A" : String.format("%.2e", fVal)).append("\n");
-        sb.append("  g(x,y) = ").append(Double.isNaN(gVal) ? "N/A" : String.format("%.2e", gVal)).append("\n");
+        sb.append(String.format(getString(R.string.system_resid_f), Double.isNaN(fVal) ? "N/A" : String.format("%.2e", fVal))).append("\n");
+        sb.append(String.format(getString(R.string.system_resid_g), Double.isNaN(gVal) ? "N/A" : String.format("%.2e", gVal))).append("\n");
 
         android.widget.TextView tv = new android.widget.TextView(this);
         tv.setText(sb.toString());
@@ -676,9 +676,9 @@ public class CalcActivity extends AppCompatActivity {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("DFT Spectrum (").append(n).append(" samples)\n");
+        sb.append(String.format(getString(R.string.fft_spectrum_header), n)).append("\n");
         sb.append(String.format(getString(R.string.fft_dominant_freq), freqs[peakIdx]))
-          .append(" A=").append(fmt(amps[peakIdx])).append("\n\n");
+          .append(getString(R.string.fft_amplitude)).append(fmt(amps[peakIdx])).append("\n\n");
         int show = Math.min(m, 16);
         sb.append(getString(R.string.fft_header)).append("\n");
         sb.append("--------------------------------\n");
@@ -687,7 +687,7 @@ public class CalcActivity extends AppCompatActivity {
               .append(fmt(amps[i])).append("\t")
               .append(fmt(phases[i])).append("\n");
         }
-        if (m > show) sb.append("... and ").append(m - show).append(" more bins\n");
+        if (m > show) sb.append(String.format(getString(R.string.fft_more_bins), m - show)).append("\n");
 
         android.widget.TextView tv = new android.widget.TextView(this);
         tv.setText(sb.toString());
@@ -718,28 +718,28 @@ public class CalcActivity extends AppCompatActivity {
         double right = CalcEngine.limitRight(e, a);
 
         if (Double.isNaN(left) && Double.isNaN(right)) {
-            resultView.append("lim(x→" + fmt(a) + "): Error: " + CalcEngine.getLastError() + "\n");
+            resultView.append(String.format(getString(R.string.limit_error), a, CalcEngine.getLastError()) + "\n");
             return;
         }
 
         if (!Double.isNaN(left) && !Double.isNaN(right) && Math.abs(left - right) < 1e-8) {
             double val = (left + right) / 2.0;
             resultView.append(String.format(getString(R.string.limit_result), a, val) + "\n");
-            resultView.append("  Left:  " + fmt(left) + "\n");
-            resultView.append("  Right: " + fmt(right) + "\n");
+            resultView.append(String.format(getString(R.string.limit_left), left) + "\n");
+            resultView.append(String.format(getString(R.string.limit_right), right) + "\n");
         } else {
             if (!Double.isNaN(left) && !Double.isNaN(right)) {
                 resultView.append(String.format(getString(R.string.limit_two_sided_not_exist), left, right) + "\n");
             } else {
                 if (!Double.isNaN(left)) {
-                    resultView.append("lim(x→" + fmt(a) + "⁻) = " + fmt(left) + "\n");
+                    resultView.append(String.format(getString(R.string.limit_left_result), a, left) + "\n");
                 } else {
-                    resultView.append("lim(x→" + fmt(a) + "⁻) = DNE\n");
+                    resultView.append(String.format(getString(R.string.limit_left_dne), a) + "\n");
                 }
                 if (!Double.isNaN(right)) {
-                    resultView.append("lim(x→" + fmt(a) + "⁺) = " + fmt(right) + "\n");
+                    resultView.append(String.format(getString(R.string.limit_right_result), a, right) + "\n");
                 } else {
-                    resultView.append("lim(x→" + fmt(a) + "⁺) = DNE\n");
+                    resultView.append(String.format(getString(R.string.limit_right_dne), a) + "\n");
                 }
                 resultView.append(getString(R.string.limit_two_sided_not_exist) + "\n");
             }
@@ -754,13 +754,13 @@ public class CalcActivity extends AppCompatActivity {
         String label;
         if (left) {
             result = CalcEngine.limitLeft(e, a);
-            label = "lim(x→" + fmt(a) + "⁻)";
+            label = String.format(getString(R.string.limit_left_label), a);
         } else {
             result = CalcEngine.limitRight(e, a);
-            label = "lim(x→" + fmt(a) + "⁺)";
+            label = String.format(getString(R.string.limit_right_label), a);
         }
         if (Double.isNaN(result)) {
-            resultView.append(label + ": Error: " + CalcEngine.getLastError() + "\n");
+            resultView.append(String.format(getString(R.string.limit_side_error), label, CalcEngine.getLastError()) + "\n");
         } else {
             resultView.append(label + " = " + fmt(result) + "\n");
         }
@@ -869,9 +869,9 @@ public class CalcActivity extends AppCompatActivity {
         int count = (int) countObj;
 
         StringBuilder sb = new StringBuilder();
-        sb.append("dy/dx = ").append(expr).append(", y(").append(fmt(x0)).append(") = ").append(fmt(y0)).append("\n");
-        sb.append("Solved over [").append(fmt(x0)).append(", ").append(fmt(xEnd)).append("] with ").append(steps).append(" steps (RK4)\n\n");
-        sb.append(String.format("%14s  %14s\n", "x", "y(x)"));
+        sb.append(String.format(getString(R.string.ode_header), expr, x0, y0)).append("\n");
+        sb.append(String.format(getString(R.string.ode_solved), x0, xEnd, steps)).append("\n\n");
+        sb.append(String.format("%14s  %14s\n", getString(R.string.ode_col_x), getString(R.string.ode_col_y)));
         sb.append("--------------------------------\n");
         int show = Math.min(count, 30);
         int step = count > show ? count / show : 1;
@@ -879,7 +879,7 @@ public class CalcActivity extends AppCompatActivity {
             String yStr = Double.isNaN(ys[i]) ? "N/A" : fmt(ys[i]);
             sb.append(String.format("%14s  %14s\n", fmt(xs[i]), yStr));
         }
-        if (count > show) sb.append("  ... (").append(count).append(" total points)\n");
+        if (count > show) sb.append(String.format(getString(R.string.ode_truncated), count)).append("\n");
 
         android.widget.TextView tv = new android.widget.TextView(this);
         tv.setText(sb.toString());
@@ -1054,16 +1054,17 @@ public class CalcActivity extends AppCompatActivity {
         for (double v : data) sum += v;
         double mean = sum / n;
 
-        java.util.Arrays.sort(data);
+        double[] sorted = data.clone();
+        java.util.Arrays.sort(sorted);
         double median;
         if (n % 2 == 0) {
-            median = (data[n / 2 - 1] + data[n / 2]) / 2.0;
+            median = (sorted[n / 2 - 1] + sorted[n / 2]) / 2.0;
         } else {
-            median = data[n / 2];
+            median = sorted[n / 2];
         }
 
-        double min = data[0];
-        double max = data[n - 1];
+        double min = sorted[0];
+        double max = sorted[n - 1];
         double range = max - min;
 
         // Population variance & std
@@ -1081,8 +1082,8 @@ public class CalcActivity extends AppCompatActivity {
         double stdSam = Math.sqrt(varSam);
 
         // Quartiles
-        double q1 = data[n / 4];
-        double q3 = data[Math.min(3 * n / 4, n - 1)];
+        double q1 = sorted[n / 4];
+        double q3 = sorted[Math.min(3 * n / 4, n - 1)];
         double iqr = q3 - q1;
 
         StringBuilder sb = new StringBuilder();
@@ -1093,20 +1094,20 @@ public class CalcActivity extends AppCompatActivity {
         sb.append(String.format(getString(R.string.stats_min), min)).append("\n");
         sb.append(String.format(getString(R.string.stats_max), max)).append("\n");
         sb.append(String.format(getString(R.string.stats_range), range)).append("\n");
-        sb.append(String.format("  Q1 (25%%)  = %.10g\n", q1));
-        sb.append(String.format("  Q3 (75%%)  = %.10g\n", q3));
-        sb.append(String.format("  IQR       = %.10g\n", iqr));
-        sb.append(String.format("  Var (pop) = %.10g\n", varPop));
-        if (n > 1) sb.append(String.format("  Var (sam) = %.10g\n", varSam));
-        sb.append(String.format("  Std (pop) = %.10g\n", stdPop));
-        if (n > 1) sb.append(String.format("  Std (sam) = %.10g\n", stdSam));
-        sb.append("\nSorted: ");
+        sb.append(String.format(getString(R.string.stats_q1), q1)).append("\n");
+        sb.append(String.format(getString(R.string.stats_q3), q3)).append("\n");
+        sb.append(String.format(getString(R.string.stats_iqr), iqr)).append("\n");
+        sb.append(String.format(getString(R.string.stats_var_pop), varPop)).append("\n");
+        if (n > 1) sb.append(String.format(getString(R.string.stats_var_sam), varSam)).append("\n");
+        sb.append(String.format(getString(R.string.stats_std_pop), stdPop)).append("\n");
+        if (n > 1) sb.append(String.format(getString(R.string.stats_std_sam), stdSam)).append("\n");
+        sb.append(getString(R.string.stats_sorted));
         int show = Math.min(n, 20);
         for (int i = 0; i < show; i++) {
             if (i > 0) sb.append(", ");
-            sb.append(fmt(data[i]));
+            sb.append(fmt(sorted[i]));
         }
-        if (n > show) sb.append(" ... (").append(n).append(" total)");
+        if (n > show) sb.append(String.format(getString(R.string.stats_total), n));
 
         android.widget.TextView tv = new android.widget.TextView(this);
         tv.setText(sb.toString());
@@ -1225,7 +1226,7 @@ public class CalcActivity extends AppCompatActivity {
         for (int i = 0; i < a.length; i++)
             for (int j = 0; j < a[0].length; j++)
                 r[i][j] = a[i][j] + b[i][j];
-        showMatrixResult("A + B", formatMatrix(r));
+        showMatrixResult(getString(R.string.mat_add_title), formatMatrix(r));
         resultView.append(getString(R.string.mat_add_result) + "\n");
     }
 
@@ -1238,7 +1239,7 @@ public class CalcActivity extends AppCompatActivity {
         for (int i = 0; i < a.length; i++)
             for (int j = 0; j < a[0].length; j++)
                 r[i][j] = a[i][j] - b[i][j];
-        showMatrixResult("A - B", formatMatrix(r));
+        showMatrixResult(getString(R.string.mat_sub_title), formatMatrix(r));
         resultView.append(getString(R.string.mat_sub_result) + "\n");
     }
 
@@ -1254,7 +1255,7 @@ public class CalcActivity extends AppCompatActivity {
                 for (int k = 0; k < a[0].length; k++) sum += a[i][k] * b[k][j];
                 r[i][j] = sum;
             }
-        showMatrixResult("A * B", formatMatrix(r));
+        showMatrixResult(getString(R.string.mat_mul_title), formatMatrix(r));
         resultView.append(getString(R.string.mat_mul_result) + "\n");
     }
 
@@ -1264,8 +1265,8 @@ public class CalcActivity extends AppCompatActivity {
         if (a.length == 0) return;
         if (a.length != a[0].length) { toast(getString(R.string.toast_det_square)); return; }
         double det = det(a);
-        showMatrixResult("det(A)", "det(A) = " + fmt(det));
-        resultView.append("det(A) = " + fmt(det) + "\n");
+        showMatrixResult(getString(R.string.mat_det_title), String.format(getString(R.string.mat_det_result), det));
+        resultView.append(String.format(getString(R.string.mat_det_result), det) + "\n");
     }
 
     private double det(double[][] m) {
@@ -1344,7 +1345,7 @@ public class CalcActivity extends AppCompatActivity {
         for (int i = 0; i < n; i++)
             for (int j = 0; j < n; j++)
                 inv[i][j] = aug[i][n + j];
-        showMatrixResult("inv(A)", formatMatrix(inv));
+        showMatrixResult(getString(R.string.mat_inv_title), formatMatrix(inv));
         resultView.append(getString(R.string.mat_inv_result) + "\n");
     }
 
@@ -1356,7 +1357,7 @@ public class CalcActivity extends AppCompatActivity {
         for (int i = 0; i < m; i++)
             for (int j = 0; j < n; j++)
                 t[j][i] = a[i][j];
-        showMatrixResult("A^T (Transpose)", formatMatrix(t));
+        showMatrixResult(getString(R.string.mat_trans_title), formatMatrix(t));
         resultView.append(getString(R.string.mat_transpose_result) + "\n");
     }
 
@@ -1400,24 +1401,24 @@ public class CalcActivity extends AppCompatActivity {
             double detA = a[0][0]*a[1][1] - a[0][1]*a[1][0];
             double disc = trace*trace - 4*detA;
             StringBuilder sb = new StringBuilder();
-            sb.append("Eigenvalues for 2x2 matrix:\n\n");
+            sb.append(getString(R.string.mat_eigen_header)).append("\n\n");
             if (disc >= 0) {
                 double l1 = (trace + Math.sqrt(disc)) / 2;
                 double l2 = (trace - Math.sqrt(disc)) / 2;
-                sb.append("  lambda1 = ").append(fmt(l1)).append("\n");
-                sb.append("  lambda2 = ").append(fmt(l2)).append("\n");
+                sb.append(String.format(getString(R.string.mat_eigen_lambda), 1, l1)).append("\n");
+                sb.append(String.format(getString(R.string.mat_eigen_lambda), 2, l2)).append("\n");
             } else {
                 double real = trace / 2;
                 double imag = Math.sqrt(-disc) / 2;
-                sb.append("  lambda1 = ").append(fmt(real)).append(" + ").append(fmt(imag)).append("i\n");
-                sb.append("  lambda2 = ").append(fmt(real)).append(" - ").append(fmt(imag)).append("i\n");
+                sb.append(String.format(getString(R.string.mat_eigen_lambda_complex), 1, real, imag)).append("\n");
+                sb.append(String.format(getString(R.string.mat_eigen_lambda_complex), 2, real, -imag)).append("\n");
             }
-            showMatrixResult("Eigenvalues", sb.toString());
+            showMatrixResult(getString(R.string.mat_eigen_title), sb.toString());
         } else {
             // For larger matrices: use power iteration to find dominant eigenvalue
             // and deflate to find subsequent ones (QR algorithm simplified)
             StringBuilder sb = new StringBuilder();
-            sb.append("Eigenvalue approximation (power iteration):\n\n");
+            sb.append(getString(R.string.mat_eigen_approx_header)).append("\n\n");
             double[][] mat = new double[n][n];
             for (int i = 0; i < n; i++)
                 for (int j = 0; j < n; j++)
@@ -1457,15 +1458,15 @@ public class CalcActivity extends AppCompatActivity {
                     v = newV;
                 }
                 eigenvalues[e] = eigenval;
-                sb.append("  lambda").append(e + 1).append(" = ").append(fmt(eigenval)).append("\n");
+                sb.append(String.format(getString(R.string.mat_eigen_lambda), e + 1, eigenval)).append("\n");
                 // Deflate: subtract eigenvalue * v * v^T
                 for (int i = 0; i < n; i++)
                     for (int j = 0; j < n; j++)
                         mat[i][j] -= eigenval * v[i] * v[j];
             }
-            showMatrixResult("Eigenvalues", sb.toString());
+            showMatrixResult(getString(R.string.mat_eigen_title), sb.toString());
         }
-        resultView.append("Eigenvalue computation done\n");
+        resultView.append(getString(R.string.mat_eigen_done) + "\n");
     }
 
     private void onStatsHistogram() {
@@ -1967,8 +1968,10 @@ public class CalcActivity extends AppCompatActivity {
         intent.putExtra("implicit_expr", impExpr);
         intent.putExtra("implicit_resolution", resolution);
         intent.putExtra("is_implicit", true);
-        intent.putExtra("x_min", -10.0);
-        intent.putExtra("x_max", 10.0);
+        intent.putExtra("x_min", getA());
+        intent.putExtra("x_max", getB());
+        intent.putExtra("y_min", getA());
+        intent.putExtra("y_max", getB());
         startActivity(intent);
     }
 
@@ -2545,7 +2548,7 @@ public class CalcActivity extends AppCompatActivity {
         String dowStr = isZh ? daysZh[dow] : daysEn[dow];
         String msg = isZh
             ? d.getYear() + "年" + d.getMonthValue() + "月" + d.getDayOfMonth() + "日是星期" + dowStr
-            : d + " is a " + dowStr;
+            : d + getString(R.string.cal_is_a) + dowStr;
         calResultView.setText(msg);
     }
 
@@ -2557,9 +2560,7 @@ public class CalcActivity extends AppCompatActivity {
             return;
         }
         long diff = ChronoUnit.DAYS.between(d1, d2);
-        boolean isZh = getResources().getConfiguration().locale.getLanguage().equals("zh");
-        String msg = isZh ? "两日期相差：" + diff + " 天" : "Days between dates: " + diff;
-        calResultView.setText(msg);
+        calResultView.setText(String.format(getString(R.string.cal_days_between), diff));
     }
 
     private void onCalAddDays() {
@@ -2580,7 +2581,7 @@ public class CalcActivity extends AppCompatActivity {
         boolean isZh = getResources().getConfiguration().locale.getLanguage().equals("zh");
         String msg = isZh
             ? d.toString() + " 加 " + add + " 天 = " + result
-            : d + " + " + add + " days = " + result;
+            : d + " + " + String.format(getString(R.string.cal_days_added), add, result.toString());
         calResultView.setText(msg);
     }
 
@@ -2589,6 +2590,7 @@ public class CalcActivity extends AppCompatActivity {
     // ------------------------------------------------------------------
     private EditText probNInput, probRInput, probPInput;
     private EditText probPbaInput, probPaInput, probPbnaInput;
+    private EditText probPbInput, probPabInput;
     private TextView probResultView;
 
     private void setupProbability() {
@@ -2598,6 +2600,8 @@ public class CalcActivity extends AppCompatActivity {
         probPbaInput = findViewById(R.id.prob_pba_input);
         probPaInput = findViewById(R.id.prob_pa_input);
         probPbnaInput = findViewById(R.id.prob_pbna_input);
+        probPbInput = findViewById(R.id.prob_pb_input);
+        probPabInput = findViewById(R.id.prob_pab_input);
         probResultView = findViewById(R.id.prob_result_view);
 
         MaterialButton btnCombo = findViewById(R.id.btn_prob_combo);
@@ -2656,8 +2660,8 @@ public class CalcActivity extends AppCompatActivity {
     private void onProbUnion() {
         try {
             double pa = probParseDouble(probPaInput);
-            double pb = probParseDouble(probRInput);
-            double pab = probParseDouble(probPInput);
+            double pb = probParseDouble(probPbInput);
+            double pab = probParseDouble(probPabInput);
             double result = Math.max(0, Math.min(1, pa + pb - pab));
             probResultView.setText(String.format(getString(R.string.prob_result_union), result));
         } catch (Exception ex) { toast(getString(R.string.prob_invalid_input)); }
@@ -2666,7 +2670,7 @@ public class CalcActivity extends AppCompatActivity {
     private void onProbIntersect() {
         try {
             double pa = probParseDouble(probPaInput);
-            double pb = probParseDouble(probRInput);
+            double pb = probParseDouble(probPbInput);
             double result = pa * pb;
             probResultView.setText(String.format(getString(R.string.prob_result_intersect), result));
         } catch (Exception ex) { toast(getString(R.string.prob_invalid_input)); }
@@ -2682,8 +2686,8 @@ public class CalcActivity extends AppCompatActivity {
 
     private void onProbConditional() {
         try {
-            double pab = probParseDouble(probPInput);
-            double pb = probParseDouble(probRInput);
+            double pab = probParseDouble(probPabInput);
+            double pb = probParseDouble(probPbInput);
             if (pb == 0) { toast(getString(R.string.prob_pb_zero)); return; }
             double result = pab / pb;
             probResultView.setText(String.format(getString(R.string.prob_result_conditional), result));

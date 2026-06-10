@@ -367,9 +367,9 @@
     <string name="stats_min">最小值：%.10g</string>
     <string name="stats_max">最大值：%.10g</string>
     <string name="stats_range">极差：%.10g</string>
-    <string name="stats_q1">Q1：%.10g</string>
-    <string name="stats_q3">Q3：%.10g</string>
-    <string name="stats_iqr">IQR：%.10g</string>
+    <string name="stats_q1">  Q1 (25%%)  = %.10g</string>
+    <string name="stats_q3">  Q3 (75%%)  = %.10g</string>
+    <string name="stats_iqr">  IQR       = %.10g</string>
     <string name="stats_var">方差：%.10g</string>
     <string name="stats_std">标准差：%.10g</string>
     <string name="stats_toast">统计：n=%d，均值=%.6g，标准差=%.6g</string>
@@ -457,6 +457,8 @@
     <string name="prob_hint_pba">P(B|A)</string>
     <string name="prob_hint_pa">P(A)</string>
     <string name="prob_hint_pbna">P(B|A\')</string>
+    <string name="prob_hint_pb">P(B)</string>
+    <string name="prob_hint_pab">P(A∩B)</string>
     <string name="prob_combo">组合C(n,r)</string>
     <string name="prob_perm">排列P(n,r)</string>
     <string name="prob_union">P(A∪B)</string>
@@ -506,4 +508,74 @@
     <string name="fin_invalid_input">请输入有效的值。</string>
     <string name="fin_invalid_flows">请输入至少2个逗号分隔的现金流。</string>
     <string name="fin_depr_invalid">残值须小于原值，使用寿命须大于0。</string>
+
+    <!-- Stats labels -->
+    <string name="stats_var_pop">  总体方差 = %.10g</string>
+    <string name="stats_var_sam">  样本方差 = %.10g</string>
+    <string name="stats_std_pop">  总体标准差 = %.10g</string>
+    <string name="stats_std_sam">  样本标准差 = %.10g</string>
+    <string name="stats_sorted">\n排序: </string>
+    <string name="stats_total"> ... (共%d个)</string>
+
+    <!-- Result labels -->
+    <string name="label_root">根</string>
+    <string name="label_min">最小值</string>
+    <string name="label_max">最大值</string>
+    <string name="result_inf_pos">+∞</string>
+    <string name="result_inf_neg">-∞</string>
+    <string name="result_normal_vert">法线: 垂直线 x = %.10g</string>
+    <string name="result_computation_failed">计算失败</string>
+
+    <!-- Matrix labels -->
+    <string name="mat_add_title">A + B</string>
+    <string name="mat_inv_title">inv(A)</string>
+    <string name="mat_trans_title">A^T (转置)</string>
+    <string name="mat_eigen_title">特征值</string>
+    <string name="mat_eigen_header">2×2矩阵特征值:</string>
+    <string name="mat_eigen_approx_header">特征值近似 (幂迭代法):</string>
+    <string name="mat_eigen_lambda">  λ%d = %.10g</string>
+    <string name="mat_eigen_lambda_complex">  λ%d = %.10g + %.10gi</string>
+    <string name="mat_eigen_done">特征值计算完成</string>
+
+    <!-- Limit labels -->
+    <string name="limit_error">lim(x→%.6g): 错误: %s</string>
+    <string name="limit_left">  左极限:  %.10g</string>
+    <string name="limit_right">  右极限: %.10g</string>
+    <string name="limit_left_result">lim(x→%.6g⁻) = %.10g</string>
+    <string name="limit_right_result">lim(x→%.6g⁺) = %.10g</string>
+    <string name="limit_left_dne">lim(x→%.6g⁻) = 不存在</string>
+    <string name="limit_right_dne">lim(x→%.6g⁺) = 不存在</string>
+    <string name="limit_side_error">%s: 错误: %s</string>
+    <string name="limit_left_label">lim(x→%.6g⁻)</string>
+    <string name="limit_right_label">lim(x→%.6g⁺)</string>
+
+    <!-- ODE labels -->
+    <string name="ode_header">dy/dx = %s, y(%.6g) = %.6g</string>
+    <string name="ode_solved">在 [%.6g, %.6g] 上求解，%d 步 (RK4)</string>
+    <string name="ode_col_x">x</string>
+    <string name="ode_col_y">y(x)</string>
+    <string name="ode_truncated">  ... (共%d个点)</string>
+
+    <!-- Calendar labels -->
+    <string name="cal_days_between">日期间隔: %d 天</string>
+    <string name="cal_days_added">%d 天 = %s</string>
+    <string name="cal_is_a"> 是 </string>
+
+    <!-- Misc result labels -->
+    <string name="result_and_more">... 另有 %d 项</string>
+    <string name="result_sorted_prefix">排序: </string>
+    <string name="result_total_count"> ... (共%d个)</string>
+
+    <!-- FFT labels -->
+    <string name="fft_spectrum_header">DFT频谱 (%d 个采样点)</string>
+    <string name="fft_amplitude"> A=</string>
+    <string name="fft_more_bins">... 另有 %d 个频段</string>
+
+    <!-- System solver labels -->
+    <string name="system_func_f">f(x,y) = %s</string>
+    <string name="system_func_g">g(x,y) = %s</string>
+    <string name="system_sol_x">  x = %s</string>
+    <string name="system_sol_y">  y = %s</string>
+    <string name="system_resid_f">  f(x,y) = %s</string>
+    <string name="system_resid_g">  g(x,y) = %s</string>
 </resources>
