@@ -141,7 +141,7 @@ CMAP_3D_OPTIONS = [
 ]
 
 PARAM_PATTERN = re.compile(r'\b([a-zA-Z]+)\b')
-KNOWN_FUNCTIONS = {'sin', 'cos', 'tan', 'log', 'ln', 'exp', 'sqrt', 'abs', 'floor', 'ceil'}
+KNOWN_FUNCTIONS = {'sin', 'cos', 'tan', 'log', 'ln', 'exp', 'sqrt', 'abs', 'floor', 'ceil', 'mod'}
 KNOWN_CONSTANTS = {'pi', 'e'}
 INDEPENDENT_VARS = {'x', 'y', 't'}  # variables used by the engine, not parameters
 

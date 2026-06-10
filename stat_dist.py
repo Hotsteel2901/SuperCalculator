@@ -118,11 +118,11 @@ def _igamma(a: float, x: float) -> float:
             an = -i * (i - a)
             b += 2.0
             d = an * d + b
-            if abs(d) < 1e-30:
-                d = np.sign(d) * 1e-30 if d != 0 else 1e-30
+            if abs(d) < 1e-300:
+                d = np.sign(d) * 1e-300 if d != 0 else 1e-300
             c = b + an / c
-            if abs(c) < 1e-30:
-                c = np.sign(c) * 1e-30 if c != 0 else 1e-30
+            if abs(c) < 1e-300:
+                c = np.sign(c) * 1e-300 if c != 0 else 1e-300
             d = 1.0 / d
             delta = d * c
             h *= delta
@@ -238,24 +238,17 @@ class StudentTDist:
                 if abs(xi_val) < 1e-15:
                     result.flat[i] = 0.5
                 elif xi_val > 0:
-                    h = xi_val / n
-                    total = 0.0
-                    for j in range(n):
-                        t = j * h
-                        total += float(self.pdf(np.array([t]))[0])
-                    total += float(self.pdf(np.array([xi_val]))[0]) / 2.0
-                    total -= float(self.pdf(np.array([0.0]))[0]) / 2.0
-                    result.flat[i] = 0.5 + total * h
+                    # Vectorized trapezoidal integration
+                    t_vals = np.linspace(0, xi_val, n + 1)
+                    pdf_vals = self.pdf(t_vals)
+                    total = np.trapz(pdf_vals, t_vals)
+                    result.flat[i] = 0.5 + total
                 else:
                     # CDF(x) = 1 - CDF(-x) for x < 0
-                    h = -xi_val / n
-                    total = 0.0
-                    for j in range(n):
-                        t = -j * h
-                        total += float(self.pdf(np.array([t]))[0])
-                    total += float(self.pdf(np.array([-xi_val]))[0]) / 2.0
-                    total -= float(self.pdf(np.array([0.0]))[0]) / 2.0
-                    result.flat[i] = 0.5 - total * h
+                    t_vals = np.linspace(0, -xi_val, n + 1)
+                    pdf_vals = self.pdf(t_vals)
+                    total = np.trapz(pdf_vals, t_vals)
+                    result.flat[i] = 0.5 - total
         return result
 
     def ppf(self, q: float) -> float:
@@ -531,7 +524,7 @@ class PoissonDist:
                 return k
             k += 1
             if k > cap:
-                return k
+                return k - 1
 
     def mean(self) -> float:
         return self.lam

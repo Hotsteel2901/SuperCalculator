@@ -368,7 +368,7 @@ static int eval_rpn(RPN* rpn, int nrpn, double x, double y, double* result) {
                 if (sp < 1) { set_error("Invalid expression"); return -1; }
                 double a = stack[--sp];
                 if (a < 0 || floor(a) != a) { set_error("Factorial requires non-negative integer"); return -1; }
-                else if (a > 170) { set_error("Factorial overflow (max 170!)"); stack[sp++] = INFINITY; }
+                else if (a > 170) { set_error("Factorial overflow (max 170!)"); stack[sp++] = NAN; }
                 else {
                     double r = 1.0;
                     for (int k = 2; k <= (int)a; k++) r *= k;
@@ -384,7 +384,14 @@ static int eval_rpn(RPN* rpn, int nrpn, double x, double y, double* result) {
                     case '*': stack[sp++] = a*b; break;
                     case '/': stack[sp++] = b ? a/b : (set_error("Division by zero"),NAN); break;
                     case '%': stack[sp++] = b ? fmod(a,b) : (set_error("Modulo by zero"),NAN); break;
-                    case '^': stack[sp++] = pow(a,b); break;
+                    case '^':
+                        if (a < 0.0 && floor(b) != b) {
+                            set_error("Negative base with non-integer exponent");
+                            stack[sp++] = NAN;
+                        } else {
+                            stack[sp++] = pow(a,b);
+                        }
+                        break;
                     default:  set_error("Unknown operator"); return -1;
                 }
             }

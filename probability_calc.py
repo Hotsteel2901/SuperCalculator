@@ -165,11 +165,18 @@ def poisson_probability(lam: float, k: int) -> Optional[float]:
     """Compute P(X = k) for Poisson distribution with rate lambda.
     
     P(X = k) = e^(-lambda) * lambda^k / k!
+    Uses log-space computation to avoid overflow for large lambda or k.
     """
     if lam < 0 or k < 0 or k != int(k):
         return None
     k = int(k)
-    return math.exp(-lam) * (lam ** k) / math.factorial(k)
+    if lam == 0:
+        return 1.0 if k == 0 else 0.0
+    if k == 0:
+        return math.exp(-lam)
+    # Use log-space to avoid overflow
+    log_result = -lam + k * math.log(lam) - math.lgamma(k + 1)
+    return math.exp(log_result)
 
 
 def geometric_probability(p: float, k: int) -> Optional[float]:
@@ -204,7 +211,7 @@ def expected_value(values: List[float], probabilities: List[float]) -> Optional[
     if not all(0 <= p <= 1 for p in probabilities):
         return None
     total_p = sum(probabilities)
-    if abs(total_p - 1.0) > 1e-9:
+    if abs(total_p - 1.0) > 1e-6:
         return None
     return sum(v * p for v, p in zip(values, probabilities))
 

@@ -689,7 +689,6 @@ class CalcEngine:
             return 0.0 if a == b else None
         if n < 1:
             return None
-        import math as _math
         h = (b - a) / n
         xs = [a + i * h for i in range(n + 1)]
         ys = CalcEngine.evaluate_array(expr, xs)
@@ -861,7 +860,7 @@ class CalcEngine:
             # R² calculation
             ss_res = np.sum((y_arr - (slope * x_arr + intercept)) ** 2)
             ss_tot = np.sum((y_arr - y_mean) ** 2)
-            r_squared = 1.0 - ss_res / ss_tot if ss_tot != 0 else 0.0
+            r_squared = 1.0 - ss_res / ss_tot if ss_tot != 0 else (1.0 if ss_res == 0 else 0.0)
             # Format equation
             sign = "+" if intercept >= 0 else "-"
             eq = f"y = {slope:.6g}*x {sign} {abs(intercept):.6g}"
@@ -904,7 +903,7 @@ class CalcEngine:
             y_mean = np.mean(y_arr)
             ss_res = np.sum((y_arr - y_fit) ** 2)
             ss_tot = np.sum((y_arr - y_mean) ** 2)
-            r_squared = 1.0 - ss_res / ss_tot if ss_tot != 0 else 0.0
+            r_squared = 1.0 - ss_res / ss_tot if ss_tot != 0 else (1.0 if ss_res == 0 else 0.0)
             # Sort x for smooth plotting
             x_sorted = np.sort(x_arr)
             y_sorted = poly(x_sorted)
@@ -968,7 +967,7 @@ class CalcEngine:
             y_mean = np.mean(y_arr)
             ss_res = np.sum((y_arr - y_fit) ** 2)
             ss_tot = np.sum((y_arr - y_mean) ** 2)
-            r_squared = 1.0 - ss_res / ss_tot if ss_tot != 0 else 0.0
+            r_squared = 1.0 - ss_res / ss_tot if ss_tot != 0 else (1.0 if ss_res == 0 else 0.0)
             x_sorted = np.sort(x_arr)
             y_sorted = a * np.exp(b * x_sorted)
             eq = f"y = {a:.6g} * e^({b:.6g}*x)"
@@ -1021,7 +1020,7 @@ class CalcEngine:
             y_mean = np.mean(y_arr)
             ss_res = np.sum((y_arr - y_fit) ** 2)
             ss_tot = np.sum((y_arr - y_mean) ** 2)
-            r_squared = 1.0 - ss_res / ss_tot if ss_tot != 0 else 0.0
+            r_squared = 1.0 - ss_res / ss_tot if ss_tot != 0 else (1.0 if ss_res == 0 else 0.0)
             x_sorted = np.sort(x_arr)
             y_sorted = a * np.power(x_sorted, b)
             eq = f"y = {a:.6g} * x^{b:.6g}"
@@ -1131,7 +1130,7 @@ class CalcEngine:
             y_fit = a + b * ln_x
             ss_res = np.sum((y_arr - y_fit) ** 2)
             ss_tot = np.sum((y_arr - y_mean) ** 2)
-            r_squared = 1.0 - ss_res / ss_tot if ss_tot != 0 else 0.0
+            r_squared = 1.0 - ss_res / ss_tot if ss_tot != 0 else (1.0 if ss_res == 0 else 0.0)
             x_sorted = np.sort(x_arr)
             y_sorted = a + b * np.log(x_sorted)
             sign = "+" if b >= 0 else "-"

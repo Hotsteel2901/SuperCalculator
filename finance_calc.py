@@ -248,7 +248,7 @@ def bond_price(face_value: float, coupon_rate: float, yield_rate: float,
     m = coupons_per_year
     c = face_value * coupon_rate / 100.0 / m
     y = yield_rate / 100.0 / m
-    n = years * m
+    n = int(years * m)
     pv_coupons = sum(c / (1 + y) ** t for t in range(1, n + 1))
     pv_face = face_value / (1 + y) ** n
     return pv_coupons + pv_face
@@ -264,7 +264,7 @@ def bond_yield(face_value: float, coupon_rate: float, price: float,
     c = face_value * coupon_rate / 100.0 / m
     r = guess / 100.0 / m
     for _ in range(200):
-        n = years * m
+        n = int(years * m)
         pv = sum(c / (1 + r) ** t for t in range(1, n + 1)) + \
             face_value / (1 + r) ** n
         dpv = sum(-t * c / (1 + r) ** (t + 1)
@@ -276,7 +276,11 @@ def bond_yield(face_value: float, coupon_rate: float, price: float,
         if abs(r_new - r) < 1e-12:
             return r_new * m * 100.0
         r = r_new
-    return r * m * 100.0 if abs(pv - price) < 0.01 else None
+    # Recompute pv with final r for accurate check
+    n = int(years * m)
+    pv_final = sum(c / (1 + r) ** t for t in range(1, n + 1)) + \
+        face_value / (1 + r) ** n
+    return r * m * 100.0 if abs(pv_final - price) < 0.01 else None
 
 
 def retirement_savings(monthly_contribution: float, annual_rate: float,
@@ -289,7 +293,7 @@ def retirement_savings(monthly_contribution: float, annual_rate: float,
     if monthly_contribution < 0 or years <= 0:
         return None
     r = annual_rate / 100.0 / 12.0
-    n = years * 12
+    n = int(years * 12)
     if r == 0:
         total = current_savings + monthly_contribution * n
         return {
