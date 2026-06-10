@@ -1066,6 +1066,77 @@ class SuperCalcApp:
         ttk.Button(reg_row4, text=t("btn_plot_fit"),
                    command=self._on_reg_plot).pack(side=tk.LEFT, padx=(8, 2))
 
+        # --- CSV Data Import & Scatter Plot ---
+        frm_data = ttk.LabelFrame(scroll_frame, text=t("sec_data_import"),
+                                  style="Dark.TLabelframe")
+        frm_data.pack(fill=tk.X, padx=8, pady=4)
+
+        drow1 = ttk.Frame(frm_data, style="Dark.TFrame")
+        drow1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Button(drow1, text=t("btn_import_csv"),
+                   command=self._on_data_import_csv).pack(side=tk.LEFT, padx=2)
+        ttk.Button(drow1, text=t("btn_clear_data"),
+                   command=self._on_data_clear).pack(side=tk.LEFT, padx=2)
+
+        drow1b = ttk.Frame(frm_data, style="Dark.TFrame")
+        drow1b.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(drow1b, text=t("label_delimiter"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_data_delim = tk.StringVar(value="comma")
+        delim_combo = ttk.Combobox(drow1b, textvariable=self._var_data_delim,
+                                   values=["comma", "tab", "semicolon", "space"],
+                                   state="readonly", font=("Consolas", 10), width=10)
+        delim_combo.pack(side=tk.LEFT, padx=4)
+        self._var_data_header = tk.BooleanVar(value=True)
+        ttk.Checkbutton(drow1b, text=t("label_has_header"),
+                        variable=self._var_data_header).pack(side=tk.LEFT, padx=(8, 0))
+
+        drow2 = ttk.Frame(frm_data, style="Dark.TFrame")
+        drow2.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(drow2, text=t("label_x_column"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_data_xcol = tk.StringVar(value="0")
+        ttk.Entry(drow2, textvariable=self._var_data_xcol, width=5,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+        ttk.Label(drow2, text=t("label_y_column"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(8, 0))
+        self._var_data_ycol = tk.StringVar(value="1")
+        ttk.Entry(drow2, textvariable=self._var_data_ycol, width=5,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+        ttk.Label(drow2, text=t("label_chart_type"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(8, 0))
+        self._var_data_chart = tk.StringVar(value="scatter")
+        chart_combo = ttk.Combobox(drow2, textvariable=self._var_data_chart,
+                                   values=["scatter", "line", "bar"],
+                                   state="readonly", font=("Consolas", 10), width=9)
+        chart_combo.pack(side=tk.LEFT, padx=2)
+
+        drow3 = ttk.Frame(frm_data, style="Dark.TFrame")
+        drow3.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(drow3, text=t("label_trendline_type"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_data_trend = tk.StringVar(value="none")
+        trend_combo = ttk.Combobox(drow3, textvariable=self._var_data_trend,
+                                   values=["none", "linear", "quadratic", "exponential", "power", "logarithmic"],
+                                   state="readonly", font=("Consolas", 10), width=13)
+        trend_combo.pack(side=tk.LEFT, padx=4)
+
+        drow4 = ttk.Frame(frm_data, style="Dark.TFrame")
+        drow4.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Button(drow4, text=t("btn_plot_data"),
+                   command=self._on_data_plot).pack(side=tk.LEFT, padx=2)
+        ttk.Button(drow4, text=t("btn_fit_trendline"),
+                   command=self._on_data_trendline).pack(side=tk.LEFT, padx=2)
+        ttk.Button(drow4, text=t("btn_export_data_plot"),
+                   command=self._on_data_export_plot).pack(side=tk.LEFT, padx=2)
+
+        self._data_rows: list[list[str]] = []
+        self._data_headers: list[str] = []
+        self._data_x: list[float] = []
+        self._data_y: list[float] = []
+        self._data_filename: str = ""
+        self._data_trendline_data: Optional[dict[str, object]] = None
+        self.window_data: Optional[tk.Toplevel] = None
+        self.fig_data: Optional[Figure] = None
+        self.ax_data: Optional[Axes] = None
+        self.canvas_data: Optional[FigureCanvasTkAgg] = None
+        self.toolbar_data: Optional[NavigationToolbar2Tk] = None
+
         # --- Matrix Operations ---
         frm_matrix = ttk.LabelFrame(scroll_frame, text=t("sec_matrix"),
                                     style="Dark.TLabelframe")
@@ -4291,6 +4362,216 @@ class SuperCalcApp:
 
         self.canvas_2d.draw()
         self.status_var.set(t("status_fit_plotted", result['equation']))
+
+    # ------------------------------------------------------------------
+    #  CSV Data Import & Scatter Plot
+    # ------------------------------------------------------------------
+    def _get_data_delimiter(self) -> str:
+        """Return the delimiter character based on user selection."""
+        d = self._var_data_delim.get()
+        if d == "tab":
+            return "\t"
+        elif d == "semicolon":
+            return ";"
+        elif d == "space":
+            return " "
+        return ","
+
+    def _on_data_import_csv(self):
+        """Import a CSV file and parse its data."""
+        path = filedialog.askopenfilename(
+            title="Import CSV Data",
+            filetypes=[("CSV files", "*.csv"), ("TSV files", "*.tsv"),
+                       ("Text files", "*.txt"), ("All files", "*.*")],
+        )
+        if not path:
+            return
+        try:
+            delim = self._get_data_delimiter()
+            has_header = self._var_data_header.get()
+            rows = []
+            headers = []
+            with open(path, "r", encoding="utf-8-sig") as f:
+                for i, line in enumerate(f):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    parts = [p.strip() for p in line.split(delim)]
+                    if i == 0 and has_header:
+                        headers = parts
+                    else:
+                        rows.append(parts)
+            if not rows:
+                messagebox.showerror(t("err_error"), t("err_csv_parse", "empty file"))
+                return
+            self._data_rows = rows
+            self._data_headers = headers
+            self._data_filename = os.path.basename(path)
+            self._data_x = []
+            self._data_y = []
+            self._data_trendline_data = None
+            ncols = max(len(r) for r in rows)
+            self.status_var.set(t("status_data_imported", len(rows), self._data_filename))
+            info = t("label_data_preview", len(rows)) + "\n"
+            if headers:
+                info += "  Headers: " + ", ".join(headers) + "\n"
+            info += "  Columns: " + str(ncols) + "\n"
+            preview_n = min(5, len(rows))
+            for r in rows[:preview_n]:
+                info += "  " + ", ".join(r) + "\n"
+            if len(rows) > preview_n:
+                info += "  ...\n"
+            messagebox.showinfo(t("sec_data_import"), info)
+        except Exception as e:
+            messagebox.showerror(t("err_error"), t("err_csv_parse", str(e)))
+
+    def _on_data_clear(self):
+        """Clear imported data."""
+        self._data_rows = []
+        self._data_headers = []
+        self._data_x = []
+        self._data_y = []
+        self._data_filename = ""
+        self._data_trendline_data = None
+        self.status_var.set(t("status_cleared"))
+
+    def _extract_data_columns(self) -> tuple[list[float], list[float]]:
+        """Extract X and Y columns from imported data."""
+        try:
+            xcol = int(self._var_data_xcol.get())
+            ycol = int(self._var_data_ycol.get())
+        except ValueError:
+            messagebox.showerror(t("err_error"), t("err_invalid_column"))
+            return [], []
+        xs, ys = [], []
+        for row in self._data_rows:
+            if xcol < len(row) and ycol < len(row):
+                try:
+                    x = float(row[xcol])
+                    y = float(row[ycol])
+                    xs.append(x)
+                    ys.append(y)
+                except ValueError:
+                    continue
+        return xs, ys
+
+    def _on_data_plot(self):
+        """Plot imported data as scatter/line/bar chart."""
+        if not self._data_rows:
+            messagebox.showinfo(t("err_info"), t("err_no_data"))
+            return
+        xs, ys = self._extract_data_columns()
+        if not xs or not ys:
+            messagebox.showerror(t("err_error"), t("err_invalid_column"))
+            return
+        self._data_x = xs
+        self._data_y = ys
+        chart_type = self._var_data_chart.get()
+        self._ensure_2d_window()
+        self.ax_2d.clear()
+        self._setup_axes(self.ax_2d, is_3d=False)
+        color = "#f38ba8"
+        if chart_type == "scatter":
+            self.ax_2d.scatter(xs, ys, color=color, s=30, zorder=5,
+                             edgecolors="#313244", linewidths=0.5)
+        elif chart_type == "line":
+            sorted_pairs = sorted(zip(xs, ys))
+            sx, sy = zip(*sorted_pairs)
+            self.ax_2d.plot(sx, sy, color=color, linewidth=1.5, alpha=0.9)
+            self.ax_2d.scatter(xs, ys, color=color, s=20, zorder=5,
+                             edgecolors="#313244", linewidths=0.5)
+        elif chart_type == "bar":
+            self.ax_2d.bar(xs, ys, color=color, alpha=0.8, edgecolor="#313244", linewidth=0.5)
+        label = self._data_filename or "Data"
+        self.ax_2d.set_title(f"{chart_type.title()}: {label}", color="#cdd6f4", fontsize=12)
+        self.ax_2d.set_xlabel("X", color="#cdd6f4")
+        self.ax_2d.set_ylabel("Y", color="#cdd6f4")
+        self.ax_2d.grid(True, alpha=0.2, color="#585b70")
+        self.canvas_2d.draw()
+        self.status_var.set(t("status_data_plotted", len(xs), chart_type))
+
+    def _on_data_trendline(self):
+        """Fit a trendline to the imported data and plot it."""
+        if not self._data_x or not self._data_y:
+            if not self._data_rows:
+                messagebox.showinfo(t("err_info"), t("err_no_data"))
+                return
+            xs, ys = self._extract_data_columns()
+            if not xs or not ys:
+                messagebox.showerror(t("err_error"), t("err_invalid_column"))
+                return
+            self._data_x = xs
+            self._data_y = ys
+        trend_type = self._var_data_trend.get()
+        if trend_type == "none":
+            self._on_data_plot()
+            return
+        xs, ys = self._data_x, self._data_y
+        result = None
+        if trend_type == "linear":
+            result = CalcEngine.linear_regression(xs, ys)
+        elif trend_type == "quadratic":
+            result = CalcEngine.polynomial_regression(xs, ys, 2)
+        elif trend_type == "exponential":
+            result = CalcEngine.exponential_regression(xs, ys)
+        elif trend_type == "power":
+            result = CalcEngine.power_regression(xs, ys)
+        elif trend_type == "logarithmic":
+            result = CalcEngine.logarithmic_regression(xs, ys)
+        if result is None:
+            messagebox.showerror(t("err_error"), t("err_csv_parse", "regression failed"))
+            return
+        self._data_trendline_data = result
+        xs_fit = result.get('xs_fit', [])
+        ys_fit = result.get('ys_fit', [])
+        self._ensure_2d_window()
+        self.ax_2d.clear()
+        self._setup_axes(self.ax_2d, is_3d=False)
+        chart_type = self._var_data_chart.get()
+        color = "#f38ba8"
+        if chart_type == "scatter":
+            self.ax_2d.scatter(xs, ys, color=color, s=30, zorder=5,
+                             edgecolors="#313244", linewidths=0.5)
+        elif chart_type == "line":
+            sorted_pairs = sorted(zip(xs, ys))
+            sx, sy = zip(*sorted_pairs)
+            self.ax_2d.plot(sx, sy, color=color, linewidth=1.5, alpha=0.9)
+            self.ax_2d.scatter(xs, ys, color=color, s=20, zorder=5,
+                             edgecolors="#313244", linewidths=0.5)
+        elif chart_type == "bar":
+            self.ax_2d.bar(xs, ys, color=color, alpha=0.8, edgecolor="#313244", linewidth=0.5)
+        if xs_fit and ys_fit:
+            self.ax_2d.plot(xs_fit, ys_fit, color="#89b4fa", linewidth=2,
+                          label=f"Fit: {result['equation']}\nR²={result['r_squared']:.6f}")
+            self.ax_2d.legend(loc="best", facecolor="#313244",
+                            edgecolor="#585b70", labelcolor="#cdd6f4", fontsize=9)
+        label = self._data_filename or "Data"
+        self.ax_2d.set_title(f"{chart_type.title()}: {label}", color="#cdd6f4", fontsize=12)
+        self.ax_2d.set_xlabel("X", color="#cdd6f4")
+        self.ax_2d.set_ylabel("Y", color="#cdd6f4")
+        self.ax_2d.grid(True, alpha=0.2, color="#585b70")
+        self.canvas_2d.draw()
+        self.status_var.set(t("status_trendline_fit", result['equation'], result['r_squared']))
+
+    def _on_data_export_plot(self):
+        """Export the data plot as PNG."""
+        if self.fig_2d is None or self.ax_2d is None:
+            messagebox.showinfo(t("err_info"), t("err_no_data"))
+            return
+        path = filedialog.asksaveasfilename(
+            defaultextension=".png",
+            filetypes=[("PNG files", "*.png"), ("All files", "*.*")],
+            title="Export Data Plot"
+        )
+        if not path:
+            return
+        try:
+            fig = self.fig_2d
+            fig.savefig(path, dpi=150, bbox_inches="tight",
+                       facecolor=fig.get_facecolor(), edgecolor="none")
+            self.status_var.set(t("status_exported", os.path.basename(path)))
+        except Exception as e:
+            messagebox.showerror(t("err_export"), str(e))
 
     # ------------------------------------------------------------------
     #  Matrix Operations
