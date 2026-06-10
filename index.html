@@ -1743,6 +1743,21 @@
                 </div>
                 <div class="card glass reveal">
                     <div class="card-icon">
+                        <!-- CSV data import scatter plot -->
+                        <svg viewBox="0 0 24 24">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                            <polyline points="14,2 14,8 20,8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                            <circle cx="8" cy="16" r="1.2" fill="currentColor"/>
+                            <circle cx="11" cy="12" r="1.2" fill="currentColor"/>
+                            <circle cx="14" cy="14" r="1.2" fill="currentColor"/>
+                            <circle cx="17" cy="10" r="1.2" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <h3 class="card-title">CSV 数据导入与散点图</h3>
+                    <p class="card-text">导入 CSV/TSV 数据文件，绘制散点图、折线图或柱状图，支持线性/二次/指数趋势线拟合与 R² 显示</p>
+                </div>
+                <div class="card glass reveal">
+                    <div class="card-icon">
                         <!-- Distribution bell curve -->
                         <svg viewBox="0 0 24 24">
                             <path d="M2 20c2-8 5-14 10-14s8 6 10 14" fill="none" stroke="currentColor" stroke-width="2"/>
@@ -2668,6 +2683,54 @@
             </div>
         </section>
 
+        <section class="section" id="data-import">
+            <div class="section-header">
+                <div class="section-label">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                    Data Import &amp; Scatter Plot
+                </div>
+                <h2 class="section-title">数据导入与散点图</h2>
+                <p class="section-subtitle">导入CSV数据，绘制散点图/折线图/柱状图，支持趋势线拟合</p>
+            </div>
+            <div class="card glass reveal" style="max-width: 700px; margin: 0 auto;">
+                <div style="display:flex;flex-direction:column;gap:16px;">
+                    <div>
+                        <label style="display:block;font-size:13px;color:var(--text-muted);margin-bottom:6px;font-weight:500;">CSV数据 <span style="color:var(--text-subtle);font-size:11px;">(每行一组 x,y，逗号分隔)</span></label>
+                        <textarea id="dataCsvInput" rows="6" placeholder="1,2.1&#10;2,3.9&#10;3,6.2&#10;4,7.8&#10;5,10.1&#10;6,12.3&#10;7,13.9&#10;8,16.2&#10;9,18.1&#10;10,20.0" 
+                            style="width:100%;padding:14px 18px;border-radius:12px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:14px;font-family:monospace;outline:none;transition:border-color 0.3s,box-shadow 0.3s;box-sizing:border-box;resize:vertical;"
+                            onfocus="this.style.borderColor='var(--glow-primary)';this.style.boxShadow='0 0 20px var(--glow-primary)'"
+                            onblur="this.style.borderColor='var(--glass-border)';this.style.boxShadow='none'"
+                            oninput="parseDataCSV()"></textarea>
+                    </div>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <div style="flex:1;min-width:120px;">
+                            <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">图表类型</label>
+                            <div style="display:flex;gap:6px;">
+                                <button class="chip active" onclick="setDataChartType('scatter')" id="dataChartScatter">散点图</button>
+                                <button class="chip" onclick="setDataChartType('line')" id="dataChartLine">折线图</button>
+                                <button class="chip" onclick="setDataChartType('bar')" id="dataChartBar">柱状图</button>
+                            </div>
+                        </div>
+                        <div style="flex:1;min-width:120px;">
+                            <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">趋势线</label>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                                <button class="chip active" onclick="setDataTrend('none')" id="dataTrendNone">无</button>
+                                <button class="chip" onclick="setDataTrend('linear')" id="dataTrendLinear">线性</button>
+                                <button class="chip" onclick="setDataTrend('quadratic')" id="dataTrendQuad">二次</button>
+                                <button class="chip" onclick="setDataTrend('exponential')" id="dataTrendExp">指数</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="dataResults" style="display:none;">
+                        <canvas id="dataCanvas" style="width:100%;height:280px;border-radius:12px;background:rgba(17,17,27,0.5);border:1px solid var(--glass-border);"></canvas>
+                        <div id="dataTrendInfo" style="margin-top:12px;padding:12px 16px;border-radius:10px;background:var(--glass-bg);border:1px solid var(--glass-border);font-family:monospace;font-size:13px;color:var(--glow-accent);line-height:1.6;display:none;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <footer class="footer">
@@ -3423,6 +3486,222 @@
             };
 
             computeFinLoan();
+        })();
+    </script>
+    <script>
+        (function() {
+            var isZh = (navigator.language || '').indexOf('zh') === 0;
+            var dataChartType = 'scatter';
+            var dataTrendType = 'none';
+            var dataX = [], dataY = [];
+
+            function setDataChartType(t) {
+                dataChartType = t;
+                document.querySelectorAll('#dataChartScatter,#dataChartLine,#dataChartBar').forEach(function(b){b.classList.remove('active');});
+                document.getElementById('dataChart' + t.charAt(0).toUpperCase() + t.slice(1)).classList.add('active');
+                drawDataChart();
+            }
+            window.setDataChartType = setDataChartType;
+
+            function setDataTrend(t) {
+                dataTrendType = t;
+                document.querySelectorAll('#dataTrendNone,#dataTrendLinear,#dataTrendQuad,#dataTrendExp').forEach(function(b){b.classList.remove('active');});
+                var id = 'dataTrend' + ({'none':'None','linear':'Linear','quadratic':'Quad','exponential':'Exp'})[t];
+                document.getElementById(id).classList.add('active');
+                drawDataChart();
+            }
+            window.setDataTrend = setDataTrend;
+
+            function parseDataCSV() {
+                var raw = document.getElementById('dataCsvInput').value.trim();
+                dataX = []; dataY = [];
+                if (!raw) { document.getElementById('dataResults').style.display = 'none'; return; }
+                var lines = raw.split('\n');
+                for (var i = 0; i < lines.length; i++) {
+                    var line = lines[i].trim();
+                    if (!line) continue;
+                    var parts = line.split(/[,\t;]+/);
+                    if (parts.length >= 2) {
+                        var x = parseFloat(parts[0]);
+                        var y = parseFloat(parts[1]);
+                        if (!isNaN(x) && !isNaN(y)) { dataX.push(x); dataY.push(y); }
+                    }
+                }
+                if (dataX.length > 0) {
+                    document.getElementById('dataResults').style.display = 'block';
+                    drawDataChart();
+                } else {
+                    document.getElementById('dataResults').style.display = 'none';
+                }
+            }
+            window.parseDataCSV = parseDataCSV;
+
+            function drawDataChart() {
+                var canvas = document.getElementById('dataCanvas');
+                if (!canvas || dataX.length === 0) return;
+                var ctx = canvas.getContext('2d');
+                var dpr = window.devicePixelRatio || 1;
+                var rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+                ctx.scale(dpr, dpr);
+                var W = rect.width, H = rect.height;
+                var pad = {t: 30, r: 20, b: 40, l: 55};
+                var pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+                ctx.clearRect(0, 0, W, H);
+
+                var xMin = Math.min.apply(null, dataX), xMax = Math.max.apply(null, dataX);
+                var yMin = Math.min.apply(null, dataY), yMax = Math.max.apply(null, dataY);
+                var xRange = xMax - xMin || 1, yRange = yMax - yMin || 1;
+                xMin -= xRange * 0.05; xMax += xRange * 0.05;
+                yMin -= yRange * 0.05; yMax += yRange * 0.05;
+                xRange = xMax - xMin; yRange = yMax - yMin;
+
+                function tx(x) { return pad.l + (x - xMin) / xRange * pw; }
+                function ty(y) { return pad.t + ph - (y - yMin) / yRange * ph; }
+
+                ctx.strokeStyle = 'rgba(88,91,112,0.3)';
+                ctx.lineWidth = 0.5;
+                for (var i = 0; i <= 5; i++) {
+                    var gy = pad.t + ph * i / 5;
+                    ctx.beginPath(); ctx.moveTo(pad.l, gy); ctx.lineTo(pad.l + pw, gy); ctx.stroke();
+                    ctx.fillStyle = '#6c7086';
+                    ctx.font = '11px monospace';
+                    ctx.textAlign = 'right';
+                    ctx.fillText((yMax - yRange * i / 5).toFixed(2), pad.l - 8, gy + 4);
+                }
+                for (var i = 0; i <= 5; i++) {
+                    var gx = pad.l + pw * i / 5;
+                    ctx.beginPath(); ctx.moveTo(gx, pad.t); ctx.lineTo(gx, pad.t + ph); ctx.stroke();
+                    ctx.fillStyle = '#6c7086';
+                    ctx.textAlign = 'center';
+                    ctx.fillText((xMin + xRange * i / 5).toFixed(2), gx, pad.t + ph + 18);
+                }
+
+                if (dataChartType === 'scatter') {
+                    ctx.fillStyle = '#f38ba8';
+                    for (var i = 0; i < dataX.length; i++) {
+                        ctx.beginPath();
+                        ctx.arc(tx(dataX[i]), ty(dataY[i]), 5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                } else if (dataChartType === 'line') {
+                    var sorted = dataX.map(function(x,i){return {x:x,y:dataY[i]};}).sort(function(a,b){return a.x-b.x;});
+                    ctx.strokeStyle = '#f38ba8';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    for (var i = 0; i < sorted.length; i++) {
+                        var px = tx(sorted[i].x), py = ty(sorted[i].y);
+                        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+                    }
+                    ctx.stroke();
+                    ctx.fillStyle = '#f38ba8';
+                    for (var i = 0; i < sorted.length; i++) {
+                        ctx.beginPath();
+                        ctx.arc(tx(sorted[i].x), ty(sorted[i].y), 4, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                } else if (dataChartType === 'bar') {
+                    var barW = Math.max(2, pw / dataX.length * 0.6);
+                    ctx.fillStyle = '#f38ba8';
+                    for (var i = 0; i < dataX.length; i++) {
+                        var bx = tx(dataX[i]) - barW / 2;
+                        var by = ty(dataY[i]);
+                        var bh = ty(0) - by;
+                        if (bh < 0) { by = ty(0); bh = -bh; }
+                        ctx.fillRect(bx, by, barW, bh);
+                    }
+                }
+
+                var trendInfo = document.getElementById('dataTrendInfo');
+                if (dataTrendType !== 'none') {
+                    var trend = fitTrendline(dataX, dataY, dataTrendType);
+                    if (trend) {
+                        ctx.strokeStyle = '#89b4fa';
+                        ctx.lineWidth = 2;
+                        ctx.setLineDash([8, 4]);
+                        ctx.beginPath();
+                        var first = true;
+                        for (var px = 0; px <= pw; px += 2) {
+                            var xv = xMin + (px / pw) * xRange;
+                            var yv = evalTrend(trend, xv, dataTrendType);
+                            if (isFinite(yv)) {
+                                var scx = pad.l + px, scy = ty(yv);
+                                if (scy >= pad.t - 10 && scy <= pad.t + ph + 10) {
+                                    if (first) { ctx.moveTo(scx, scy); first = false; }
+                                    else ctx.lineTo(scx, scy);
+                                }
+                            }
+                        }
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        var ssRes = 0, ssTot = 0, yMean = 0;
+                        for (var i = 0; i < dataY.length; i++) yMean += dataY[i];
+                        yMean /= dataY.length;
+                        for (var i = 0; i < dataY.length; i++) {
+                            var yPred = evalTrend(trend, dataX[i], dataTrendType);
+                            ssRes += (dataY[i] - yPred) * (dataY[i] - yPred);
+                            ssTot += (dataY[i] - yMean) * (dataY[i] - yMean);
+                        }
+                        var r2 = ssTot > 0 ? 1 - ssRes / ssTot : 0;
+                        trendInfo.style.display = 'block';
+                        trendInfo.innerHTML = '<span style="color:var(--text-muted);">' + (isZh ? '趋势线' : 'Trendline') + ':</span> ' + trend.eq + '  <span style="color:var(--text-muted);">R² = </span>' + r2.toFixed(6);
+                    } else {
+                        trendInfo.style.display = 'none';
+                    }
+                } else {
+                    trendInfo.style.display = 'none';
+                }
+
+                ctx.fillStyle = '#cdd6f4';
+                ctx.font = 'bold 13px sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(isZh ? '数据散点图' : 'Data Scatter Plot', pad.l, 18);
+            }
+
+            function fitTrendline(xs, ys, type) {
+                var n = xs.length;
+                if (n < 2) return null;
+                if (type === 'linear') {
+                    var sx=0,sy=0,sxy=0,sxx=0;
+                    for(var i=0;i<n;i++){sx+=xs[i];sy+=ys[i];sxy+=xs[i]*ys[i];sxx+=xs[i]*xs[i];}
+                    var b=(n*sxy-sx*sy)/(n*sxx-sx*sx);
+                    var a=(sy-b*sx)/n;
+                    return {p:[b,a], eq:'y = ' + b.toFixed(4) + 'x + ' + a.toFixed(4)};
+                } else if (type === 'quadratic') {
+                    var sx=0,sx2=0,sx3=0,sx4=0,sy=0,sxy=0,sx2y=0;
+                    for(var i=0;i<n;i++){var x=xs[i],y=ys[i];sx+=x;sx2+=x*x;sx3+=x*x*x;sx4+=x*x*x*x;sy+=y;sxy+=x*y;sx2y+=x*x*y;}
+                    var m=[[n,sx,sx2],[sx,sx2,sx3],[sx2,sx3,sx4]];
+                    var r=[sy,sxy,sx2y];
+                    var s=solve3(m,r);
+                    if(s) return {p:s, eq:'y = '+s[0].toFixed(4)+'x² + '+s[1].toFixed(4)+'x + '+s[2].toFixed(4)};
+                } else if (type === 'exponential') {
+                    var slnx=0,sy=0,slnx2=0,sylnx=0,cnt=0;
+                    for(var i=0;i<n;i++){if(ys[i]>0){var lnx=Math.log(xs[i]);slnx+=lnx;sy+=Math.log(ys[i]);slnx2+=lnx*lnx;sylnx+=Math.log(ys[i])*lnx;cnt++;}}
+                    if(cnt<2) return null;
+                    var b=(cnt*sylnx-slnx*sy)/(cnt*slnx2-slnx*slnx);
+                    var a=(sy-b*slnx)/cnt;
+                    return {p:[Math.exp(a),b], eq:'y = '+Math.exp(a).toFixed(4)+'·e^('+b.toFixed(4)+'x)'};
+                }
+                return null;
+            }
+
+            function solve3(m,b) {
+                var a=[];for(var i=0;i<3;i++){a[i]=m[i].slice();a[i][3]=b[i];}
+                for(var i=0;i<3;i++){var mx=i;for(var k=i+1;k<3;k++)if(Math.abs(a[k][i])>Math.abs(a[mx][i]))mx=k;var t=a[i];a[i]=a[mx];a[mx]=t;if(Math.abs(a[i][i])<1e-12)return null;for(var k=i+1;k<3;k++){var f=a[k][i]/a[i][i];for(var j=i;j<4;j++)a[k][j]-=f*a[i][j];}}
+                var x=[0,0,0];for(var i=2;i>=0;i--){x[i]=a[i][3];for(var j=i+1;j<3;j++)x[i]-=a[i][j]*x[j];x[i]/=a[i][i];}
+                return x;
+            }
+
+            function evalTrend(t, x, type) {
+                var p = t.p;
+                if (type === 'linear') return p[0] * x + p[1];
+                if (type === 'quadratic') return p[0] * x * x + p[1] * x + p[2];
+                if (type === 'exponential' && x > 0) return p[0] * Math.exp(p[1] * x);
+                return NaN;
+            }
+
+            parseDataCSV();
         })();
     </script>
 </body>

@@ -578,4 +578,26 @@
     <string name="system_sol_y">  y = %s</string>
     <string name="system_resid_f">  f(x,y) = %s</string>
     <string name="system_resid_g">  g(x,y) = %s</string>
+
+    <!-- Data Import & Scatter Plot -->
+    <string name="data_import_title">数据导入与散点图</string>
+    <string name="data_import_csv">导入CSV</string>
+    <string name="data_plot">绘制数据</string>
+    <string name="data_clear">清除数据</string>
+    <string name="data_x_col_label">X列：</string>
+    <string name="data_y_col_label">Y列：</string>
+    <string name="data_chart_label">图表类型：</string>
+    <string name="data_trend_label">趋势线：</string>
+    <string name="data_chart_scatter">散点图</string>
+    <string name="data_chart_line">折线图</string>
+    <string name="data_chart_bar">柱状图</string>
+    <string name="data_trend_none">无</string>
+    <string name="data_trend_linear">线性</string>
+    <string name="data_trend_quadratic">二次</string>
+    <string name="data_trend_exponential">指数</string>
+    <string name="data_imported">已从 %2$s 导入 %1$d 个数据点</string>
+    <string name="data_plotted">已绘制 %1$d 个数据点（%2$s）</string>
+    <string name="data_no_data">没有可绘制的数据，请先导入CSV文件。</string>
+    <string name="data_csv_error">解析CSV失败：%s</string>
+    <string name="data_invalid_col">列索引无效。</string>
 </resources>

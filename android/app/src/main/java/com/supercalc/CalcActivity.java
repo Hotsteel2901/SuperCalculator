@@ -23,6 +23,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 public class CalcActivity extends AppCompatActivity {
 
@@ -38,6 +41,11 @@ public class CalcActivity extends AppCompatActivity {
     private TextView resultView;
     private LineChart lineChart;
     private MaterialCardView graphCard;
+    private EditText dataXColInput, dataYColInput;
+    private AutoCompleteTextView dataTrendSpinner;
+    private TextView dataStatusView;
+    private List<double[]> dataRows = new ArrayList<>();
+    private String dataFileName = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -329,6 +337,9 @@ public class CalcActivity extends AppCompatActivity {
 
         // Finance Calculator
         setupFinance();
+
+        // Data Import & Scatter Plot
+        setupDataImport();
     }
 
     private String getExpr()  { return exprInput.getText().toString().trim(); }
@@ -3217,5 +3228,250 @@ public class CalcActivity extends AppCompatActivity {
         resOct.setText(String.format("%o", bwMask(result, width)));
         resDec.setText(String.valueOf(bwToSigned(result, width)));
         resultView.append(String.format(getString(R.string.bitwise_result_fmt), op, aInput.getText().toString().trim(), bInput.getText().toString().trim(), bwToSigned(result, width)) + "\n");
+    }
+
+    // ------------------------------------------------------------------
+    //  Data Import & Scatter Plot
+    // ------------------------------------------------------------------
+    private void setupDataImport() {
+        dataXColInput = findViewById(R.id.data_x_col);
+        dataYColInput = findViewById(R.id.data_y_col);
+        dataTrendSpinner = findViewById(R.id.data_trend_spinner);
+        dataStatusView = findViewById(R.id.data_status_view);
+
+        String[] trendTypes = {getString(R.string.data_trend_none), getString(R.string.data_trend_linear), getString(R.string.data_trend_quadratic), getString(R.string.data_trend_exponential)};
+        ArrayAdapter<String> trendAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, trendTypes);
+        dataTrendSpinner.setAdapter(trendAdapter);
+
+        MaterialButton btnImport = findViewById(R.id.btn_data_import);
+        MaterialButton btnPlot = findViewById(R.id.btn_data_plot);
+        MaterialButton btnClear = findViewById(R.id.btn_data_clear);
+
+        btnImport.setOnClickListener(v -> onDataImport());
+        btnPlot.setOnClickListener(v -> onDataPlot());
+        btnClear.setOnClickListener(v -> onDataClear());
+    }
+
+    private void onDataImport() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        startActivityForResult(intent, 9001);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 9001 && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            try {
+                InputStream is = getContentResolver().openInputStream(data.getData());
+                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+                dataRows.clear();
+                String line;
+                boolean firstLine = true;
+                while ((line = reader.readLine()) != null) {
+                    line = line.trim();
+                    if (line.isEmpty()) continue;
+                    String[] parts = line.split("[,\\t;]+");
+                    if (firstLine) {
+                        try {
+                            for (String p : parts) Double.parseDouble(p.trim());
+                            firstLine = false;
+                        } catch (NumberFormatException e) {
+                            firstLine = false;
+                            continue;
+                        }
+                    }
+                    double[] row = new double[parts.length];
+                    boolean valid = true;
+                    for (int i = 0; i < parts.length; i++) {
+                        try { row[i] = Double.parseDouble(parts[i].trim()); }
+                        catch (NumberFormatException e) { valid = false; break; }
+                    }
+                    if (valid) dataRows.add(row);
+                }
+                reader.close();
+                is.close();
+                dataFileName = data.getData().getLastPathSegment();
+                if (dataFileName == null) dataFileName = "data";
+                dataStatusView.setText(String.format(getString(R.string.data_imported), dataRows.size(), dataFileName));
+            } catch (Exception e) {
+                toast(String.format(getString(R.string.data_csv_error), e.getMessage()));
+            }
+        }
+    }
+
+    private void onDataPlot() {
+        if (dataRows.isEmpty()) {
+            toast(getString(R.string.data_no_data));
+            return;
+        }
+        int xCol, yCol;
+        try {
+            xCol = Integer.parseInt(dataXColInput.getText().toString().trim());
+            yCol = Integer.parseInt(dataYColInput.getText().toString().trim());
+        } catch (NumberFormatException e) {
+            toast(getString(R.string.data_invalid_col));
+            return;
+        }
+
+        String trendType = dataTrendSpinner.getText().toString().trim();
+        List<Entry> entries = new ArrayList<>();
+        List<Double> xList = new ArrayList<>(), yList = new ArrayList<>();
+
+        for (double[] row : dataRows) {
+            if (xCol < row.length && yCol < row.length) {
+                float x = (float) row[xCol];
+                float y = (float) row[yCol];
+                entries.add(new Entry(x, y));
+                xList.add(row[xCol]);
+                yList.add(row[yCol]);
+            }
+        }
+
+        if (entries.isEmpty()) {
+            toast(getString(R.string.data_invalid_col));
+            return;
+        }
+
+        LineDataSet dataSet = new LineDataSet(entries, dataFileName);
+        dataSet.setDrawValues(false);
+        dataSet.setDrawCircles(true);
+        dataSet.setCircleRadius(4f);
+        dataSet.setCircleColor(0xFFF38BA8);
+        dataSet.setColor(0xFFF38BA8);
+        dataSet.setLineWidth(1.5f);
+        dataSet.setMode(LineDataSet.Mode.LINEAR);
+
+        if (!trendType.equals(getString(R.string.data_trend_none))) {
+            double[] trendResult = computeTrendline(xList, yList, trendType);
+            if (trendResult != null) {
+                float xMin = Float.MAX_VALUE, xMax = Float.MIN_VALUE;
+                for (Entry e : entries) {
+                    if (e.getX() < xMin) xMin = e.getX();
+                    if (e.getX() > xMax) xMax = e.getX();
+                }
+                List<Entry> trendEntries = new ArrayList<>();
+                int steps = 100;
+                for (int i = 0; i <= steps; i++) {
+                    float x = xMin + (xMax - xMin) * i / steps;
+                    float y = evalTrendline(trendResult, x, trendType);
+                    if (Float.isFinite(y)) trendEntries.add(new Entry(x, y));
+                }
+                LineDataSet trendSet = new LineDataSet(trendEntries, trendType);
+                trendSet.setDrawValues(false);
+                trendSet.setDrawCircles(false);
+                trendSet.setColor(0xFF89B4FA);
+                trendSet.setLineWidth(2f);
+                trendSet.setEnableDashedLine(true, 10, 5);
+
+                LineData lineData = new LineData(dataSet, trendSet);
+                showDataChart(lineData);
+            } else {
+                showDataChart(new LineData(dataSet));
+            }
+        } else {
+            showDataChart(new LineData(dataSet));
+        }
+        dataStatusView.setText(String.format(getString(R.string.data_plotted), entries.size(), trendType));
+    }
+
+    private double[] computeTrendline(List<Double> xs, List<Double> ys, String type) {
+        int n = xs.size();
+        if (n < 2) return null;
+        if (type.equals(getString(R.string.data_trend_linear))) {
+            double sx = 0, sy = 0, sxy = 0, sxx = 0;
+            for (int i = 0; i < n; i++) {
+                sx += xs.get(i); sy += ys.get(i);
+                sxy += xs.get(i) * ys.get(i);
+                sxx += xs.get(i) * xs.get(i);
+            }
+            double b = (n * sxy - sx * sy) / (n * sxx - sx * sx);
+            double a = (sy - b * sx) / n;
+            return new double[]{b, a};
+        } else if (type.equals(getString(R.string.data_trend_exponential))) {
+            double slnx = 0, sy = 0, slnx2 = 0, sylnx = 0;
+            int count = 0;
+            for (int i = 0; i < n; i++) {
+                if (ys.get(i) > 0) {
+                    double lnx = Math.log(xs.get(i));
+                    slnx += lnx; sy += Math.log(ys.get(i));
+                    slnx2 += lnx * lnx; sylnx += Math.log(ys.get(i)) * lnx;
+                    count++;
+                }
+            }
+            if (count < 2) return null;
+            double b = (count * sylnx - slnx * sy) / (count * slnx2 - slnx * slnx);
+            double a = (sy - b * slnx) / count;
+            return new double[]{Math.exp(a), b};
+        } else if (type.equals(getString(R.string.data_trend_quadratic))) {
+            double sx = 0, sx2 = 0, sx3 = 0, sx4 = 0, sy = 0, sxy = 0, sx2y = 0;
+            for (int i = 0; i < n; i++) {
+                double x = xs.get(i), y = ys.get(i);
+                sx += x; sx2 += x*x; sx3 += x*x*x; sx4 += x*x*x*x;
+                sy += y; sxy += x*y; sx2y += x*x*y;
+            }
+            double[][] mat = {{n, sx, sx2}, {sx, sx2, sx3}, {sx2, sx3, sx4}};
+            double[] rhs = {sy, sxy, sx2y};
+            double[] sol = solveLinear3(mat, rhs);
+            if (sol != null) return new double[]{sol[2], sol[1], sol[0]};
+        }
+        return null;
+    }
+
+    private double[] solveLinear3(double[][] m, double[] b) {
+        double[][] a = new double[3][4];
+        for (int i = 0; i < 3; i++) { System.arraycopy(m[i], 0, a[i], 0, 3); a[i][3] = b[i]; }
+        for (int i = 0; i < 3; i++) {
+            int maxRow = i;
+            for (int k = i + 1; k < 3; k++) if (Math.abs(a[k][i]) > Math.abs(a[maxRow][i])) maxRow = k;
+            double[] tmp = a[i]; a[i] = a[maxRow]; a[maxRow] = tmp;
+            if (Math.abs(a[i][i]) < 1e-12) return null;
+            for (int k = i + 1; k < 3; k++) {
+                double f = a[k][i] / a[i][i];
+                for (int j = i; j < 4; j++) a[k][j] -= f * a[i][j];
+            }
+        }
+        double[] x = new double[3];
+        for (int i = 2; i >= 0; i--) {
+            x[i] = a[i][3];
+            for (int j = i + 1; j < 3; j++) x[i] -= a[i][j] * x[j];
+            x[i] /= a[i][i];
+        }
+        return x;
+    }
+
+    private float evalTrendline(double[] p, float x, String type) {
+        if (type.equals(getString(R.string.data_trend_linear))) {
+            return (float)(p[0] * x + p[1]);
+        } else if (type.equals(getString(R.string.data_trend_quadratic))) {
+            return (float)(p[0] * x * x + p[1] * x + p[2]);
+        } else if (type.equals(getString(R.string.data_trend_exponential)) && x > 0) {
+            return (float)(p[0] * Math.exp(p[1] * x));
+        }
+        return Float.NaN;
+    }
+
+    private void showDataChart(LineData lineData) {
+        graphCard.setVisibility(android.view.View.VISIBLE);
+        lineChart.setData(lineData);
+        lineChart.getDescription().setText("");
+        XAxis xAxis = lineChart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setDrawGridLines(true);
+        xAxis.setGranularity(1f);
+        YAxis leftAxis = lineChart.getAxisLeft();
+        leftAxis.setDrawGridLines(true);
+        lineChart.getAxisRight().setEnabled(false);
+        lineChart.animateX(500);
+        lineChart.invalidate();
+    }
+
+    private void onDataClear() {
+        dataRows.clear();
+        dataFileName = "";
+        dataStatusView.setText("");
+        lineChart.clear();
+        graphCard.setVisibility(android.view.View.GONE);
     }
 }

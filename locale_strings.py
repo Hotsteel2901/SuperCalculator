@@ -2856,6 +2856,160 @@ STRINGS = {
         "en": "Error",
         "zh": "错误",
     },
+
+    # ---- CSV Data Import & Scatter Plot ----
+    "sec_data_import": {
+        "en": "Data Import & Scatter Plot",
+        "zh": "数据导入与散点图",
+    },
+    "btn_import_csv": {
+        "en": "Import CSV",
+        "zh": "导入CSV",
+    },
+    "btn_plot_data": {
+        "en": "Plot Data",
+        "zh": "绘制数据",
+    },
+    "btn_fit_trendline": {
+        "en": "Fit Trendline",
+        "zh": "拟合趋势线",
+    },
+    "btn_clear_data": {
+        "en": "Clear Data",
+        "zh": "清除数据",
+    },
+    "btn_export_data_plot": {
+        "en": "Export Plot",
+        "zh": "导出图表",
+    },
+    "label_x_column": {
+        "en": "X column",
+        "zh": "X列",
+    },
+    "label_y_column": {
+        "en": "Y column",
+        "zh": "Y列",
+    },
+    "label_chart_type": {
+        "en": "Chart type",
+        "zh": "图表类型",
+    },
+    "chart_scatter": {
+        "en": "Scatter",
+        "zh": "散点图",
+    },
+    "chart_line": {
+        "en": "Line",
+        "zh": "折线图",
+    },
+    "chart_bar": {
+        "en": "Bar",
+        "zh": "柱状图",
+    },
+    "status_data_imported": {
+        "en": "Imported {0} data points from {1}",
+        "zh": "已从 {1} 导入 {0} 个数据点",
+    },
+    "status_data_plotted": {
+        "en": "Plotted {0} data points ({1})",
+        "zh": "已绘制 {0} 个数据点（{1}）",
+    },
+    "status_trendline_fit": {
+        "en": "Trendline: {0} (R²={1:.6f})",
+        "zh": "趋势线：{0}（R²={1:.6f}）",
+    },
+    "err_no_data": {
+        "en": "No data to plot. Import a CSV file first.",
+        "zh": "没有可绘制的数据，请先导入CSV文件。",
+    },
+    "err_csv_parse": {
+        "en": "Failed to parse CSV file: {0}",
+        "zh": "解析CSV文件失败：{0}",
+    },
+    "err_invalid_column": {
+        "en": "Invalid column index.",
+        "zh": "列索引无效。",
+    },
+    "msg_data_stats": {
+        "en": "Data Statistics for column \"{0}\":\n  Count = {1}\n  Mean = {2:.10g}\n  Std Dev = {3:.10g}\n  Min = {4:.10g}\n  Max = {5:.10g}\n  Median = {6:.10g}",
+        "zh": "数据列 \"{0}\" 统计：\n  数量 = {1}\n  均值 = {2:.10g}\n  标准差 = {3:.10g}\n  最小值 = {4:.10g}\n  最大值 = {5:.10g}\n  中位数 = {6:.10g}",
+    },
+    "trendline_linear": {
+        "en": "y = {0:.6g}x + {1:.6g}",
+        "zh": "y = {0:.6g}x + {1:.6g}",
+    },
+    "trendline_quadratic": {
+        "en": "y = {0:.6g}x² + {1:.6g}x + {2:.6g}",
+        "zh": "y = {0:.6g}x² + {1:.6g}x + {2:.6g}",
+    },
+    "trendline_exponential": {
+        "en": "y = {0:.6g}·e^({1:.6g}x)",
+        "zh": "y = {0:.6g}·e^({1:.6g}x)",
+    },
+    "trendline_power": {
+        "en": "y = {0:.6g}·x^{1:.6g}",
+        "zh": "y = {0:.6g}·x^{1:.6g}",
+    },
+    "trendline_logarithmic": {
+        "en": "y = {0:.6g}·ln(x) + {1:.6g}",
+        "zh": "y = {0:.6g}·ln(x) + {1:.6g}",
+    },
+    "label_trendline_type": {
+        "en": "Trendline",
+        "zh": "趋势线类型",
+    },
+    "trend_none": {
+        "en": "None",
+        "zh": "无",
+    },
+    "trend_linear": {
+        "en": "Linear",
+        "zh": "线性",
+    },
+    "trend_quadratic": {
+        "en": "Quadratic",
+        "zh": "二次",
+    },
+    "trend_exponential": {
+        "en": "Exponential",
+        "zh": "指数",
+    },
+    "trend_power": {
+        "en": "Power",
+        "zh": "幂",
+    },
+    "trend_logarithmic": {
+        "en": "Logarithmic",
+        "zh": "对数",
+    },
+    "label_delimiter": {
+        "en": "Delimiter",
+        "zh": "分隔符",
+    },
+    "delim_comma": {
+        "en": "Comma",
+        "zh": "逗号",
+    },
+    "delim_tab": {
+        "en": "Tab",
+        "zh": "制表符",
+    },
+    "delim_semicolon": {
+        "en": "Semicolon",
+        "zh": "分号",
+    },
+    "delim_space": {
+        "en": "Space",
+        "zh": "空格",
+    },
+    "label_has_header": {
+        "en": "Has header row",
+        "zh": "包含标题行",
+    },
+    "label_data_preview": {
+        "en": "Data preview ({0} rows):",
+        "zh": "数据预览（{0}行）：",
+    },
 }
 
 

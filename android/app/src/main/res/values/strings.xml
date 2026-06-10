@@ -578,4 +578,26 @@
     <string name="system_sol_y">  y = %s</string>
     <string name="system_resid_f">  f(x,y) = %s</string>
     <string name="system_resid_g">  g(x,y) = %s</string>
+
+    <!-- Data Import & Scatter Plot -->
+    <string name="data_import_title">Data Import &amp; Scatter Plot</string>
+    <string name="data_import_csv">Import CSV</string>
+    <string name="data_plot">Plot Data</string>
+    <string name="data_clear">Clear Data</string>
+    <string name="data_x_col_label">X column:</string>
+    <string name="data_y_col_label">Y column:</string>
+    <string name="data_chart_label">Chart type:</string>
+    <string name="data_trend_label">Trendline:</string>
+    <string name="data_chart_scatter">Scatter</string>
+    <string name="data_chart_line">Line</string>
+    <string name="data_chart_bar">Bar</string>
+    <string name="data_trend_none">None</string>
+    <string name="data_trend_linear">Linear</string>
+    <string name="data_trend_quadratic">Quadratic</string>
+    <string name="data_trend_exponential">Exponential</string>
+    <string name="data_imported">Imported %d data points from %s</string>
+    <string name="data_plotted">Plotted %d data points (%s)</string>
+    <string name="data_no_data">No data to plot. Import a CSV file first.</string>
+    <string name="data_csv_error">Failed to parse CSV: %s</string>
+    <string name="data_invalid_col">Invalid column index.</string>
 </resources>
