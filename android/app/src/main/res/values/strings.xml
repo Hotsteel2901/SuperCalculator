@@ -367,9 +367,9 @@
     <string name="stats_min">Min: %.10g</string>
     <string name="stats_max">Max: %.10g</string>
     <string name="stats_range">Range: %.10g</string>
-    <string name="stats_q1">Q1: %.10g</string>
-    <string name="stats_q3">Q3: %.10g</string>
-    <string name="stats_iqr">IQR: %.10g</string>
+    <string name="stats_q1">  Q1 (25%%)  = %.10g</string>
+    <string name="stats_q3">  Q3 (75%%)  = %.10g</string>
+    <string name="stats_iqr">  IQR       = %.10g</string>
     <string name="stats_var">Var: %.10g</string>
     <string name="stats_std">Std: %.10g</string>
     <string name="stats_toast">Stats: n=%d, mean=%.6g, std=%.6g</string>
@@ -457,6 +457,8 @@
     <string name="prob_hint_pba">P(B|A)</string>
     <string name="prob_hint_pa">P(A)</string>
     <string name="prob_hint_pbna">P(B|A\')</string>
+    <string name="prob_hint_pb">P(B)</string>
+    <string name="prob_hint_pab">P(A∩B)</string>
     <string name="prob_combo">C(n,r)</string>
     <string name="prob_perm">P(n,r)</string>
     <string name="prob_union">P(A∪B)</string>
@@ -506,4 +508,74 @@
     <string name="fin_invalid_input">Please enter valid values.</string>
     <string name="fin_invalid_flows">Enter at least 2 comma-separated cash flows.</string>
     <string name="fin_depr_invalid">Salvage must be less than cost, life > 0.</string>
+
+    <!-- Stats labels -->
+    <string name="stats_var_pop">  Var (pop) = %.10g</string>
+    <string name="stats_var_sam">  Var (sam) = %.10g</string>
+    <string name="stats_std_pop">  Std (pop) = %.10g</string>
+    <string name="stats_std_sam">  Std (sam) = %.10g</string>
+    <string name="stats_sorted">\nSorted: </string>
+    <string name="stats_total"> ... (%d total)</string>
+
+    <!-- Result labels -->
+    <string name="label_root">Root</string>
+    <string name="label_min">Min</string>
+    <string name="label_max">Max</string>
+    <string name="result_inf_pos">+Inf</string>
+    <string name="result_inf_neg">-Inf</string>
+    <string name="result_normal_vert">Normal: vertical line x = %.10g</string>
+    <string name="result_computation_failed">computation failed</string>
+
+    <!-- Matrix labels -->
+    <string name="mat_add_title">A + B</string>
+    <string name="mat_inv_title">inv(A)</string>
+    <string name="mat_trans_title">A^T (Transpose)</string>
+    <string name="mat_eigen_title">Eigenvalues</string>
+    <string name="mat_eigen_header">Eigenvalues for 2x2 matrix:</string>
+    <string name="mat_eigen_approx_header">Eigenvalue approximation (power iteration):</string>
+    <string name="mat_eigen_lambda">  lambda%d = %.10g</string>
+    <string name="mat_eigen_lambda_complex">  lambda%d = %.10g + %.10gi</string>
+    <string name="mat_eigen_done">Eigenvalue computation done</string>
+
+    <!-- Limit labels -->
+    <string name="limit_error">lim(x→%.6g): Error: %s</string>
+    <string name="limit_left">  Left:  %.10g</string>
+    <string name="limit_right">  Right: %.10g</string>
+    <string name="limit_left_result">lim(x→%.6g⁻) = %.10g</string>
+    <string name="limit_right_result">lim(x→%.6g⁺) = %.10g</string>
+    <string name="limit_left_dne">lim(x→%.6g⁻) = DNE</string>
+    <string name="limit_right_dne">lim(x→%.6g⁺) = DNE</string>
+    <string name="limit_side_error">%s: Error: %s</string>
+    <string name="limit_left_label">lim(x→%.6g⁻)</string>
+    <string name="limit_right_label">lim(x→%.6g⁺)</string>
+
+    <!-- ODE labels -->
+    <string name="ode_header">dy/dx = %s, y(%.6g) = %.6g</string>
+    <string name="ode_solved">Solved over [%.6g, %.6g] with %d steps (RK4)</string>
+    <string name="ode_col_x">x</string>
+    <string name="ode_col_y">y(x)</string>
+    <string name="ode_truncated">  ... (%d total points)</string>
+
+    <!-- Calendar labels -->
+    <string name="cal_days_between">Days between dates: %d</string>
+    <string name="cal_days_added">%d days = %s</string>
+    <string name="cal_is_a"> is a </string>
+
+    <!-- Misc result labels -->
+    <string name="result_and_more">... and %d more</string>
+    <string name="result_sorted_prefix">Sorted: </string>
+    <string name="result_total_count"> ... (%d total)</string>
+
+    <!-- FFT labels -->
+    <string name="fft_spectrum_header">DFT Spectrum (%d samples)</string>
+    <string name="fft_amplitude"> A=</string>
+    <string name="fft_more_bins">... and %d more bins</string>
+
+    <!-- System solver labels -->
+    <string name="system_func_f">f(x,y) = %s</string>
+    <string name="system_func_g">g(x,y) = %s</string>
+    <string name="system_sol_x">  x = %s</string>
+    <string name="system_sol_y">  y = %s</string>
+    <string name="system_resid_f">  f(x,y) = %s</string>
+    <string name="system_resid_g">  g(x,y) = %s</string>
 </resources>

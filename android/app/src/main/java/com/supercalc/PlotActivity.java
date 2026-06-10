@@ -199,8 +199,10 @@ public class PlotActivity extends AppCompatActivity {
             int resolution = intent.getIntExtra("implicit_resolution", 200);
             double xMin = intent.getDoubleExtra("x_min", -10.0);
             double xMax = intent.getDoubleExtra("x_max", 10.0);
+            double yMin = intent.getDoubleExtra("y_min", -10.0);
+            double yMax = intent.getDoubleExtra("y_max", 10.0);
             if (impExpr != null) {
-                plotImplicitCurve(impExpr, resolution, xMin, xMax);
+                plotImplicitCurve(impExpr, resolution, xMin, xMax, yMin, yMax);
             }
         }
         
@@ -400,10 +402,8 @@ public class PlotActivity extends AppCompatActivity {
         toast(getString(R.string.toast_polar_plotted));
     }
     
-    private void plotImplicitCurve(String impExpr, int resolution, double xMin, double xMax) {
+    private void plotImplicitCurve(String impExpr, int resolution, double xMin, double xMax, double yMin, double yMax) {
         ArrayList<Entry> entries = new ArrayList<>();
-        double yMin = -10.0;
-        double yMax = 10.0;
         
         double dx = (xMax - xMin) / resolution;
         double dy = (yMax - yMin) / resolution;

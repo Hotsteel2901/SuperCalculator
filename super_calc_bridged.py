@@ -1089,22 +1089,22 @@ class SuperCalcApp:
 
         mrow3 = ttk.Frame(frm_matrix, style="Dark.TFrame")
         mrow3.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Button(mrow3, text="A + B", command=self._on_matrix_add).pack(side=tk.LEFT, padx=2)
-        ttk.Button(mrow3, text="A - B", command=self._on_matrix_sub).pack(side=tk.LEFT, padx=2)
-        ttk.Button(mrow3, text="A * B", command=self._on_matrix_mul).pack(side=tk.LEFT, padx=2)
-        ttk.Button(mrow3, text="det(A)", command=self._on_matrix_det).pack(side=tk.LEFT, padx=2)
+        ttk.Button(mrow3, text=t("btn_mat_add"), command=self._on_matrix_add).pack(side=tk.LEFT, padx=2)
+        ttk.Button(mrow3, text=t("btn_mat_sub"), command=self._on_matrix_sub).pack(side=tk.LEFT, padx=2)
+        ttk.Button(mrow3, text=t("btn_mat_mul"), command=self._on_matrix_mul).pack(side=tk.LEFT, padx=2)
+        ttk.Button(mrow3, text=t("btn_mat_det"), command=self._on_matrix_det).pack(side=tk.LEFT, padx=2)
 
         mrow4 = ttk.Frame(frm_matrix, style="Dark.TFrame")
         mrow4.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Button(mrow4, text="inv(A)", command=self._on_matrix_inv).pack(side=tk.LEFT, padx=2)
-        ttk.Button(mrow4, text="A^T", command=self._on_matrix_transpose).pack(side=tk.LEFT, padx=2)
-        ttk.Button(mrow4, text="rank(A)", command=self._on_matrix_rank).pack(side=tk.LEFT, padx=2)
-        ttk.Button(mrow4, text="rref(A)", command=self._on_matrix_rref).pack(side=tk.LEFT, padx=2)
+        ttk.Button(mrow4, text=t("btn_mat_inv"), command=self._on_matrix_inv).pack(side=tk.LEFT, padx=2)
+        ttk.Button(mrow4, text=t("btn_mat_trans"), command=self._on_matrix_transpose).pack(side=tk.LEFT, padx=2)
+        ttk.Button(mrow4, text=t("btn_mat_rank"), command=self._on_matrix_rank).pack(side=tk.LEFT, padx=2)
+        ttk.Button(mrow4, text=t("btn_mat_rref"), command=self._on_matrix_rref).pack(side=tk.LEFT, padx=2)
 
         mrow5 = ttk.Frame(frm_matrix, style="Dark.TFrame")
         mrow5.pack(fill=tk.X, padx=6, pady=(0, 4))
-        ttk.Button(mrow5, text="eig(A)", command=self._on_matrix_eigen).pack(side=tk.LEFT, padx=2)
-        ttk.Button(mrow5, text="Clear", command=self._on_matrix_clear).pack(side=tk.RIGHT, padx=2)
+        ttk.Button(mrow5, text=t("btn_mat_eigen"), command=self._on_matrix_eigen).pack(side=tk.LEFT, padx=2)
+        ttk.Button(mrow5, text=t("btn_mat_clear"), command=self._on_matrix_clear).pack(side=tk.RIGHT, padx=2)
 
         self._matrix_result = None
 
@@ -1126,11 +1126,11 @@ class SuperCalcApp:
 
         crow2 = ttk.Frame(frm_complex, style="Dark.TFrame")
         crow2.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Button(crow2, text="z1 + z2", command=self._on_complex_add).pack(side=tk.LEFT, padx=2)
-        ttk.Button(crow2, text="z1 - z2", command=self._on_complex_sub).pack(side=tk.LEFT, padx=2)
-        ttk.Button(crow2, text="z1 * z2", command=self._on_complex_mul).pack(side=tk.LEFT, padx=2)
-        ttk.Button(crow2, text="z1 / z2", command=self._on_complex_div).pack(side=tk.LEFT, padx=2)
-        ttk.Button(crow2, text="z1 ^ z2", command=self._on_complex_pow).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow2, text=t("btn_complex_add"), command=self._on_complex_add).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow2, text=t("btn_complex_sub"), command=self._on_complex_sub).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow2, text=t("btn_complex_mul"), command=self._on_complex_mul).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow2, text=t("btn_complex_div"), command=self._on_complex_div).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow2, text=t("btn_complex_pow"), command=self._on_complex_pow).pack(side=tk.LEFT, padx=2)
 
         crow3 = ttk.Frame(frm_complex, style="Dark.TFrame")
         crow3.pack(fill=tk.X, padx=6, pady=2)
@@ -1141,19 +1141,19 @@ class SuperCalcApp:
 
         crow4 = ttk.Frame(frm_complex, style="Dark.TFrame")
         crow4.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Button(crow4, text="sin(z)", command=self._on_complex_sin).pack(side=tk.LEFT, padx=2)
-        ttk.Button(crow4, text="cos(z)", command=self._on_complex_cos).pack(side=tk.LEFT, padx=2)
-        ttk.Button(crow4, text="tan(z)", command=self._on_complex_tan).pack(side=tk.LEFT, padx=2)
-        ttk.Button(crow4, text="exp(z)", command=self._on_complex_exp).pack(side=tk.LEFT, padx=2)
-        ttk.Button(crow4, text="ln(z)", command=self._on_complex_ln).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow4, text=t("btn_complex_sin"), command=self._on_complex_sin).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow4, text=t("btn_complex_cos"), command=self._on_complex_cos).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow4, text=t("btn_complex_tan"), command=self._on_complex_tan).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow4, text=t("btn_complex_exp"), command=self._on_complex_exp).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow4, text=t("btn_complex_ln"), command=self._on_complex_ln).pack(side=tk.LEFT, padx=2)
 
         crow5 = ttk.Frame(frm_complex, style="Dark.TFrame")
         crow5.pack(fill=tk.X, padx=6, pady=2)
-        ttk.Button(crow5, text="sqrt(z)", command=self._on_complex_sqrt).pack(side=tk.LEFT, padx=2)
-        ttk.Button(crow5, text="|z|", command=self._on_complex_abs).pack(side=tk.LEFT, padx=2)
-        ttk.Button(crow5, text="conj(z)", command=self._on_complex_conj).pack(side=tk.LEFT, padx=2)
-        ttk.Button(crow5, text="Re(z)", command=self._on_complex_real).pack(side=tk.LEFT, padx=2)
-        ttk.Button(crow5, text="Im(z)", command=self._on_complex_imag).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow5, text=t("btn_complex_sqrt"), command=self._on_complex_sqrt).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow5, text=t("btn_complex_abs"), command=self._on_complex_abs).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow5, text=t("btn_complex_conj"), command=self._on_complex_conj).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow5, text=t("btn_complex_re"), command=self._on_complex_real).pack(side=tk.LEFT, padx=2)
+        ttk.Button(crow5, text=t("btn_complex_im"), command=self._on_complex_imag).pack(side=tk.LEFT, padx=2)
 
         crow6 = ttk.Frame(frm_complex, style="Dark.TFrame")
         crow6.pack(fill=tk.X, padx=6, pady=(0, 4))
@@ -4359,7 +4359,7 @@ class SuperCalcApp:
             return
         try:
             result = np.array(a) + np.array(b)
-            self._show_matrix_result("A + B", self._format_matrix(result))
+            self._show_matrix_result(t("mat_title_add"), self._format_matrix(result))
             self.status_var.set(t("status_matrix_add"))
         except Exception as e:
             messagebox.showerror(t("err_matrix"), t("msg_add_failed", e))
@@ -4371,7 +4371,7 @@ class SuperCalcApp:
             return
         try:
             result = np.array(a) - np.array(b)
-            self._show_matrix_result("A - B", self._format_matrix(result))
+            self._show_matrix_result(t("mat_title_sub"), self._format_matrix(result))
             self.status_var.set(t("status_matrix_sub"))
         except Exception as e:
             messagebox.showerror(t("err_matrix"), t("msg_sub_failed", e))
@@ -4383,7 +4383,7 @@ class SuperCalcApp:
             return
         try:
             result = np.array(a) @ np.array(b)
-            self._show_matrix_result("A * B", self._format_matrix(result))
+            self._show_matrix_result(t("mat_title_mul"), self._format_matrix(result))
             self.status_var.set(t("status_matrix_mul"))
         except Exception as e:
             messagebox.showerror(t("err_matrix"), t("msg_mul_failed", e))
@@ -4398,7 +4398,7 @@ class SuperCalcApp:
                 messagebox.showerror(t("err_matrix"), t("msg_det_square"))
                 return
             det = np.linalg.det(arr)
-            self._show_matrix_result("det(A)", f"det(A) = {det:.10g}")
+            self._show_matrix_result(t("mat_title_det"), t("mat_result_det", det))
             self.status_var.set(t("status_det", f"{det:.10g}"))
         except Exception as e:
             messagebox.showerror(t("err_matrix"), t("msg_det_failed", e))
@@ -4413,7 +4413,7 @@ class SuperCalcApp:
                 messagebox.showerror(t("err_matrix"), t("msg_inv_square"))
                 return
             result = np.linalg.inv(arr)
-            self._show_matrix_result("inv(A)", self._format_matrix(result))
+            self._show_matrix_result(t("mat_title_inv"), self._format_matrix(result))
             self.status_var.set(t("status_matrix_inv"))
         except np.linalg.LinAlgError:
             messagebox.showerror(t("err_matrix"), t("msg_singular"))
@@ -4426,7 +4426,7 @@ class SuperCalcApp:
             return
         try:
             result = np.array(a).T
-            self._show_matrix_result("A^T (Transpose)", self._format_matrix(result))
+            self._show_matrix_result(t("mat_title_trans"), self._format_matrix(result))
             self.status_var.set(t("status_matrix_trans"))
         except Exception as e:
             messagebox.showerror(t("err_matrix"), t("msg_transpose_failed", e))
@@ -4438,7 +4438,7 @@ class SuperCalcApp:
         try:
             arr = np.array(a)
             rank = np.linalg.matrix_rank(arr)
-            self._show_matrix_result("rank(A)", f"rank(A) = {rank}")
+            self._show_matrix_result(t("mat_title_rank"), t("mat_result_rank", rank))
             self.status_var.set(t("status_rank", rank))
         except Exception as e:
             messagebox.showerror(t("err_matrix"), t("msg_rank_failed", e))
@@ -4469,8 +4469,8 @@ class SuperCalcApp:
                 pivot_cols.append(col)
                 pivot_row += 1
             result_str = self._format_matrix(arr.tolist())
-            info = f"Rank = {len(pivot_cols)}\n\n{result_str}"
-            self._show_matrix_result("RREF(A)", info)
+            info = t("mat_result_rref", len(pivot_cols)) + "\n\n" + result_str
+            self._show_matrix_result(t("mat_title_rref"), info)
             self.status_var.set(t("status_rref", len(pivot_cols)))
         except Exception as e:
             messagebox.showerror(t("err_matrix"), t("msg_rref_failed", e))
@@ -4485,13 +4485,13 @@ class SuperCalcApp:
                 messagebox.showerror(t("err_matrix"), t("msg_eigen_square"))
                 return
             eigenvalues, eigenvectors = np.linalg.eig(arr)
-            lines = ["Eigenvalues:"]
+            lines = [t("mat_eigen_header")]
             for i, val in enumerate(eigenvalues):
-                lines.append(f"  λ{i+1} = {val:.10g}")
+                lines.append(f"  \u03bb{i+1} = {val:.10g}")
             lines.append("")
-            lines.append("Eigenvectors (columns):")
+            lines.append(t("mat_eigen_vec_header"))
             lines.append(self._format_matrix(eigenvectors))
-            self._show_matrix_result("Eigenvalues & Eigenvectors", "\n".join(lines))
+            self._show_matrix_result(t("mat_title_eigen"), "\n".join(lines))
             self.status_var.set(t("status_eigenvalues", str([f'{v:.6g}' for v in eigenvalues])))
         except np.linalg.LinAlgError:
             messagebox.showerror(t("err_matrix"), t("msg_eigen_failed"))
@@ -4670,25 +4670,25 @@ class SuperCalcApp:
         if z is not None:
             result = CalcEngine.complex_abs(z)
             if result is not None:
-                self._show_complex_result(f"|z| = {result:.10g}")
+                self._show_complex_result(t("complex_result_abs", result))
             else:
-                self._show_complex_result("Error")
+                self._show_complex_result(t("complex_result_error"))
 
     def _on_complex_conj(self):
         z = self._parse_complex(self._var_complex_z.get())
         if z is not None:
             result = CalcEngine.complex_conj(z)
-            self._show_complex_result(f"conj(z) = {self._format_complex(result)}")
+            self._show_complex_result(t("complex_result_conj", self._format_complex(result)))
 
     def _on_complex_real(self):
         z = self._parse_complex(self._var_complex_z.get())
         if z is not None:
-            self._show_complex_result(f"Re(z) = {z.real:.10g}")
+            self._show_complex_result(t("complex_result_re", z.real))
 
     def _on_complex_imag(self):
         z = self._parse_complex(self._var_complex_z.get())
         if z is not None:
-            self._show_complex_result(f"Im(z) = {z.imag:.10g}")
+            self._show_complex_result(t("complex_result_im", z.imag))
 
     # ------------------------------------------------------------------
     #  Number Theory Calculator
