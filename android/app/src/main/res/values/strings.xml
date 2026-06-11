@@ -369,6 +369,7 @@
     <!-- Taylor -->
     <string name="taylor_error">Taylor: Error: %s</string>
     <string name="taylor_result">Taylor series at a=%.4g (order %d):\n%s</string>
+    <string name="taylor_coefficients_header">Coefficients (c_k = f^(k)(a)/k!):\n</string>
     <string name="taylor_toast">Taylor at a=%.4g plotted</string>
 
     <!-- ODE -->
@@ -420,6 +421,7 @@
     <string name="parametric_error">Parametric: Error: %s</string>
     <string name="polar_error">Polar: Error: %s</string>
     <string name="table_error">Table: Error: %s</string>
+    <string name="table_header">x\t\tf(x)</string>
     <string name="table_valid_count">Valid: %d / %d</string>
     <string name="table_generated">Table generated: %d/%d valid points</string>
     <string name="table_share">Share table</string>
@@ -546,6 +548,9 @@
 
     <!-- Matrix labels -->
     <string name="mat_add_title">A + B</string>
+    <string name="mat_sub_title">A - B</string>
+    <string name="mat_mul_title">A * B</string>
+    <string name="mat_det_title">det(A)</string>
     <string name="mat_inv_title">inv(A)</string>
     <string name="mat_trans_title">A^T (Transpose)</string>
     <string name="mat_eigen_title">Eigenvalues</string>
