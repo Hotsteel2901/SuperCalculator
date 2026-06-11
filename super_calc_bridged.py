@@ -926,6 +926,67 @@ class SuperCalcApp:
         self._ode_data: Optional[dict[str, object]] = None
         self._last_reg_result: Optional[dict[str, object]] = None
 
+        # --- Direction Field (Vector Field) ---
+        DIRECTION_FIELD_PRESETS = {
+            "Exponential decay (-y)": "-y",
+            "Logistic growth (y*(1-y))": "y*(1-y)",
+            "Harmonic (-y-sin(x))": "-y-sin(x)",
+            "Van der Pol (y-(y^3)/3+x)": "y-((y^3)/3)+x",
+            "Lotka-Volterra (x*(1-y), y*(x-1))": "x*(1-y)",
+            "Damped oscillator (-0.5*y-sin(x))": "-0.5*y-sin(x)",
+            "Newton cooling (-0.5*(y-20))": "-0.5*(y-20)",
+            "Predator-prey (-x*y+0.5*x)": "-x*y+0.5*x",
+        }
+
+        frm_df = ttk.LabelFrame(scroll_frame, text=t("sec_direction_field"),
+                                 style="Dark.TLabelframe")
+        frm_df.pack(fill=tk.X, padx=8, pady=4)
+
+        df_row1 = ttk.Frame(frm_df, style="Dark.TFrame")
+        df_row1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(df_row1, text=t("label_df_expr"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_df_expr = tk.StringVar(value="-y")
+        ttk.Entry(df_row1, textvariable=self._var_df_expr, width=22).pack(
+            side=tk.LEFT, padx=4)
+
+        df_row1b = ttk.Frame(frm_df, style="Dark.TFrame")
+        df_row1b.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(df_row1b, text=t("label_preset"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_df_preset = tk.StringVar()
+        df_preset_combo = ttk.Combobox(df_row1b, textvariable=self._var_df_preset,
+                                        values=list(DIRECTION_FIELD_PRESETS.keys()),
+                                        state="readonly", font=("Consolas", 10), width=24)
+        df_preset_combo.pack(side=tk.LEFT, padx=4)
+        df_preset_combo.bind("<<ComboboxSelected>>",
+                              lambda e: self._on_df_preset(DIRECTION_FIELD_PRESETS.get(
+                                  self._var_df_preset.get(), "")))
+
+        df_row2 = ttk.Frame(frm_df, style="Dark.TFrame")
+        df_row2.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(df_row2, text=t("label_df_grid"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_df_grid = tk.StringVar(value="20")
+        ttk.Entry(df_row2, textvariable=self._var_df_grid, width=5).pack(
+            side=tk.LEFT, padx=2)
+        ttk.Label(df_row2, text=t("label_df_arrows"), style="Dark.TLabel").pack(
+            side=tk.LEFT, padx=(8, 0))
+        self._var_df_arrows = tk.StringVar(value="20")
+        ttk.Entry(df_row2, textvariable=self._var_df_arrows, width=5).pack(
+            side=tk.LEFT, padx=2)
+
+        df_row3 = ttk.Frame(frm_df, style="Dark.TFrame")
+        df_row3.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(df_row3, text=t("label_df_sol_ic"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_df_ic = tk.StringVar(value="0,1; 0,0.5; 0,-1")
+        ttk.Entry(df_row3, textvariable=self._var_df_ic, width=30).pack(
+            side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+
+        df_row4 = ttk.Frame(frm_df, style="Dark.TFrame")
+        df_row4.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Button(df_row4, text=t("btn_df_plot"),
+                   command=self._on_direction_field_plot).pack(side=tk.LEFT, padx=2)
+        ttk.Button(df_row4, text=t("btn_df_clear"),
+                   command=lambda: self._var_df_ic.set("")).pack(side=tk.LEFT, padx=2)
+
         # --- Statistics Calculator ---
         frm_stats = ttk.LabelFrame(scroll_frame, text=t("sec_stats"),
                                     style="Dark.TLabelframe")
@@ -3690,6 +3751,85 @@ class SuperCalcApp:
             self._var_ode_y0.set(y0)
             self._var_ode_xend.set(x_end)
             self._var_ode_steps.set(steps)
+
+    def _on_df_preset(self, expr: str):
+        if expr:
+            self._var_df_expr.set(expr)
+
+    def _on_direction_field_plot(self):
+        expr = self._var_df_expr.get().strip()
+        if not expr:
+            messagebox.showwarning(t("err_input"), t("msg_df_invalid_expr"))
+            return
+        try:
+            n_grid = int(self._var_df_grid.get())
+            n_arrows = int(self._var_df_arrows.get())
+        except ValueError:
+            messagebox.showerror(t("err_df"), t("msg_df_invalid_grid"))
+            return
+        if n_grid < 5 or n_grid > 50:
+            messagebox.showerror(t("err_df"), t("msg_df_invalid_grid"))
+            return
+
+        self._ensure_2d_window()
+        self.ax_2d.clear()
+        self._setup_axes(self.ax_2d, is_3d=False)
+
+        x_min, x_max = self.x_min, self.x_max
+        y_min, y_max = self.y_min, self.y_max
+
+        xs_grid = np.linspace(x_min, x_max, n_arrows)
+        ys_grid = np.linspace(y_min, y_max, n_arrows)
+        X, Y = np.meshgrid(xs_grid, ys_grid)
+
+        flat_x = X.flatten().tolist()
+        flat_y = Y.flatten().tolist()
+        slopes = CalcEngine.evaluate_xy_array(expr, flat_x, flat_y)
+        Z = np.array([s if s is not None else 0.0 for s in slopes]).reshape(X.shape)
+
+        dx = 1.0
+        dy = Z
+        norm = np.sqrt(dx**2 + dy**2)
+        norm = np.where(norm == 0, 1, norm)
+        U = dx / norm
+        V = dy / norm
+
+        self.ax_2d.quiver(X, Y, U, V, norm, cmap='coolwarm', alpha=0.7,
+                          scale=25, width=0.004)
+
+        ic_str = self._var_df_ic.get().strip()
+        n_solutions = 0
+        if ic_str:
+            try:
+                pairs = [p.strip() for p in ic_str.split(";") if p.strip()]
+                colors_solutions = ["#a6e3a1", "#f9e2af", "#89b4fa", "#f38ba8",
+                                    "#cba6f7", "#fab387"]
+                for idx, pair in enumerate(pairs):
+                    parts = pair.split(",")
+                    x0_ic = float(parts[0].strip())
+                    y0_ic = float(parts[1].strip())
+                    sol = CalcEngine.ode_solve_rk4(expr, x0_ic, y0_ic,
+                                                    x_max, max(n_grid * 10, 200))
+                    if sol and sol['xs']:
+                        sol_xs = sol['xs']
+                        sol_ys = [y if y is not None else np.nan for y in sol['ys']]
+                        color = colors_solutions[idx % len(colors_solutions)]
+                        self.ax_2d.plot(sol_xs, sol_ys, color=color, linewidth=2,
+                                        alpha=0.9)
+                        self.ax_2d.plot(x0_ic, y0_ic, 'o', color=color, markersize=6)
+                        n_solutions += 1
+            except (ValueError, IndexError):
+                pass
+
+        self.ax_2d.set_xlim(x_min, x_max)
+        self.ax_2d.set_ylim(y_min, y_max)
+        self.ax_2d.set_xlabel("x", color="#cdd6f4")
+        self.ax_2d.set_ylabel("y", color="#cdd6f4")
+        self.ax_2d.set_title(f"Direction Field: dy/dx = {expr}", color="#cdd6f4")
+        self.ax_2d.grid(True, alpha=0.3, color="#585b70")
+        self.ax_2d.set_facecolor("#1e1e2e")
+        self.canvas_2d.draw()
+        self.status_var.set(t("status_df_plotted", n_arrows, n_arrows, n_solutions))
 
     # ------------------------------------------------------------------
     #  Equation Solver

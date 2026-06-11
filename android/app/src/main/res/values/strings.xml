@@ -45,6 +45,14 @@
     <string name="taylor_plot">Taylor Plot</string>
     <string name="solve_ode">Solve ODE</string>
     <string name="ode_plot">ODE Plot</string>
+    <string name="direction_field">Direction Field dy/dx = f(x,y)</string>
+    <string name="direction_field_plot">Plot Field</string>
+    <string name="direction_field_solve">Solve &amp; Plot</string>
+    <string name="hint_df_expr">dy/dx = f(x,y)</string>
+    <string name="hint_df_grid">Grid</string>
+    <string name="hint_df_ymin">Y min</string>
+    <string name="hint_df_ymax">Y max</string>
+    <string name="hint_df_ic">IC: x0,y0; ...</string>
     <string name="histogram">Histogram</string>
     <string name="sort">Sort</string>
     <string name="function_graph">Function Graph</string>
@@ -201,6 +209,7 @@
     <string name="toast_enter_fg">Enter both f(x,y) and g(x,y) expressions</string>
     <string name="toast_invalid_guess">Invalid initial guess</string>
     <string name="toast_enter_ode">Enter ODE expression dy/dx = f(x,y)</string>
+    <string name="toast_enter_df_expr">Enter direction field expression dy/dx = f(x,y)</string>
     <string name="toast_invalid_ode">Invalid ODE parameters</string>
     <string name="toast_steps_range">Steps must be 1-100000</string>
     <string name="toast_x0_xend">x0 must not equal x end</string>
@@ -242,6 +251,8 @@
     <string name="toast_polar_plotted">Polar curve plotted</string>
     <string name="toast_implicit_plotted">Implicit curve plotted</string>
     <string name="toast_no_ode_points">No valid ODE points to plot</string>
+    <string name="toast_direction_field_plotted">Direction field plotted</string>
+    <string name="toast_invalid_ic">Invalid initial condition: {0}</string>
     <string name="toast_ode_plotted">ODE solution plotted</string>
     <string name="toast_taylor_plotted">Taylor series (order {0}) plotted at a={1}</string>
     <string name="toast_no_data_points">No valid data points to plot</string>
@@ -275,6 +286,7 @@
     <string name="dialog_fft_spectrum">FFT Spectrum</string>
     <string name="dialog_taylor_series">Taylor Series Expansion</string>
     <string name="dialog_ode_solution">ODE Solution (RK4)</string>
+    <string name="dialog_direction_field">Direction Field</string>
     <string name="dialog_statistics">Statistics Results</string>
     <string name="dialog_histogram">Histogram</string>
     <string name="dialog_function_table">Function Table ({0} pts)</string>
