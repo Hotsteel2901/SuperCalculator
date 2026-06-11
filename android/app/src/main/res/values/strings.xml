@@ -62,6 +62,12 @@
     <string name="ode_solver">ODE Solver dy/dx = f(x,y)</string>
     <string name="arc_length">Arc Length</string>
     <string name="area_between">Area Between</string>
+    <string name="volume_revolution">Volume of Revolution</string>
+    <string name="vol_disk">Disk</string>
+    <string name="vol_washer">Washer</string>
+    <string name="vol_shell">Shell</string>
+    <string name="volume_error">Volume Error: %s</string>
+    <string name="volume_result">%s: %s\nInterval: [%.4g, %.4g]\nResult: %.10g</string>
     <string name="unit_converter">Unit Converter</string>
     <string name="convert">Convert</string>
     <string name="lim_fx">lim f(x)</string>

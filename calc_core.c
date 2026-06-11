@@ -1429,6 +1429,146 @@ EXPORT void convert_base_all(const char* input, int from_base,
     if (hex) long_to_base(value, 16, hex, hex_max);
 }
 
+/* --------------------------------------------------------------------------
+ *  Volume of Revolution
+ *  Computes volumes of solids of revolution using three methods:
+ *
+ *  Disk method:   V = π ∫_a^b [f(x)]² dx        (rotate f(x) around x-axis)
+ *  Washer method: V = π ∫_a^b ([f(x)]²-[g(x)]²) dx  (rotate f(x),g(x) around x-axis)
+ *  Shell method:  V = 2π ∫_a^b x·f(x) dx         (rotate f(x) around y-axis)
+ *
+ *  Uses adaptive Simpson's rule for integration.
+ * -------------------------------------------------------------------------- */
+
+static double _disk_integrand(const char* expr, double x) {
+    double fv;
+    if (parse_and_eval(expr, x, 0.0, &fv) != 0) return NAN;
+    return fv * fv;
+}
+
+static double _washer_integrand(const char* expr_f, const char* expr_g, double x) {
+    double fv, gv;
+    if (parse_and_eval(expr_f, x, 0.0, &fv) != 0) return NAN;
+    if (parse_and_eval(expr_g, x, 0.0, &gv) != 0) return NAN;
+    return fv * fv - gv * gv;
+}
+
+static double _shell_integrand(const char* expr, double x) {
+    double fv;
+    if (parse_and_eval(expr, x, 0.0, &fv) != 0) return NAN;
+    return x * fv;
+}
+
+static double _simpson_volume(const char* expr_f, const char* expr_g,
+                               double a, double b, int n, int method) {
+    /* method: 0=disk, 1=washer, 2=shell */
+    if (n < 2 || n % 2 != 0) { set_error("Simpson's rule requires even n >= 2"); return NAN; }
+    if (a == b) return 0.0;
+    double h = (b - a) / n;
+
+    double fa_val, fb_val;
+    if (method == 0) {
+        fa_val = _disk_integrand(expr_f, a);
+        fb_val = _disk_integrand(expr_f, b);
+    } else if (method == 1) {
+        fa_val = _washer_integrand(expr_f, expr_g, a);
+        fb_val = _washer_integrand(expr_f, expr_g, b);
+    } else {
+        fa_val = _shell_integrand(expr_f, a);
+        fb_val = _shell_integrand(expr_f, b);
+    }
+    if (isnan(fa_val) || isnan(fb_val)) return NAN;
+
+    double sum = fa_val + fb_val;
+    for (int i = 1; i < n; i++) {
+        double xi = a + i * h;
+        double fi;
+        if (method == 0) {
+            fi = _disk_integrand(expr_f, xi);
+        } else if (method == 1) {
+            fi = _washer_integrand(expr_f, expr_g, xi);
+        } else {
+            fi = _shell_integrand(expr_f, xi);
+        }
+        if (isnan(fi)) return NAN;
+        sum += (i % 2 == 0 ? 2.0 : 4.0) * fi;
+    }
+
+    double base = (h / 3.0) * sum;
+    if (method == 0 || method == 1) {
+        return M_PI * base;
+    } else {
+        return 2.0 * M_PI * base;
+    }
+}
+
+EXPORT double volume_disk(const char* expr, double a, double b, double tol) {
+    if (!expr) { set_error("NULL expression"); return NAN; }
+    if (a > b) { set_error("Invalid interval: a must be <= b"); return NAN; }
+    if (a == b) { clear_error(); return 0.0; }
+    if (tol <= 0.0) tol = 1e-8;
+    clear_error();
+
+    int n = 64;
+    double prev, cur;
+    cur = _simpson_volume(expr, NULL, a, b, n, 0);
+    if (isnan(cur)) return NAN;
+    for (int k = 0; k < 12; k++) {
+        n *= 2;
+        prev = cur;
+        cur = _simpson_volume(expr, NULL, a, b, n, 0);
+        if (isnan(cur)) return NAN;
+        if (fabs(cur - prev) < tol) return cur;
+    }
+    set_error("Adaptive volume computation did not converge");
+    return cur;
+}
+
+EXPORT double volume_washer(const char* expr_f, const char* expr_g,
+                             double a, double b, double tol) {
+    if (!expr_f || !expr_g) { set_error("NULL expression"); return NAN; }
+    if (a > b) { set_error("Invalid interval: a must be <= b"); return NAN; }
+    if (a == b) { clear_error(); return 0.0; }
+    if (tol <= 0.0) tol = 1e-8;
+    clear_error();
+
+    int n = 64;
+    double prev, cur;
+    cur = _simpson_volume(expr_f, expr_g, a, b, n, 1);
+    if (isnan(cur)) return NAN;
+    for (int k = 0; k < 12; k++) {
+        n *= 2;
+        prev = cur;
+        cur = _simpson_volume(expr_f, expr_g, a, b, n, 1);
+        if (isnan(cur)) return NAN;
+        if (fabs(cur - prev) < tol) return cur;
+    }
+    set_error("Adaptive volume computation did not converge");
+    return cur;
+}
+
+EXPORT double volume_shell(const char* expr, double a, double b, double tol) {
+    if (!expr) { set_error("NULL expression"); return NAN; }
+    if (a > b) { set_error("Invalid interval: a must be <= b"); return NAN; }
+    if (a == b) { clear_error(); return 0.0; }
+    if (tol <= 0.0) tol = 1e-8;
+    clear_error();
+
+    int n = 64;
+    double prev, cur;
+    cur = _simpson_volume(expr, NULL, a, b, n, 2);
+    if (isnan(cur)) return NAN;
+    for (int k = 0; k < 12; k++) {
+        n *= 2;
+        prev = cur;
+        cur = _simpson_volume(expr, NULL, a, b, n, 2);
+        if (isnan(cur)) return NAN;
+        if (fabs(cur - prev) < tol) return cur;
+    }
+    set_error("Adaptive volume computation did not converge");
+    return cur;
+}
+
 EXPORT void complex_array_evaluate(const char* expr, const double* xs, const double* ys,
                                     double* out_re, double* out_im, int n) {
     if (!expr || !xs || !ys || !out_re || !out_im || n <= 0) return;

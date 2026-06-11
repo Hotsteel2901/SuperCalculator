@@ -2683,6 +2683,60 @@
             </div>
         </section>
 
+        <section class="section" id="volume-revolution">
+            <div class="section-header">
+                <div class="section-label">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+                    </svg>
+                    Volume of Revolution
+                </div>
+                <h2 class="section-title">旋转体体积计算器</h2>
+                <p class="section-subtitle">圆盘法、垫圈法、壳法，可视化旋转体体积计算</p>
+            </div>
+            <div class="card glass reveal" style="max-width: 700px; margin: 0 auto;">
+                <div style="display:flex;flex-direction:column;gap:16px;">
+                    <!-- Method selector -->
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button class="chip active" onclick="setVolMode('disk')" id="volChipDisk">圆盘法</button>
+                        <button class="chip" onclick="setVolMode('washer')" id="volChipWasher">垫圈法</button>
+                        <button class="chip" onclick="setVolMode('shell')" id="volChipShell">壳法</button>
+                    </div>
+                    <!-- f(x) input -->
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <div style="flex:2;min-width:200px;">
+                            <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">f(x) =</label>
+                            <input type="text" id="volFx" value="sqrt(1-x^2)" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeVolume()">
+                        </div>
+                        <div style="flex:2;min-width:200px;" id="volGxDiv">
+                            <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">g(x) =</label>
+                            <input type="text" id="volGx" value="0" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeVolume()">
+                        </div>
+                    </div>
+                    <!-- Interval -->
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <div style="flex:1;min-width:80px;">
+                            <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">a</label>
+                            <input type="number" id="volA" value="0" step="0.1" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeVolume()">
+                        </div>
+                        <div style="flex:1;min-width:80px;">
+                            <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">b</label>
+                            <input type="number" id="volB" value="1" step="0.1" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="computeVolume()">
+                        </div>
+                    </div>
+                    <!-- Presets -->
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button class="chip" onclick="setVolPreset('sphere')" style="font-size:12px;">球体 (r=1)</button>
+                        <button class="chip" onclick="setVolPreset('cone')" style="font-size:12px;">圆锥 (h=1,r=1)</button>
+                        <button class="chip" onclick="setVolPreset('cylinder')" style="font-size:12px;">圆柱 (h=1,r=1)</button>
+                        <button class="chip" onclick="setVolPreset('torus')" style="font-size:12px;">圆环 (R=2,r=0.5)</button>
+                    </div>
+                    <div id="volResults" style="padding:16px;border-radius:12px;background:var(--glass-bg);border:1px solid var(--glass-border);font-family:monospace;font-size:15px;color:var(--glow-accent);line-height:1.8;word-break:break-all;"></div>
+                </div>
+            </div>
+        </section>
+
         <section class="section" id="data-import">
             <div class="section-header">
                 <div class="section-label">
@@ -3482,6 +3536,108 @@
                     '<div><span style="color:var(--text-muted);">' + (isZh ? '终值' : 'Future Value') + ' = </span><span style="color:var(--glow-primary);font-size:18px;">' + fmtMoney(fv) + '</span></div>' +
                     '<div><span style="color:var(--text-muted);">' + (isZh ? '总投入' : 'Total Contributions') + ' = </span><span style="color:var(--glow-primary);">' + fmtMoney(contributions) + '</span></div>' +
                     '<div><span style="color:var(--text-muted);">' + (isZh ? '总收益' : 'Total Interest') + ' = </span><span style="color:var(--glow-primary);">' + fmtMoney(interest) + '</span></div>' +
+                    '</div>';
+            };
+
+            // Volume of Revolution Calculator
+            var volMode = 'disk';
+
+            window.setVolMode = function(mode) {
+                volMode = mode;
+                document.getElementById('volChipDisk').classList.toggle('active', mode === 'disk');
+                document.getElementById('volChipWasher').classList.toggle('active', mode === 'washer');
+                document.getElementById('volChipShell').classList.toggle('active', mode === 'shell');
+                document.getElementById('volGxDiv').style.display = mode === 'washer' ? '' : 'none';
+                computeVolume();
+            };
+
+            window.setVolPreset = function(preset) {
+                var presets = {
+                    sphere: { f: 'sqrt(1-x^2)', g: '0', a: 0, b: 1, mode: 'disk' },
+                    cone: { f: 'x', g: '0', a: 0, b: 1, mode: 'disk' },
+                    cylinder: { f: '1', g: '0', a: 0, b: 1, mode: 'disk' },
+                    torus: { f: '2+sqrt(1-x^2)', g: '2-sqrt(1-x^2)', a: 0, b: 1, mode: 'washer' }
+                };
+                var p = presets[preset];
+                if (!p) return;
+                document.getElementById('volFx').value = p.f;
+                document.getElementById('volGx').value = p.g;
+                document.getElementById('volA').value = p.a;
+                document.getElementById('volB').value = p.b;
+                window.setVolMode(p.mode);
+            };
+
+            function evalMathExpr(expr, xVal) {
+                try {
+                    var e = expr
+                        .replace(/\^/g, '**')
+                        .replace(/sqrt\(/g, 'Math.sqrt(')
+                        .replace(/sin\(/g, 'Math.sin(')
+                        .replace(/cos\(/g, 'Math.cos(')
+                        .replace(/tan\(/g, 'Math.tan(')
+                        .replace(/log\(/g, 'Math.log(')
+                        .replace(/ln\(/g, 'Math.log(')
+                        .replace(/exp\(/g, 'Math.exp(')
+                        .replace(/abs\(/g, 'Math.abs(')
+                        .replace(/pi/g, 'Math.PI')
+                        .replace(/e(?![xp])/g, 'Math.E');
+                    var fn = new Function('x', 'return ' + e);
+                    return fn(xVal);
+                } catch (err) {
+                    return NaN;
+                }
+            }
+
+            window.computeVolume = function() {
+                var fxExpr = document.getElementById('volFx').value.trim();
+                var gxExpr = document.getElementById('volGx').value.trim();
+                var a = parseFloat(document.getElementById('volA').value);
+                var b = parseFloat(document.getElementById('volB').value);
+                var res = document.getElementById('volResults');
+                if (!fxExpr || isNaN(a) || isNaN(b) || a >= b) { res.innerHTML = ''; return; }
+                if (volMode === 'washer' && !gxExpr) { res.innerHTML = ''; return; }
+
+                var n = 1000;
+                var h = (b - a) / n;
+                var vol = 0;
+                if (volMode === 'disk') {
+                    for (var i = 0; i <= n; i++) {
+                        var x = a + i * h;
+                        var fv = evalMathExpr(fxExpr, x);
+                        if (isNaN(fv)) { res.innerHTML = '<span style="color:#f38ba8;">' + (isZh ? '表达式计算错误' : 'Expression error') + '</span>'; return; }
+                        var w = (i === 0 || i === n) ? 0.5 : 1;
+                        vol += w * Math.PI * fv * fv;
+                    }
+                } else if (volMode === 'washer') {
+                    for (var i = 0; i <= n; i++) {
+                        var x = a + i * h;
+                        var fv = evalMathExpr(fxExpr, x);
+                        var gv = evalMathExpr(gxExpr, x);
+                        if (isNaN(fv) || isNaN(gv)) { res.innerHTML = '<span style="color:#f38ba8;">' + (isZh ? '表达式计算错误' : 'Expression error') + '</span>'; return; }
+                        var w = (i === 0 || i === n) ? 0.5 : 1;
+                        vol += w * Math.PI * (fv * fv - gv * gv);
+                    }
+                } else { // shell
+                    for (var i = 0; i <= n; i++) {
+                        var x = a + i * h;
+                        var fv = evalMathExpr(fxExpr, x);
+                        if (isNaN(fv)) { res.innerHTML = '<span style="color:#f38ba8;">' + (isZh ? '表达式计算错误' : 'Expression error') + '</span>'; return; }
+                        var w = (i === 0 || i === n) ? 0.5 : 1;
+                        vol += w * 2 * Math.PI * x * fv;
+                    }
+                }
+                vol *= h;
+                var methodName = volMode === 'disk' ? (isZh ? '圆盘法' : 'Disk') :
+                                 volMode === 'washer' ? (isZh ? '垫圈法' : 'Washer') :
+                                 (isZh ? '壳法' : 'Shell');
+                var formula = volMode === 'disk' ? 'V = π∫[a,b] [f(x)]² dx' :
+                              volMode === 'washer' ? 'V = π∫[a,b] ([f(x)]²-[g(x)]²) dx' :
+                              'V = 2π∫[a,b] x·f(x) dx';
+                res.innerHTML = '<div>' +
+                    '<div><span style="color:var(--text-muted);">' + methodName + ': </span><span style="color:var(--glow-accent);font-size:18px;">' + formula + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '积分区间' : 'Interval') + ' [' + a + ', ' + b + ']</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '计算结果' : 'Result') + ' = </span><span style="color:var(--glow-primary);font-size:20px;">' + vol.toFixed(6) + '</span></div>' +
+                    '<div><span style="color:var(--text-subtle);font-size:12px;">f(x) = ' + fxExpr + (volMode === 'washer' ? ', g(x) = ' + gxExpr : '') + '</span></div>' +
                     '</div>';
             };
 

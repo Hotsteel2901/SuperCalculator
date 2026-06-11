@@ -3010,6 +3010,96 @@ STRINGS = {
         "en": "Data preview ({0} rows):",
         "zh": "数据预览（{0}行）：",
     },
+
+    # ---- Volume of Revolution Calculator ----
+    "sec_volume": {
+        "en": "Volume of Revolution",
+        "zh": "旋转体体积",
+    },
+    "label_vol_method": {
+        "en": "Method:",
+        "zh": "方法：",
+    },
+    "vol_method_disk": {
+        "en": "Disk (x-axis)",
+        "zh": "圆盘法 (绕x轴)",
+    },
+    "vol_method_washer": {
+        "en": "Washer (x-axis)",
+        "zh": "垫圈法 (绕x轴)",
+    },
+    "vol_method_shell": {
+        "en": "Shell (y-axis)",
+        "zh": "壳法 (绕y轴)",
+    },
+    "label_vol_fx": {
+        "en": "f(x) =",
+        "zh": "f(x) =",
+    },
+    "label_vol_gx": {
+        "en": "g(x) =",
+        "zh": "g(x) =",
+    },
+    "label_vol_interval": {
+        "en": "Interval [a, b]:",
+        "zh": "区间 [a, b]：",
+    },
+    "btn_vol_compute": {
+        "en": "Compute Volume",
+        "zh": "计算体积",
+    },
+    "status_vol_disk": {
+        "en": "Disk method: V = π∫[{0},{1}] [f(x)]² dx = {2}",
+        "zh": "圆盘法：V = π∫[{0},{1}] [f(x)]² dx = {2}",
+    },
+    "status_vol_washer": {
+        "en": "Washer method: V = π∫[{0},{1}] ([f(x)]²-[g(x)]²) dx = {2}",
+        "zh": "垫圈法：V = π∫[{0},{1}] ([f(x)]²-[g(x)]²) dx = {2}",
+    },
+    "status_vol_shell": {
+        "en": "Shell method: V = 2π∫[{0},{1}] x·f(x) dx = {2}",
+        "zh": "壳法：V = 2π∫[{0},{1}] x·f(x) dx = {2}",
+    },
+    "err_vol": {
+        "en": "Volume Error",
+        "zh": "体积计算错误",
+    },
+    "msg_vol_enter_fx": {
+        "en": "Please enter an f(x) expression.",
+        "zh": "请输入 f(x) 表达式。",
+    },
+    "msg_vol_enter_gx": {
+        "en": "Please enter a g(x) expression for the washer method.",
+        "zh": "请输入垫圈法所需的 g(x) 表达式。",
+    },
+    "msg_vol_invalid_interval": {
+        "en": "Invalid interval. a must be less than b.",
+        "zh": "区间无效，a 必须小于 b。",
+    },
+    "msg_vol_failed": {
+        "en": "Could not compute volume.\n{0}",
+        "zh": "无法计算体积。\n{0}",
+    },
+    "sec_volume_presets": {
+        "en": "Volume Presets",
+        "zh": "体积预设",
+    },
+    "vol_preset_sphere": {
+        "en": "Sphere (r=1)",
+        "zh": "球体 (r=1)",
+    },
+    "vol_preset_cone": {
+        "en": "Cone (h=1, r=1)",
+        "zh": "圆锥 (h=1, r=1)",
+    },
+    "vol_preset_cylinder": {
+        "en": "Cylinder (h=1, r=1)",
+        "zh": "圆柱 (h=1, r=1)",
+    },
+    "vol_preset_torus": {
+        "en": "Torus (R=2, r=0.5)",
+        "zh": "圆环 (R=2, r=0.5)",
+    },
 }
 
 

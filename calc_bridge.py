@@ -250,6 +250,19 @@ _lib.convert_base_all.argtypes = [ctypes.c_char_p, ctypes.c_int,
                                    ctypes.c_char_p, ctypes.c_int]
 _lib.convert_base_all.restype = None
 
+_lib.volume_disk.argtypes = [ctypes.c_char_p, ctypes.c_double,
+                              ctypes.c_double, ctypes.c_double]
+_lib.volume_disk.restype = ctypes.c_double
+
+_lib.volume_washer.argtypes = [ctypes.c_char_p, ctypes.c_char_p,
+                                ctypes.c_double, ctypes.c_double,
+                                ctypes.c_double]
+_lib.volume_washer.restype = ctypes.c_double
+
+_lib.volume_shell.argtypes = [ctypes.c_char_p, ctypes.c_double,
+                               ctypes.c_double, ctypes.c_double]
+_lib.volume_shell.restype = ctypes.c_double
+
 
 def _is_invalid(x: float) -> bool:
     try:
@@ -1094,6 +1107,42 @@ class CalcEngine:
             'dec': dec_buf.value.decode("utf-8"),
             'hex': hex_buf.value.decode("utf-8"),
         }
+
+    # Volume of revolution functions
+    @staticmethod
+    def volume_disk(expr: str, a: float, b: float,
+                    tol: float = 1e-8) -> Optional[float]:
+        """Compute volume of revolution using the disk method.
+        
+        V = π ∫_a^b [f(x)]² dx
+        Rotates f(x) around the x-axis.
+        """
+        result = _lib.volume_disk(expr.encode("utf-8"), a, b, tol)
+        return None if _is_invalid(result) else result
+
+    @staticmethod
+    def volume_washer(expr_f: str, expr_g: str, a: float, b: float,
+                      tol: float = 1e-8) -> Optional[float]:
+        """Compute volume of revolution using the washer method.
+        
+        V = π ∫_a^b ([f(x)]² - [g(x)]²) dx
+        Rotates the region between f(x) and g(x) around the x-axis.
+        """
+        result = _lib.volume_washer(expr_f.encode("utf-8"),
+                                     expr_g.encode("utf-8"),
+                                     a, b, tol)
+        return None if _is_invalid(result) else result
+
+    @staticmethod
+    def volume_shell(expr: str, a: float, b: float,
+                     tol: float = 1e-8) -> Optional[float]:
+        """Compute volume of revolution using the shell method.
+        
+        V = 2π ∫_a^b x·f(x) dx
+        Rotates f(x) around the y-axis.
+        """
+        result = _lib.volume_shell(expr.encode("utf-8"), a, b, tol)
+        return None if _is_invalid(result) else result
 
     @staticmethod
     def logarithmic_regression(xs: List[float], ys: List[float]) -> Optional[Dict[str, object]]:

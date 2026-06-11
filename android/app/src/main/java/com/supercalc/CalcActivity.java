@@ -36,6 +36,8 @@ public class CalcActivity extends AppCompatActivity {
     private EditText odeExprInput, odeX0Input, odeY0Input, odeXEndInput, odeStepsInput;
     private EditText statsDataInput;
     private EditText areaGInput;
+    private EditText volGInput;
+    private String volMode = "disk";
     private EditText sysFInput, sysGInput, sysX0Input, sysY0Input;
     private EditText matrixAInput, matrixBInput;
     private TextView resultView;
@@ -162,6 +164,15 @@ public class CalcActivity extends AppCompatActivity {
         areaGInput = findViewById(R.id.area_g_input);
         MaterialButton btnAreaBetween = findViewById(R.id.btn_area_between);
         btnAreaBetween.setOnClickListener(v -> onAreaBetweenCurves());
+
+        // Volume of Revolution
+        volGInput = findViewById(R.id.vol_g_input);
+        MaterialButton btnVolDisk = findViewById(R.id.btn_vol_disk);
+        MaterialButton btnVolWasher = findViewById(R.id.btn_vol_washer);
+        MaterialButton btnVolShell = findViewById(R.id.btn_vol_shell);
+        btnVolDisk.setOnClickListener(v -> { volMode = "disk"; onVolumeCompute(); });
+        btnVolWasher.setOnClickListener(v -> { volMode = "washer"; onVolumeCompute(); });
+        btnVolShell.setOnClickListener(v -> { volMode = "shell"; onVolumeCompute(); });
 
         // Nonlinear System Solver (2D)
         sysFInput = findViewById(R.id.sys_f_input);
@@ -572,6 +583,43 @@ public class CalcActivity extends AppCompatActivity {
             return;
         }
         resultView.append(String.format(getString(R.string.area_between_result), a, b, a, b, result) + "\n");
+    }
+
+    private void onVolumeCompute() {
+        String eF = getExpr();
+        if (eF.isEmpty()) { toast(getString(R.string.toast_enter_fx)); return; }
+        double a = getA();
+        double b = getB();
+        if (a >= b) { toast(getString(R.string.toast_a_less_b)); return; }
+
+        double result;
+        if ("disk".equals(volMode)) {
+            result = CalcEngine.volumeDisk(eF, a, b);
+        } else if ("washer".equals(volMode)) {
+            String eG = volGInput.getText().toString().trim();
+            if (eG.isEmpty()) { toast(getString(R.string.toast_enter_gx)); return; }
+            result = CalcEngine.volumeWasher(eF, eG, a, b);
+        } else {
+            result = CalcEngine.volumeShell(eF, a, b);
+        }
+        if (Double.isNaN(result)) {
+            String err = CalcEngine.getLastError();
+            resultView.append(String.format(getString(R.string.volume_error), (err.isEmpty() ? getString(R.string.result_computation_failed) : err)) + "\n");
+            return;
+        }
+        String methodName;
+        String formula;
+        if ("disk".equals(volMode)) {
+            methodName = getString(R.string.vol_disk);
+            formula = "V = π∫[a,b] [f(x)]² dx";
+        } else if ("washer".equals(volMode)) {
+            methodName = getString(R.string.vol_washer);
+            formula = "V = π∫[a,b] ([f(x)]²-[g(x)]²) dx";
+        } else {
+            methodName = getString(R.string.vol_shell);
+            formula = "V = 2π∫[a,b] x·f(x) dx";
+        }
+        resultView.append(String.format(getString(R.string.volume_result), methodName, formula, a, b, result) + "\n");
     }
 
     @SuppressWarnings("unchecked")

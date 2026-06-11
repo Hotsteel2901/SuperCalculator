@@ -52,6 +52,10 @@ void complex_conj_value(double re, double im, double* out_re, double* out_im);
 double area_between_curves(const char* expr_f, const char* expr_g,
                            double a, double b, double tol);
 
+double volume_disk(const char* expr_f, double a, double b);
+double volume_washer(const char* expr_f, const char* expr_g, double a, double b);
+double volume_shell(const char* expr_f, double a, double b);
+
 int solve_system_2d(const char* f_expr, const char* g_expr,
                     double x0, double y0, double tol, int max_iter,
                     double* out_x, double* out_y);
@@ -638,6 +642,43 @@ Java_com_supercalc_CalcEngine_areaBetweenCurves(JNIEnv* env, jclass clazz,
     double result = area_between_curves(strF, strG, a, b, 1e-8);
     (*env)->ReleaseStringUTFChars(env, exprF, strF);
     (*env)->ReleaseStringUTFChars(env, exprG, strG);
+    return result;
+}
+
+JNIEXPORT jdouble JNICALL
+Java_com_supercalc_CalcEngine_volumeDisk(JNIEnv* env, jclass clazz,
+                                          jstring exprF, jdouble a, jdouble b) {
+    const char* strF = (*env)->GetStringUTFChars(env, exprF, NULL);
+    if (!strF) return NAN;
+    double result = volume_disk(strF, a, b);
+    (*env)->ReleaseStringUTFChars(env, exprF, strF);
+    return result;
+}
+
+JNIEXPORT jdouble JNICALL
+Java_com_supercalc_CalcEngine_volumeWasher(JNIEnv* env, jclass clazz,
+                                            jstring exprF, jstring exprG,
+                                            jdouble a, jdouble b) {
+    const char* strF = (*env)->GetStringUTFChars(env, exprF, NULL);
+    const char* strG = (*env)->GetStringUTFChars(env, exprG, NULL);
+    if (!strF || !strG) {
+        if (strF) (*env)->ReleaseStringUTFChars(env, exprF, strF);
+        if (strG) (*env)->ReleaseStringUTFChars(env, exprG, strG);
+        return NAN;
+    }
+    double result = volume_washer(strF, strG, a, b);
+    (*env)->ReleaseStringUTFChars(env, exprF, strF);
+    (*env)->ReleaseStringUTFChars(env, exprG, strG);
+    return result;
+}
+
+JNIEXPORT jdouble JNICALL
+Java_com_supercalc_CalcEngine_volumeShell(JNIEnv* env, jclass clazz,
+                                           jstring exprF, jdouble a, jdouble b) {
+    const char* strF = (*env)->GetStringUTFChars(env, exprF, NULL);
+    if (!strF) return NAN;
+    double result = volume_shell(strF, a, b);
+    (*env)->ReleaseStringUTFChars(env, exprF, strF);
     return result;
 }
 

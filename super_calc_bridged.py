@@ -1926,6 +1926,60 @@ class SuperCalcApp:
         # Initially show only loan frame
         self._on_fin_mode_change()
 
+        # --- Volume of Revolution Calculator ---
+        frm_vol = ttk.LabelFrame(scroll_frame, text=t("sec_volume"),
+                                  style="Dark.TLabelframe")
+        frm_vol.pack(fill=tk.X, padx=8, pady=4)
+
+        vol_row0 = ttk.Frame(frm_vol, style="Dark.TFrame")
+        vol_row0.pack(fill=tk.X, padx=6, pady=(4, 2))
+        ttk.Label(vol_row0, text=t("label_vol_method"),
+                  style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_vol_method = tk.StringVar(value="disk")
+        vol_methods = [
+            (t("vol_method_disk"), "disk"),
+            (t("vol_method_washer"), "washer"),
+            (t("vol_method_shell"), "shell"),
+        ]
+        vol_combo = ttk.Combobox(vol_row0, textvariable=self._var_vol_method,
+                                  values=[m[0] for m in vol_methods],
+                                  state="readonly", font=("Consolas", 10), width=22)
+        vol_combo.pack(side=tk.LEFT, padx=4)
+        self._vol_mode_map = {m[0]: m[1] for m in vol_methods}
+        vol_combo.bind("<<ComboboxSelected>>",
+                       lambda e: self._on_vol_mode_change())
+
+        vol_row1 = ttk.Frame(frm_vol, style="Dark.TFrame")
+        vol_row1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(vol_row1, text=t("label_vol_fx"),
+                  style="Dark.TLabel", width=6).pack(side=tk.LEFT)
+        self._var_vol_f = tk.StringVar(value="sqrt(1-x^2)")
+        ttk.Entry(vol_row1, textvariable=self._var_vol_f, width=20).pack(
+            side=tk.LEFT, padx=4)
+        self._lbl_vol_g = ttk.Label(vol_row1, text=t("label_vol_gx"),
+                                     style="Dark.TLabel", width=6)
+        self._lbl_vol_g.pack(side=tk.LEFT, padx=(8, 0))
+        self._var_vol_g = tk.StringVar(value="0")
+        self._entry_vol_g = ttk.Entry(vol_row1, textvariable=self._var_vol_g,
+                                       width=20)
+        self._entry_vol_g.pack(side=tk.LEFT, padx=4)
+
+        vol_row2 = ttk.Frame(frm_vol, style="Dark.TFrame")
+        vol_row2.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Label(vol_row2, text=t("label_vol_interval"),
+                  style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_vol_a = tk.StringVar(value="0")
+        ttk.Entry(vol_row2, textvariable=self._var_vol_a, width=7).pack(
+            side=tk.LEFT, padx=2)
+        ttk.Label(vol_row2, text=t("label_to"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_vol_b = tk.StringVar(value="1")
+        ttk.Entry(vol_row2, textvariable=self._var_vol_b, width=7).pack(
+            side=tk.LEFT, padx=2)
+        ttk.Button(vol_row2, text=t("btn_vol_compute"),
+                   command=self._on_volume_compute).pack(side=tk.RIGHT, padx=2)
+
+        self._on_vol_mode_change()
+
         # --- Status ---
         self.status_var = tk.StringVar(value=t("status_ready"))
         status_bar = ttk.Label(scroll_frame, textvariable=self.status_var,
@@ -3230,6 +3284,60 @@ class SuperCalcApp:
             f"g(x) = {expr_g}\n"
             f"Area from {a} to {b} = {result:.10g}")
         self.status_var.set(t("status_area", a, b, f"{result:.10g}"))
+
+    # ------------------------------------------------------------------
+    #  Volume of Revolution
+    # ------------------------------------------------------------------
+    def _on_vol_mode_change(self) -> None:
+        """Toggle washer-specific fields visibility."""
+        sel = self._var_vol_method.get()
+        mode = self._vol_mode_map.get(sel, sel)
+        if mode == "washer":
+            self._lbl_vol_g.pack(side=tk.LEFT, padx=(8, 0))
+            self._entry_vol_g.pack(side=tk.LEFT, padx=4)
+        else:
+            self._lbl_vol_g.pack_forget()
+            self._entry_vol_g.pack_forget()
+
+    def _on_volume_compute(self) -> None:
+        sel = self._var_vol_method.get()
+        mode = self._vol_mode_map.get(sel, sel)
+        expr_f = self._var_vol_f.get().strip()
+        if not expr_f:
+            messagebox.showwarning(t("err_vol"), t("msg_vol_enter_fx"))
+            return
+        if mode == "washer":
+            expr_g = self._var_vol_g.get().strip()
+            if not expr_g:
+                messagebox.showwarning(t("err_vol"), t("msg_vol_enter_gx"))
+                return
+        try:
+            a_str = self._resolve_t_range(self._var_vol_a.get())
+            b_str = self._resolve_t_range(self._var_vol_b.get())
+            a = float(a_str)
+            b = float(b_str)
+        except ValueError:
+            messagebox.showerror(t("err_vol"), t("msg_vol_invalid_interval"))
+            return
+        if a >= b:
+            messagebox.showerror(t("err_vol"), t("msg_vol_invalid_interval"))
+            return
+        f_sub = self._substitute_params(expr_f)
+        if mode == "disk":
+            result = CalcEngine.volume_disk(f_sub, a, b)
+            status_msg = t("status_vol_disk", a, b, f"{result:.10g}" if result is not None else "?")
+        elif mode == "washer":
+            g_sub = self._substitute_params(expr_g)
+            result = CalcEngine.volume_washer(f_sub, g_sub, a, b)
+            status_msg = t("status_vol_washer", a, b, f"{result:.10g}" if result is not None else "?")
+        else:  # shell
+            result = CalcEngine.volume_shell(f_sub, a, b)
+            status_msg = t("status_vol_shell", a, b, f"{result:.10g}" if result is not None else "?")
+        if result is None:
+            err = CalcEngine.get_last_error()
+            messagebox.showerror(t("err_vol"), t("msg_vol_failed", err))
+            return
+        self.status_var.set(status_msg)
 
     def _on_limit(self, two_sided: bool = True, side: Optional[str] = None) -> None:
         expr = self._get_active_expression()
