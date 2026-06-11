@@ -369,6 +369,7 @@
     <!-- Taylor -->
     <string name="taylor_error">泰勒级数：错误：%s</string>
     <string name="taylor_result">在a=%.4g处的泰勒级数（%d阶）：\n%s</string>
+    <string name="taylor_coefficients_header">系数（c_k = f^(k)(a)/k!）：\n</string>
     <string name="taylor_toast">已在a=%.4g处绘制泰勒级数</string>
 
     <!-- ODE -->
@@ -420,6 +421,7 @@
     <string name="parametric_error">参数曲线：错误：%s</string>
     <string name="polar_error">极坐标曲线：错误：%s</string>
     <string name="table_error">表格：错误：%s</string>
+    <string name="table_header">x\t\tf(x)</string>
     <string name="table_valid_count">有效：%d / %d</string>
     <string name="table_generated">已生成表格：%d/%d个有效点</string>
     <string name="table_share">分享表格</string>
@@ -546,6 +548,9 @@
 
     <!-- Matrix labels -->
     <string name="mat_add_title">A + B</string>
+    <string name="mat_sub_title">A - B</string>
+    <string name="mat_mul_title">A * B</string>
+    <string name="mat_det_title">det(A)</string>
     <string name="mat_inv_title">inv(A)</string>
     <string name="mat_trans_title">A^T (转置)</string>
     <string name="mat_eigen_title">特征值</string>

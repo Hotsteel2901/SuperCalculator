@@ -236,18 +236,18 @@ _lib.base_to_long.argtypes = [ctypes.c_char_p, ctypes.c_int]
 _lib.base_to_long.restype = ctypes.c_longlong
 
 _lib.long_to_base.argtypes = [ctypes.c_longlong, ctypes.c_int,
-                               ctypes.c_char_p, ctypes.c_int]
+                               ctypes.POINTER(ctypes.c_char), ctypes.c_int]
 _lib.long_to_base.restype = ctypes.c_int
 
 _lib.convert_base.argtypes = [ctypes.c_char_p, ctypes.c_int, ctypes.c_int,
-                               ctypes.c_char_p, ctypes.c_int]
+                               ctypes.POINTER(ctypes.c_char), ctypes.c_int]
 _lib.convert_base.restype = ctypes.c_int
 
 _lib.convert_base_all.argtypes = [ctypes.c_char_p, ctypes.c_int,
-                                   ctypes.c_char_p, ctypes.c_int,
-                                   ctypes.c_char_p, ctypes.c_int,
-                                   ctypes.c_char_p, ctypes.c_int,
-                                   ctypes.c_char_p, ctypes.c_int]
+                                   ctypes.POINTER(ctypes.c_char), ctypes.c_int,
+                                   ctypes.POINTER(ctypes.c_char), ctypes.c_int,
+                                   ctypes.POINTER(ctypes.c_char), ctypes.c_int,
+                                   ctypes.POINTER(ctypes.c_char), ctypes.c_int]
 _lib.convert_base_all.restype = None
 
 _lib.volume_disk.argtypes = [ctypes.c_char_p, ctypes.c_double,

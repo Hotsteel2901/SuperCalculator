@@ -814,7 +814,7 @@ public class CalcActivity extends AppCompatActivity {
                 } else {
                     resultView.append(String.format(getString(R.string.limit_right_dne), a) + "\n");
                 }
-                resultView.append(getString(R.string.limit_two_sided_not_exist) + "\n");
+                resultView.append(String.format(getString(R.string.limit_two_sided_not_exist), Double.isNaN(left) ? 0.0 : left, Double.isNaN(right) ? 0.0 : right) + "\n");
             }
         }
     }
@@ -862,9 +862,7 @@ public class CalcActivity extends AppCompatActivity {
             return;
         }
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("Taylor series at a=").append(fmt(a)).append(" (order ").append(order).append(")\n\n");
-
+        StringBuilder polySb = new StringBuilder();
         // Build human-readable Taylor polynomial
         for (int k = 0; k < coeffs.length; k++) {
             if (Double.isNaN(coeffs[k])) continue;
@@ -873,14 +871,17 @@ public class CalcActivity extends AppCompatActivity {
 
             String cStr = fmt(c);
             if (k == 0) {
-                sb.append(cStr);
+                polySb.append(cStr);
             } else if (k == 1) {
-                sb.append(" + ").append(cStr).append("*(x-").append(fmt(a)).append(")");
+                polySb.append(" + ").append(cStr).append("*(x-").append(fmt(a)).append(")");
             } else {
-                sb.append(" + ").append(cStr).append("*(x-").append(fmt(a)).append(")^").append(k);
+                polySb.append(" + ").append(cStr).append("*(x-").append(fmt(a)).append(")^").append(k);
             }
         }
-        sb.append("\n\nCoefficients (c_k = f^(k)(a)/k!):\n");
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format(getString(R.string.taylor_result), a, order, polySb.toString()));
+        sb.append("\n\n");
+        sb.append(getString(R.string.taylor_coefficients_header));
         for (int k = 0; k < coeffs.length; k++) {
             sb.append("c").append(k).append(" = ").append(fmt(coeffs[k])).append("\n");
         }
@@ -1163,7 +1164,7 @@ public class CalcActivity extends AppCompatActivity {
 
         // Show direction field in a dialog with custom Canvas drawing
         showDirectionFieldDialog(expr, xs, ys, slopes, grid, xmin, xmax, ymin, ymax, solutionCurves);
-        resultView.append(String.format(getString(R.string.toast_direction_field_plotted)) + "\n");
+        resultView.append(getString(R.string.toast_direction_field_plotted) + "\n");
     }
 
     private void showDirectionFieldDialog(String expr, double[] gridXs, double[] gridYs, double[] slopes,
@@ -2328,7 +2329,7 @@ public class CalcActivity extends AppCompatActivity {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("x\t\tf(x)\n");
+        sb.append(getString(R.string.table_header)).append("\n");
         sb.append("----------------------------\n");
         int valid = 0;
         for (int i = 0; i < n; i++) {
@@ -3540,8 +3541,8 @@ public class CalcActivity extends AppCompatActivity {
             case "OR":   result = aMasked | bMasked; break;
             case "XOR":  result = aMasked ^ bMasked; break;
             case "NOT":  result = (~aMasked) & mask; break;
-            case "<<":   result = (aMasked << bMasked) & mask; break;
-            case ">>":   result = aMasked >>> bMasked; break;
+            case "<<":   result = (aMasked << (bMasked % width)) & mask; break;
+            case ">>":   result = aMasked >>> (bMasked % width); break;
             default:     result = 0;
         }
 
