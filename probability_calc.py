@@ -224,4 +224,4 @@ def variance_discrete(values: List[float], probabilities: List[float]) -> Option
     ev2 = expected_value([v ** 2 for v in values], probabilities)
     if ev2 is None:
         return None
-    return ev2 - ev ** 2
+    return max(0.0, ev2 - ev ** 2)

@@ -820,10 +820,13 @@ EXPORT int taylor_coefficients(const char* expr, double a, int order, double* ou
     double factorial = 1.0;
 
     for (int k = 0; k <= order; k++) {
-        if (k > 0) factorial *= k;
+        if (k > 0) {
+            if (k <= 170) factorial *= k;
+            else factorial = INFINITY;
+        }
         double dk = nth_derivative(expr, a, k, h);
         if (isnan(dk)) return -1;
-        out_coeffs[k] = dk / factorial;
+        out_coeffs[k] = (isinf(factorial) || factorial == 0.0) ? 0.0 : dk / factorial;
     }
     return order + 1;
 }
@@ -948,7 +951,7 @@ static Complex complex_sqrt(Complex a) {
     double r = complex_abs(a);
     if (r == 0.0) return complex_make(0.0, 0.0);
     double re = sqrt((r + a.re) / 2.0);
-    double im = (a.im >= 0 ? 1.0 : -1.0) * sqrt((r - a.re) / 2.0);
+    double im = (a.im >= 0 ? 1.0 : -1.0) * sqrt(fmax(0.0, (r - a.re) / 2.0));
     return complex_make(re, im);
 }
 
@@ -1294,6 +1297,14 @@ EXPORT int solve_system_2d(const char* f_expr, const char* g_expr,
         /* Cramer's rule: J * delta = -[F, G] */
         double dx = (-F_val * J22 + G_val * J12) / det;
         double dy = (-J11 * G_val + J21 * F_val) / det;
+
+        /* Bound step size to prevent divergence */
+        double step = sqrt(dx * dx + dy * dy);
+        if (step > 10.0) {
+            double scale = 10.0 / step;
+            dx *= scale;
+            dy *= scale;
+        }
 
         x += dx;
         y += dy;
