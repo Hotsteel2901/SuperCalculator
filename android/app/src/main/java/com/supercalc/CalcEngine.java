@@ -107,6 +107,15 @@ public class CalcEngine {
     /** Compute area between two curves f(x) and g(x) over [a,b]. Returns integral_a^b |f(x)-g(x)| dx. */
     public static native double areaBetweenCurves(String exprF, String exprG, double a, double b);
 
+    /** Volume of revolution using disk method: V = π∫[a,b] [f(x)]² dx. */
+    public static native double volumeDisk(String exprF, double a, double b);
+
+    /** Volume of revolution using washer method: V = π∫[a,b] ([f(x)]²-[g(x)]²) dx. */
+    public static native double volumeWasher(String exprF, String exprG, double a, double b);
+
+    /** Volume of revolution using shell method: V = 2π∫[a,b] x·f(x) dx. */
+    public static native double volumeShell(String exprF, double a, double b);
+
     /** Solve a system of two nonlinear equations f(x,y)=0, g(x,y)=0 using Newton's method for systems.
      *  Returns HashMap with "x" and "y" keys on success, or null on failure. */
     public static native HashMap<String, Object> solveSystem2d(String fExpr, String gExpr, double x0, double y0);

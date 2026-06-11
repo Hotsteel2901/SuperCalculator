@@ -62,6 +62,12 @@
     <string name="ode_solver">ODE求解器 dy/dx = f(x,y)</string>
     <string name="arc_length">弧长</string>
     <string name="area_between">曲线间面积</string>
+    <string name="volume_revolution">旋转体体积</string>
+    <string name="vol_disk">圆盘法</string>
+    <string name="vol_washer">垫圈法</string>
+    <string name="vol_shell">壳法</string>
+    <string name="volume_error">体积计算错误：%s</string>
+    <string name="volume_result">%s：%s\n区间：[%.4g, %.4g]\n结果：%.10g</string>
     <string name="unit_converter">单位换算</string>
     <string name="convert">换算</string>
     <string name="lim_fx">lim f(x)</string>
