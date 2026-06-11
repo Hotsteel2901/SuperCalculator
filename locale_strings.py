@@ -839,6 +839,190 @@ STRINGS = {
         "en": "Histogram plotted ({0} values, {1} bins)",
         "zh": "直方图已绘制（{0} 个值, {1} 个区间）",
     },
+    "histogram_title": {
+        "en": "Histogram",
+        "zh": "直方图",
+    },
+    "histogram_xlabel": {
+        "en": "Value",
+        "zh": "值",
+    },
+    "histogram_ylabel": {
+        "en": "Frequency",
+        "zh": "频率",
+    },
+    "stat_mean_label": {
+        "en": "Mean = {0}",
+        "zh": "均值 = {0}",
+    },
+    "stat_median_label": {
+        "en": "Median = {0}",
+        "zh": "中位数 = {0}",
+    },
+    "stat_for_n": {
+        "en": "Statistics for {0} data points:",
+        "zh": "{0} 个数据点的统计：",
+    },
+    "stat_sum": {
+        "en": "  Sum       = {0}",
+        "zh": "  总和      = {0}",
+    },
+    "stat_mean": {
+        "en": "  Mean      = {0}",
+        "zh": "  均值      = {0}",
+    },
+    "stat_median": {
+        "en": "  Median    = {0}",
+        "zh": "  中位数    = {0}",
+    },
+    "stat_mode": {
+        "en": "  Mode      = {0}",
+        "zh": "  众数      = {0}",
+    },
+    "stat_mode_na": {
+        "en": "N/A (all unique)",
+        "zh": "无（全部唯一）",
+    },
+    "stat_min": {
+        "en": "  Min       = {0}",
+        "zh": "  最小值    = {0}",
+    },
+    "stat_max": {
+        "en": "  Max       = {0}",
+        "zh": "  最大值    = {0}",
+    },
+    "stat_range": {
+        "en": "  Range     = {0}",
+        "zh": "  极差      = {0}",
+    },
+    "stat_q1": {
+        "en": "  Q1 (25%)  = {0}",
+        "zh": "  Q1 (25%)  = {0}",
+    },
+    "stat_q3": {
+        "en": "  Q3 (75%)  = {0}",
+        "zh": "  Q3 (75%)  = {0}",
+    },
+    "stat_iqr": {
+        "en": "  IQR       = {0}",
+        "zh": "  四分位距  = {0}",
+    },
+    "stat_var_pop": {
+        "en": "  Var (pop) = {0}",
+        "zh": "  方差(总体)= {0}",
+    },
+    "stat_var_sam": {
+        "en": "  Var (sam) = {0}",
+        "zh": "  方差(样本)= {0}",
+    },
+    "stat_std_pop": {
+        "en": "  Std (pop) = {0}",
+        "zh": "  标准差(总体)= {0}",
+    },
+    "stat_std_sam": {
+        "en": "  Std (sam) = {0}",
+        "zh": "  标准差(样本)= {0}",
+    },
+    "stat_sorted": {
+        "en": "Sorted: {0}",
+        "zh": "已排序：{0}",
+    },
+    "stat_sorted_more": {
+        "en": " ... ({0} total)",
+        "zh": " ...（共 {0} 个）",
+    },
+    "curve_fit_title": {
+        "en": "Curve Fitting",
+        "zh": "曲线拟合",
+    },
+    "curve_fit_data_label": {
+        "en": "Data",
+        "zh": "数据",
+    },
+    "found_roots_msg": {
+        "en": "Found {0} root(s):",
+        "zh": "找到 {0} 个根：",
+    },
+    "valid_points": {
+        "en": "Valid points: {0} / {1}",
+        "zh": "有效点：{0} / {1}",
+    },
+    "status_fin_depr_ddb": {
+        "en": "DDB: Depr={0:.2f}, Monthly={1:.2f}",
+        "zh": "双倍余额递减：折旧={0:.2f}, 月折旧={1:.2f}",
+    },
+    "label_fin_depr_ddb_header": {
+        "en": "Year  Depreciation  Book Value",
+        "zh": "年份  折旧额      账面价值",
+    },
+    "status_bw_result": {
+        "en": "A {0} B = {1} (dec)",
+        "zh": "A {0} B = {1}（十进制）",
+    },
+    "title_export_table": {
+        "en": "Export Function Table",
+        "zh": "导出函数表",
+    },
+    "title_export_fft": {
+        "en": "Export FFT Spectrum",
+        "zh": "导出FFT频谱",
+    },
+    "title_export_stats": {
+        "en": "Export Statistics Data",
+        "zh": "导出统计数据",
+    },
+    "title_import_csv": {
+        "en": "Import CSV Data",
+        "zh": "导入CSV数据",
+    },
+    "title_export_plot": {
+        "en": "Export Data Plot",
+        "zh": "导出数据图",
+    },
+    "data_label_fallback": {
+        "en": "Data",
+        "zh": "数据",
+    },
+    "data_preview_headers": {
+        "en": "  Headers: {0}",
+        "zh": "  表头：{0}",
+    },
+    "data_preview_columns": {
+        "en": "  Columns: {0}",
+        "zh": "  列数：{0}",
+    },
+    "title_cdf": {
+        "en": "CDF",
+        "zh": "累积分布函数",
+    },
+    "title_ppf": {
+        "en": "PPF",
+        "zh": "百分点函数",
+    },
+    "label_cdf": {
+        "en": "CDF",
+        "zh": "累积分布函数",
+    },
+    "label_x": {
+        "en": "x",
+        "zh": "x",
+    },
+    "label_dec": {
+        "en": "(Dec)",
+        "zh": "（十进制）",
+    },
+    "csv_header_frequency": {
+        "en": "Frequency",
+        "zh": "频率",
+    },
+    "csv_header_amplitude": {
+        "en": "Amplitude",
+        "zh": "幅度",
+    },
+    "csv_header_phase_rad": {
+        "en": "Phase_rad",
+        "zh": "相位_弧度",
+    },
     "status_exported_stats": {
         "en": "Exported {0} values to {1}",
         "zh": "已导出 {0} 个值到 {1}",

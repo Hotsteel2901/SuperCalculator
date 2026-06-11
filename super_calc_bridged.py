@@ -1335,7 +1335,7 @@ class SuperCalcApp:
         self._var_bw_a = tk.StringVar(value="12")
         ttk.Entry(bw_row2, textvariable=self._var_bw_a, width=15,
                   font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
-        ttk.Label(bw_row2, text="(Dec)", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(bw_row2, text=t("label_dec"), style="Dark.TLabel").pack(side=tk.LEFT)
 
         # Row 3: Operand B
         bw_row3 = ttk.Frame(frm_bw, style="Dark.TFrame")
@@ -1344,7 +1344,7 @@ class SuperCalcApp:
         self._var_bw_b = tk.StringVar(value="5")
         ttk.Entry(bw_row3, textvariable=self._var_bw_b, width=15,
                   font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
-        ttk.Label(bw_row3, text="(Dec)", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(bw_row3, text=t("label_dec"), style="Dark.TLabel").pack(side=tk.LEFT)
 
         # Row 4: Calculate + Clear
         bw_row4 = ttk.Frame(frm_bw, style="Dark.TFrame")
@@ -3084,7 +3084,7 @@ class SuperCalcApp:
         win.minsize(320, 300)
 
         ttk.Label(win, text=f"f(x) = {expr}", style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(10, 4))
-        ttk.Label(win, text=f"Valid points: {valid_count} / {len(self._table_data)}", style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(0, 6))
+        ttk.Label(win, text=t("valid_points", valid_count, len(self._table_data)), style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(0, 6))
 
         # Use a treeview for clean tabular display
         cols = ("x", "f(x)")
@@ -3115,7 +3115,7 @@ class SuperCalcApp:
         path = filedialog.asksaveasfilename(
             defaultextension=".csv",
             filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
-            title="Export Function Table"
+            title=t("title_export_table")
         )
         if not path:
             return
@@ -3442,12 +3442,12 @@ class SuperCalcApp:
         self._setup_axes(self.ax_fft_amp, is_3d=False)
         self._setup_axes(self.ax_fft_phase, is_3d=False)
 
-        self.ax_fft_amp.set_title(f"Amplitude Spectrum — {expr}", color="#cdd6f4", fontsize=11)
-        self.ax_fft_phase.set_title(f"Phase Spectrum — {expr}", color="#cdd6f4", fontsize=11)
-        self.ax_fft_amp.set_xlabel("Frequency")
-        self.ax_fft_amp.set_ylabel("Amplitude")
-        self.ax_fft_phase.set_xlabel("Frequency")
-        self.ax_fft_phase.set_ylabel("Phase (rad)")
+        self.ax_fft_amp.set_title(f"{t('fft_amp_title')} — {expr}", color="#cdd6f4", fontsize=11)
+        self.ax_fft_phase.set_title(f"{t('fft_phase_title')} — {expr}", color="#cdd6f4", fontsize=11)
+        self.ax_fft_amp.set_xlabel(t("fft_freq"))
+        self.ax_fft_amp.set_ylabel(t("fft_amp"))
+        self.ax_fft_phase.set_xlabel(t("fft_freq"))
+        self.ax_fft_phase.set_ylabel(t("fft_phase_rad"))
 
         # Amplitude plot with stem-like visualization using vlines for performance
         self.ax_fft_amp.plot(freqs, amps, color="#00e5c9", linewidth=1.2, alpha=0.9)
@@ -3475,14 +3475,14 @@ class SuperCalcApp:
         path = filedialog.asksaveasfilename(
             defaultextension=".csv",
             filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
-            title="Export FFT Spectrum"
+            title=t("title_export_fft")
         )
         if not path:
             return
         try:
             with open(path, "w", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
-                writer.writerow(["Frequency", "Amplitude", "Phase_rad"])
+                writer.writerow([t("csv_header_frequency"), t("csv_header_amplitude"), t("csv_header_phase_rad")])
                 for fr, am, ph in zip(self._fft_data['freqs'],
                                       self._fft_data['amps'],
                                       self._fft_data['phases']):
@@ -3872,7 +3872,7 @@ class SuperCalcApp:
         self._plot_all()
 
         if unique_roots:
-            lines = [f"Found {len(unique_roots)} root(s):"]
+            lines = [t("found_roots_msg", len(unique_roots))]
             for i, r in enumerate(unique_roots[:20], 1):
                 verify = CalcEngine.evaluate(expr_sub, r)
                 v_str = f"{verify:.2e}" if verify is not None else "N/A"
@@ -3944,24 +3944,24 @@ class SuperCalcApp:
         data_iqr = data_q3 - data_q1
 
         lines = [
-            f"Statistics for {n} data points:",
-            f"  Sum       = {data_sum:.10g}",
-            f"  Mean      = {data_mean:.10g}",
-            f"  Median    = {data_median:.10g}",
-            f"  Mode      = {data_mode if data_mode is not None else 'N/A (all unique)'}",
-            f"  Min       = {data_min:.10g}",
-            f"  Max       = {data_max:.10g}",
-            f"  Range     = {data_range:.10g}",
-            f"  Q1 (25%)  = {data_q1:.10g}",
-            f"  Q3 (75%)  = {data_q3:.10g}",
-            f"  IQR       = {data_iqr:.10g}",
-            f"  Var (pop) = {data_var_pop:.10g}",
-            f"  Var (sam) = {data_var_sam:.10g}" if n > 1 else "",
-            f"  Std (pop) = {data_std_pop:.10g}",
-            f"  Std (sam) = {data_std_sam:.10g}" if data_std_sam is not None else "",
+            t("stat_for_n", n),
+            t("stat_sum", f"{data_sum:.10g}"),
+            t("stat_mean", f"{data_mean:.10g}"),
+            t("stat_median", f"{data_median:.10g}"),
+            t("stat_mode", data_mode if data_mode is not None else t("stat_mode_na")),
+            t("stat_min", f"{data_min:.10g}"),
+            t("stat_max", f"{data_max:.10g}"),
+            t("stat_range", f"{data_range:.10g}"),
+            t("stat_q1", f"{data_q1:.10g}"),
+            t("stat_q3", f"{data_q3:.10g}"),
+            t("stat_iqr", f"{data_iqr:.10g}"),
+            t("stat_var_pop", f"{data_var_pop:.10g}"),
+            t("stat_var_sam", f"{data_var_sam:.10g}") if n > 1 else "",
+            t("stat_std_pop", f"{data_std_pop:.10g}"),
+            t("stat_std_sam", f"{data_std_sam:.10g}") if data_std_sam is not None else "",
             f"",
-            f"Sorted: {[f'{v:.6g}' for v in data_sorted[:20]]}" +
-            (f" ... ({n} total)" if n > 20 else ""),
+            t("stat_sorted", ", ".join(f'{v:.6g}' for v in data_sorted[:20])) +
+            (t("stat_sorted_more", n) if n > 20 else ""),
         ]
 
         msg = "\n".join(line for line in lines if line)
@@ -3992,15 +3992,15 @@ class SuperCalcApp:
         data_mean = _stats.mean(values)
         data_median = _stats.median(values)
         self.ax_2d.axvline(data_mean, color="#f38ba8", linestyle="--", linewidth=2,
-                           label=f"Mean = {data_mean:.4g}")
+                           label=t("stat_mean_label", f"{data_mean:.4g}"))
         self.ax_2d.axvline(data_median, color="#a6e3a1", linestyle=":", linewidth=2,
-                           label=f"Median = {data_median:.4g}")
+                           label=t("stat_median_label", f"{data_median:.4g}"))
 
         self.ax_2d.legend(loc="upper right", facecolor="#313244",
                           edgecolor="#585b70", labelcolor="#cdd6f4", fontsize=9)
-        self.ax_2d.set_title("Histogram", color="#cdd6f4", fontsize=12)
-        self.ax_2d.set_xlabel("Value", color="#cdd6f4")
-        self.ax_2d.set_ylabel("Frequency", color="#cdd6f4")
+        self.ax_2d.set_title(t("histogram_title"), color="#cdd6f4", fontsize=12)
+        self.ax_2d.set_xlabel(t("histogram_xlabel"), color="#cdd6f4")
+        self.ax_2d.set_ylabel(t("histogram_ylabel"), color="#cdd6f4")
 
         self.canvas_2d.draw()
         self.status_var.set(t("status_histogram", len(values), n_bins))
@@ -4013,7 +4013,7 @@ class SuperCalcApp:
         path = filedialog.asksaveasfilename(
             defaultextension=".csv",
             filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
-            title="Export Statistics Data")
+            title=t("title_export_stats"))
         if not path:
             return
         try:
@@ -4118,7 +4118,7 @@ class SuperCalcApp:
             result = float(dist.cdf(x_val))
             dist_name = info.get(f"name_{_get_lang()}", info["name_en"])
             msg = f"{dist_name} CDF({x_str}) = {result:.10g}"
-            messagebox.showinfo("CDF", msg)
+            messagebox.showinfo(t("title_cdf"), msg)
             self.status_var.set(msg)
         except Exception as e:
             messagebox.showerror(t("err_error"), str(e))
@@ -4146,7 +4146,7 @@ class SuperCalcApp:
             result = float(dist.ppf(q_val))
             dist_name = info.get(f"name_{_get_lang()}", info["name_en"])
             msg = f"{dist_name} PPF({x_str}) = {result:.10g}"
-            messagebox.showinfo("PPF", msg)
+            messagebox.showinfo(t("title_ppf"), msg)
             self.status_var.set(msg)
         except Exception as e:
             messagebox.showerror(t("err_error"), str(e))
@@ -4204,7 +4204,7 @@ class SuperCalcApp:
             self.ax_2d.set_title(f"{dist_name} — {pdf_label}", color=text_color, fontsize=11)
             self.ax_2d.set_ylabel(pdf_label, color=text_color, fontsize=10)
             ax2.set_title(f"{dist_name} — CDF", color=text_color, fontsize=11)
-            ax2.set_ylabel("CDF", color=text_color, fontsize=10)
+            ax2.set_ylabel(t("label_cdf"), color=text_color, fontsize=10)
             ax2.set_xlabel("x", color=text_color, fontsize=10)
 
             self.canvas_2d.draw()
@@ -4311,7 +4311,7 @@ class SuperCalcApp:
             self.ax_2d.legend(facecolor="#313244", edgecolor="#585b70",
                        labelcolor=text_color, fontsize=8)
             ax2.set_title(f"{dist_name} — CDF Comparison", color=text_color, fontsize=11)
-            ax2.set_ylabel("CDF", color=text_color, fontsize=10)
+            ax2.set_ylabel(t("label_cdf"), color=text_color, fontsize=10)
             ax2.set_xlabel("x", color=text_color, fontsize=10)
             ax2.legend(facecolor="#313244", edgecolor="#585b70",
                        labelcolor=text_color, fontsize=8)
@@ -4456,7 +4456,7 @@ class SuperCalcApp:
 
         if xs and ys:
             self.ax_2d.scatter(xs, ys, color="#f38ba8", s=30, zorder=5,
-                             label="Data", edgecolors="#313244", linewidths=0.5)
+                             label=t("curve_fit_data_label"), edgecolors="#313244", linewidths=0.5)
 
         # Plot fitted curve
         self.ax_2d.plot(xs_fit, ys_fit, color="#89b4fa", linewidth=2,
@@ -4464,7 +4464,7 @@ class SuperCalcApp:
 
         self.ax_2d.legend(loc="best", facecolor="#313244",
                           edgecolor="#585b70", labelcolor="#cdd6f4", fontsize=9)
-        self.ax_2d.set_title("Curve Fitting", color="#cdd6f4", fontsize=12)
+        self.ax_2d.set_title(t("curve_fit_title"), color="#cdd6f4", fontsize=12)
         self.ax_2d.set_xlabel("X", color="#cdd6f4")
         self.ax_2d.set_ylabel("Y", color="#cdd6f4")
 
@@ -4488,7 +4488,7 @@ class SuperCalcApp:
     def _on_data_import_csv(self):
         """Import a CSV file and parse its data."""
         path = filedialog.askopenfilename(
-            title="Import CSV Data",
+            title=t("title_import_csv"),
             filetypes=[("CSV files", "*.csv"), ("TSV files", "*.tsv"),
                        ("Text files", "*.txt"), ("All files", "*.*")],
         )
@@ -4522,8 +4522,8 @@ class SuperCalcApp:
             self.status_var.set(t("status_data_imported", len(rows), self._data_filename))
             info = t("label_data_preview", len(rows)) + "\n"
             if headers:
-                info += "  Headers: " + ", ".join(headers) + "\n"
-            info += "  Columns: " + str(ncols) + "\n"
+                info += t("data_preview_headers", ", ".join(headers)) + "\n"
+            info += t("data_preview_columns", str(ncols)) + "\n"
             preview_n = min(5, len(rows))
             for r in rows[:preview_n]:
                 info += "  " + ", ".join(r) + "\n"
@@ -4590,7 +4590,7 @@ class SuperCalcApp:
                              edgecolors="#313244", linewidths=0.5)
         elif chart_type == "bar":
             self.ax_2d.bar(xs, ys, color=color, alpha=0.8, edgecolor="#313244", linewidth=0.5)
-        label = self._data_filename or "Data"
+        label = self._data_filename or t("data_label_fallback")
         self.ax_2d.set_title(f"{chart_type.title()}: {label}", color="#cdd6f4", fontsize=12)
         self.ax_2d.set_xlabel("X", color="#cdd6f4")
         self.ax_2d.set_ylabel("Y", color="#cdd6f4")
@@ -4653,7 +4653,7 @@ class SuperCalcApp:
                           label=f"Fit: {result['equation']}\nR²={result['r_squared']:.6f}")
             self.ax_2d.legend(loc="best", facecolor="#313244",
                             edgecolor="#585b70", labelcolor="#cdd6f4", fontsize=9)
-        label = self._data_filename or "Data"
+        label = self._data_filename or t("data_label_fallback")
         self.ax_2d.set_title(f"{chart_type.title()}: {label}", color="#cdd6f4", fontsize=12)
         self.ax_2d.set_xlabel("X", color="#cdd6f4")
         self.ax_2d.set_ylabel("Y", color="#cdd6f4")
@@ -4669,7 +4669,7 @@ class SuperCalcApp:
         path = filedialog.asksaveasfilename(
             defaultextension=".png",
             filetypes=[("PNG files", "*.png"), ("All files", "*.*")],
-            title="Export Data Plot"
+            title=t("title_export_plot")
         )
         if not path:
             return
@@ -5214,7 +5214,7 @@ class SuperCalcApp:
             messagebox.showerror(t("err_nt_input"), t("msg_nt_invalid_n"))
             return
         if self._nt_is_prime(n):
-            self._nt_show_result(f"{n} is prime")
+            self._nt_show_result(t("status_nt_prime", n))
             self.status_var.set(t("status_nt_prime", n))
         else:
             factors = self._nt_factorize(n)
@@ -5350,7 +5350,7 @@ class SuperCalcApp:
         self._var_bw_res_hex.set(format(self._bw_mask(result, width), 'X'))
         self._var_bw_res_oct.set(format(self._bw_mask(result, width), 'o'))
         self._var_bw_res_dec.set(str(self._bw_to_signed(result, width)))
-        self.status_var.set(f"A {op} B = {self._bw_to_signed(result, width)} (dec)")
+        self.status_var.set(t("status_bw_result", op, self._bw_to_signed(result, width)))
 
     def _on_bw_clear(self):
         self._var_bw_a.set("0")
@@ -5905,11 +5905,11 @@ class SuperCalcApp:
         if result is None:
             messagebox.showerror(t("err_finance"), t("msg_fin_depr_invalid"))
             return
-        lines = ["Year  Depreciation  Book Value"]
+        lines = [t("label_fin_depr_ddb_header")]
         for row in result:
             lines.append(f"  {row['year']:>4d}  {row['depreciation']:>12.2f}  {row['book_value']:>10.2f}")
         self._var_fin_result.set("\n".join(lines))
-        self.status_var.set(t("status_fin_depr_sl", result[0]['depreciation'], result[0]['depreciation'] / 12))
+        self.status_var.set(t("status_fin_depr_ddb", result[0]['depreciation'], result[0]['depreciation'] / 12))
 
     def _on_fin_bond(self):
         from finance_calc import bond_price
