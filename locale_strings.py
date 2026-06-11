@@ -3264,6 +3264,80 @@ STRINGS = {
         "en": "Could not compute volume.\n{0}",
         "zh": "无法计算体积。\n{0}",
     },
+    # ---- Direction Field / Vector Field ----
+    "sec_direction_field": {
+        "en": "Direction Field (dy/dx = f(x,y))",
+        "zh": "方向场 (dy/dx = f(x,y))",
+    },
+    "label_df_expr": {
+        "en": "dy/dx =",
+        "zh": "dy/dx =",
+    },
+    "label_df_grid": {
+        "en": "Grid:",
+        "zh": "网格：",
+    },
+    "label_df_arrows": {
+        "en": "Arrows:",
+        "zh": "箭头数：",
+    },
+    "label_df_sol_ic": {
+        "en": "Solution ICs (x0,y0 pairs):",
+        "zh": "解曲线初值 (x0,y0 对)：",
+    },
+    "btn_df_plot": {
+        "en": "Plot Direction Field",
+        "zh": "绘制方向场",
+    },
+    "btn_df_clear": {
+        "en": "Clear",
+        "zh": "清除",
+    },
+    "status_df_plotted": {
+        "en": "Direction field plotted: {0}×{1} grid, {2} solution curve(s)",
+        "zh": "方向场已绘制：{0}×{1} 网格，{2} 条解曲线",
+    },
+    "err_df": {
+        "en": "Direction Field Error",
+        "zh": "方向场错误",
+    },
+    "msg_df_invalid_expr": {
+        "en": "Please enter a valid dy/dx expression using x and y.",
+        "zh": "请输入有效的 dy/dx 表达式（使用 x 和 y）。",
+    },
+    "msg_df_invalid_grid": {
+        "en": "Grid size must be between 5 and 50.",
+        "zh": "网格大小必须在 5 到 50 之间。",
+    },
+    "msg_df_plot_failed": {
+        "en": "Could not plot direction field.\n{0}",
+        "zh": "无法绘制方向场。\n{0}",
+    },
+    "df_preset_decay": {
+        "en": "Exponential decay (-y)",
+        "zh": "指数衰减 (-y)",
+    },
+    "df_preset_logistic": {
+        "en": "Logistic growth (y*(1-y))",
+        "zh": "逻辑斯蒂增长 (y*(1-y))",
+    },
+    "df_preset_harmonic": {
+        "en": "Harmonic (-y-sin(x))",
+        "zh": "简谐运动 (-y-sin(x))",
+    },
+    "df_preset_predprey": {
+        "en": "Predator-prey (x*y-0.5*x, -x*y+y)",
+        "zh": "捕食者-猎物 (x*y-0.5*x, -x*y+y)",
+    },
+    "df_preset_vanderpol": {
+        "en": "Van der Pol (y-(y^3)/3+x)",
+        "zh": "范德波尔 (y-(y^3)/3+x)",
+    },
+    "df_preset_lotka": {
+        "en": "Lotka-Volterra (x*(1-y), y*(x-1))",
+        "zh": "Lotka-Volterra (x*(1-y), y*(x-1))",
+    },
+
     "sec_volume_presets": {
         "en": "Volume Presets",
         "zh": "体积预设",

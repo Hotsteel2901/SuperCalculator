@@ -45,6 +45,14 @@
     <string name="taylor_plot">泰勒绘图</string>
     <string name="solve_ode">求解ODE</string>
     <string name="ode_plot">ODE绘图</string>
+    <string name="direction_field">方向场 dy/dx = f(x,y)</string>
+    <string name="direction_field_plot">绘制方向场</string>
+    <string name="direction_field_solve">求解并绘制</string>
+    <string name="hint_df_expr">dy/dx = f(x,y)</string>
+    <string name="hint_df_grid">网格数</string>
+    <string name="hint_df_ymin">Y最小</string>
+    <string name="hint_df_ymax">Y最大</string>
+    <string name="hint_df_ic">初始条件: x0,y0; ...</string>
     <string name="histogram">直方图</string>
     <string name="sort">排序</string>
     <string name="function_graph">函数图像</string>
@@ -201,6 +209,7 @@
     <string name="toast_enter_fg">请输入f(x,y)和g(x,y)表达式</string>
     <string name="toast_invalid_guess">初始猜测无效</string>
     <string name="toast_enter_ode">请输入ODE表达式 dy/dx = f(x,y)</string>
+    <string name="toast_enter_df_expr">请输入方向场表达式 dy/dx = f(x,y)</string>
     <string name="toast_invalid_ode">ODE参数无效</string>
     <string name="toast_steps_range">步数必须在1-100000之间</string>
     <string name="toast_x0_xend">x0不能等于x终点</string>
@@ -242,6 +251,8 @@
     <string name="toast_polar_plotted">极坐标曲线已绘制</string>
     <string name="toast_implicit_plotted">隐函数曲线已绘制</string>
     <string name="toast_no_ode_points">没有有效ODE点可绘制</string>
+    <string name="toast_direction_field_plotted">方向场已绘制</string>
+    <string name="toast_invalid_ic">初始条件无效：{0}</string>
     <string name="toast_ode_plotted">ODE解已绘制</string>
     <string name="toast_taylor_plotted">泰勒级数（{0}阶）已在a={1}处绘制</string>
     <string name="toast_no_data_points">没有有效数据点可绘制</string>
@@ -275,6 +286,7 @@
     <string name="dialog_fft_spectrum">FFT频谱</string>
     <string name="dialog_taylor_series">泰勒级数展开</string>
     <string name="dialog_ode_solution">ODE解（RK4）</string>
+    <string name="dialog_direction_field">方向场</string>
     <string name="dialog_statistics">统计结果</string>
     <string name="dialog_histogram">直方图</string>
     <string name="dialog_function_table">函数表（{0}个点）</string>

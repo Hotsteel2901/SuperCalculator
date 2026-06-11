@@ -39,6 +39,7 @@ public class CalcActivity extends AppCompatActivity {
     private EditText volGInput;
     private String volMode = "disk";
     private EditText sysFInput, sysGInput, sysX0Input, sysY0Input;
+    private EditText dfExprInput, dfGridInput, dfXminInput, dfXmaxInput, dfYminInput, dfYmaxInput, dfIcInput;
     private EditText matrixAInput, matrixBInput;
     private TextView resultView;
     private LineChart lineChart;
@@ -127,6 +128,19 @@ public class CalcActivity extends AppCompatActivity {
         MaterialButton btnOdePlot = findViewById(R.id.btn_ode_plot);
         btnOdeSolve.setOnClickListener(v -> onOdeSolve());
         btnOdePlot.setOnClickListener(v -> onOdePlot());
+
+        // Direction Field
+        dfExprInput = findViewById(R.id.df_expr_input);
+        dfGridInput = findViewById(R.id.df_grid_input);
+        dfXminInput = findViewById(R.id.df_xmin_input);
+        dfXmaxInput = findViewById(R.id.df_xmax_input);
+        dfYminInput = findViewById(R.id.df_ymin_input);
+        dfYmaxInput = findViewById(R.id.df_ymax_input);
+        dfIcInput = findViewById(R.id.df_ic_input);
+        MaterialButton btnDfPlot = findViewById(R.id.btn_df_plot);
+        MaterialButton btnDfSolve = findViewById(R.id.btn_df_solve);
+        btnDfPlot.setOnClickListener(v -> onDirectionField(false));
+        btnDfSolve.setOnClickListener(v -> onDirectionField(true));
 
         // Statistics
         statsDataInput = findViewById(R.id.stats_data_input);
@@ -1028,6 +1042,266 @@ public class CalcActivity extends AppCompatActivity {
         intent.putExtra("x_min", x0);
         intent.putExtra("x_max", xEnd);
         startActivity(intent);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void onDirectionField(boolean solveIC) {
+        String expr = dfExprInput.getText().toString().trim();
+        if (expr.isEmpty()) { toast(getString(R.string.toast_enter_df_expr)); return; }
+
+        int grid;
+        double xmin, xmax, ymin, ymax;
+        try {
+            grid = Integer.parseInt(dfGridInput.getText().toString().trim());
+            xmin = Double.parseDouble(dfXminInput.getText().toString().trim());
+            xmax = Double.parseDouble(dfXmaxInput.getText().toString().trim());
+            ymin = Double.parseDouble(dfYminInput.getText().toString().trim());
+            ymax = Double.parseDouble(dfYmaxInput.getText().toString().trim());
+        } catch (NumberFormatException ex) {
+            toast(getString(R.string.toast_invalid_ode));
+            return;
+        }
+        if (grid < 3) grid = 3;
+        if (grid > 40) grid = 40;
+        if (xmin >= xmax || ymin >= ymax) {
+            toast(getString(R.string.toast_min_max));
+            return;
+        }
+
+        int n = grid * grid;
+        double[] xs = new double[n];
+        double[] ys = new double[n];
+        int idx = 0;
+        double dx = (xmax - xmin) / (grid - 1);
+        double dy = (ymax - ymin) / (grid - 1);
+        for (int j = 0; j < grid; j++) {
+            for (int i = 0; i < grid; i++) {
+                xs[idx] = xmin + i * dx;
+                ys[idx] = ymin + j * dy;
+                idx++;
+            }
+        }
+
+        double[] slopes = CalcEngine.evaluateXYArray(expr, xs, ys);
+        if (slopes == null) {
+            resultView.append(String.format(getString(R.string.ode_error), CalcEngine.getLastError()) + "\n");
+            return;
+        }
+
+        // Parse initial conditions: "x0,y0; x1,y1; ..."
+        java.util.List<double[]> icList = new java.util.ArrayList<>();
+        if (solveIC) {
+            String icStr = dfIcInput.getText().toString().trim();
+            if (!icStr.isEmpty()) {
+                String[] pairs = icStr.split(";");
+                for (String pair : pairs) {
+                    pair = pair.trim();
+                    if (pair.isEmpty()) continue;
+                    String[] parts = pair.split(",");
+                    if (parts.length == 2) {
+                        try {
+                            double icx = Double.parseDouble(parts[0].trim());
+                            double icy = Double.parseDouble(parts[1].trim());
+                            icList.add(new double[]{icx, icy});
+                        } catch (NumberFormatException e) {
+                            toast(String.format(getString(R.string.toast_invalid_ic), pair));
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Solve ODE for each IC using RK4
+        java.util.List<double[]> solutionCurves = new java.util.ArrayList<>();
+        for (double[] ic : icList) {
+            double icx = ic[0], icy = ic[1];
+            int odeSteps = 500;
+            HashMap<String, Object> result = CalcEngine.odeSolveRk4(expr, icx, icy, xmax, odeSteps);
+            if (result != null) {
+                Object xsObj = result.get("xs");
+                Object ysObj = result.get("ys");
+                if (xsObj != null && ysObj != null) {
+                    double[] oxs = (double[]) xsObj;
+                    double[] oys = (double[]) ysObj;
+                    // Also solve backward from xmin
+                    HashMap<String, Object> resultBack = CalcEngine.odeSolveRk4(expr, icx, icy, xmin, odeSteps);
+                    double[] bxs = null, bys = null;
+                    if (resultBack != null) {
+                        Object bxsObj = resultBack.get("xs");
+                        Object bysObj = resultBack.get("ys");
+                        if (bxsObj != null && bysObj != null) {
+                            bxs = (double[]) bxsObj;
+                            bys = (double[]) bysObj;
+                        }
+                    }
+                    // Combine: reverse backward part, then forward part
+                    java.util.List<double[]> curve = new java.util.ArrayList<>();
+                    if (bxs != null && bys != null) {
+                        for (int i = bxs.length - 1; i >= 0; i--) {
+                            if (bxs[i] >= xmin && bxs[i] <= xmax) {
+                                curve.add(new double[]{bxs[i], bys[i]});
+                            }
+                        }
+                    }
+                    for (int i = 0; i < oxs.length; i++) {
+                        if (oxs[i] > xmin && oxs[i] <= xmax) {
+                            curve.add(new double[]{oxs[i], oys[i]});
+                        }
+                    }
+                    if (!curve.isEmpty()) {
+                        solutionCurves.add(new double[curve.size() * 2]);
+                        double[] flat = solutionCurves.get(solutionCurves.size() - 1);
+                        for (int i = 0; i < curve.size(); i++) {
+                            flat[i * 2] = curve.get(i)[0];
+                            flat[i * 2 + 1] = curve.get(i)[1];
+                        }
+                    }
+                }
+            }
+        }
+
+        // Show direction field in a dialog with custom Canvas drawing
+        showDirectionFieldDialog(expr, xs, ys, slopes, grid, xmin, xmax, ymin, ymax, solutionCurves);
+        resultView.append(String.format(getString(R.string.toast_direction_field_plotted)) + "\n");
+    }
+
+    private void showDirectionFieldDialog(String expr, double[] gridXs, double[] gridYs, double[] slopes,
+                                           int grid, double xmin, double xmax, double ymin, double ymax,
+                                           java.util.List<double[]> solutionCurves) {
+        android.app.Dialog dialog = new android.app.Dialog(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert);
+        dialog.setTitle(getString(R.string.dialog_direction_field));
+
+        android.widget.FrameLayout container = new android.widget.FrameLayout(this);
+        container.setPadding(16, 16, 16, 16);
+
+        android.view.View fieldView = new android.view.View(this) {
+            @Override
+            protected void onDraw(android.graphics.Canvas canvas) {
+                super.onDraw(canvas);
+                int w = getWidth();
+                int h = getHeight();
+                android.graphics.Paint bgPaint = new android.graphics.Paint();
+                bgPaint.setColor(android.graphics.Color.parseColor("#181825"));
+                canvas.drawRect(0, 0, w, h, bgPaint);
+
+                // Scale from math coords to screen coords
+                float margin = 20f;
+                float plotW = w - 2 * margin;
+                float plotH = h - 2 * margin;
+                float scaleX = plotW / (float)(xmax - xmin);
+                float scaleY = plotH / (float)(ymax - ymin);
+
+                float toScreenX(double x) { return margin + (float)((x - xmin) * scaleX); }
+                float toScreenY(double y) { return margin + (float)((ymax - y) * scaleY); }
+
+                // Draw axes
+                android.graphics.Paint axisPaint = new android.graphics.Paint();
+                axisPaint.setColor(android.graphics.Color.parseColor("#585b70"));
+                axisPaint.setStrokeWidth(1f);
+
+                float axX = toScreenX(0);
+                float axY = toScreenY(0);
+                if (axX >= margin && axX <= margin + plotW) {
+                    canvas.drawLine(axX, margin, axX, margin + plotH, axisPaint);
+                }
+                if (axY >= margin && axY <= margin + plotH) {
+                    canvas.drawLine(margin, axY, margin + plotW, axY, axisPaint);
+                }
+
+                // Draw direction arrows
+                android.graphics.Paint arrowPaint = new android.graphics.Paint();
+                arrowPaint.setColor(android.graphics.Color.parseColor("#89b4fa"));
+                arrowPaint.setStrokeWidth(2f);
+                arrowPaint.setStyle(android.graphics.Paint.Style.STROKE);
+                arrowPaint.setAntiAlias(true);
+
+                float arrowLen = Math.min(plotW, plotH) / grid * 0.7f;
+
+                for (int i = 0; i < gridXs.length; i++) {
+                    if (Double.isNaN(slopes[i]) || Double.isInfinite(slopes[i])) continue;
+                    float cx = toScreenX(gridXs[i]);
+                    float cy = toScreenY(gridYs[i]);
+                    if (cx < margin || cx > margin + plotW || cy < margin || cy > margin + plotH) continue;
+
+                    double slope = slopes[i];
+                    double normLen = arrowLen / Math.sqrt(1 + slope * slope);
+                    double dxHalf = normLen * 0.5;
+                    double dyHalf = normLen * slope * 0.5;
+
+                    float x1 = (float)(cx - dxHalf * scaleX / plotW * plotW);
+                    float y1 = (float)(cy + dyHalf * scaleY / plotH * plotH);
+                    float x2 = (float)(cx + dxHalf * scaleX / plotW * plotW);
+                    float y2 = (float)(cy - dyHalf * scaleY / plotH * plotH);
+
+                    // Recalculate with proper scaling
+                    double screenDx = dxHalf;
+                    double screenDy = dxHalf * slope;
+                    double screenLen = Math.sqrt(screenDx * screenDx + screenDy * screenDy);
+                    if (screenLen > arrowLen / 2) {
+                        double scale2 = (arrowLen / 2) / screenLen;
+                        screenDx *= scale2;
+                        screenDy *= scale2;
+                    }
+                    x1 = (float)(cx - screenDx);
+                    y1 = (float)(cy + screenDy);
+                    x2 = (float)(cx + screenDx);
+                    y2 = (float)(cy - screenDy);
+
+                    canvas.drawLine(x1, y1, x2, y2, arrowPaint);
+
+                    // Draw arrowhead
+                    double angle = Math.atan2(-(y2 - y1), x2 - x1);
+                    double headLen = arrowLen * 0.2;
+                    float hx1 = (float)(x2 - headLen * Math.cos(angle - 0.4));
+                    float hy1 = (float)(y2 + headLen * Math.sin(angle - 0.4));
+                    float hx2 = (float)(x2 - headLen * Math.cos(angle + 0.4));
+                    float hy2 = (float)(y2 + headLen * Math.sin(angle + 0.4));
+                    canvas.drawLine(x2, y2, hx1, hy1, arrowPaint);
+                    canvas.drawLine(x2, y2, hx2, hy2, arrowPaint);
+                }
+
+                // Draw solution curves
+                android.graphics.Paint curvePaint = new android.graphics.Paint();
+                curvePaint.setColor(android.graphics.Color.parseColor("#f38ba8"));
+                curvePaint.setStrokeWidth(2.5f);
+                curvePaint.setStyle(android.graphics.Paint.Style.STROKE);
+                curvePaint.setAntiAlias(true);
+
+                for (double[] curve : solutionCurves) {
+                    if (curve.length < 4) continue;
+                    android.graphics.Path path = new android.graphics.Path();
+                    boolean started = false;
+                    for (int i = 0; i < curve.length; i += 2) {
+                        float sx = toScreenX(curve[i]);
+                        float sy = toScreenY(curve[i + 1]);
+                        if (!started) {
+                            path.moveTo(sx, sy);
+                            started = true;
+                        } else {
+                            path.lineTo(sx, sy);
+                        }
+                    }
+                    canvas.drawPath(path, curvePaint);
+                }
+
+                // Draw labels
+                android.graphics.Paint labelPaint = new android.graphics.Paint();
+                labelPaint.setColor(android.graphics.Color.parseColor("#a6adc8"));
+                labelPaint.setTextSize(24f);
+                canvas.drawText("dy/dx = " + expr, margin, h - margin / 2, labelPaint);
+            }
+        };
+
+        container.addView(fieldView, new android.widget.FrameLayout.LayoutParams(
+            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+            android.view.Gravity.CENTER));
+
+        dialog.setContentView(container);
+        dialog.getWindow().setLayout(android.view.WindowManager.LayoutParams.MATCH_PARENT,
+            android.view.WindowManager.LayoutParams.MATCH_PARENT);
+        dialog.show();
     }
 
     private void onTaylorPlot() {

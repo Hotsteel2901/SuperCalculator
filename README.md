@@ -49,8 +49,9 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
   - **Area Between Curves** — compute the enclosed area between any two curves f(x) and g(x) over [a,b] using adaptive Simpson's rule
   - **Fourier Transform & Spectrum Analysis** — FFT amplitude and phase spectrum for any function, with dominant-frequency detection and CSV export
   - **Taylor Series Expansion** — expand any function into a Taylor polynomial at an arbitrary point, with configurable order, coefficient display, and comparison plot of Taylor vs. original
-  - **ODE Solver (RK4)** — solve first-order ODEs dy/dx = f(x,y) with initial conditions using 4th-order Runge-Kutta method, with solution plotting
-  - **Statistics Calculator** — compute mean, median, mode, variance, standard deviation, quartiles (Q1/Q3/IQR), min, max, range; supports data sorting, histogram visualization, and CSV export
+   - **ODE Solver (RK4)** — solve first-order ODEs dy/dx = f(x,y) with initial conditions using 4th-order Runge-Kutta method, with solution plotting
+   - **Direction Field Plotter** — visualize ODE dy/dx = f(x,y) as a vector field with direction arrows, overlay multiple solution curves from different initial conditions, 8 preset examples. Available on desktop (Python).
+   - **Statistics Calculator** — compute mean, median, mode, variance, standard deviation, quartiles (Q1/Q3/IQR), min, max, range; supports data sorting, histogram visualization, and CSV export
   - **Matrix Operations (Linear Algebra)** — perform matrix addition, subtraction, multiplication, determinant, inverse, transpose, rank, RREF, and eigenvalue computation on matrices up to any size; input format: rows separated by `;`, columns by `,` (e.g., `1,2;3,4` for a 2×2 matrix)
   - **Preset Functions** — quick-select from 21 common functions (including 3D and FFT presets) plus 10 parametric presets
   - **Parameter System** — auto-detects extra parameters (e.g., `a`, `b`) and provides live input fields
@@ -189,6 +190,7 @@ SuperCalculator/
 - **Complex Number Calculator** — perform complex arithmetic (+, -, *, /, ^), trigonometric functions (sin, cos, tan), exponential, logarithm, square root, absolute value, and conjugate. Input format: `a+bi` (e.g., `1+2i`, `3-4i`). Available on both desktop (Python) and Android (JNI).
 - **Matrix Operations (Linear Algebra)** — perform matrix addition, subtraction, multiplication, determinant, inverse, transpose, rank, RREF, and eigenvalue computation. Input format: rows separated by `;`, columns by `,` (e.g., `1,2;3,4`). Available on both desktop (Python/numpy) and Android (Java).
 - **ODE Solver (RK4)** — solve first-order ODEs dy/dx = f(x,y) with initial conditions using 4th-order Runge-Kutta method. Supports custom step count, solution data output, and plotting. Available on both desktop (Python) and Android (JNI).
+- **Direction Field Plotter** — visualize ODE dy/dx = f(x,y) as a vector field with direction arrows, overlay solution curves from different initial conditions. Supports 8 preset examples including exponential decay, logistic growth, harmonic oscillator, Van der Pol, and Lotka-Volterra systems. Available on desktop (Python).
 - **Taylor Series Expansion** — expand any function into a Taylor polynomial at an arbitrary expansion point with configurable order. Displays coefficients, the polynomial expression, and a comparison plot of Taylor vs. original function. Available on both desktop (Python) and Android (JNI).
 - **Limit Computation** — compute left-hand, right-hand, and two-sided limits using Richardson extrapolation for high accuracy. Available on both desktop (Python) and Android (JNI).
 - **Parametric Curve Plotting** — plot curves defined as x(t) and y(t) with 10 built-in presets (circle, ellipse, Lissajous, spiral, cardioid, heart, trefoil knot, butterfly curve, star). Available on both desktop (Python) and Android (JNI).
