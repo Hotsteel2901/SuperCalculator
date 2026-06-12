@@ -623,4 +623,20 @@
     <string name="data_no_data">No data to plot. Import a CSV file first.</string>
     <string name="data_csv_error">Failed to parse CSV: %s</string>
     <string name="data_invalid_col">Invalid column index.</string>
+    <string name="interp_title">Data Interpolation</string>
+    <string name="interp_method_label">Method:</string>
+    <string name="interp_linear">Linear</string>
+    <string name="interp_lagrange">Polynomial (Lagrange)</string>
+    <string name="interp_newton">Polynomial (Newton)</string>
+    <string name="interp_spline">Cubic Spline</string>
+    <string name="interp_data_hint">Data points (x,y): 0,0; 1,1; 2,4; 3,9</string>
+    <string name="interp_eval_x">Evaluate at x =</string>
+    <string name="interp_compute">Interpolate</string>
+    <string name="interp_plot">Plot</string>
+    <string name="interp_result">f(%s) = %s</string>
+    <string name="interp_plotted">Interpolation plotted (%d points, %s method)</string>
+    <string name="interp_error">Interpolation Error</string>
+    <string name="interp_need_points">Please enter at least 2 data points.</string>
+    <string name="interp_invalid_format">Invalid data format. Use: x1,y1; x2,y2; ...</string>
+    <string name="interp_duplicate_x">Duplicate x values are not allowed.</string>
 </resources>

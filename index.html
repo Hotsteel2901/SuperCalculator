@@ -1326,6 +1326,7 @@
             <a href="#calendar" class="nav-link"><span>万年历</span></a>
             <a href="#finance-calculator" class="nav-link"><span>金融计算</span></a>
             <a href="#direction-field" class="nav-link"><span>方向场</span></a>
+            <a href="#interpolation" class="nav-link"><span>数据插值</span></a>
             <a href="#quick-start" class="nav-link"><span>快速开始</span></a>
             <a href="#platforms" class="nav-link"><span>支持平台</span></a>
             <a href="#api" class="nav-link"><span>API 参考</span></a>
@@ -1354,6 +1355,7 @@
         <a href="#calendar" class="mobile-nav-link">万年历</a>
         <a href="#finance-calculator" class="mobile-nav-link">金融计算</a>
         <a href="#direction-field" class="mobile-nav-link">方向场</a>
+        <a href="#interpolation" class="mobile-nav-link">数据插值</a>
         <a href="#quick-start" class="mobile-nav-link">快速开始</a>
         <a href="#platforms" class="mobile-nav-link">支持平台</a>
         <a href="#api" class="mobile-nav-link">API 参考</a>
@@ -2093,6 +2095,236 @@
                 </div>
             </div>
         </section>
+
+        <section class="section" id="interpolation">
+            <div class="section-header">
+                <div class="section-label">
+                    <svg viewBox="0 0 24 24"><path d="M3 17h2v-7H3v7zm4 0h2V7H7v10zm4 0h2V4h-2v13zm4 0h2v-7h-2v7zm4 0h2V10h-2v7z"/></svg>
+                    Interactive Demo
+                </div>
+                <h2 class="section-title">数据插值</h2>
+                <p class="section-subtitle">支持线性、拉格朗日、牛顿和三次样条插值，可视化数据拟合曲线</p>
+            </div>
+            <div class="card glass reveal" style="max-width: 850px; margin: 0 auto;">
+                <h3 style="font-size: 20px; margin-bottom: 16px; color: var(--text-main);">Data Interpolation Calculator</h3>
+                <p style="margin-bottom: 12px; color: var(--text-muted); font-size: 14px;">Enter data points as <code style="background:var(--code-bg);padding:2px 6px;border-radius:4px;font-size:13px;">x,y; x,y; ...</code> and select an interpolation method to evaluate or visualize.</p>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+                    <label style="font-size:13px;color:var(--text-muted);font-weight:600;">Method:</label>
+                    <select id="interpWebMethod" style="padding:10px 14px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:14px;font-family:inherit;cursor:pointer;">
+                        <option value="linear">Linear</option>
+                        <option value="lagrange">Polynomial (Lagrange)</option>
+                        <option value="newton">Polynomial (Newton)</option>
+                        <option value="spline">Cubic Spline</option>
+                    </select>
+                    <button onclick="interpWebPlot()" style="flex:1;min-width:100px;padding:12px 16px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;">Plot</button>
+                    <button onclick="interpWebClear()" style="padding:12px 16px;border-radius:12px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-muted);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;">Clear</button>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:13px;color:var(--text-muted);font-weight:600;display:block;margin-bottom:6px;">Data Points (x,y):</label>
+                    <input type="text" id="interpWebData" value="0,0; 1,1; 2,4; 3,9; 4,16" style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:14px;font-family:'JetBrains Mono',monospace;box-sizing:border-box;" placeholder="e.g. 0,0; 1,1; 2,4; 3,9" />
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+                    <label style="font-size:13px;color:var(--text-muted);font-weight:600;">Evaluate at x =</label>
+                    <input type="number" id="interpWebEvalX" value="2.5" step="0.1" style="width:90px;padding:10px 12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:14px;font-family:'JetBrains Mono',monospace;" />
+                    <button onclick="interpWebCalc()" style="padding:10px 18px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;">Calculate</button>
+                    <span id="interpWebResult" style="font-size:14px;color:var(--glow-accent);font-family:'JetBrains Mono',monospace;font-weight:600;"></span>
+                </div>
+                <div style="position:relative;width:100%;height:300px;border-radius:12px;overflow:hidden;border:1px solid var(--glass-border);background:#181825;">
+                    <canvas id="interpWebCanvas" style="width:100%;height:100%;"></canvas>
+                </div>
+                <p id="interpWebStatus" style="margin-top:8px;font-size:12px;color:var(--text-subtle);"></p>
+            </div>
+        </section>
+
+        <script>
+        /* ---- Interpolation Web Demo ---- */
+        (function(){
+            var canvas=document.getElementById('interpWebCanvas');
+            var ctx=canvas.getContext('2d');
+            var points=[];
+
+            function resizeCanvas(){
+                var r=canvas.parentElement.getBoundingClientRect();
+                canvas.width=r.width*window.devicePixelRatio;
+                canvas.height=r.height*window.devicePixelRatio;
+                ctx.setTransform(window.devicePixelRatio,0,0,window.devicePixelRatio,0,0);
+            }
+
+            window.interpWebPlot=function(){
+                resizeCanvas();
+                var raw=document.getElementById('interpWebData').value.trim();
+                if(!raw)return;
+                points=[];
+                raw.split(';').forEach(function(seg){
+                    seg=seg.trim();if(!seg)return;
+                    var parts=seg.split(',');
+                    if(parts.length===2){
+                        var x=parseFloat(parts[0].trim()),y=parseFloat(parts[1].trim());
+                        if(!isNaN(x)&&!isNaN(y))points.push({x:x,y:y});
+                    }
+                });
+                points.sort(function(a,b){return a.x-b.x;});
+                if(points.length<2)return;
+
+                var method=document.getElementById('interpWebMethod').value;
+                var xs=points.map(function(p){return p.x;});
+                var ys=points.map(function(p){return p.y;});
+                var xMin=xs[0],xMax=xs[xs.length-1];
+                var margin=Math.max((xMax-xMin)*0.15,0.5);
+                var xLo=xMin-margin,xHi=xMax+margin;
+
+                var ys_vals=ys;
+                var yMin=Math.min.apply(null,ys_vals),yMax=Math.max.apply(null,ys_vals);
+                var yMargin=Math.max((yMax-yMin)*0.2,0.5);
+                var yLo=yMin-yMargin,yHi=yMax+yMargin;
+
+                var w=canvas.width/window.devicePixelRatio,h=canvas.height/window.devicePixelRatio;
+                var padL=50,padR=20,padT=20,padB=30;
+                var plotW=w-padL-padR,plotH=h-padT-padB;
+
+                function toCanvasX(v){return padL+(v-xLo)/(xHi-xLo)*plotW;}
+                function toCanvasY(v){return padT+(1-(v-yLo)/(yHi-yLo))*plotH;}
+
+                ctx.clearRect(0,0,w,h);
+                ctx.fillStyle='#181825';ctx.fillRect(0,0,w,h);
+
+                ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=1;
+                for(var i=0;i<=5;i++){
+                    var gx=padL+plotW*i/5;
+                    ctx.beginPath();ctx.moveTo(gx,padT);ctx.lineTo(gx,padT+plotH);ctx.stroke();
+                    ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='11px monospace';ctx.textAlign='center';
+                    ctx.fillText((xLo+(xHi-xLo)*i/5).toFixed(1),gx,padT+plotH+14);
+                }
+                for(var i=0;i<=4;i++){
+                    var gy=padT+plotH*i/4;
+                    ctx.beginPath();ctx.moveTo(padL,gy);ctx.lineTo(padL+plotW,gy);ctx.stroke();
+                    ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='11px monospace';ctx.textAlign='right';
+                    ctx.fillText((yHi-(yHi-yLo)*i/4).toFixed(1),padL-6,gy+4);
+                }
+
+                ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=1;
+                if(yLo<0&&yHi>0){var gy0=toCanvasY(0);ctx.beginPath();ctx.moveTo(padL,gy0);ctx.lineTo(padL+plotW,gy0);ctx.stroke();}
+                if(xLo<0&&xHi>0){var gx0=toCanvasX(0);ctx.beginPath();ctx.moveTo(gx0,padT);ctx.lineTo(gx0,padT+plotH);ctx.stroke();}
+
+                var nPlot=400;
+                var curvePts=[];
+                for(var i=0;i<=nPlot;i++){
+                    var x=xLo+(xHi-xLo)*i/nPlot;
+                    var y;
+                    if(method==='linear')y=interpLinearJS(xs,ys,x);
+                    else if(method==='lagrange')y=interpLagrangeJS(xs,ys,x);
+                    else if(method==='newton')y=interpNewtonJS(xs,ys,x);
+                    else y=interpSplineJS(xs,ys,x);
+                    if(isFinite(y))curvePts.push({x:x,y:y});
+                }
+
+                ctx.strokeStyle='#4f8cff';ctx.lineWidth=2.5;ctx.lineJoin='round';
+                ctx.beginPath();
+                curvePts.forEach(function(p,i){
+                    var cx=toCanvasX(p.x),cy=toCanvasY(p.y);
+                    if(i===0)ctx.moveTo(cx,cy);else ctx.lineTo(cx,cy);
+                });
+                ctx.stroke();
+
+                points.forEach(function(p){
+                    var cx=toCanvasX(p.x),cy=toCanvasY(p.y);
+                    ctx.fillStyle='#ff6b6b';
+                    ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);ctx.fill();
+                    ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font='10px monospace';ctx.textAlign='left';
+                    ctx.fillText('('+p.x.toFixed(1)+','+p.y.toFixed(1)+')',cx+8,cy-6);
+                });
+
+                document.getElementById('interpWebStatus').textContent='Plotted '+points.length+' points with '+method+' interpolation';
+            };
+
+            window.interpWebCalc=function(){
+                if(points.length<2){document.getElementById('interpWebResult').textContent='Need ≥2 points';return;}
+                var x=parseFloat(document.getElementById('interpWebEvalX').value);
+                if(isNaN(x))return;
+                var xs=points.map(function(p){return p.x;});
+                var ys=points.map(function(p){return p.y;});
+                var method=document.getElementById('interpWebMethod').value;
+                var y;
+                if(method==='linear')y=interpLinearJS(xs,ys,x);
+                else if(method==='lagrange')y=interpLagrangeJS(xs,ys,x);
+                else if(method==='newton')y=interpNewtonJS(xs,ys,x);
+                else y=interpSplineJS(xs,ys,x);
+                document.getElementById('interpWebResult').textContent='f('+x+') = '+y.toFixed(6);
+            };
+
+            window.interpWebClear=function(){
+                points=[];
+                var c=canvas.getContext('2d');
+                c.clearRect(0,0,canvas.width,canvas.height);
+                c.fillStyle='#181825';c.fillRect(0,0,canvas.width/window.devicePixelRatio,canvas.height/window.devicePixelRatio);
+                document.getElementById('interpWebResult').textContent='';
+                document.getElementById('interpWebStatus').textContent='';
+            };
+
+            function interpLinearJS(xs,ys,x){
+                var n=xs.length;
+                if(x<=xs[0])return ys[0];
+                if(x>=xs[n-1])return ys[n-1];
+                for(var i=0;i<n-1;i++){
+                    if(x>=xs[i]&&x<=xs[i+1]){
+                        var t=(x-xs[i])/(xs[i+1]-xs[i]);
+                        return ys[i]+t*(ys[i+1]-ys[i]);
+                    }
+                }
+                return ys[n-1];
+            }
+
+            function interpLagrangeJS(xs,ys,x){
+                var n=xs.length,result=0;
+                for(var i=0;i<n;i++){
+                    var li=1;
+                    for(var j=0;j<n;j++){if(i!==j)li*=(x-xs[j])/(xs[i]-xs[j]);}
+                    result+=ys[i]*li;
+                }
+                return result;
+            }
+
+            function interpNewtonJS(xs,ys,x){
+                var n=xs.length;
+                var dd=[];for(var i=0;i<n;i++){dd[i]=[ys[i]];}
+                for(var j=1;j<n;j++){
+                    for(var i=0;i<n-j;i++){
+                        dd[i][j]=(dd[i+1][j-1]-dd[i][j-1])/(xs[i+j]-xs[i]);
+                    }
+                }
+                var result=dd[0][0],product=1;
+                for(var j=1;j<n;j++){
+                    product*=(x-xs[j-1]);
+                    result+=dd[0][j]*product;
+                }
+                return result;
+            }
+
+            function interpSplineJS(xs,ys,x){
+                var n=xs.length-1;
+                var h=[];for(var i=0;i<n;i++)h[i]=xs[i+1]-xs[i];
+                var alpha=new Array(n+1).fill(0);
+                for(var i=1;i<n;i++){
+                    alpha[i]=3/h[i]*(ys[i+1]-ys[i])-3/h[i-1]*(ys[i]-ys[i-1]);
+                }
+                var l=new Array(n+1).fill(1),mu=new Array(n+1).fill(0),z=new Array(n+1).fill(0);
+                for(var i=1;i<n;i++){
+                    l[i]=2*(xs[i+1]-xs[i-1])-h[i-1]*mu[i-1];
+                    mu[i]=h[i]/l[i];
+                    z[i]=(alpha[i]-h[i-1]*z[i-1])/l[i];
+                }
+                var c=new Array(n+1).fill(0),b=new Array(n).fill(0),d=new Array(n).fill(0);
+                for(var j=n-1;j>=0;j--){
+                    c[j]=z[j]-mu[j]*c[j+1];
+                    b[j]=(ys[j+1]-ys[j])/h[j]-h[j]*(c[j+1]+2*c[j])/3;
+                    d[j]=(c[j+1]-c[j])/(3*h[j]);
+                }
+                var seg=0;for(var i=0;i<n;i++){if(x>=xs[i])seg=i;}
+                var dx=x-xs[seg];
+                return ys[seg]+b[seg]*dx+c[seg]*dx*dx+d[seg]*dx*dx*dx;
+            }
+        })();
+        </script>
 
         <section class="section" id="quick-start">
             <div class="section-header">

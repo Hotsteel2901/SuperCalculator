@@ -623,4 +623,20 @@
     <string name="data_no_data">没有可绘制的数据，请先导入CSV文件。</string>
     <string name="data_csv_error">解析CSV失败：%s</string>
     <string name="data_invalid_col">列索引无效。</string>
+    <string name="interp_title">数据插值</string>
+    <string name="interp_method_label">方法：</string>
+    <string name="interp_linear">线性插值</string>
+    <string name="interp_lagrange">多项式 (拉格朗日)</string>
+    <string name="interp_newton">多项式 (牛顿)</string>
+    <string name="interp_spline">三次样条</string>
+    <string name="interp_data_hint">数据点 (x,y)：0,0; 1,1; 2,4; 3,9</string>
+    <string name="interp_eval_x">在 x = 处求值</string>
+    <string name="interp_compute">插值计算</string>
+    <string name="interp_plot">绘图</string>
+    <string name="interp_result">f(%1$s) = %2$s</string>
+    <string name="interp_plotted">已绘制插值曲线（%1$d 个点，%2$s 方法）</string>
+    <string name="interp_error">插值错误</string>
+    <string name="interp_need_points">请至少输入 2 个数据点。</string>
+    <string name="interp_invalid_format">数据格式无效。请使用：x1,y1; x2,y2; ...</string>
+    <string name="interp_duplicate_x">不允许重复的 x 值。</string>
 </resources>

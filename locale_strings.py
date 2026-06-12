@@ -3358,6 +3358,92 @@ STRINGS = {
         "en": "Torus (R=2, r=0.5)",
         "zh": "圆环 (R=2, r=0.5)",
     },
+
+    # --- Data Interpolation ---
+    "sec_interpolation": {
+        "en": "Data Interpolation",
+        "zh": "数据插值",
+    },
+    "label_interp_method": {
+        "en": "Method:",
+        "zh": "方法：",
+    },
+    "interp_method_linear": {
+        "en": "Linear",
+        "zh": "线性插值",
+    },
+    "interp_method_lagrange": {
+        "en": "Polynomial (Lagrange)",
+        "zh": "多项式 (拉格朗日)",
+    },
+    "interp_method_newton": {
+        "en": "Polynomial (Newton)",
+        "zh": "多项式 (牛顿)",
+    },
+    "interp_method_spline": {
+        "en": "Cubic Spline",
+        "zh": "三次样条",
+    },
+    "label_interp_data": {
+        "en": "Data points (x,y):",
+        "zh": "数据点 (x,y)：",
+    },
+    "label_interp_data_hint": {
+        "en": "e.g. 0,1; 1,4; 2,9; 3,16",
+        "zh": "如 0,1; 1,4; 2,9; 3,16",
+    },
+    "label_interp_eval_x": {
+        "en": "Evaluate at x =",
+        "zh": "在 x = 处求值",
+    },
+    "btn_interp_compute": {
+        "en": "Interpolate",
+        "zh": "插值计算",
+    },
+    "btn_interp_plot": {
+        "en": "Plot",
+        "zh": "绘图",
+    },
+    "btn_interp_clear": {
+        "en": "Clear",
+        "zh": "清除",
+    },
+    "label_interp_result": {
+        "en": "Result:",
+        "zh": "结果：",
+    },
+    "label_interp_formula": {
+        "en": "Formula:",
+        "zh": "公式：",
+    },
+    "status_interp_ok": {
+        "en": "f({0}) = {1}",
+        "zh": "f({0}) = {1}",
+    },
+    "status_interp_plotted": {
+        "en": "Interpolation plotted ({0} points, {1} method)",
+        "zh": "已绘制插值曲线（{0} 个点，{1} 方法）",
+    },
+    "err_interp": {
+        "en": "Interpolation Error",
+        "zh": "插值错误",
+    },
+    "msg_interp_need_points": {
+        "en": "Please enter at least 2 data points.",
+        "zh": "请至少输入 2 个数据点。",
+    },
+    "msg_interp_invalid_format": {
+        "en": "Invalid data format. Use: x1,y1; x2,y2; ...",
+        "zh": "数据格式无效。请使用：x1,y1; x2,y2; ...",
+    },
+    "msg_interp_duplicate_x": {
+        "en": "Duplicate x values are not allowed.",
+        "zh": "不允许重复的 x 值。",
+    },
+    "msg_interp_x_not_sorted": {
+        "en": "Warning: x values are not in ascending order. They will be sorted automatically.",
+        "zh": "警告：x 值未按升序排列，将自动排序。",
+    },
 }
 
 

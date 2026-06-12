@@ -365,6 +365,9 @@ public class CalcActivity extends AppCompatActivity {
 
         // Data Import & Scatter Plot
         setupDataImport();
+
+        // Data Interpolation Calculator
+        setupInterpolation();
     }
 
     private String getExpr()  { return exprInput.getText().toString().trim(); }
@@ -3796,5 +3799,235 @@ public class CalcActivity extends AppCompatActivity {
         dataStatusView.setText("");
         lineChart.clear();
         graphCard.setVisibility(android.view.View.GONE);
+    }
+
+    // ------------------------------------------------------------------
+    //  Data Interpolation Calculator
+    // ------------------------------------------------------------------
+    private AutoCompleteTextView interpMethodSpinner;
+    private EditText interpDataInput, interpEvalXInput;
+    private TextView interpResultView;
+    private ArrayAdapter<String> interpMethodAdapter;
+
+    private void setupInterpolation() {
+        interpMethodSpinner = findViewById(R.id.interp_method_spinner);
+        interpDataInput = findViewById(R.id.interp_data_input);
+        interpEvalXInput = findViewById(R.id.interp_eval_x_input);
+        interpResultView = findViewById(R.id.interp_result_view);
+
+        String[] methods = {
+            getString(R.string.interp_linear),
+            getString(R.string.interp_lagrange),
+            getString(R.string.interp_newton),
+            getString(R.string.interp_spline)
+        };
+        interpMethodAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, methods);
+        interpMethodSpinner.setAdapter(interpMethodAdapter);
+
+        MaterialButton btnCompute = findViewById(R.id.btn_interp_compute);
+        MaterialButton btnPlot = findViewById(R.id.btn_interp_plot);
+
+        btnCompute.setOnClickListener(v -> onInterpCompute());
+        btnPlot.setOnClickListener(v -> onInterpPlot());
+    }
+
+    private List<double[]> parseInterpPoints() {
+        String raw = interpDataInput.getText().toString().trim();
+        if (raw.isEmpty()) {
+            toast(getString(R.string.interp_need_points));
+            return null;
+        }
+        List<double[]> points = new ArrayList<>();
+        String[] segments = raw.split(";");
+        for (String seg : segments) {
+            seg = seg.trim();
+            if (seg.isEmpty()) continue;
+            String[] parts = seg.split(",");
+            if (parts.length != 2) {
+                toast(getString(R.string.interp_invalid_format));
+                return null;
+            }
+            try {
+                double x = Double.parseDouble(parts[0].trim());
+                double y = Double.parseDouble(parts[1].trim());
+                points.add(new double[]{x, y});
+            } catch (NumberFormatException e) {
+                toast(getString(R.string.interp_invalid_format));
+                return null;
+            }
+        }
+        if (points.size() < 2) {
+            toast(getString(R.string.interp_need_points));
+            return null;
+        }
+        points.sort((a, b) -> Double.compare(a[0], b[0]));
+        return points;
+    }
+
+    private void onInterpCompute() {
+        List<double[]> points = parseInterpPoints();
+        if (points == null) return;
+
+        double xVal;
+        try {
+            xVal = Double.parseDouble(interpEvalXInput.getText().toString().trim());
+        } catch (NumberFormatException e) {
+            toast(getString(R.string.interp_invalid_format));
+            return;
+        }
+
+        double[] xs = points.stream().mapToDouble(p -> p[0]).toArray();
+        double[] ys = points.stream().mapToDouble(p -> p[1]).toArray();
+        String method = interpMethodSpinner.getText().toString().trim();
+
+        double result;
+        if (method.equals(getString(R.string.interp_linear))) {
+            result = interpLinear(xs, ys, xVal);
+        } else if (method.equals(getString(R.string.interp_lagrange))) {
+            result = interpLagrange(xs, ys, xVal);
+        } else if (method.equals(getString(R.string.interp_newton))) {
+            result = interpNewton(xs, ys, xVal);
+        } else if (method.equals(getString(R.string.interp_spline))) {
+            result = interpSpline(xs, ys, xVal);
+        } else {
+            result = interpLinear(xs, ys, xVal);
+        }
+
+        interpResultView.setText(String.format(getString(R.string.interp_result), fmt(xVal), fmt(result)));
+    }
+
+    private void onInterpPlot() {
+        List<double[]> points = parseInterpPoints();
+        if (points == null) return;
+
+        double[] xs = points.stream().mapToDouble(p -> p[0]).toArray();
+        double[] ys = points.stream().mapToDouble(p -> p[1]).toArray();
+        String method = interpMethodSpinner.getText().toString().trim();
+
+        float xMin = (float) xs[0];
+        float xMax = (float) xs[xs.length - 1];
+        float margin = Math.max((xMax - xMin) * 0.15f, 0.5f);
+        float xLo = xMin - margin;
+        float xHi = xMax + margin;
+        int nPlot = 200;
+
+        List<Entry> curveEntries = new ArrayList<>();
+        for (int i = 0; i <= nPlot; i++) {
+            float x = xLo + (xHi - xLo) * i / nPlot;
+            double y;
+            if (method.equals(getString(R.string.interp_linear))) {
+                y = interpLinear(xs, ys, x);
+            } else if (method.equals(getString(R.string.interp_lagrange))) {
+                y = interpLagrange(xs, ys, x);
+            } else if (method.equals(getString(R.string.interp_newton))) {
+                y = interpNewton(xs, ys, x);
+            } else if (method.equals(getString(R.string.interp_spline))) {
+                y = interpSpline(xs, ys, x);
+            } else {
+                y = interpLinear(xs, ys, x);
+            }
+            if (Double.isFinite(y)) curveEntries.add(new Entry(x, (float) y));
+        }
+
+        LineDataSet curveSet = new LineDataSet(curveEntries, getString(R.string.interp_title));
+        curveSet.setColor(android.graphics.Color.parseColor("#4f8cff"));
+        curveSet.setLineWidth(2.5f);
+        curveSet.setDrawCircles(false);
+        curveSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+
+        List<Entry> pointEntries = new ArrayList<>();
+        for (double[] p : points) {
+            pointEntries.add(new Entry((float) p[0], (float) p[1]));
+        }
+        LineDataSet pointSet = new LineDataSet(pointEntries, "Data");
+        pointSet.setColor(android.graphics.Color.parseColor("#ff6b6b"));
+        pointSet.setLineWidth(0f);
+        pointSet.setCircleRadius(5f);
+        pointSet.setDrawCircleHole(false);
+        pointSet.setDrawValues(true);
+        pointSet.setValueTextSize(10f);
+
+        LineData lineData = new LineData(curveSet, pointSet);
+        showDataChart(lineData);
+
+        String methodLabel = method;
+        toast(String.format(getString(R.string.interp_plotted), points.size(), methodLabel));
+    }
+
+    private static double interpLinear(double[] xs, double[] ys, double x) {
+        int n = xs.length;
+        if (x <= xs[0]) return ys[0];
+        if (x >= xs[n - 1]) return ys[n - 1];
+        for (int i = 0; i < n - 1; i++) {
+            if (x >= xs[i] && x <= xs[i + 1]) {
+                double t = (x - xs[i]) / (xs[i + 1] - xs[i]);
+                return ys[i] + t * (ys[i + 1] - ys[i]);
+            }
+        }
+        return ys[n - 1];
+    }
+
+    private static double interpLagrange(double[] xs, double[] ys, double x) {
+        int n = xs.length;
+        double result = 0.0;
+        for (int i = 0; i < n; i++) {
+            double li = 1.0;
+            for (int j = 0; j < n; j++) {
+                if (i != j) li *= (x - xs[j]) / (xs[i] - xs[j]);
+            }
+            result += ys[i] * li;
+        }
+        return result;
+    }
+
+    private static double interpNewton(double[] xs, double[] ys, double x) {
+        int n = xs.length;
+        double[][] dd = new double[n][n];
+        for (int i = 0; i < n; i++) dd[i][0] = ys[i];
+        for (int j = 1; j < n; j++) {
+            for (int i = 0; i < n - j; i++) {
+                dd[i][j] = (dd[i + 1][j - 1] - dd[i][j - 1]) / (xs[i + j] - xs[i]);
+            }
+        }
+        double result = dd[0][0];
+        double product = 1.0;
+        for (int j = 1; j < n; j++) {
+            product *= (x - xs[j - 1]);
+            result += dd[0][j] * product;
+        }
+        return result;
+    }
+
+    private static double interpSpline(double[] xs, double[] ys, double x) {
+        int n = xs.length - 1;
+        double[] h = new double[n];
+        for (int i = 0; i < n; i++) h[i] = xs[i + 1] - xs[i];
+
+        double[] alpha = new double[n + 1];
+        for (int i = 1; i < n; i++) {
+            alpha[i] = 3.0 / h[i] * (ys[i + 1] - ys[i]) - 3.0 / h[i - 1] * (ys[i] - ys[i - 1]);
+        }
+
+        double[] l = new double[n + 1], mu = new double[n + 1], z = new double[n + 1];
+        l[0] = 1.0;
+        for (int i = 1; i < n; i++) {
+            l[i] = 2.0 * (xs[i + 1] - xs[i - 1]) - h[i - 1] * mu[i - 1];
+            mu[i] = h[i] / l[i];
+            z[i] = (alpha[i] - h[i - 1] * z[i - 1]) / l[i];
+        }
+
+        double[] c = new double[n + 1], b = new double[n], d = new double[n];
+        for (int j = n - 1; j >= 0; j--) {
+            c[j] = z[j] - mu[j] * c[j + 1];
+            b[j] = (ys[j + 1] - ys[j]) / h[j] - h[j] * (c[j + 1] + 2.0 * c[j]) / 3.0;
+            d[j] = (c[j + 1] - c[j]) / (3.0 * h[j]);
+        }
+
+        int seg = 0;
+        for (int i = 0; i < n; i++) {
+            if (x >= xs[i]) seg = i;
+        }
+        double dx = x - xs[seg];
+        return ys[seg] + b[seg] * dx + c[seg] * dx * dx + d[seg] * dx * dx * dx;
     }
 }
