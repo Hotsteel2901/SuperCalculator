@@ -9,6 +9,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.widget.NestedScrollView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.card.MaterialCardView;
@@ -42,6 +43,7 @@ public class CalcActivity extends AppCompatActivity {
     private EditText dfExprInput, dfGridInput, dfXminInput, dfXmaxInput, dfYminInput, dfYmaxInput, dfIcInput;
     private EditText matrixAInput, matrixBInput;
     private TextView resultView;
+    private NestedScrollView scrollView;
     private LineChart lineChart;
     private MaterialCardView graphCard;
     private EditText dataXColInput, dataYColInput;
@@ -75,6 +77,7 @@ public class CalcActivity extends AppCompatActivity {
         odeStepsInput = findViewById(R.id.ode_steps_input);
         resultView = findViewById(R.id.result_view);
         resultView.setMovementMethod(new ScrollingMovementMethod());
+        scrollView = findViewById(R.id.main_scroll);
         lineChart  = findViewById(R.id.line_chart);
         graphCard  = findViewById(R.id.graph_card);
 
@@ -381,6 +384,12 @@ public class CalcActivity extends AppCompatActivity {
         catch (NumberFormatException ex) { return 0.0; }
     }
 
+    private void scrollToResult() {
+        if (scrollView != null) {
+            scrollView.post(() -> scrollView.scrollTo(0, resultView.getTop() - 100));
+        }
+    }
+
     private void appendResult(String label, double value) {
         String line = label + " = ";
         if (Double.isNaN(value)) {
@@ -391,11 +400,13 @@ public class CalcActivity extends AppCompatActivity {
             line += String.format("%.10g", value);
         }
         resultView.append(line + "\n");
+        scrollToResult();
     }
 
     private void appendResult(String label, int value) {
         String line = label + " = " + String.format(getString(R.string.result_points_plotted), value);
         resultView.append(line + "\n");
+        scrollToResult();
     }
 
     private void onEvaluate() {
@@ -427,6 +438,7 @@ public class CalcActivity extends AppCompatActivity {
         } else {
             resultView.append(String.format(getString(R.string.result_root), root) + "\n");
             resultView.append(String.format(getString(R.string.result_root_fval), CalcEngine.evaluate(e, root)) + "\n");
+            scrollToResult();
         }
     }
 
@@ -1196,16 +1208,13 @@ public class CalcActivity extends AppCompatActivity {
                 float scaleX = plotW / (float)(xmax - xmin);
                 float scaleY = plotH / (float)(ymax - ymin);
 
-                float toScreenX(double x) { return margin + (float)((x - xmin) * scaleX); }
-                float toScreenY(double y) { return margin + (float)((ymax - y) * scaleY); }
-
                 // Draw axes
                 android.graphics.Paint axisPaint = new android.graphics.Paint();
                 axisPaint.setColor(android.graphics.Color.parseColor("#585b70"));
                 axisPaint.setStrokeWidth(1f);
 
-                float axX = toScreenX(0);
-                float axY = toScreenY(0);
+                float axX = margin + (float)((0 - xmin) * scaleX);
+                float axY = margin + (float)((ymax - 0) * scaleY);
                 if (axX >= margin && axX <= margin + plotW) {
                     canvas.drawLine(axX, margin, axX, margin + plotH, axisPaint);
                 }
@@ -1224,8 +1233,8 @@ public class CalcActivity extends AppCompatActivity {
 
                 for (int i = 0; i < gridXs.length; i++) {
                     if (Double.isNaN(slopes[i]) || Double.isInfinite(slopes[i])) continue;
-                    float cx = toScreenX(gridXs[i]);
-                    float cy = toScreenY(gridYs[i]);
+                    float cx = margin + (float)((gridXs[i] - xmin) * scaleX);
+                    float cy = margin + (float)((ymax - gridYs[i]) * scaleY);
                     if (cx < margin || cx > margin + plotW || cy < margin || cy > margin + plotH) continue;
 
                     double slope = slopes[i];
@@ -1277,8 +1286,8 @@ public class CalcActivity extends AppCompatActivity {
                     android.graphics.Path path = new android.graphics.Path();
                     boolean started = false;
                     for (int i = 0; i < curve.length; i += 2) {
-                        float sx = toScreenX(curve[i]);
-                        float sy = toScreenY(curve[i + 1]);
+                        float sx = margin + (float)((curve[i] - xmin) * scaleX);
+                        float sy = margin + (float)((ymax - curve[i + 1]) * scaleY);
                         if (!started) {
                             path.moveTo(sx, sy);
                             started = true;
