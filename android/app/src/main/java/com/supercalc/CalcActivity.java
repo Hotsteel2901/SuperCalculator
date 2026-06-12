@@ -3689,7 +3689,7 @@ public class CalcActivity extends AppCompatActivity {
                 trendSet.setDrawCircles(false);
                 trendSet.setColor(0xFF89B4FA);
                 trendSet.setLineWidth(2f);
-                trendSet.setEnableDashedLine(true, 10, 5);
+                trendSet.enableDashedLine(10, 5, 0);
 
                 LineData lineData = new LineData(dataSet, trendSet);
                 showDataChart(lineData);
