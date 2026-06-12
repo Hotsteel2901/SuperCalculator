@@ -26,7 +26,7 @@ def loan_monthly_payment(principal: float, annual_rate: float,
     float or None
         Monthly payment amount, or None on invalid input.
     """
-    if principal <= 0 or months <= 0:
+    if principal <= 0 or months <= 0 or annual_rate < 0:
         return None
     if annual_rate == 0:
         return principal / months

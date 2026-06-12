@@ -1059,6 +1059,10 @@ STRINGS = {
         "en": "{0} {1} = {2} {3}",
         "zh": "{0} {1} = {2} {3}",
     },
+    "status_exported": {
+        "en": "Exported to {0}",
+        "zh": "已导出到 {0}",
+    },
 
     # ---- Error/Info dialog titles ----
     "err_input": {
