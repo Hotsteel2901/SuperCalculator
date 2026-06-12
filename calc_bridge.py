@@ -901,9 +901,11 @@ class CalcEngine:
             # Format equation
             sign = "+" if intercept >= 0 else "-"
             eq = f"y = {slope:.6g}*x {sign} {abs(intercept):.6g}"
+            x_sorted = np.sort(x_arr)
+            y_sorted = slope * x_sorted + intercept
             return {
-                'a': float(a),
-                'b': float(b),
+                'slope': float(slope),
+                'intercept': float(intercept),
                 'r_squared': float(r_squared),
                 'equation': eq,
                 'xs_fit': x_sorted.tolist(),

@@ -228,9 +228,10 @@ class StudentTDist:
         x_flat = x.ravel()
         for i in range(x_flat.size):
             xi_val = float(x_flat[i])
-            if xi_val < -15:
+            threshold = max(15.0, 3.0 * np.sqrt(self.nu) + 5.0)
+            if xi_val < -threshold:
                 result.flat[i] = 0.0
-            elif xi_val > 15:
+            elif xi_val > threshold:
                 result.flat[i] = 1.0
             else:
                 # Use symmetry: CDF(x) = 0.5 + integral from 0 to x of PDF(t) dt
@@ -417,7 +418,10 @@ class BinomialDist:
         result = np.zeros_like(k)
         k_flat = k.ravel()
         for i in range(k_flat.size):
-            ki_val = int(round(float(k_flat[i])))
+            ki_val = int(float(k_flat[i]))
+            if float(k_flat[i]) != ki_val:
+                result.flat[i] = 0.0
+                continue
             if 0 <= ki_val <= self.n:
                 if self.p == 0.0:
                     result.flat[i] = 1.0 if ki_val == 0 else 0.0
@@ -486,7 +490,10 @@ class PoissonDist:
         result = np.zeros_like(k)
         k_flat = k.ravel()
         for i in range(k_flat.size):
-            ki_val = int(round(float(k_flat[i])))
+            ki_val = int(float(k_flat[i]))
+            if float(k_flat[i]) != ki_val:
+                result.flat[i] = 0.0
+                continue
             if ki_val >= 0:
                 if self.lam == 0.0:
                     result.flat[i] = 1.0 if ki_val == 0 else 0.0
