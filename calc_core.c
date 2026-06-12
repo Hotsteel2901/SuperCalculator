@@ -1600,3 +1600,223 @@ EXPORT void complex_array_evaluate(const char* expr, const double* xs, const dou
     if (any_failed && g_error[0] == '\0')
         set_error("Some evaluations failed in complex_array_evaluate");
 }
+
+/* --------------------------------------------------------------------------
+ *  ODE Solver — Euler Method (1st order)
+ *  Solves the initial value problem:  dy/dx = f(x, y),  y(x0) = y0
+ *  over the interval [x0, x_end] with n_steps uniform steps.
+ *  out_x and out_y must have space for at least (n_steps + 1) doubles.
+ *  Returns the number of points stored, or -1 on error.
+ * -------------------------------------------------------------------------- */
+
+EXPORT int ode_solve_euler(const char* expr, double x0, double y0, double x_end,
+                           int n_steps, double* out_x, double* out_y, int max_out) {
+    if (!expr || !out_x || !out_y) { set_error("NULL pointer argument"); return -1; }
+    if (n_steps < 1) { set_error("n_steps must be >= 1"); return -1; }
+    if (n_steps > 10000000) { set_error("n_steps too large (max 10000000)"); return -1; }
+    if (max_out < n_steps + 1) { set_error("Output buffer too small"); return -1; }
+    clear_error();
+
+    double h = (x_end - x0) / n_steps;
+    double x = x0;
+    double y = y0;
+
+    out_x[0] = x;
+    out_y[0] = y;
+
+    for (int i = 0; i < n_steps; i++) {
+        double f_val;
+        if (parse_and_eval(expr, x, y, &f_val) != 0) return -1;
+        if (isnan(f_val)) { set_error("f(x,y) returned NaN at Euler"); return -1; }
+
+        y = y + h * f_val;
+        x = x0 + (i + 1) * h;
+
+        out_x[i + 1] = x;
+        out_y[i + 1] = y;
+    }
+
+    return n_steps + 1;
+}
+
+/* --------------------------------------------------------------------------
+ *  ODE Solver — Improved Euler Method (Heun's method, 2nd order)
+ *  Solves the initial value problem:  dy/dx = f(x, y),  y(x0) = y0
+ *  over the interval [x0, x_end] with n_steps uniform steps.
+ *  out_x and out_y must have space for at least (n_steps + 1) doubles.
+ *  Returns the number of points stored, or -1 on error.
+ * -------------------------------------------------------------------------- */
+
+EXPORT int ode_solve_improved_euler(const char* expr, double x0, double y0, double x_end,
+                                    int n_steps, double* out_x, double* out_y, int max_out) {
+    if (!expr || !out_x || !out_y) { set_error("NULL pointer argument"); return -1; }
+    if (n_steps < 1) { set_error("n_steps must be >= 1"); return -1; }
+    if (n_steps > 10000000) { set_error("n_steps too large (max 10000000)"); return -1; }
+    if (max_out < n_steps + 1) { set_error("Output buffer too small"); return -1; }
+    clear_error();
+
+    double h = (x_end - x0) / n_steps;
+    double x = x0;
+    double y = y0;
+
+    out_x[0] = x;
+    out_y[0] = y;
+
+    for (int i = 0; i < n_steps; i++) {
+        double k1_val, k2_val;
+
+        /* k1 = f(x, y) */
+        if (parse_and_eval(expr, x, y, &k1_val) != 0) return -1;
+        if (isnan(k1_val)) { set_error("f(x,y) returned NaN at Improved Euler k1"); return -1; }
+
+        /* k2 = f(x + h, y + h*k1) */
+        if (parse_and_eval(expr, x + h, y + h * k1_val, &k2_val) != 0) return -1;
+        if (isnan(k2_val)) { set_error("f(x,y) returned NaN at Improved Euler k2"); return -1; }
+
+        /* y_{n+1} = y_n + h*(k1 + k2)/2 */
+        y = y + h * (k1_val + k2_val) / 2.0;
+        x = x0 + (i + 1) * h;
+
+        out_x[i + 1] = x;
+        out_y[i + 1] = y;
+    }
+
+    return n_steps + 1;
+}
+
+/* --------------------------------------------------------------------------
+ *  ODE Solver — Midpoint Method (2nd order)
+ *  Solves the initial value problem:  dy/dx = f(x, y),  y(x0) = y0
+ *  over the interval [x0, x_end] with n_steps uniform steps.
+ *  out_x and out_y must have space for at least (n_steps + 1) doubles.
+ *  Returns the number of points stored, or -1 on error.
+ * -------------------------------------------------------------------------- */
+
+EXPORT int ode_solve_midpoint(const char* expr, double x0, double y0, double x_end,
+                              int n_steps, double* out_x, double* out_y, int max_out) {
+    if (!expr || !out_x || !out_y) { set_error("NULL pointer argument"); return -1; }
+    if (n_steps < 1) { set_error("n_steps must be >= 1"); return -1; }
+    if (n_steps > 10000000) { set_error("n_steps too large (max 10000000)"); return -1; }
+    if (max_out < n_steps + 1) { set_error("Output buffer too small"); return -1; }
+    clear_error();
+
+    double h = (x_end - x0) / n_steps;
+    double x = x0;
+    double y = y0;
+
+    out_x[0] = x;
+    out_y[0] = y;
+
+    for (int i = 0; i < n_steps; i++) {
+        double k1_val, k2_val;
+
+        /* k1 = f(x, y) */
+        if (parse_and_eval(expr, x, y, &k1_val) != 0) return -1;
+        if (isnan(k1_val)) { set_error("f(x,y) returned NaN at Midpoint k1"); return -1; }
+
+        /* k2 = f(x + h/2, y + h*k1/2) */
+        if (parse_and_eval(expr, x + 0.5 * h, y + 0.5 * h * k1_val, &k2_val) != 0) return -1;
+        if (isnan(k2_val)) { set_error("f(x,y) returned NaN at Midpoint k2"); return -1; }
+
+        /* y_{n+1} = y_n + h*k2 */
+        y = y + h * k2_val;
+        x = x0 + (i + 1) * h;
+
+        out_x[i + 1] = x;
+        out_y[i + 1] = y;
+    }
+
+    return n_steps + 1;
+}
+
+/* --------------------------------------------------------------------------
+ *  ODE Solver — Runge-Kutta-Fehlberg (RKF45) with adaptive step size
+ *  Solves the initial value problem:  dy/dx = f(x, y),  y(x0) = y0
+ *  over the interval [x0, x_end] with adaptive step size control.
+ *  out_x and out_y must have space for at least max_points doubles.
+ *  Returns the number of points stored, or -1 on error.
+ * -------------------------------------------------------------------------- */
+
+EXPORT int ode_solve_rkf45(const char* expr, double x0, double y0, double x_end,
+                            double tol, double* out_x, double* out_y, int max_points) {
+    if (!expr || !out_x || !out_y) { set_error("NULL pointer argument"); return -1; }
+    if (max_points < 2) { set_error("Output buffer too small"); return -1; }
+    if (tol <= 0.0) tol = 1e-6;
+    clear_error();
+
+    double h = (x_end - x0) / 100.0;  /* Initial step size guess */
+    if (h <= 0.0) h = 0.01;
+    double x = x0;
+    double y = y0;
+    int count = 0;
+
+    out_x[count] = x;
+    out_y[count] = y;
+    count++;
+
+    while (x < x_end && count < max_points - 1) {
+        if (x + h > x_end) h = x_end - x;
+
+        double k1, k2, k3, k4, k5, k6;
+        double f_val;
+
+        /* k1 */
+        if (parse_and_eval(expr, x, y, &f_val) != 0) return -1;
+        k1 = f_val;
+
+        /* k2 */
+        if (parse_and_eval(expr, x + h/4.0, y + h*k1/4.0, &f_val) != 0) return -1;
+        k2 = f_val;
+
+        /* k3 */
+        if (parse_and_eval(expr, x + 3.0*h/8.0, y + 3.0*h*k1/32.0 + 9.0*h*k2/32.0, &f_val) != 0) return -1;
+        k3 = f_val;
+
+        /* k4 */
+        if (parse_and_eval(expr, x + 12.0*h/13.0, y + 1932.0*h*k1/2197.0 - 7200.0*h*k2/2197.0 + 7296.0*h*k3/2197.0, &f_val) != 0) return -1;
+        k4 = f_val;
+
+        /* k5 */
+        if (parse_and_eval(expr, x + h, y + 439.0*h*k1/216.0 - 8.0*h*k2 + 3680.0*h*k3/513.0 - 845.0*h*k4/4104.0, &f_val) != 0) return -1;
+        k5 = f_val;
+
+        /* k6 */
+        if (parse_and_eval(expr, x + h/2.0, y - 8.0*h*k1/27.0 + 2.0*h*k2 - 3544.0*h*k3/2565.0 + 1859.0*h*k4/4104.0 - 11.0*h*k5/40.0, &f_val) != 0) return -1;
+        k6 = f_val;
+
+        /* 4th order solution */
+        double y4 = y + h * (25.0*k1/216.0 + 1408.0*k3/2565.0 + 2197.0*k4/4104.0 - k5/5.0);
+
+        /* 5th order solution */
+        double y5 = y + h * (16.0*k1/135.0 + 6656.0*k3/12825.0 + 28561.0*k4/56430.0 - 9.0*k5/50.0 + 2.0*k6/55.0);
+
+        /* Error estimate */
+        double error = fabs(y5 - y4);
+
+        if (error < tol || h <= 1e-10) {
+            /* Accept step */
+            y = y5;
+            x = x + h;
+            out_x[count] = x;
+            out_y[count] = y;
+            count++;
+
+            /* Adjust step size */
+            if (error > 0.0) {
+                double scale = 0.84 * pow(tol / error, 0.25);
+                if (scale > 4.0) scale = 4.0;
+                if (scale < 0.1) scale = 0.1;
+                h = h * scale;
+            } else {
+                h = h * 2.0;
+            }
+        } else {
+            /* Reject step, reduce h */
+            double scale = 0.84 * pow(tol / error, 0.25);
+            if (scale < 0.1) scale = 0.1;
+            h = h * scale;
+        }
+    }
+
+    return count;
+}
