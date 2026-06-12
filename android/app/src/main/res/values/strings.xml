@@ -75,7 +75,7 @@
     <string name="vol_washer">Washer</string>
     <string name="vol_shell">Shell</string>
     <string name="volume_error">Volume Error: %s</string>
-    <string name="volume_result">%s: %s\nInterval: [%.4g, %.4g]\nResult: %.10g</string>
+    <string name="volume_result" formatted="false">%s: %s\nInterval: [%.4g, %.4g]\nResult: %.10g</string>
     <string name="unit_converter">Unit Converter</string>
     <string name="convert">Convert</string>
     <string name="lim_fx">lim f(x)</string>
@@ -325,37 +325,37 @@
     <string name="result_fx">f(%.10g)</string>
     <string name="result_f_prime_x">f\'(%.10g)</string>
     <string name="result_f_double_prime_x">f\'\'(%.10g)</string>
-    <string name="result_integral">I[%.10g, %.10g]</string>
+    <string name="result_integral" formatted="false">I[%.10g, %.10g]</string>
     <string name="result_root">Root: %.10g</string>
     <string name="result_root_fval">f(root) = %.10g</string>
-    <string name="result_min">Min: (%.10g, %.10g)</string>
-    <string name="result_max">Max: (%.10g, %.10g)</string>
+    <string name="result_min" formatted="false">Min: (%.10g, %.10g)</string>
+    <string name="result_max" formatted="false">Max: (%.10g, %.10g)</string>
 
     <!-- Scan roots -->
     <string name="scan_roots_error">Scan Roots: Error: %s</string>
-    <string name="scan_roots_no_roots">Scan Roots: No roots found in [%.4g, %.4g]</string>
-    <string name="scan_roots_found">Scan Roots: Found %d root(s) in [%.4g, %.4g]</string>
+    <string name="scan_roots_no_roots" formatted="false">Scan Roots: No roots found in [%.4g, %.4g]</string>
+    <string name="scan_roots_found" formatted="false">Scan Roots: Found %d root(s) in [%.4g, %.4g]</string>
 
     <!-- Tangent/Normal -->
-    <string name="tangent_label">Tangent at x=%.6g: y = %.6g(x - %.6g) + %.6g</string>
-    <string name="normal_label">Normal at x=%.6g: y = %.6g(x - %.6g) + %.6g</string>
+    <string name="tangent_label" formatted="false">Tangent at x=%.6g: y = %.6g(x - %.6g) + %.6g</string>
+    <string name="normal_label" formatted="false">Normal at x=%.6g: y = %.6g(x - %.6g) + %.6g</string>
     <string name="tangent_error">Tangent: Error: %s</string>
     <string name="normal_error">Normal: Error: %s</string>
 
     <!-- Arc length -->
     <string name="arc_length_error">Arc Length: Error: %s</string>
-    <string name="arc_length_result">Arc Length from %.4g to %.4g: %.10g</string>
+    <string name="arc_length_result" formatted="false">Arc Length from %.4g to %.4g: %.10g</string>
 
     <!-- Area between curves -->
     <string name="area_between_error">Area Between Curves: Error: %s</string>
-    <string name="area_between_result">Area between f(x)=%.4g..%.4g and g(x)=%.4g..%.4g: %.10g</string>
+    <string name="area_between_result" formatted="false">Area between f(x)=%.4g..%.4g and g(x)=%.4g..%.4g: %.10g</string>
 
     <!-- System solver -->
     <string name="system_solver_error">System Solver: Error: %s</string>
     <string name="system_solver_invalid">System Solver: Invalid result</string>
     <string name="system_solution_label">Solution:\n%s</string>
     <string name="system_residuals_label">Residuals:\n%s</string>
-    <string name="system_solved_toast">System solved: x=%.6g, y=%.6g</string>
+    <string name="system_solved_toast" formatted="false">System solved: x=%.6g, y=%.6g</string>
 
     <!-- FFT -->
     <string name="fft_dominant_freq">Dominant: f=%.6g Hz</string>
@@ -363,19 +363,19 @@
     <string name="fft_toast">FFT computed: %d points</string>
 
     <!-- Limit -->
-    <string name="limit_result">lim(x→%.6g) f(x) = %.10g</string>
-    <string name="limit_two_sided_not_exist">Two-sided limit does not exist.\nLeft: %.10g, Right: %.10g</string>
+    <string name="limit_result" formatted="false">lim(x→%.6g) f(x) = %.10g</string>
+    <string name="limit_two_sided_not_exist" formatted="false">Two-sided limit does not exist.\nLeft: %.10g, Right: %.10g</string>
 
     <!-- Taylor -->
     <string name="taylor_error">Taylor: Error: %s</string>
-    <string name="taylor_result">Taylor series at a=%.4g (order %d):\n%s</string>
+    <string name="taylor_result" formatted="false">Taylor series at a=%.4g (order %d):\n%s</string>
     <string name="taylor_coefficients_header">Coefficients (c_k = f^(k)(a)/k!):\n</string>
     <string name="taylor_toast">Taylor at a=%.4g plotted</string>
 
     <!-- ODE -->
     <string name="ode_error">ODE Error: %s</string>
     <string name="ode_error_invalid">ODE Error: Invalid result from solver</string>
-    <string name="ode_result">ODE solved over [%.4g, %.4g] with %d steps (RK4)\ny(%.4g) = %.10g</string>
+    <string name="ode_result" formatted="false">ODE solved over [%.4g, %.4g] with %d steps (RK4)\ny(%.4g) = %.10g</string>
     <string name="ode_toast">ODE solved: %d points</string>
 
     <!-- Statistics -->
@@ -391,7 +391,7 @@
     <string name="stats_iqr">  IQR       = %.10g</string>
     <string name="stats_var">Var: %.10g</string>
     <string name="stats_std">Std: %.10g</string>
-    <string name="stats_toast">Stats: n=%d, mean=%.6g, std=%.6g</string>
+    <string name="stats_toast" formatted="false">Stats: n=%d, mean=%.6g, std=%.6g</string>
 
     <!-- Matrix -->
     <string name="mat_add_result">Matrix A + B computed</string>
@@ -402,12 +402,12 @@
     <string name="mat_transpose_result">Matrix transpose computed</string>
     <string name="mat_rref_result">RREF computed</string>
     <string name="mat_rank_result">rank(A) = %d</string>
-    <string name="mat_eigen_result">Eigenvalues: %.10g, %.10g\nEigenvectors not shown for %dx%d</string>
+    <string name="mat_eigen_result" formatted="false">Eigenvalues: %.10g, %.10g\nEigenvectors not shown for %dx%d</string>
 
     <!-- Histogram -->
     <string name="histogram_title">Histogram (%d bins)</string>
-    <string name="histogram_stats">Mean=%.4g  Median=%.4g</string>
-    <string name="histogram_toast">Histogram: %d bins, mean=%.4g</string>
+    <string name="histogram_stats" formatted="false">Mean=%.4g  Median=%.4g</string>
+    <string name="histogram_toast" formatted="false">Histogram: %d bins, mean=%.4g</string>
 
     <!-- Regression -->
     <string name="regression_prefix">Equation: </string>
@@ -422,20 +422,20 @@
     <string name="polar_error">Polar: Error: %s</string>
     <string name="table_error">Table: Error: %s</string>
     <string name="table_header">x\t\tf(x)</string>
-    <string name="table_valid_count">Valid: %d / %d</string>
-    <string name="table_generated">Table generated: %d/%d valid points</string>
+    <string name="table_valid_count" formatted="false">Valid: %d / %d</string>
+    <string name="table_generated" formatted="false">Table generated: %d/%d valid points</string>
     <string name="table_share">Share table</string>
 
     <!-- Number theory -->
     <string name="nt_prime_result">%d is prime</string>
-    <string name="nt_composite_result">%d is composite = %s</string>
-    <string name="nt_gcd_result">gcd(%d, %d) = %d</string>
-    <string name="nt_lcm_result">lcm(%d, %d) = %d</string>
-    <string name="nt_fibonacci_result">Fibonacci(%d) = %d</string>
-    <string name="nt_factorize_result">%d = %s</string>
+    <string name="nt_composite_result" formatted="false">%d is composite = %s</string>
+    <string name="nt_gcd_result" formatted="false">gcd(%d, %d) = %d</string>
+    <string name="nt_lcm_result" formatted="false">lcm(%d, %d) = %d</string>
+    <string name="nt_fibonacci_result" formatted="false">Fibonacci(%d) = %d</string>
+    <string name="nt_factorize_result" formatted="false">%d = %s</string>
     <string name="nt_factorize_showing">(showing first 20 of %d factors)</string>
-    <string name="nt_modpow_result">%d^%d mod %d = %d</string>
-    <string name="nt_totient_result">φ(%d) = %d</string>
+    <string name="nt_modpow_result" formatted="false">%d^%d mod %d = %d</string>
+    <string name="nt_totient_result" formatted="false">φ(%d) = %d</string>
 
     <!-- Bitwise Operations -->
     <string name="bitwise_title">Bitwise Operations</string>
@@ -456,7 +456,7 @@
     <string name="bitwise_result_oct">Octal:</string>
     <string name="bitwise_result_dec">Decimal:</string>
     <string name="bitwise_error">Please enter valid integers.</string>
-    <string name="bitwise_result_fmt">%s %s %s = %d</string>
+    <string name="bitwise_result_fmt" formatted="false">%s %s %s = %d</string>
 
     <!-- Surface 3D -->
     <string name="no_3d_data">No 3D data</string>
@@ -488,14 +488,14 @@
     <string name="prob_bayes">Bayes</string>
     <string name="prob_binom">Binomial</string>
     <string name="prob_poisson">Poisson</string>
-    <string name="prob_result_combo">C(%d, %d) = %s</string>
-    <string name="prob_result_perm">P(%d, %d) = %s</string>
+    <string name="prob_result_combo" formatted="false">C(%d, %d) = %s</string>
+    <string name="prob_result_perm" formatted="false">P(%d, %d) = %s</string>
     <string name="prob_result_union">P(A∪B) = %.6g</string>
     <string name="prob_result_intersect">P(A∩B) = %.6g</string>
     <string name="prob_result_complement">P(A\') = %.6g</string>
     <string name="prob_result_conditional">P(A|B) = %.6g</string>
-    <string name="prob_result_bayes">P(A|B) = %.6g\nP(B|A)=%.4g, P(A)=%.4g</string>
-    <string name="prob_result_binom">P(X=%d) = %.6g [Binomial(%d, p=%.4g)]</string>
+    <string name="prob_result_bayes" formatted="false">P(A|B) = %.6g\nP(B|A)=%.4g, P(A)=%.4g</string>
+    <string name="prob_result_binom" formatted="false">P(X=%d) = %.6g [Binomial(%d, p=%.4g)]</string>
     <string name="prob_error">Probability Error</string>
     <string name="prob_invalid_input">Please enter valid values.</string>
     <string name="prob_r_gt_n">r must be ≤ n.</string>
@@ -516,14 +516,14 @@
     <string name="fin_depr">Depreciation</string>
     <string name="fin_bond">Bond</string>
     <string name="fin_retire">Retire</string>
-    <string name="fin_result_loan">Monthly: %.2f\nTotal: %.2f\nInterest: %.2f</string>
+    <string name="fin_result_loan" formatted="false">Monthly: %.2f\nTotal: %.2f\nInterest: %.2f</string>
     <string name="fin_result_fv">Future Value: %.6g</string>
     <string name="fin_result_pv">Present Value: %.6g</string>
     <string name="fin_result_npv">NPV: %.6g</string>
     <string name="fin_result_irr">IRR: %.6g%%</string>
-    <string name="fin_result_depr">Annual: %.2f\nMonthly: %.2f</string>
+    <string name="fin_result_depr" formatted="false">Annual: %.2f\nMonthly: %.2f</string>
     <string name="fin_result_bond">Bond Price: %.6g</string>
-    <string name="fin_result_retire">FV: %.2f\nContributions: %.2f\nInterest: %.2f</string>
+    <string name="fin_result_retire" formatted="false">FV: %.2f\nContributions: %.2f\nInterest: %.2f</string>
     <string name="fin_error">Finance Error</string>
     <string name="fin_invalid_input">Please enter valid values.</string>
     <string name="fin_invalid_flows">Enter at least 2 comma-separated cash flows.</string>
@@ -556,32 +556,32 @@
     <string name="mat_eigen_title">Eigenvalues</string>
     <string name="mat_eigen_header">Eigenvalues for 2x2 matrix:</string>
     <string name="mat_eigen_approx_header">Eigenvalue approximation (power iteration):</string>
-    <string name="mat_eigen_lambda">  lambda%d = %.10g</string>
-    <string name="mat_eigen_lambda_complex">  lambda%d = %.10g + %.10gi</string>
+    <string name="mat_eigen_lambda" formatted="false">  lambda%d = %.10g</string>
+    <string name="mat_eigen_lambda_complex" formatted="false">  lambda%d = %.10g + %.10gi</string>
     <string name="mat_eigen_done">Eigenvalue computation done</string>
 
     <!-- Limit labels -->
-    <string name="limit_error">lim(x→%.6g): Error: %s</string>
+    <string name="limit_error" formatted="false">lim(x→%.6g): Error: %s</string>
     <string name="limit_left">  Left:  %.10g</string>
     <string name="limit_right">  Right: %.10g</string>
-    <string name="limit_left_result">lim(x→%.6g⁻) = %.10g</string>
-    <string name="limit_right_result">lim(x→%.6g⁺) = %.10g</string>
+    <string name="limit_left_result" formatted="false">lim(x→%.6g⁻) = %.10g</string>
+    <string name="limit_right_result" formatted="false">lim(x→%.6g⁺) = %.10g</string>
     <string name="limit_left_dne">lim(x→%.6g⁻) = DNE</string>
     <string name="limit_right_dne">lim(x→%.6g⁺) = DNE</string>
-    <string name="limit_side_error">%s: Error: %s</string>
+    <string name="limit_side_error" formatted="false">%s: Error: %s</string>
     <string name="limit_left_label">lim(x→%.6g⁻)</string>
     <string name="limit_right_label">lim(x→%.6g⁺)</string>
 
     <!-- ODE labels -->
-    <string name="ode_header">dy/dx = %s, y(%.6g) = %.6g</string>
-    <string name="ode_solved">Solved over [%.6g, %.6g] with %d steps (RK4)</string>
+    <string name="ode_header" formatted="false">dy/dx = %s, y(%.6g) = %.6g</string>
+    <string name="ode_solved" formatted="false">Solved over [%.6g, %.6g] with %d steps (RK4)</string>
     <string name="ode_col_x">x</string>
     <string name="ode_col_y">y(x)</string>
     <string name="ode_truncated">  ... (%d total points)</string>
 
     <!-- Calendar labels -->
     <string name="cal_days_between">Days between dates: %d</string>
-    <string name="cal_days_added">%d days = %s</string>
+    <string name="cal_days_added" formatted="false">%d days = %s</string>
     <string name="cal_is_a"> is a </string>
 
     <!-- Misc result labels -->
@@ -618,8 +618,8 @@
     <string name="data_trend_linear">Linear</string>
     <string name="data_trend_quadratic">Quadratic</string>
     <string name="data_trend_exponential">Exponential</string>
-    <string name="data_imported">Imported %d data points from %s</string>
-    <string name="data_plotted">Plotted %d data points (%s)</string>
+    <string name="data_imported" formatted="false">Imported %d data points from %s</string>
+    <string name="data_plotted" formatted="false">Plotted %d data points (%s)</string>
     <string name="data_no_data">No data to plot. Import a CSV file first.</string>
     <string name="data_csv_error">Failed to parse CSV: %s</string>
     <string name="data_invalid_col">Invalid column index.</string>
@@ -633,8 +633,8 @@
     <string name="interp_eval_x">Evaluate at x =</string>
     <string name="interp_compute">Interpolate</string>
     <string name="interp_plot">Plot</string>
-    <string name="interp_result">f(%s) = %s</string>
-    <string name="interp_plotted">Interpolation plotted (%d points, %s method)</string>
+    <string name="interp_result" formatted="false">f(%s) = %s</string>
+    <string name="interp_plotted" formatted="false">Interpolation plotted (%d points, %s method)</string>
     <string name="interp_error">Interpolation Error</string>
     <string name="interp_need_points">Please enter at least 2 data points.</string>
     <string name="interp_invalid_format">Invalid data format. Use: x1,y1; x2,y2; ...</string>
