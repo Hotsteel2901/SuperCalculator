@@ -2041,6 +2041,71 @@ class SuperCalcApp:
 
         self._on_vol_mode_change()
 
+        # --- Data Interpolation Calculator ---
+        frm_interp = ttk.LabelFrame(scroll_frame, text=t("sec_interpolation"),
+                                    style="Dark.TLabelframe")
+        frm_interp.pack(fill=tk.X, padx=8, pady=4)
+
+        ip_row0 = ttk.Frame(frm_interp, style="Dark.TFrame")
+        ip_row0.pack(fill=tk.X, padx=6, pady=(4, 2))
+        ttk.Label(ip_row0, text=t("label_interp_method"),
+                  style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_interp_method = tk.StringVar(value="linear")
+        interp_methods = [
+            (t("interp_method_linear"), "linear"),
+            (t("interp_method_lagrange"), "lagrange"),
+            (t("interp_method_newton"), "newton"),
+            (t("interp_method_spline"), "spline"),
+        ]
+        interp_combo = ttk.Combobox(ip_row0, textvariable=self._var_interp_method,
+                                     values=[m[0] for m in interp_methods],
+                                     state="readonly", font=("Consolas", 10), width=22)
+        interp_combo.pack(side=tk.LEFT, padx=4)
+        self._interp_mode_map = {m[0]: m[1] for m in interp_methods}
+
+        ip_row1 = ttk.Frame(frm_interp, style="Dark.TFrame")
+        ip_row1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(ip_row1, text=t("label_interp_data"),
+                  style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_interp_data = tk.StringVar(value="0,0; 1,1; 2,4; 3,9; 4,16")
+        ttk.Entry(ip_row1, textvariable=self._var_interp_data, width=42).pack(
+            side=tk.LEFT, padx=4, fill=tk.X, expand=True)
+
+        ip_hint = ttk.Label(frm_interp, text=t("label_interp_data_hint"),
+                            style="Dark.TLabel")
+        ip_hint.pack(anchor=tk.W, padx=12, pady=(0, 2))
+
+        ip_row2 = ttk.Frame(frm_interp, style="Dark.TFrame")
+        ip_row2.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(ip_row2, text=t("label_interp_eval_x"),
+                  style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_interp_eval_x = tk.StringVar(value="2.5")
+        ttk.Entry(ip_row2, textvariable=self._var_interp_eval_x, width=10).pack(
+            side=tk.LEFT, padx=4)
+        ttk.Button(ip_row2, text=t("btn_interp_compute"),
+                   command=self._on_interp_compute).pack(side=tk.LEFT, padx=4)
+        ttk.Button(ip_row2, text=t("btn_interp_plot"),
+                   command=self._on_interp_plot).pack(side=tk.LEFT, padx=4)
+        ttk.Button(ip_row2, text=t("btn_interp_clear"),
+                   command=lambda: (self._var_interp_result.set(""),
+                                    self._var_interp_formula.set(""))).pack(side=tk.LEFT, padx=4)
+
+        ip_row3 = ttk.Frame(frm_interp, style="Dark.TFrame")
+        ip_row3.pack(fill=tk.X, padx=6, pady=(2, 4))
+        ttk.Label(ip_row3, text=t("label_interp_result"),
+                  style="Dark.TLabel", width=8).pack(side=tk.LEFT)
+        self._var_interp_result = tk.StringVar(value="")
+        ttk.Entry(ip_row3, textvariable=self._var_interp_result, width=38,
+                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+
+        ip_row4 = ttk.Frame(frm_interp, style="Dark.TFrame")
+        ip_row4.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Label(ip_row4, text=t("label_interp_formula"),
+                  style="Dark.TLabel", width=8).pack(side=tk.LEFT)
+        self._var_interp_formula = tk.StringVar(value="")
+        ttk.Entry(ip_row4, textvariable=self._var_interp_formula, width=50,
+                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+
         # --- Status ---
         self.status_var = tk.StringVar(value=t("status_ready"))
         status_bar = ttk.Label(scroll_frame, textvariable=self.status_var,
@@ -6086,6 +6151,191 @@ class SuperCalcApp:
                                result['future_value'],
                                result['total_contributions'],
                                result['total_interest']))
+
+    # ------------------------------------------------------------------
+    #  Data Interpolation
+    # ------------------------------------------------------------------
+    def _interp_parse_data(self) -> Optional[List]:
+        raw = self._var_interp_data.get().strip()
+        if not raw:
+            messagebox.showerror(t("err_interp"), t("msg_interp_need_points"))
+            return None
+        points = []
+        for seg in raw.split(";"):
+            seg = seg.strip()
+            if not seg:
+                continue
+            parts = seg.split(",")
+            if len(parts) != 2:
+                messagebox.showerror(t("err_interp"), t("msg_interp_invalid_format"))
+                return None
+            try:
+                x = float(parts[0].strip())
+                y = float(parts[1].strip())
+            except ValueError:
+                messagebox.showerror(t("err_interp"), t("msg_interp_invalid_format"))
+                return None
+            points.append((x, y))
+        if len(points) < 2:
+            messagebox.showerror(t("err_interp"), t("msg_interp_need_points"))
+            return None
+        xs = [p[0] for p in points]
+        if xs != sorted(xs):
+            self.status_var.set(t("msg_interp_x_not_sorted"))
+            points.sort(key=lambda p: p[0])
+        return points
+
+    @staticmethod
+    def _interp_linear(xs: List[float], ys: List[float], x: float) -> float:
+        return float(np.interp(x, xs, ys))
+
+    @staticmethod
+    def _interp_lagrange(xs: List[float], ys: List[float], x: float) -> float:
+        n = len(xs)
+        result = 0.0
+        for i in range(n):
+            li = 1.0
+            for j in range(n):
+                if i != j:
+                    li *= (x - xs[j]) / (xs[i] - xs[j])
+            result += ys[i] * li
+        return result
+
+    @staticmethod
+    def _interp_newton(xs: List[float], ys: List[float], x: float) -> tuple:
+        n = len(xs)
+        dd = [[0.0] * n for _ in range(n)]
+        for i in range(n):
+            dd[i][0] = ys[i]
+        for j in range(1, n):
+            for i in range(n - j):
+                dd[i][j] = (dd[i + 1][j - 1] - dd[i][j - 1]) / (xs[i + j] - xs[i])
+        result = dd[0][0]
+        product = 1.0
+        terms = [f"{dd[0][0]:.6g}"]
+        for j in range(1, n):
+            product *= (x - xs[j - 1])
+            result += dd[0][j] * product
+            terms.append(f"{dd[0][j]:.6g}*(x-{xs[j-1]:.4g})")
+        formula = " + ".join(terms)
+        return result, formula
+
+    @staticmethod
+    def _interp_spline(xs: List[float], ys: List[float], x: float) -> float:
+        n = len(xs) - 1
+        h = [xs[i + 1] - xs[i] for i in range(n)]
+        alpha = [0.0] * (n + 1)
+        for i in range(1, n):
+            alpha[i] = (3.0 / h[i] * (ys[i + 1] - ys[i])
+                        - 3.0 / h[i - 1] * (ys[i] - ys[i - 1]))
+        l = [1.0] * (n + 1)
+        mu = [0.0] * (n + 1)
+        z = [0.0] * (n + 1)
+        for i in range(1, n):
+            l[i] = 2.0 * (xs[i + 1] - xs[i - 1]) - h[i - 1] * mu[i - 1]
+            mu[i] = h[i] / l[i]
+            z[i] = (alpha[i] - h[i - 1] * z[i - 1]) / l[i]
+        c = [0.0] * (n + 1)
+        b = [0.0] * n
+        d = [0.0] * n
+        for j in range(n - 1, -1, -1):
+            c[j] = z[j] - mu[j] * c[j + 1]
+            b[j] = (ys[j + 1] - ys[j]) / h[j] - h[j] * (c[j + 1] + 2.0 * c[j]) / 3.0
+            d[j] = (c[j + 1] - c[j]) / (3.0 * h[j])
+        seg = 0
+        for i in range(n):
+            if x >= xs[i]:
+                seg = i
+        dx = x - xs[seg]
+        return ys[seg] + b[seg] * dx + c[seg] * dx ** 2 + d[seg] * dx ** 3
+
+    def _on_interp_compute(self):
+        points = self._interp_parse_data()
+        if points is None:
+            return
+        xs = [p[0] for p in points]
+        ys = [p[1] for p in points]
+        try:
+            x_val = float(self._var_interp_eval_x.get().strip())
+        except ValueError:
+            messagebox.showerror(t("err_interp"), t("msg_interp_invalid_format"))
+            return
+        method = self._interp_mode_map.get(self._var_interp_method.get(), "linear")
+        try:
+            if method == "linear":
+                result = self._interp_linear(xs, ys, x_val)
+                self._var_interp_formula.set("Linear interpolation")
+            elif method == "lagrange":
+                result = self._interp_lagrange(xs, ys, x_val)
+                self._var_interp_formula.set("Lagrange polynomial")
+            elif method == "newton":
+                result, formula = self._interp_newton(xs, ys, x_val)
+                self._var_interp_formula.set(formula)
+            elif method == "spline":
+                result = self._interp_spline(xs, ys, x_val)
+                self._var_interp_formula.set("Cubic spline interpolation")
+            else:
+                result = self._interp_linear(xs, ys, x_val)
+            self._var_interp_result.set(t("status_interp_ok", x_val, result))
+            self.status_var.set(t("status_interp_ok", x_val, result))
+        except Exception as ex:
+            messagebox.showerror(t("err_interp"), str(ex))
+
+    def _on_interp_plot(self):
+        points = self._interp_parse_data()
+        if points is None:
+            return
+        xs = [p[0] for p in points]
+        ys = [p[1] for p in points]
+        method = self._interp_mode_map.get(self._var_interp_method.get(), "linear")
+        try:
+            self._ensure_2d_window()
+            if self.ax_2d is None:
+                return
+            self.ax_2d.clear()
+            self._setup_axes(self.ax_2d, is_3d=False)
+            x_min, x_max = xs[0], xs[-1]
+            margin = max((x_max - x_min) * 0.15, 0.5)
+            x_lo, x_hi = x_min - margin, x_max + margin
+            x_plot = np.linspace(x_lo, x_hi, 500)
+            y_plot = []
+            for xv in x_plot:
+                if method == "linear":
+                    y_plot.append(self._interp_linear(xs, ys, float(xv)))
+                elif method == "lagrange":
+                    y_plot.append(self._interp_lagrange(xs, ys, float(xv)))
+                elif method == "newton":
+                    val, _ = self._interp_newton(xs, ys, float(xv))
+                    y_plot.append(val)
+                elif method == "spline":
+                    y_plot.append(self._interp_spline(xs, ys, float(xv)))
+                else:
+                    y_plot.append(self._interp_linear(xs, ys, float(xv)))
+            method_names = {
+                "linear": t("interp_method_linear"),
+                "lagrange": t("interp_method_lagrange"),
+                "newton": t("interp_method_newton"),
+                "spline": t("interp_method_spline"),
+            }
+            self.ax_2d.plot(x_plot, y_plot, color="#4f8cff", linewidth=2,
+                           label=method_names.get(method, method))
+            self.ax_2d.scatter(xs, ys, color="#ff6b6b", s=60, zorder=5,
+                              label="Data points")
+            for xi, yi in zip(xs, ys):
+                self.ax_2d.annotate(f"({xi:.2g},{yi:.2g})",
+                                   (xi, yi), textcoords="offset points",
+                                   xytext=(6, 6), fontsize=8, color="#cdd6f4")
+            self.ax_2d.legend(fontsize=10, facecolor="#1e1e2e",
+                             edgecolor="#45475a", labelcolor="#cdd6f4")
+            self.ax_2d.set_title(t("sec_interpolation"), color="#cdd6f4", fontsize=13)
+            self.ax_2d.set_xlabel("x", color="#cdd6f4")
+            self.ax_2d.set_ylabel("y", color="#cdd6f4")
+            self.fig_2d.tight_layout()
+            self.canvas_2d.draw()
+            self.status_var.set(t("status_interp_plotted",
+                                  len(xs), method_names.get(method, method)))
+        except Exception as ex:
+            messagebox.showerror(t("err_interp"), str(ex))
 
 
 # ---------------------------------------------------------------------------
