@@ -5302,9 +5302,9 @@ class SuperCalcApp:
 
     def _format_complex(self, z: complex) -> str:
         """Format complex number for display."""
-        if z.imag == 0:
+        if abs(z.imag) < 1e-10:
             return f"{z.real:.10g}"
-        elif z.real == 0:
+        elif abs(z.real) < 1e-10:
             if z.imag == 1:
                 return "i"
             elif z.imag == -1:
@@ -5353,7 +5353,7 @@ class SuperCalcApp:
         z1 = self._parse_complex(self._var_complex_z1.get())
         z2 = self._parse_complex(self._var_complex_z2.get())
         if z1 is not None and z2 is not None:
-            if abs(z2) == 0:
+            if abs(z2) < 1e-15:
                 messagebox.showerror(t("err_complex"), t("msg_cplx_div_zero"))
                 return
             result = CalcEngine.complex_div(z1, z2)
@@ -5363,8 +5363,11 @@ class SuperCalcApp:
         z1 = self._parse_complex(self._var_complex_z1.get())
         z2 = self._parse_complex(self._var_complex_z2.get())
         if z1 is not None and z2 is not None:
-            result = CalcEngine.complex_pow(z1, z2)
-            self._show_complex_result(self._format_complex(result))
+            try:
+                result = CalcEngine.complex_pow(z1, z2)
+                self._show_complex_result(self._format_complex(result))
+            except Exception:
+                messagebox.showerror(t("err_complex"), t("msg_cplx_div_zero"))
 
     def _on_complex_sin(self):
         z = self._parse_complex(self._var_complex_z.get())
@@ -5393,7 +5396,7 @@ class SuperCalcApp:
     def _on_complex_ln(self):
         z = self._parse_complex(self._var_complex_z.get())
         if z is not None:
-            if abs(z) == 0:
+            if abs(z) < 1e-15:
                 messagebox.showerror(t("err_complex"), t("msg_ln_zero"))
                 return
             result = CalcEngine.complex_ln(z)
@@ -5561,7 +5564,7 @@ class SuperCalcApp:
         except ValueError:
             messagebox.showerror(t("err_nt_input"), t("msg_nt_invalid_n"))
             return
-        if n <= 0:
+        if n < 2:
             messagebox.showerror(t("err_nt_input"), t("msg_nt_invalid_n"))
             return
         if self._nt_is_prime(n):
@@ -5621,6 +5624,9 @@ class SuperCalcApp:
             messagebox.showerror(t("err_nt_input"), t("msg_nt_invalid_modpow"))
             return
         if mod <= 0:
+            messagebox.showerror(t("err_nt_input"), t("msg_nt_invalid_modpow"))
+            return
+        if exp < 0:
             messagebox.showerror(t("err_nt_input"), t("msg_nt_invalid_modpow"))
             return
         result = self._nt_mod_pow(base, exp, mod)
@@ -6326,6 +6332,9 @@ class SuperCalcApp:
             messagebox.showerror(t("err_interp"), t("msg_interp_need_points"))
             return None
         xs = [p[0] for p in points]
+        if len(set(xs)) != len(xs):
+            messagebox.showerror(t("err_interp"), t("msg_interp_duplicate_x"))
+            return None
         if xs != sorted(xs):
             self.status_var.set(t("msg_interp_x_not_sorted"))
             points.sort(key=lambda p: p[0])
