@@ -3448,6 +3448,55 @@ STRINGS = {
         "en": "Warning: x values are not in ascending order. They will be sorted automatically.",
         "zh": "警告：x 值未按升序排列，将自动排序。",
     },
+    # Numerical method comparison strings
+    "sec_ode_compare": {
+        "en": "ODE Method Comparison",
+        "zh": "ODE数值方法对比",
+    },
+    "label_compare_expr": {
+        "en": "dy/dx =",
+        "zh": "dy/dx =",
+    },
+    "btn_compare_methods": {
+        "en": "Compare Methods",
+        "zh": "对比方法",
+    },
+    "btn_compare_plot": {
+        "en": "Plot Comparison",
+        "zh": "绘制对比图",
+    },
+    "status_compare_plotted": {
+        "en": "Method comparison plotted ({0} methods, {1} steps each)",
+        "zh": "方法对比已绘制（{0} 种方法，每种 {1} 步）",
+    },
+    "err_compare": {
+        "en": "Method Comparison Error",
+        "zh": "方法对比错误",
+    },
+    "msg_compare_invalid_steps": {
+        "en": "Number of steps must be between 1 and 100000.",
+        "zh": "步数必须在 1 到 100000 之间。",
+    },
+    "compare_euler": {
+        "en": "Euler (1st order)",
+        "zh": "欧拉法（1阶）",
+    },
+    "compare_improved_euler": {
+        "en": "Improved Euler (2nd order)",
+        "zh": "改进欧拉法（2阶）",
+    },
+    "compare_midpoint": {
+        "en": "Midpoint (2nd order)",
+        "zh": "中点法（2阶）",
+    },
+    "compare_rk4": {
+        "en": "RK4 (4th order)",
+        "zh": "RK4（4阶）",
+    },
+    "compare_rkf45": {
+        "en": "RKF45 (Adaptive)",
+        "zh": "RKF45（自适应）",
+    },
 }
 
 

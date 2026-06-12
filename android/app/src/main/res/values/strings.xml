@@ -639,4 +639,16 @@
     <string name="interp_need_points">Please enter at least 2 data points.</string>
     <string name="interp_invalid_format">Invalid data format. Use: x1,y1; x2,y2; ...</string>
     <string name="interp_duplicate_x">Duplicate x values are not allowed.</string>
+    
+    <!-- ODE Method Comparison -->
+    <string name="ode_compare">ODE Method Comparison</string>
+    <string name="ode_compare_btn">Compare Methods</string>
+    <string name="ode_compare_plot">Plot Comparison</string>
+    <string name="ode_compare_header" formatted="false">Comparing methods for dy/dx = %s, y(%s) = %s\nOver [%s, %s] with %d steps</string>
+    <string name="ode_compare_result" formatted="false">%s: y(%s) = %s</string>
+    <string name="ode_compare_toast" formatted="false">Method comparison plotted (%d methods, %d steps each)</string>
+    <string name="ode_compare_euler">Euler (1st order)</string>
+    <string name="ode_compare_improved_euler">Improved Euler (2nd order)</string>
+    <string name="ode_compare_midpoint">Midpoint (2nd order)</string>
+    <string name="ode_compare_rk4">RK4 (4th order)</string>
 </resources>

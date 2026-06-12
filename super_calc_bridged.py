@@ -925,6 +925,66 @@ class SuperCalcApp:
 
         self._ode_data: Optional[dict[str, object]] = None
         self._last_reg_result: Optional[dict[str, object]] = None
+        self._compare_data: Optional[dict[str, object]] = None
+
+        # --- ODE Method Comparison ---
+        COMPARE_PRESETS = {
+            "Exponential decay (-y)": "-y",
+            "Logistic growth (y*(1-y))": "y*(1-y)",
+            "Harmonic (-y-sin(x))": "-y-sin(x)",
+            "Linear (x+y)": "x+y",
+            "Decaying oscillation (-y+sin(x))": "-y+sin(x)",
+        }
+
+        frm_compare = ttk.LabelFrame(scroll_frame, text=t("sec_ode_compare"),
+                                     style="Dark.TLabelframe")
+        frm_compare.pack(fill=tk.X, padx=8, pady=4)
+
+        cmp_row1 = ttk.Frame(frm_compare, style="Dark.TFrame")
+        cmp_row1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(cmp_row1, text=t("label_compare_expr"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_cmp_expr = tk.StringVar(value="-y")
+        ttk.Entry(cmp_row1, textvariable=self._var_cmp_expr, width=22).pack(
+            side=tk.LEFT, padx=4)
+
+        cmp_row2 = ttk.Frame(frm_compare, style="Dark.TFrame")
+        cmp_row2.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(cmp_row2, text=t("label_x0"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_cmp_x0 = tk.StringVar(value="0")
+        ttk.Entry(cmp_row2, textvariable=self._var_cmp_x0, width=6).pack(
+            side=tk.LEFT, padx=2)
+        ttk.Label(cmp_row2, text=t("label_y0"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
+        self._var_cmp_y0 = tk.StringVar(value="1")
+        ttk.Entry(cmp_row2, textvariable=self._var_cmp_y0, width=6).pack(
+            side=tk.LEFT, padx=2)
+        ttk.Label(cmp_row2, text=t("label_xend"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
+        self._var_cmp_xend = tk.StringVar(value="5")
+        ttk.Entry(cmp_row2, textvariable=self._var_cmp_xend, width=6).pack(
+            side=tk.LEFT, padx=2)
+        ttk.Label(cmp_row2, text=t("label_steps"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(6, 0))
+        self._var_cmp_steps = tk.StringVar(value="20")
+        ttk.Entry(cmp_row2, textvariable=self._var_cmp_steps, width=6).pack(
+            side=tk.LEFT, padx=2)
+
+        cmp_row3 = ttk.Frame(frm_compare, style="Dark.TFrame")
+        cmp_row3.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Button(cmp_row3, text=t("btn_compare_methods"),
+                   command=self._on_compare_methods).pack(side=tk.LEFT, padx=2)
+        ttk.Button(cmp_row3, text=t("btn_compare_plot"),
+                   command=self._on_compare_plot).pack(side=tk.LEFT, padx=2)
+
+        # Compare presets
+        cmp_row4 = ttk.Frame(frm_compare, style="Dark.TFrame")
+        cmp_row4.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Label(cmp_row4, text=t("label_preset"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_cmp_preset = tk.StringVar()
+        cmp_combo = ttk.Combobox(cmp_row4, textvariable=self._var_cmp_preset,
+                                  values=list(COMPARE_PRESETS.keys()),
+                                  state="readonly", font=("Consolas", 10), width=24)
+        cmp_combo.pack(side=tk.LEFT, padx=4)
+        cmp_combo.bind("<<ComboboxSelected>>",
+                        lambda e: self._on_compare_preset(COMPARE_PRESETS.get(
+                            self._var_cmp_preset.get(), "")))
 
         # --- Direction Field (Vector Field) ---
         DIRECTION_FIELD_PRESETS = {
@@ -3816,6 +3876,92 @@ class SuperCalcApp:
             self._var_ode_y0.set(y0)
             self._var_ode_xend.set(x_end)
             self._var_ode_steps.set(steps)
+
+    def _on_compare_preset(self, expr: str):
+        if expr:
+            self._var_cmp_expr.set(expr)
+
+    def _on_compare_methods(self):
+        """Compare different ODE solving methods."""
+        expr = self._var_cmp_expr.get().strip()
+        if not expr:
+            messagebox.showwarning(t("err_input"), t("msg_enter_ode"))
+            return
+        try:
+            x0 = float(self._var_cmp_x0.get())
+            y0 = float(self._var_cmp_y0.get())
+            x_end = float(self._var_cmp_xend.get())
+            n_steps = int(self._var_cmp_steps.get())
+        except ValueError:
+            messagebox.showerror(t("err_compare"), t("msg_invalid_ode"))
+            return
+        if n_steps < 1 or n_steps > 100000:
+            messagebox.showerror(t("err_compare"), t("msg_compare_invalid_steps"))
+            return
+        if x0 == x_end:
+            messagebox.showerror(t("err_compare"), t("msg_x0_neq_xend"))
+            return
+
+        result = CalcEngine.ode_compare_methods(expr, x0, y0, x_end, n_steps)
+        if result is None:
+            err = CalcEngine.get_last_error()
+            messagebox.showerror(t("err_compare"), t("msg_could_not_ode", err))
+            return
+        self._compare_data = result
+
+        lines = [f"dy/dx = {expr},  y({x0}) = {y0}"]
+        lines.append(f"Comparing methods over [{x0}, {x_end}] with {n_steps} steps\n")
+        
+        method_names = result['method_names']
+        method_data = [result['euler'], result['improved_euler'], 
+                       result['midpoint'], result['rk4'], result['rkf45']]
+        
+        for name, data in zip(method_names, method_data):
+            if data and 'ys' in data:
+                final_y = data['ys'][-1] if data['ys'] else 'N/A'
+                final_y_str = f"{final_y:.10g}" if final_y is not None else "N/A"
+                lines.append(f"{name}: y({x_end}) = {final_y_str}")
+
+        msg = "\n".join(lines)
+        messagebox.showinfo(t("msg_ode_solution"), msg)
+        self.status_var.set(t("status_compare_plotted", 5, n_steps))
+
+    def _on_compare_plot(self):
+        """Plot the comparison of different methods."""
+        if self._compare_data is None:
+            messagebox.showinfo(t("err_info"), t("msg_solve_ode_first"))
+            return
+        self._ensure_2d_window()
+        self.ax_2d.clear()
+        self._setup_axes(self.ax_2d, is_3d=False)
+
+        method_names = self._compare_data['method_names']
+        method_colors = self._compare_data['method_colors']
+        method_keys = ['euler', 'improved_euler', 'midpoint', 'rk4', 'rkf45']
+        
+        for key, name, color in zip(method_keys, method_names, method_colors):
+            data = self._compare_data[key]
+            if data and 'xs' in data and 'ys' in data:
+                xs = np.array(data['xs'])
+                ys = np.array([y if y is not None else np.nan for y in data['ys']])
+                if len(xs) > 0 and len(ys) > 0:
+                    self.ax_2d.plot(xs, ys, color=color, linewidth=2,
+                                    label=name, alpha=0.8)
+
+        expr = self._var_cmp_expr.get().strip()
+        x0 = self._var_cmp_x0.get()
+        y0 = self._var_cmp_y0.get()
+        self.ax_2d.plot(float(x0), float(y0), 'go', markersize=8,
+                        label=f"y({x0})={y0}")
+        self.ax_2d.set_title(f"dy/dx = {expr}", color='#cdd6f4', fontsize=12)
+        self.ax_2d.set_xlabel('x', color='#cdd6f4')
+        self.ax_2d.set_ylabel('y', color='#cdd6f4')
+
+        self.ax_2d.legend(loc="upper right", facecolor="#313244",
+                          edgecolor="#585b70", labelcolor="#cdd6f4", fontsize=9)
+        self.canvas_2d.draw()
+        n_steps = self._var_cmp_steps.get()
+        self.status_var.set(t("status_compare_plotted", 5, n_steps))
 
     def _on_df_preset(self, expr: str):
         if expr:

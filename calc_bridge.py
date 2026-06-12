@@ -137,6 +137,30 @@ _lib.ode_solve_rk4.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_double
                                  ctypes.POINTER(ctypes.c_double), ctypes.c_int]
 _lib.ode_solve_rk4.restype = ctypes.c_int
 
+_lib.ode_solve_euler.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_double,
+                                  ctypes.c_double, ctypes.c_int,
+                                  ctypes.POINTER(ctypes.c_double),
+                                  ctypes.POINTER(ctypes.c_double), ctypes.c_int]
+_lib.ode_solve_euler.restype = ctypes.c_int
+
+_lib.ode_solve_improved_euler.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_double,
+                                           ctypes.c_double, ctypes.c_int,
+                                           ctypes.POINTER(ctypes.c_double),
+                                           ctypes.POINTER(ctypes.c_double), ctypes.c_int]
+_lib.ode_solve_improved_euler.restype = ctypes.c_int
+
+_lib.ode_solve_midpoint.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_double,
+                                     ctypes.c_double, ctypes.c_int,
+                                     ctypes.POINTER(ctypes.c_double),
+                                     ctypes.POINTER(ctypes.c_double), ctypes.c_int]
+_lib.ode_solve_midpoint.restype = ctypes.c_int
+
+_lib.ode_solve_rkf45.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_double,
+                                  ctypes.c_double, ctypes.c_double,
+                                  ctypes.POINTER(ctypes.c_double),
+                                  ctypes.POINTER(ctypes.c_double), ctypes.c_int]
+_lib.ode_solve_rkf45.restype = ctypes.c_int
+
 # Complex number functions
 _lib.complex_evaluate.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_double,
                                    ctypes.POINTER(ctypes.c_double),
@@ -878,15 +902,167 @@ class CalcEngine:
             sign = "+" if intercept >= 0 else "-"
             eq = f"y = {slope:.6g}*x {sign} {abs(intercept):.6g}"
             return {
-                'slope': float(slope),
-                'intercept': float(intercept),
+                'a': float(a),
+                'b': float(b),
                 'r_squared': float(r_squared),
                 'equation': eq,
-                'xs_fit': x_arr.tolist(),
-                'ys_fit': (slope * x_arr + intercept).tolist(),
+                'xs_fit': x_sorted.tolist(),
+                'ys_fit': y_sorted.tolist(),
             }
         except Exception:
             return None
+
+    # Numerical method comparison functions
+    @staticmethod
+    def ode_solve_euler(expr: str, x0: float, y0: float, x_end: float,
+                        n_steps: int = 1000) -> Optional[Dict[str, object]]:
+        """Solve ODE dy/dx = f(x, y) with initial condition y(x0) = y0
+        using Euler's method (1st order) over [x0, x_end].
+
+        Returns a dict with keys:
+            'xs' : list of x values
+            'ys' : list of y values
+            'n_steps' : number of steps used
+        Returns None on error.
+        """
+        if n_steps < 1:
+            return None
+        max_out = n_steps + 1
+        arr_x = (ctypes.c_double * max_out)()
+        arr_y = (ctypes.c_double * max_out)()
+        count = _lib.ode_solve_euler(expr.encode("utf-8"), x0, y0, x_end,
+                                     n_steps, arr_x, arr_y, max_out)
+        if count <= 0:
+            return None
+        count = min(count, max_out)
+        return {
+            'xs': [arr_x[i] for i in range(count)],
+            'ys': [None if _is_invalid(arr_y[i]) else arr_y[i] for i in range(count)],
+            'n_steps': n_steps,
+        }
+
+    @staticmethod
+    def ode_solve_improved_euler(expr: str, x0: float, y0: float, x_end: float,
+                                 n_steps: int = 1000) -> Optional[Dict[str, object]]:
+        """Solve ODE dy/dx = f(x, y) with initial condition y(x0) = y0
+        using Improved Euler's method (Heun's method, 2nd order) over [x0, x_end].
+
+        Returns a dict with keys:
+            'xs' : list of x values
+            'ys' : list of y values
+            'n_steps' : number of steps used
+        Returns None on error.
+        """
+        if n_steps < 1:
+            return None
+        max_out = n_steps + 1
+        arr_x = (ctypes.c_double * max_out)()
+        arr_y = (ctypes.c_double * max_out)()
+        count = _lib.ode_solve_improved_euler(expr.encode("utf-8"), x0, y0, x_end,
+                                              n_steps, arr_x, arr_y, max_out)
+        if count <= 0:
+            return None
+        count = min(count, max_out)
+        return {
+            'xs': [arr_x[i] for i in range(count)],
+            'ys': [None if _is_invalid(arr_y[i]) else arr_y[i] for i in range(count)],
+            'n_steps': n_steps,
+        }
+
+    @staticmethod
+    def ode_solve_midpoint(expr: str, x0: float, y0: float, x_end: float,
+                           n_steps: int = 1000) -> Optional[Dict[str, object]]:
+        """Solve ODE dy/dx = f(x, y) with initial condition y(x0) = y0
+        using Midpoint method (2nd order) over [x0, x_end].
+
+        Returns a dict with keys:
+            'xs' : list of x values
+            'ys' : list of y values
+            'n_steps' : number of steps used
+        Returns None on error.
+        """
+        if n_steps < 1:
+            return None
+        max_out = n_steps + 1
+        arr_x = (ctypes.c_double * max_out)()
+        arr_y = (ctypes.c_double * max_out)()
+        count = _lib.ode_solve_midpoint(expr.encode("utf-8"), x0, y0, x_end,
+                                        n_steps, arr_x, arr_y, max_out)
+        if count <= 0:
+            return None
+        count = min(count, max_out)
+        return {
+            'xs': [arr_x[i] for i in range(count)],
+            'ys': [None if _is_invalid(arr_y[i]) else arr_y[i] for i in range(count)],
+            'n_steps': n_steps,
+        }
+
+    @staticmethod
+    def ode_solve_rkf45(expr: str, x0: float, y0: float, x_end: float,
+                        tol: float = 1e-6) -> Optional[Dict[str, object]]:
+        """Solve ODE dy/dx = f(x, y) with initial condition y(x0) = y0
+        using Runge-Kutta-Fehlberg (RKF45) method with adaptive step size over [x0, x_end].
+
+        Returns a dict with keys:
+            'xs' : list of x values
+            'ys' : list of y values
+            'n_points' : number of points computed
+        Returns None on error.
+        """
+        max_points = 100000
+        arr_x = (ctypes.c_double * max_points)()
+        arr_y = (ctypes.c_double * max_points)()
+        count = _lib.ode_solve_rkf45(expr.encode("utf-8"), x0, y0, x_end,
+                                     tol, arr_x, arr_y, max_points)
+        if count <= 0:
+            return None
+        count = min(count, max_points)
+        return {
+            'xs': [arr_x[i] for i in range(count)],
+            'ys': [None if _is_invalid(arr_y[i]) else arr_y[i] for i in range(count)],
+            'n_points': count,
+        }
+
+    @staticmethod
+    def ode_compare_methods(expr: str, x0: float, y0: float, x_end: float,
+                            n_steps: int = 100) -> Optional[Dict[str, object]]:
+        """Compare different ODE solving methods for the same problem.
+        
+        Solves dy/dx = f(x, y), y(x0) = y0 using:
+        - Euler (1st order)
+        - Improved Euler (2nd order)
+        - Midpoint (2nd order)
+        - RK4 (4th order)
+        - RKF45 (adaptive)
+        
+        Returns a dict with keys:
+            'euler' : Euler method result {'xs', 'ys'}
+            'improved_euler' : Improved Euler result {'xs', 'ys'}
+            'midpoint' : Midpoint result {'xs', 'ys'}
+            'rk4' : RK4 result {'xs', 'ys'}
+            'rkf45' : RKF45 result {'xs', 'ys'}
+            'method_names' : list of method names
+            'method_colors' : list of colors for plotting
+        Returns None on error.
+        """
+        euler = CalcEngine.ode_solve_euler(expr, x0, y0, x_end, n_steps)
+        improved_euler = CalcEngine.ode_solve_improved_euler(expr, x0, y0, x_end, n_steps)
+        midpoint = CalcEngine.ode_solve_midpoint(expr, x0, y0, x_end, n_steps)
+        rk4 = CalcEngine.ode_solve_rk4(expr, x0, y0, x_end, n_steps)
+        rkf45 = CalcEngine.ode_solve_rkf45(expr, x0, y0, x_end)
+
+        if not all([euler, improved_euler, midpoint, rk4, rkf45]):
+            return None
+
+        return {
+            'euler': euler,
+            'improved_euler': improved_euler,
+            'midpoint': midpoint,
+            'rk4': rk4,
+            'rkf45': rkf45,
+            'method_names': ['Euler (1st)', 'Improved Euler (2nd)', 'Midpoint (2nd)', 'RK4 (4th)', 'RKF45 (Adaptive)'],
+            'method_colors': ['#f38ba8', '#fab387', '#f9e2af', '#a6e3a1', '#89b4fa'],
+        }
 
     @staticmethod
     def polynomial_regression(xs: List[float], ys: List[float], degree: int = 2) -> Optional[Dict[str, object]]:

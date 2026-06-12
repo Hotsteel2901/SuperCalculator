@@ -61,6 +61,15 @@ public class CalcEngine {
     /** Solve ODE dy/dx = f(x,y) with y(x0)=y0 using RK4. Returns HashMap with "xs", "ys", "count" keys, or null on error. */
     public static native HashMap<String, Object> odeSolveRk4(String expr, double x0, double y0, double xEnd, int nSteps);
 
+    /** Solve ODE using Euler's method (1st order). Returns HashMap with "xs", "ys", "count" keys, or null on error. */
+    public static native HashMap<String, Object> odeSolveEuler(String expr, double x0, double y0, double xEnd, int nSteps);
+
+    /** Solve ODE using Improved Euler's method (Heun's method, 2nd order). Returns HashMap with "xs", "ys", "count" keys, or null on error. */
+    public static native HashMap<String, Object> odeSolveImprovedEuler(String expr, double x0, double y0, double xEnd, int nSteps);
+
+    /** Solve ODE using Midpoint method (2nd order). Returns HashMap with "xs", "ys", "count" keys, or null on error. */
+    public static native HashMap<String, Object> odeSolveMidpoint(String expr, double x0, double y0, double xEnd, int nSteps);
+
     /** Last error message from the C core. */
     public static native String getLastError();
 

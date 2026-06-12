@@ -1326,6 +1326,7 @@
             <a href="#calendar" class="nav-link"><span>万年历</span></a>
             <a href="#finance-calculator" class="nav-link"><span>金融计算</span></a>
             <a href="#direction-field" class="nav-link"><span>方向场</span></a>
+            <a href="#ode-compare" class="nav-link"><span>数值方法对比</span></a>
             <a href="#interpolation" class="nav-link"><span>数据插值</span></a>
             <a href="#quick-start" class="nav-link"><span>快速开始</span></a>
             <a href="#platforms" class="nav-link"><span>支持平台</span></a>
@@ -1355,6 +1356,7 @@
         <a href="#calendar" class="mobile-nav-link">万年历</a>
         <a href="#finance-calculator" class="mobile-nav-link">金融计算</a>
         <a href="#direction-field" class="mobile-nav-link">方向场</a>
+        <a href="#ode-compare" class="mobile-nav-link">数值方法对比</a>
         <a href="#interpolation" class="mobile-nav-link">数据插值</a>
         <a href="#quick-start" class="mobile-nav-link">快速开始</a>
         <a href="#platforms" class="mobile-nav-link">支持平台</a>
@@ -2095,6 +2097,231 @@
                 </div>
             </div>
         </section>
+
+        <section class="section" id="ode-compare">
+            <div class="section-header">
+                <div class="section-label">
+                    <svg viewBox="0 0 24 24"><path d="M3 17h2v-7H3v7zm4 0h2V7H7v10zm4 0h2V4h-2v13zm4 0h2v-7h-2v7zm4 0h2V10h-2v7z"/></svg>
+                    Interactive Demo
+                </div>
+                <h2 class="section-title">数值方法对比</h2>
+                <p class="section-subtitle">对比不同ODE数值求解方法（欧拉法、改进欧拉法、中点法、RK4、RKF45）的精度与收敛性</p>
+            </div>
+            <div class="card glass reveal" style="max-width: 850px; margin: 0 auto;">
+                <h3 style="font-size: 20px; margin-bottom: 16px; color: var(--text-main);">ODE Method Comparison</h3>
+                <p style="margin-bottom: 12px; color: var(--text-muted); font-size: 14px;">输入微分方程 <code style="background:var(--code-bg);padding:2px 6px;border-radius:4px;font-size:13px;">dy/dx = f(x,y)</code>，对比不同数值方法的求解结果。</p>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+                    <label style="font-size:13px;color:var(--text-muted);font-weight:600;">dy/dx =</label>
+                    <input type="text" id="odeCompareExpr" value="-y" style="flex:1;min-width:150px;padding:10px 14px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:14px;font-family:'JetBrains Mono',monospace;" placeholder="e.g. -y, x+y, sin(x)" />
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+                    <label style="font-size:13px;color:var(--text-muted);font-weight:600;">x₀=</label>
+                    <input type="number" id="odeCompareX0" value="0" step="0.1" style="width:70px;padding:10px 12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:14px;font-family:'JetBrains Mono',monospace;" />
+                    <label style="font-size:13px;color:var(--text-muted);font-weight:600;">y₀=</label>
+                    <input type="number" id="odeCompareY0" value="1" step="0.1" style="width:70px;padding:10px 12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:14px;font-family:'JetBrains Mono',monospace;" />
+                    <label style="font-size:13px;color:var(--text-muted);font-weight:600;">x_end=</label>
+                    <input type="number" id="odeCompareXEnd" value="5" step="0.5" style="width:70px;padding:10px 12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:14px;font-family:'JetBrains Mono',monospace;" />
+                    <label style="font-size:13px;color:var(--text-muted);font-weight:600;">Steps=</label>
+                    <input type="number" id="odeCompareSteps" value="20" min="2" max="200" style="width:70px;padding:10px 12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:14px;font-family:'JetBrains Mono',monospace;" />
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+                    <label style="font-size:13px;color:var(--text-muted);font-weight:600;">预设:</label>
+                    <select id="odeComparePreset" onchange="document.getElementById('odeCompareExpr').value=this.value" style="padding:10px 14px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:14px;font-family:inherit;cursor:pointer;">
+                        <option value="-y">Exponential decay (-y)</option>
+                        <option value="y*(1-y)">Logistic growth (y*(1-y))</option>
+                        <option value="x+y">Linear (x+y)</option>
+                        <option value="-y+sin(x)">Damped oscillation (-y+sin(x))</option>
+                        <option value="x^2-y">Parabolic (x²-y)</option>
+                    </select>
+                    <button onclick="odeComparePlot()" style="flex:1;min-width:120px;padding:12px 16px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;">对比绘图</button>
+                </div>
+                <div style="position:relative;width:100%;height:350px;border-radius:12px;overflow:hidden;border:1px solid var(--glass-border);background:#181825;">
+                    <canvas id="odeCompareCanvas" style="width:100%;height:100%;"></canvas>
+                </div>
+                <div id="odeCompareLegend" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;justify-content:center;"></div>
+                <p id="odeCompareStatus" style="margin-top:8px;font-size:12px;color:var(--text-subtle);text-align:center;"></p>
+            </div>
+        </section>
+
+        <script>
+        /* ---- ODE Method Comparison Web Demo ---- */
+        (function(){
+            var canvas=document.getElementById('odeCompareCanvas');
+            var ctx=canvas.getContext('2d');
+            var dpr=window.devicePixelRatio||1;
+
+            function resizeCanvas(){
+                var r=canvas.parentElement.getBoundingClientRect();
+                canvas.width=r.width*dpr;
+                canvas.height=r.height*dpr;
+                ctx.setTransform(dpr,0,0,dpr,0,0);
+            }
+
+            /* ---- Numerical methods ---- */
+            function evalExpr(expr,x,y){
+                try{
+                    return Function('x','y','with(Math){return ('+expr+')}')(x,y);
+                }catch(e){return NaN;}
+            }
+
+            function eulerMethod(expr,x0,y0,xEnd,n){
+                var h=(xEnd-x0)/n,xs=[x0],ys=[y0],x=x0,y=y0;
+                for(var i=0;i<n;i++){
+                    var k=evalExpr(expr,x,y);
+                    if(isNaN(k))return null;
+                    y=y+h*k;x=x0+(i+1)*h;xs.push(x);ys.push(y);
+                }
+                return{xs:xs,ys:ys};
+            }
+
+            function improvedEulerMethod(expr,x0,y0,xEnd,n){
+                var h=(xEnd-x0)/n,xs=[x0],ys=[y0],x=x0,y=y0;
+                for(var i=0;i<n;i++){
+                    var k1=evalExpr(expr,x,y);
+                    var k2=evalExpr(expr,x+h,y+h*k1);
+                    if(isNaN(k1)||isNaN(k2))return null;
+                    y=y+h*(k1+k2)/2;x=x0+(i+1)*h;xs.push(x);ys.push(y);
+                }
+                return{xs:xs,ys:ys};
+            }
+
+            function midpointMethod(expr,x0,y0,xEnd,n){
+                var h=(xEnd-x0)/n,xs=[x0],ys=[y0],x=x0,y=y0;
+                for(var i=0;i<n;i++){
+                    var k1=evalExpr(expr,x,y);
+                    var k2=evalExpr(expr,x+h/2,y+h*k1/2);
+                    if(isNaN(k1)||isNaN(k2))return null;
+                    y=y+h*k2;x=x0+(i+1)*h;xs.push(x);ys.push(y);
+                }
+                return{xs:xs,ys:ys};
+            }
+
+            function rk4Method(expr,x0,y0,xEnd,n){
+                var h=(xEnd-x0)/n,xs=[x0],ys=[y0],x=x0,y=y0;
+                for(var i=0;i<n;i++){
+                    var k1=evalExpr(expr,x,y);
+                    var k2=evalExpr(expr,x+h/2,y+h*k1/2);
+                    var k3=evalExpr(expr,x+h/2,y+h*k2/2);
+                    var k4=evalExpr(expr,x+h,y+h*k3);
+                    if(isNaN(k1)||isNaN(k2)||isNaN(k3)||isNaN(k4))return null;
+                    y=y+h*(k1+2*k2+2*k3+k4)/6;x=x0+(i+1)*h;xs.push(x);ys.push(y);
+                }
+                return{xs:xs,ys:ys};
+            }
+
+            window.odeComparePlot=function(){
+                resizeCanvas();
+                var expr=document.getElementById('odeCompareExpr').value.trim();
+                var x0=parseFloat(document.getElementById('odeCompareX0').value);
+                var y0=parseFloat(document.getElementById('odeCompareY0').value);
+                var xEnd=parseFloat(document.getElementById('odeCompareXEnd').value);
+                var n=parseInt(document.getElementById('odeCompareSteps').value);
+                var statusEl=document.getElementById('odeCompareStatus');
+                var legendEl=document.getElementById('odeCompareLegend');
+
+                if(!expr||isNaN(x0)||isNaN(y0)||isNaN(xEnd)||isNaN(n)||n<2||n>200){
+                    statusEl.textContent='请输入有效参数';return;
+                }
+
+                var methods=[
+                    {name:'Euler (1st)',color:'#f38ba8',fn:function(){return eulerMethod(expr,x0,y0,xEnd,n);}},
+                    {name:'Improved Euler (2nd)',color:'#fab387',fn:function(){return improvedEulerMethod(expr,x0,y0,xEnd,n);}},
+                    {name:'Midpoint (2nd)',color:'#f9e2af',fn:function(){return midpointMethod(expr,x0,y0,xEnd,n);}},
+                    {name:'RK4 (4th)',color:'#a6e3a1',fn:function(){return rk4Method(expr,x0,y0,xEnd,n);}}
+                ];
+
+                var results=[];
+                for(var i=0;i<methods.length;i++){
+                    var r=methods[i].fn();
+                    if(r)results.push({name:methods[i].name,color:methods[i].color,data:r});
+                }
+
+                if(results.length===0){
+                    statusEl.textContent='无法求解该方程';legendEl.innerHTML='';return;
+                }
+
+                /* Compute bounds */
+                var allX=[],allY=[];
+                for(var i=0;i<results.length;i++){
+                    allX=allX.concat(results[i].data.xs);
+                    allY=allY.concat(results[i].data.ys);
+                }
+                var xMin=Math.min.apply(null,allX),xMax=Math.max.apply(null,allX);
+                var yMin=Math.min.apply(null,allY),yMax=Math.max.apply(null,allY);
+                var xMargin=Math.max((xMax-xMin)*0.1,0.1);
+                var yMargin=Math.max((yMax-yMin)*0.15,0.1);
+                xMin-=xMargin;xMax+=xMargin;yMin-=yMargin;yMax+=yMargin;
+
+                var w=canvas.width/dpr,h=canvas.height/dpr;
+                var padL=50,padR=20,padT=20,padB=30;
+                var plotW=w-padL-padR,plotH=h-padT-padB;
+
+                function toX(v){return padL+(v-xMin)/(xMax-xMin)*plotW;}
+                function toY(v){return padT+(1-(v-yMin)/(yMax-yMin))*plotH;}
+
+                ctx.clearRect(0,0,w,h);
+                ctx.fillStyle='#181825';ctx.fillRect(0,0,w,h);
+
+                /* Grid */
+                ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=1;
+                var xTicks=5,yTicks=5;
+                for(var i=0;i<=xTicks;i++){
+                    var xv=xMin+(xMax-xMin)*i/xTicks;
+                    var cx=toX(xv);
+                    ctx.beginPath();ctx.moveTo(cx,padT);ctx.lineTo(cx,padT+plotH);ctx.stroke();
+                    ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='11px monospace';ctx.textAlign='center';
+                    ctx.fillText(xv.toFixed(1),cx,padT+plotH+14);
+                }
+                for(var i=0;i<=yTicks;i++){
+                    var yv=yMin+(yMax-yMin)*i/yTicks;
+                    var cy=toY(yv);
+                    ctx.beginPath();ctx.moveTo(padL,cy);ctx.lineTo(padL+plotW,cy);ctx.stroke();
+                    ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='11px monospace';ctx.textAlign='right';
+                    ctx.fillText(yv.toFixed(1),padL-6,cy+4);
+                }
+
+                /* Axes */
+                ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1.5;
+                if(yMin<=0&&yMax>=0){var cy=toY(0);ctx.beginPath();ctx.moveTo(padL,cy);ctx.lineTo(padL+plotW,cy);ctx.stroke();}
+                if(xMin<=0&&xMax>=0){var cx=toX(0);ctx.beginPath();ctx.moveTo(cx,padT);ctx.lineTo(cx,padT+plotH);ctx.stroke();}
+
+                /* Plot lines */
+                for(var m=0;m<results.length;m++){
+                    var res=results[m];
+                    ctx.strokeStyle=res.color;ctx.lineWidth=2.5;ctx.globalAlpha=0.85;
+                    ctx.beginPath();
+                    var started=false;
+                    for(var i=0;i<res.data.xs.length;i++){
+                        var px=toX(res.data.xs[i]),py=toY(res.data.ys[i]);
+                        if(!isFinite(px)||!isFinite(py))continue;
+                        if(!started){ctx.moveTo(px,py);started=true;}
+                        else ctx.lineTo(px,py);
+                    }
+                    ctx.stroke();ctx.globalAlpha=1;
+                }
+
+                /* Initial point */
+                ctx.fillStyle='#a6e3a1';
+                ctx.beginPath();ctx.arc(toX(x0),toY(y0),5,0,Math.PI*2);ctx.fill();
+
+                /* Title */
+                ctx.fillStyle='rgba(255,255,255,0.8)';ctx.font='bold 13px sans-serif';ctx.textAlign='center';
+                ctx.fillText('dy/dx = '+expr+', y('+x0+') = '+y0,w/2,16);
+
+                /* Legend */
+                var html='';
+                for(var i=0;i<results.length;i++){
+                    html+='<span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted);"><span style="display:inline-block;width:16px;height:3px;background:'+results[i].color+';border-radius:2px;"></span>'+results[i].name+'</span>';
+                }
+                legendEl.innerHTML=html;
+                statusEl.textContent='对比 '+results.length+' 种方法，每种 '+n+' 步';
+            };
+
+            /* Initial plot */
+            setTimeout(function(){odeComparePlot();},300);
+            window.addEventListener('resize',function(){odeComparePlot();});
+        })();
+        </script>
 
         <section class="section" id="interpolation">
             <div class="section-header">

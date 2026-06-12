@@ -208,11 +208,23 @@ public class PlotActivity extends AppCompatActivity {
         
         // Handle ODE solution plot from intent
         if (intent != null && intent.getBooleanExtra("is_ode", false)) {
-            double[] odeXs = intent.getDoubleArrayExtra("ode_xs");
-            double[] odeYs = intent.getDoubleArrayExtra("ode_ys");
-            String odeExpr = intent.getStringExtra("ode_expr");
-            if (odeXs != null && odeYs != null) {
-                plotOdeSolution(odeXs, odeYs, odeExpr != null ? odeExpr : "dy/dx");
+            // Check for multi-method comparison first
+            boolean isMulti = intent.getBooleanExtra("ode_multi", false);
+            if (isMulti) {
+                ArrayList<double[]> multiXs = (ArrayList<double[]>) intent.getSerializableExtra("ode_multi_xs");
+                ArrayList<double[]> multiYs = (ArrayList<double[]>) intent.getSerializableExtra("ode_multi_ys");
+                ArrayList<String> multiLabels = (ArrayList<String>) intent.getSerializableExtra("ode_multi_labels");
+                String odeExpr = intent.getStringExtra("ode_expr");
+                if (multiXs != null && multiYs != null && multiLabels != null) {
+                    plotOdeComparison(multiXs, multiYs, multiLabels, odeExpr != null ? odeExpr : "dy/dx");
+                }
+            } else {
+                double[] odeXs = intent.getDoubleArrayExtra("ode_xs");
+                double[] odeYs = intent.getDoubleArrayExtra("ode_ys");
+                String odeExpr = intent.getStringExtra("ode_expr");
+                if (odeXs != null && odeYs != null) {
+                    plotOdeSolution(odeXs, odeYs, odeExpr != null ? odeExpr : "dy/dx");
+                }
             }
         }
         
@@ -572,6 +584,82 @@ public class PlotActivity extends AppCompatActivity {
             lineChart.invalidate();
         }
         toast(getString(R.string.toast_ode_plotted));
+    }
+
+    private void plotOdeComparison(ArrayList<double[]> multiXs, ArrayList<double[]> multiYs,
+                                   ArrayList<String> labels, String expr) {
+        int[] colors = {
+            Color.parseColor("#f38ba8"),
+            Color.parseColor("#fab387"),
+            Color.parseColor("#f9e2af"),
+            Color.parseColor("#a6e3a1")
+        };
+
+        allEntries.clear();
+        allExpressions.clear();
+        curveColors.clear();
+        curveTypes.clear();
+        parametricXExprs.clear();
+        parametricYExprs.clear();
+        parametricTMin.clear();
+        parametricTMax.clear();
+        polarExprs.clear();
+        polarThetaMin.clear();
+        polarThetaMax.clear();
+
+        double xMin = Double.POSITIVE_INFINITY, xMax = Double.NEGATIVE_INFINITY;
+        double yMin = Double.POSITIVE_INFINITY, yMax = Double.NEGATIVE_INFINITY;
+
+        List<ILineDataSet> dataSets = new ArrayList<>();
+        for (int i = 0; i < multiXs.size() && i < labels.size(); i++) {
+            double[] xs = multiXs.get(i);
+            double[] ys = multiYs.get(i);
+            String label = labels.get(i);
+            int color = colors[i % colors.length];
+
+            ArrayList<Entry> entries = new ArrayList<>();
+            for (int j = 0; j < xs.length; j++) {
+                if (!Double.isNaN(xs[j]) && !Double.isNaN(ys[j]) &&
+                    !Double.isInfinite(xs[j]) && !Double.isInfinite(ys[j])) {
+                    entries.add(new Entry((float) xs[j], (float) ys[j]));
+                    if (xs[j] < xMin) xMin = xs[j];
+                    if (xs[j] > xMax) xMax = xs[j];
+                    if (ys[j] < yMin) yMin = ys[j];
+                    if (ys[j] > yMax) yMax = ys[j];
+                }
+            }
+
+            if (!entries.isEmpty()) {
+                allEntries.add(entries);
+                allExpressions.add(label);
+                curveColors.add(color);
+                curveTypes.add("ode");
+
+                LineDataSet dataSet = new LineDataSet(entries, label);
+                dataSet.setColor(color);
+                dataSet.setLineWidth(2f);
+                dataSet.setDrawCircles(false);
+                dataSet.setDrawValues(false);
+                dataSets.add(dataSet);
+            }
+        }
+
+        if (dataSets.isEmpty()) {
+            toast(getString(R.string.toast_no_valid_points));
+            return;
+        }
+
+        double xPad = (xMax - xMin) * 0.1;
+        double yPad = (yMax - yMin) * 0.1;
+        xMinInput.setText(String.valueOf(xMin - xPad));
+        xMaxInput.setText(String.valueOf(xMax + xPad));
+        yMinInput.setText(String.valueOf(yMin - yPad));
+        yMaxInput.setText(String.valueOf(yMax + yPad));
+
+        LineData lineData = new LineData(dataSets);
+        lineChart.setData(lineData);
+        lineChart.invalidate();
+        toast(getString(R.string.ode_compare_toast, labels.size(), 0));
     }
     
     private void plotTaylorSeries(String expr, double a, int order, double[] xs, double[] ysOrig, double[] ysTaylor) {

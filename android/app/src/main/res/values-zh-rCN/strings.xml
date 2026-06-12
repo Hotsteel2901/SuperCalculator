@@ -639,4 +639,16 @@
     <string name="interp_need_points">请至少输入 2 个数据点。</string>
     <string name="interp_invalid_format">数据格式无效。请使用：x1,y1; x2,y2; ...</string>
     <string name="interp_duplicate_x">不允许重复的 x 值。</string>
+    
+    <!-- ODE Method Comparison -->
+    <string name="ode_compare">ODE数值方法对比</string>
+    <string name="ode_compare_btn">对比方法</string>
+    <string name="ode_compare_plot">绘制对比图</string>
+    <string name="ode_compare_header" formatted="false">对比方法 dy/dx = %1$s, y(%2$s) = %3$s\n区间 [%4$s, %5$s]，%6$d 步</string>
+    <string name="ode_compare_result" formatted="false">%1$s: y(%2$s) = %3$s</string>
+    <string name="ode_compare_toast" formatted="false">方法对比已绘制（%1$d 种方法，每种 %2$d 步）</string>
+    <string name="ode_compare_euler">欧拉法（1阶）</string>
+    <string name="ode_compare_improved_euler">改进欧拉法（2阶）</string>
+    <string name="ode_compare_midpoint">中点法（2阶）</string>
+    <string name="ode_compare_rk4">RK4（4阶）</string>
 </resources>

@@ -35,6 +35,7 @@ public class CalcActivity extends AppCompatActivity {
     private EditText rPolarInput, thetaMinInput, thetaMaxInput;
     private EditText taylorOrderInput;
     private EditText odeExprInput, odeX0Input, odeY0Input, odeXEndInput, odeStepsInput;
+    private EditText odeCompareExprInput, odeCompareX0Input, odeCompareY0Input, odeCompareXEndInput, odeCompareStepsInput;
     private EditText statsDataInput;
     private EditText areaGInput;
     private EditText volGInput;
@@ -131,6 +132,17 @@ public class CalcActivity extends AppCompatActivity {
         MaterialButton btnOdePlot = findViewById(R.id.btn_ode_plot);
         btnOdeSolve.setOnClickListener(v -> onOdeSolve());
         btnOdePlot.setOnClickListener(v -> onOdePlot());
+
+        // ODE Method Comparison
+        odeCompareExprInput = findViewById(R.id.ode_compare_expr_input);
+        odeCompareX0Input = findViewById(R.id.ode_compare_x0_input);
+        odeCompareY0Input = findViewById(R.id.ode_compare_y0_input);
+        odeCompareXEndInput = findViewById(R.id.ode_compare_xend_input);
+        odeCompareStepsInput = findViewById(R.id.ode_compare_steps_input);
+        MaterialButton btnOdeCompare = findViewById(R.id.btn_ode_compare);
+        MaterialButton btnOdeComparePlot = findViewById(R.id.btn_ode_compare_plot);
+        btnOdeCompare.setOnClickListener(v -> onOdeCompare());
+        btnOdeComparePlot.setOnClickListener(v -> onOdeComparePlot());
 
         // Direction Field
         dfExprInput = findViewById(R.id.df_expr_input);
@@ -1054,6 +1066,139 @@ public class CalcActivity extends AppCompatActivity {
         intent.putExtra("is_ode", true);
         intent.putExtra("ode_xs", xs);
         intent.putExtra("ode_ys", ys);
+        intent.putExtra("ode_expr", expr);
+        intent.putExtra("x_min", x0);
+        intent.putExtra("x_max", xEnd);
+        startActivity(intent);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void onOdeCompare() {
+        String expr = odeCompareExprInput.getText().toString().trim();
+        if (expr.isEmpty()) { toast(getString(R.string.toast_enter_ode)); return; }
+        double x0, y0, xEnd;
+        int steps;
+        try {
+            x0 = Double.parseDouble(odeCompareX0Input.getText().toString().trim());
+            y0 = Double.parseDouble(odeCompareY0Input.getText().toString().trim());
+            xEnd = Double.parseDouble(odeCompareXEndInput.getText().toString().trim());
+            steps = Integer.parseInt(odeCompareStepsInput.getText().toString().trim());
+        } catch (NumberFormatException ex) {
+            toast(getString(R.string.toast_invalid_ode));
+            return;
+        }
+        if (steps < 1 || steps > 100000) { toast(getString(R.string.toast_steps_range)); return; }
+        if (x0 == xEnd) { toast(getString(R.string.toast_x0_xend)); return; }
+
+        // Solve with all methods
+        HashMap<String, Object> euler = CalcEngine.odeSolveEuler(expr, x0, y0, xEnd, steps);
+        HashMap<String, Object> improvedEuler = CalcEngine.odeSolveImprovedEuler(expr, x0, y0, xEnd, steps);
+        HashMap<String, Object> midpoint = CalcEngine.odeSolveMidpoint(expr, x0, y0, xEnd, steps);
+        HashMap<String, Object> rk4 = CalcEngine.odeSolveRk4(expr, x0, y0, xEnd, steps);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format(getString(R.string.ode_compare_header), expr, fmt(x0), fmt(y0), fmt(x0), fmt(xEnd), steps)).append("\n\n");
+
+        String[] names = {
+            getString(R.string.ode_compare_euler),
+            getString(R.string.ode_compare_improved_euler),
+            getString(R.string.ode_compare_midpoint),
+            getString(R.string.ode_compare_rk4)
+        };
+        HashMap<String, Object>[] results = new HashMap[]{euler, improvedEuler, midpoint, rk4};
+
+        for (int i = 0; i < names.length; i++) {
+            HashMap<String, Object> result = results[i];
+            if (result != null) {
+                double[] ys = (double[]) result.get("ys");
+                if (ys != null && ys.length > 0) {
+                    double finalY = ys[ys.length - 1];
+                    sb.append(String.format(getString(R.string.ode_compare_result), names[i], fmt(xEnd), fmt(finalY))).append("\n");
+                }
+            }
+        }
+
+        android.widget.TextView tv = new android.widget.TextView(this);
+        tv.setText(sb.toString());
+        tv.setTypeface(android.graphics.Typeface.MONOSPACE);
+        tv.setTextSize(13);
+        tv.setPadding(40, 24, 40, 24);
+        tv.setTextColor(android.graphics.Color.parseColor("#cdd6f4"));
+        tv.setBackgroundColor(android.graphics.Color.parseColor("#181825"));
+
+        android.widget.ScrollView sv = new android.widget.ScrollView(this);
+        sv.addView(tv);
+
+        new androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert)
+            .setTitle(getString(R.string.ode_compare))
+            .setView(sv)
+            .setPositiveButton(getString(R.string.dialog_close), null)
+            .show();
+
+        resultView.append(String.format(getString(R.string.ode_compare_toast), 4, steps) + "\n");
+    }
+
+    @SuppressWarnings("unchecked")
+    private void onOdeComparePlot() {
+        String expr = odeCompareExprInput.getText().toString().trim();
+        if (expr.isEmpty()) { toast(getString(R.string.toast_enter_ode)); return; }
+        double x0, y0, xEnd;
+        int steps;
+        try {
+            x0 = Double.parseDouble(odeCompareX0Input.getText().toString().trim());
+            y0 = Double.parseDouble(odeCompareY0Input.getText().toString().trim());
+            xEnd = Double.parseDouble(odeCompareXEndInput.getText().toString().trim());
+            steps = Integer.parseInt(odeCompareStepsInput.getText().toString().trim());
+        } catch (NumberFormatException ex) {
+            toast(getString(R.string.toast_invalid_ode));
+            return;
+        }
+        if (steps < 1 || steps > 100000) { toast(getString(R.string.toast_steps_range)); return; }
+        if (x0 == xEnd) { toast(getString(R.string.toast_x0_xend)); return; }
+
+        // Solve with all methods
+        HashMap<String, Object> euler = CalcEngine.odeSolveEuler(expr, x0, y0, xEnd, steps);
+        HashMap<String, Object> improvedEuler = CalcEngine.odeSolveImprovedEuler(expr, x0, y0, xEnd, steps);
+        HashMap<String, Object> midpoint = CalcEngine.odeSolveMidpoint(expr, x0, y0, xEnd, steps);
+        HashMap<String, Object> rk4 = CalcEngine.odeSolveRk4(expr, x0, y0, xEnd, steps);
+
+        // Combine all data for plotting
+        ArrayList<double[]> allXs = new ArrayList<>();
+        ArrayList<double[]> allYs = new ArrayList<>();
+        ArrayList<String> labels = new ArrayList<>();
+
+        String[] names = {
+            "Euler",
+            "Improved Euler",
+            "Midpoint",
+            "RK4"
+        };
+        HashMap<String, Object>[] results = new HashMap[]{euler, improvedEuler, midpoint, rk4};
+
+        for (int i = 0; i < names.length; i++) {
+            HashMap<String, Object> result = results[i];
+            if (result != null) {
+                double[] xs = (double[]) result.get("xs");
+                double[] ys = (double[]) result.get("ys");
+                if (xs != null && ys != null && xs.length > 0) {
+                    allXs.add(xs);
+                    allYs.add(ys);
+                    labels.add(names[i]);
+                }
+            }
+        }
+
+        if (allXs.isEmpty()) {
+            resultView.append("No results to plot\n");
+            return;
+        }
+
+        Intent intent = new Intent(this, PlotActivity.class);
+        intent.putExtra("is_ode", true);
+        intent.putExtra("ode_multi", true);
+        intent.putExtra("ode_multi_xs", allXs);
+        intent.putExtra("ode_multi_ys", allYs);
+        intent.putExtra("ode_multi_labels", labels);
         intent.putExtra("ode_expr", expr);
         intent.putExtra("x_min", x0);
         intent.putExtra("x_max", xEnd);
