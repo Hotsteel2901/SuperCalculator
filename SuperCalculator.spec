@@ -34,6 +34,8 @@ a = Analysis(
         'calc_bridge',
         'locale_strings',
         'stat_dist',
+        'probability_calc',
+        'finance_calc',
     ],
     hookspath=[],
     hooksconfig={},
