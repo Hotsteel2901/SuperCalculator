@@ -489,60 +489,87 @@ public class CalcActivity extends AppCompatActivity {
         double b = getB();
         if (a >= b) { toast(getString(R.string.toast_a_less_b)); return; }
 
-        int nSamples = 2000;
-        double tolZero = 1e-6;
-        double tolDup = 1e-4;
-        double[] xs = new double[nSamples];
-        double step = (b - a) / (nSamples - 1);
-        for (int i = 0; i < nSamples; i++) {
-            xs[i] = a + i * step;
-        }
-        double[] ys = CalcEngine.evaluateArray(e, xs);
-        if (ys == null) {
-            resultView.append(String.format(getString(R.string.scan_roots_error), CalcEngine.getLastError()) + "\n");
-            return;
-        }
+        final MaterialButton btnScanRoots = findViewById(R.id.btn_scan_roots);
+        btnScanRoots.setEnabled(false);
+        final String expr = e;
+        final double aVal = a;
+        final double bVal = b;
 
-        java.util.ArrayList<Double> roots = new java.util.ArrayList<>();
-        for (int i = 0; i < nSamples; i++) {
-            if (!Double.isNaN(ys[i]) && !Double.isInfinite(ys[i]) && Math.abs(ys[i]) < tolZero) {
-                roots.add(xs[i]);
-            }
-        }
-        for (int i = 0; i < nSamples - 1; i++) {
-            if (Double.isNaN(ys[i]) || Double.isNaN(ys[i + 1])) continue;
-            if (ys[i] == 0.0 || ys[i + 1] == 0.0) continue;
-            if (ys[i] * ys[i + 1] < 0) {
-                double root = CalcEngine.solveBisection(e, xs[i], xs[i + 1]);
-                if (!Double.isNaN(root)) {
-                    roots.add(root);
+        new Thread(() -> {
+            try {
+                int nSamples = 2000;
+                double tolZero = 1e-6;
+                double tolDup = 1e-4;
+                double[] xs = new double[nSamples];
+                double step = (bVal - aVal) / (nSamples - 1);
+                for (int i = 0; i < nSamples; i++) {
+                    xs[i] = aVal + i * step;
                 }
-            }
-        }
+                double[] ys = CalcEngine.evaluateArray(expr, xs);
 
-        java.util.Collections.sort(roots);
-        java.util.ArrayList<Double> uniqueRoots = new java.util.ArrayList<>();
-        for (Double r : roots) {
-            if (uniqueRoots.isEmpty() || Math.abs(r - uniqueRoots.get(uniqueRoots.size() - 1)) > tolDup) {
-                uniqueRoots.add(r);
-            }
-        }
+                StringBuilder sb = new StringBuilder();
 
-        if (uniqueRoots.isEmpty()) {
-            resultView.append(String.format(getString(R.string.scan_roots_no_roots), a, b) + "\n");
-        } else {
-            resultView.append(String.format(getString(R.string.scan_roots_found), uniqueRoots.size(), a, b) + "\n");
-            int limit = Math.min(uniqueRoots.size(), 20);
-            for (int i = 0; i < limit; i++) {
-                double r = uniqueRoots.get(i);
-                double verify = CalcEngine.evaluate(e, r);
-                String vStr = Double.isNaN(verify) ? "N/A" : String.format("%.2e", verify);
-                resultView.append("  x" + (i + 1) + " = " + fmt(r) + "  (f=" + vStr + ")\n");
+                if (ys == null) {
+                    String err = CalcEngine.getLastError();
+                    sb.append(String.format(getString(R.string.scan_roots_error), err != null ? err : "Unknown error")).append("\n");
+                } else {
+                    java.util.ArrayList<Double> roots = new java.util.ArrayList<>();
+                    for (int i = 0; i < nSamples; i++) {
+                        if (!Double.isNaN(ys[i]) && !Double.isInfinite(ys[i]) && Math.abs(ys[i]) < tolZero) {
+                            roots.add(xs[i]);
+                        }
+                    }
+                    for (int i = 0; i < nSamples - 1; i++) {
+                        if (Double.isNaN(ys[i]) || Double.isNaN(ys[i + 1])) continue;
+                        if (ys[i] == 0.0 || ys[i + 1] == 0.0) continue;
+                        if (ys[i] * ys[i + 1] < 0) {
+                            double root = CalcEngine.solveBisection(expr, xs[i], xs[i + 1]);
+                            if (!Double.isNaN(root)) {
+                                roots.add(root);
+                            }
+                        }
+                    }
+
+                    java.util.Collections.sort(roots);
+                    java.util.ArrayList<Double> uniqueRoots = new java.util.ArrayList<>();
+                    for (Double r : roots) {
+                        if (uniqueRoots.isEmpty() || Math.abs(r - uniqueRoots.get(uniqueRoots.size() - 1)) > tolDup) {
+                            uniqueRoots.add(r);
+                        }
+                    }
+
+                    if (uniqueRoots.isEmpty()) {
+                        sb.append(String.format(getString(R.string.scan_roots_no_roots), aVal, bVal)).append("\n");
+                    } else {
+                        sb.append(String.format(getString(R.string.scan_roots_found), uniqueRoots.size(), aVal, bVal)).append("\n");
+                        int limit = Math.min(uniqueRoots.size(), 20);
+                        for (int i = 0; i < limit; i++) {
+                            double r = uniqueRoots.get(i);
+                            double verify = CalcEngine.evaluate(expr, r);
+                            String vStr = Double.isNaN(verify) ? "N/A" : String.format("%.2e", verify);
+                            sb.append("  x").append(i + 1).append(" = ").append(fmt(r)).append("  (f=").append(vStr).append(")\n");
+                        }
+                        if (uniqueRoots.size() > 20) {
+                            sb.append(String.format(getString(R.string.result_and_more), (uniqueRoots.size() - 20))).append("\n");
+                        }
+                    }
+                }
+
+                final String result = sb.toString();
+                runOnUiThread(() -> {
+                    resultView.append(result);
+                    scrollToResult();
+                    btnScanRoots.setEnabled(true);
+                });
+            } catch (Exception ex) {
+                final String errMsg = ex.getMessage();
+                runOnUiThread(() -> {
+                    resultView.append("Scan Roots Error: " + (errMsg != null ? errMsg : "Unknown error") + "\n");
+                    scrollToResult();
+                    btnScanRoots.setEnabled(true);
+                });
             }
-            if (uniqueRoots.size() > 20) {
-                resultView.append(String.format(getString(R.string.result_and_more), (uniqueRoots.size() - 20)) + "\n");
-            }
-        }
+        }).start();
     }
 
     private void openPlot3D() {

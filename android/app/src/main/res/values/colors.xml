@@ -1,52 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Void background scale -->
-    <color name="sc_void">#FF0A0B10</color>
-    <color name="void_surface">#FF12131C</color>
-    <color name="void_elevated">#FF1A1B28</color>
-    <color name="void_overlay">#E61E1F2E</color>
+    <!-- Liquid Glass void background scale -->
+    <color name="sc_void">#FF07080F</color>
+    <color name="void_surface">#FF0D0E18</color>
+    <color name="void_elevated">#FF131422</color>
+    <color name="void_overlay">#CC181928</color>
 
-    <!-- Spectral accent colors — one per operation type -->
+    <!-- Liquid Glass card surfaces -->
+    <color name="glass_card_bg">#18FFFFFF</color>
+    <color name="glass_card_border">#30FFFFFF</color>
+    <color name="glass_card_border_focused">#50FFFFFF</color>
+
+    <!-- Spectral accent colors - vibrant glass tones -->
     <color name="spectral_evaluate">#FF00E676</color>
-    <color name="spectral_derivative">#FF00BCD4</color>
-    <color name="spectral_derivative2">#FF448AFF</color>
-    <color name="spectral_integrate">#FFFFC107</color>
-    <color name="spectral_solve">#FFE040FB</color>
+    <color name="spectral_derivative">#FF00E5FF</color>
+    <color name="spectral_derivative2">#FF536DFE</color>
+    <color name="spectral_integrate">#FFFFD740</color>
+    <color name="spectral_solve">#FFEA80FC</color>
 
-    <!-- M3 mapped tones -->
-    <color name="m3_primary">#FF6EC6FF</color>
-    <color name="m3_on_primary">#FF003548</color>
-    <color name="m3_primary_container">#FF004D69</color>
-    <color name="m3_on_primary_container">#FFC3E8FF</color>
-    <color name="m3_surface">#FF12131C</color>
-    <color name="m3_on_surface">#FFE2E2E9</color>
-    <color name="m3_surface_variant">#FF43474E</color>
-    <color name="m3_on_surface_variant">#FFC3C6CF</color>
-    <color name="m3_outline">#FF8D9199</color>
-    <color name="m3_outline_variant">#FF43474E</color>
+    <!-- M3 mapped tones for Liquid Glass -->
+    <color name="m3_primary">#FF80DEEA</color>
+    <color name="m3_on_primary">#FF003B46</color>
+    <color name="m3_primary_container">#FF004D5A</color>
+    <color name="m3_on_primary_container">#FFB2EBF6</color>
+    <color name="m3_surface">#FF0D0E18</color>
+    <color name="m3_on_surface">#FFE8E8F0</color>
+    <color name="m3_surface_variant">#2AFFFFFF</color>
+    <color name="m3_on_surface_variant">#CCFFFFFF</color>
+    <color name="m3_outline">#66FFFFFF</color>
+    <color name="m3_outline_variant">#33FFFFFF</color>
 
     <!-- Result surface -->
-    <color name="result_bg">#FF181922</color>
-    <color name="result_text">#FFD4D4DC</color>
+    <color name="result_bg">#12FFFFFF</color>
+    <color name="result_text">#FFD8D8E4</color>
 
     <!-- Chip / pill colors -->
-    <color name="chip_bg">#25222731</color>
-    <color name="chip_text">#FFB0B8C8</color>
-    
-    <!-- Chart curve colors (matching Python GUI) -->
-    <color name="chart_color_1">#FF1f77b4</color>
-    <color name="chart_color_2">#FFff7f0e</color>
-    <color name="chart_color_3">#FF2ca02c</color>
-    <color name="chart_color_4">#FFd62728</color>
-    <color name="chart_color_5">#FF9467bd</color>
-    <color name="chart_color_6">#FF8c564b</color>
-    <color name="chart_color_7">#FFe377c2</color>
-    <color name="chart_color_8">#FF7f7f7f</color>
-    <color name="chart_color_9">#FFbcbd22</color>
-    <color name="chart_color_10">#FF17becf</color>
-    
+    <color name="chip_bg">#18FFFFFF</color>
+    <color name="chip_text">#FFB8C0D0</color>
+
+    <!-- Chart curve colors -->
+    <color name="chart_color_1">#FF4FC3F7</color>
+    <color name="chart_color_2">#FFFFB74D</color>
+    <color name="chart_color_3">#FF81C784</color>
+    <color name="chart_color_4">#FFE57373</color>
+    <color name="chart_color_5">#FFBA68C8</color>
+    <color name="chart_color_6">#FFA1887F</color>
+    <color name="chart_color_7">#FFF06292</color>
+    <color name="chart_color_8">#FF90A4AE</color>
+    <color name="chart_color_9">#FFDCE775</color>
+    <color name="chart_color_10">#FF4DD0E1</color>
+
     <!-- Chart UI colors -->
-    <color name="chart_grid">#FF45475a</color>
-    <color name="chart_text">#FFcdd6f4</color>
-    <color name="chart_bg">#FF181825</color>
+    <color name="chart_grid">#33FFFFFF</color>
+    <color name="chart_text">#CCFFFFFF</color>
+    <color name="chart_bg">#FF0D0E18</color>
 </resources>
