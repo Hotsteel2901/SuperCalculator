@@ -7,7 +7,7 @@
 [![Build Android APK](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-android-apk.yml/badge.svg)](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-android-apk.yml)
 
 [English](README.md) | **中文**
-同时包含一个基于 Material Design 3 的 **Android APK** (aarch64)。
+同时包含一个基于 Liquid Glass 的 **Android APK** (aarch64)。
 
 ## 架构
 
@@ -79,7 +79,7 @@
       - **旋转体体积计算器** — 使用三种方法计算旋转体体积：圆盘法 (V = π∫[f(x)]²dx)、垫圈法 (V = π∫([f(x)]²-[g(x)]²)dx) 和壳法 (V = 2π∫x·f(x)dx)。内置预设示例（球体、圆锥、圆柱、圆环）。桌面端（Python）、Android 端（Java）及项目主页交互式网页演示均已支持。
       - **数据插值计算器** — 支持四种插值方法：线性插值、拉格朗日多项式插值、牛顿多项式插值和三次样条插值。可在任意 x 值处求值，可视化插值曲线与数据点。项目主页提供交互式网页演示。桌面端（Python）、Android 端（Java）及项目主页均已支持。
     - **Windows EXE** — 提供独立 Windows 可执行文件，无需安装 Python
- - **Android 应用** — 独立 APK，Material Design 3 界面 + JNI 桥接，现已支持 3D 曲面绘图与触控旋转及参数曲线绘制
+ - **Android 应用** — 独立 APK，Liquid Glass 界面 + JNI 桥接，现已支持 3D 曲面绘图与触控旋转及参数曲线绘制
  - **中文语言支持** — 桌面端（Python）与 Android 端均支持完整中文 (zh-CN) 本地化。桌面端自动检测系统语言或通过环境变量 `SUPERCALC_LANG=zh` 指定。Android 端跟随系统语言自动切换。
 
 ## 预编译二进制文件
