@@ -33,6 +33,7 @@ jobs:
             ## 项目技术约束（严格遵守）
             - Android：纯 Java + XML，**禁止**引入 Kotlin/Compose。AGP 8.2.0，Gradle 8.4，compileSdk 34，minSdk 26
             - C 核心：`calc_core.c` 使用 C11，通过 JNI (`calc_core_jni.c`) 暴露给 Android，通过 ctypes (`calc_bridge.py`) 暴露给 Python
+            - Python 原生模块：`locale_strings.py`（本地化，3523 行）、`stat_dist.py`（统计分布，635 行）、`finance_calc.py`（金融，312 行）、`probability_calc.py`（概率，227 行）
             - 依赖版本锁定：material:1.12.0，appcompat:1.7.0，core:1.13.1，coordinatorlayout:1.2.0，MPAndroidChart:v3.1.0
             - 主题：`Theme.SuperCalc` 基于 Material3 Dark，颜色在 `colors.xml` 中定义
             - 字体：JetBrains Mono（表达式/数字）、Outfit（标题/标签）
@@ -57,11 +58,12 @@ jobs:
             3. **Java 引擎** `CalcEngine.java`：声明 `static native` 方法，签名与 JNI 完全匹配
             4. **Android UI** `CalcActivity.java`：在对应功能区域添加 MaterialCardView 卡片 + MaterialButton 按钮，绑定点击事件
             5. **Python 桥接** `calc_bridge.py`：在 `CalcEngine` 类中添加 ctypes 包装方法，注意 `c_char_p` 返回值 decode 和 None 处理
-            6. **Python GUI** `super_calc_bridged.py`：在 `main_window` 类中添加 UI 控件和事件处理，遵循现有 tkinter 模式
-            7. **本地化** `locale_strings.py`：在对应的功能 section 中同步添加中英文字符串，格式与现有条目一致
-            8. **Web 前端** `index.html`：如果是面向用户的功能，在对应区域添加交互演示
-            9. **Android 字符串资源**：在 `strings.xml` 和 `strings-zh-rCN/strings.xml` 中同步添加所有新字符串
-            10. **文档**：更新 `README.md`、`README_CN.md`、`docs/usage_en.md`、`docs/usage_cn.md`
+            6. **Python GUI** `super_calc_bridged.py`：在 `main_window` 类中添加 UI 控件和事件处理
+            7. **Python 原生模块**：若功能涉及统计/金融/概率，同步修改 `stat_dist.py`、`finance_calc.py`、`probability_calc.py` 中添加对应的计算函数
+            8. **本地化** `locale_strings.py`：在对应的功能 section 中同步添加中英文字符串
+            9. **Web 前端** `index.html`：如果是面向用户的功能，在对应区域添加交互演示
+            10. **Android 字符串资源**：在 `strings.xml` 和 `strings-zh-rCN/strings.xml` 中同步添加所有新字符串
+            11. **文档**：更新 `README.md`、`README_CN.md`、`docs/usage_en.md`、`docs/usage_cn.md`
 
             ### 第 3 步：质量检查
             - JNI 函数签名与 Java `native` 声明完全匹配（参数数量、类型、返回类型）
