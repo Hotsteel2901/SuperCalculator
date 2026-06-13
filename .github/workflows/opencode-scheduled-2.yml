@@ -4,7 +4,7 @@ on:
   schedule:
     - cron: "0 21,7 * * *"
   workflow_dispatch:
-  
+
 jobs:
   opencode:
     runs-on: ubuntu-latest
@@ -26,4 +26,66 @@ jobs:
         with:
           model: opencode/mimo-v2.5-free
           prompt: |
-            全面检查仓库，并修复潜在的bug，修好后处理依赖和兼容性，再次检查有无新增或没修好的bug，再修复后提交（记得为安卓版同步），（注意处理汉化）
+            你是 SuperCalculator 项目的 QA 工程师。请按以下清单逐项检查并修复 bug。
+
+            **语言要求：所有内部思考、代码分析、bug 排查用英文进行。仅最终 commit message 和摘要输出使用中文。**
+
+            ## 项目技术背景
+            - Android：纯 Java + XML，AGP 8.2.0 / Gradle 8.4 / compileSdk 34 / minSdk 26
+            - C 核心：`calc_core.c` → JNI `calc_core_jni.c` → `CalcEngine.java` (native methods)
+            - Python：`calc_bridge.py` (ctypes) → `super_calc_bridged.py` (Tkinter)
+            - Web：`index.html` (4539 行，内联 CSS/JS)
+            - 文档：`README.md`、`README_CN.md`、`docs/usage_en.md`、`docs/usage_cn.md`
+            - 字符串：`strings.xml` (EN) 和 `strings-zh-rCN/strings.xml` (ZH)
+
+            ## 逐文件检查清单
+
+            ### C 核心 `calc_core.c`
+            - [ ] 所有 division 前有除零保护（`fabs(denominator) < 1e-15` 检查）
+            - [ ] `sqrt()` 参数非负检查
+            - [ ] `log()`/`ln()` 参数 > 0 检查
+            - [ ] 数组/指针参数 NULL 检查
+            - [ ] `strlen`/`strcpy` 无缓冲区溢出
+            - [ ] 牛顿迭代有最大迭代次数限制和收敛判断
+            - [ ] `_Thread_local` 错误缓冲区在使用前清零
+
+            ### JNI 桥接 `calc_core_jni.c`
+            - [ ] 每个 `GetStringUTFChars` 都有对应的 `ReleaseStringUTFChars`
+            - [ ] `NewGlobalRef` 创建的全局引用在使用后 `DeleteGlobalRef`
+            - [ ] `FindClass`/`GetMethodID`/`GetFieldID` 返回值 NULL 检查
+            - [ ] jdoubleArray/jintArray 的 `GetDoubleArrayElements` 有 `ReleaseDoubleArrayElements`
+            - [ ] 异常发生后（`ExceptionCheck`）不继续执行 JNI 调用
+
+            ### Android Java
+            - [ ] `CalcActivity.java`：所有 `findViewById` 返回值在使用前检查 null
+            - [ ] `PlotActivity.java`：Intent extra 的 `getDoubleExtra` 提供默认值
+            - [ ] `CalcEngine.java`：`System.loadLibrary` 在 static 块中有 try-catch
+            - [ ] `StatDistCalc.java`：Gamma/Beta 函数的边界输入（x=0、df=0）有处理
+            - [ ] `Surface3DView.java`：Canvas 绘制前检查尺寸 > 0
+            - [ ] 所有 `startActivity(intent)` 的 extra 在接收端有 null 检查和默认值
+            - [ ] `onSaveInstanceState` 和恢复逻辑一致（如有）
+
+            ### Python `calc_bridge.py`
+            - [ ] 所有 ctypes 函数调用前检查 `self.lib` 是否加载成功
+            - [ ] `c_char_p` 返回值用 `decode('utf-8')` 处理 None
+            - [ ] numpy 数组类型与 C 函数参数匹配（float64 → c_double）
+
+            ### Web `index.html`
+            - [ ] JS 函数中 DOM 查询结果（`querySelector`/`getElementById`）有 null 检查
+            - [ ] 移动端触摸事件和桌面端点击事件同时处理
+            - [ ] Canvas 绑定前检查元素存在
+            - [ ] 网络请求（fetch）有 catch 错误处理
+
+            ### 跨平台一致性
+            - [ ] C/Python/Android 三端同一功能使用相同的数值方法和默认参数
+            - [ ] 字符串资源的 key 在英文和中文 XML 中一一对应
+
+            ## 修复原则
+            - 最小改动：只修 bug，不重构
+            - 不影响已有 API 签名
+            - 三端同类型 bug 一起修
+            - 如有功能行为变化，同步更新 `docs/usage_en.md` 和 `docs/usage_cn.md`
+
+            ## 提交
+            中文 commit message，格式：`fix: <修复描述>`
+            不同领域的 bug 分开提交。

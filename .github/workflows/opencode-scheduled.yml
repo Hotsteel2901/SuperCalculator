@@ -4,7 +4,7 @@ on:
   schedule:
     - cron: "0 16,2 * * *"
   workflow_dispatch:
-  
+
 jobs:
   opencode:
     runs-on: ubuntu-latest
@@ -26,4 +26,51 @@ jobs:
         with:
           model: opencode/mimo-v2.5-free
           prompt: |
-            你是一位严谨的程序员。全面查看仓库的代码以及目前的功能，适当为其添加一项新功能，注意处理各项依赖以及兼容性，添加完成后记得检查一次bug再提交，且记得更新两份README，以及网页（网页需要注意兼容桌面移动两端，性能和优化以及修复bug）（注意处理汉化）。不要删除以前的功能（记得为安卓版同步）。
+            你是 SuperCalculator 项目的资深维护者。请按以下精确流程添加一项新功能。
+
+            **语言要求：所有内部思考、代码分析、bug 排查用英文进行。仅最终 commit message 和摘要输出使用中文。**
+
+            ## 项目技术约束（严格遵守）
+            - Android：纯 Java + XML，**禁止**引入 Kotlin/Compose。AGP 8.2.0，Gradle 8.4，compileSdk 34，minSdk 26
+            - C 核心：`calc_core.c` 使用 C11，通过 JNI (`calc_core_jni.c`) 暴露给 Android，通过 ctypes (`calc_bridge.py`) 暴露给 Python
+            - 依赖版本锁定：material:1.12.0，appcompat:1.7.0，core:1.13.1，coordinatorlayout:1.2.0，MPAndroidChart:v3.1.0
+            - 主题：`Theme.SuperCalc` 基于 Material3 Dark，颜色在 `colors.xml` 中定义
+            - 字体：JetBrains Mono（表达式/数字）、Outfit（标题/标签）
+            - 国际化：`strings.xml`（英文）和 `strings-zh-rCN/strings.xml`（中文）必须同步
+
+            ## 流程
+
+            ### 第 1 步：选择功能
+            从以下选一个未实现的功能：
+            - 拉普拉斯变换 / 逆变换
+            - 向量场绘图（ODE 方向场的泛化版）
+            - 等高线图（f(x,y)=c 的水平集）
+            - 稀疏矩阵求解器
+            - 计算历史记录（最近 10 条表达式，用 SharedPreferences 持久化）
+            - CSV 数据导出（将表格/统计/回归结果导出）
+            - 更多插值方法（自然样条、Akima）
+            - 自定义函数定义（用户输入 `f(x)=...` 后在表达式中引用 `f(2)`）
+
+            ### 第 2 步：实现（严格按层次顺序）
+            1. **C 核心** `calc_core.c`：添加计算函数，遵循现有命名风格（snake_case），使用 `_Thread_local` 错误缓冲区
+            2. **JNI 桥接** `calc_core_jni.c`：添加 JNI 函数，函数名格式 `Java_com_supercalc_CalcEngine_<方法名>`，正确处理 jstring 编码/释放
+            3. **Java 引擎** `CalcEngine.java`：声明 `static native` 方法，签名与 JNI 完全匹配
+            4. **Android UI** `CalcActivity.java`：在对应功能区域添加 MaterialCardView 卡片 + MaterialButton 按钮，绑定点击事件
+            5. **Python 桥接** `calc_bridge.py`：在 `CalcEngine` 类中添加 ctypes 包装方法
+            6. **Python GUI** `super_calc_bridged.py`：在 `main_window` 类中添加 UI 控件和事件处理
+            7. **Web 前端** `index.html`：如果是面向用户的功能，在对应区域添加交互演示
+            8. **字符串资源**：在 `strings.xml` 和 `strings-zh-rCN/strings.xml` 中同步添加所有新字符串
+            9. **文档**：更新 `README.md`、`README_CN.md`、`docs/usage_en.md`、`docs/usage_cn.md`
+
+            ### 第 3 步：质量检查
+            - JNI 函数签名与 Java `native` 声明完全匹配（参数数量、类型、返回类型）
+            - C 代码无内存泄漏（`GetStringUTFChars` 对应 `ReleaseStringUTFChars`）
+            - Android findViewById 后有空值检查
+            - Web 端在移动设备和桌面端都能正常显示
+            - 所有新增字符串都有英文和中文两份
+            - ProGuard 规则 `proguard-rules.pro` 如有需要则更新
+            - 不删除、不重命名、不破坏任何已有功能
+
+            ### 第 4 步：提交
+            中文 commit message，格式：`feat: <功能描述>`
+            涉及多个文件的用一次提交。
