@@ -9,7 +9,7 @@ C for computation, Python for the GUI, and `ctypes` as the bridge.
 
 [中文](README_CN.md) | **English**
 
-Also includes an **Android APK** build (aarch64) with a Material Design 3 UI.
+Also includes an **Android APK** build (aarch64) with a Liquid Glass UI.
 
 ## Architecture
 
@@ -78,7 +78,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
    - **Volume of Revolution Calculator** — compute volumes of solids of revolution using three methods: Disk (V = π∫[f(x)]²dx), Washer (V = π∫([f(x)]²-[g(x)]²)dx), and Shell (V = 2π∫x·f(x)dx). Includes preset examples (sphere, cone, cylinder, torus). Available on desktop (Python), Android (Java), and web landing page interactive demo.
    - **Data Interpolation Calculator** — fit data points using four interpolation methods: Linear, Polynomial (Lagrange), Polynomial (Newton), and Cubic Spline. Evaluate the interpolated function at any x, visualize the interpolation curve with data points. Available on desktop (Python), Android (Java), and web landing page interactive demo.
    - **Windows EXE** — standalone executable, no Python installation required
- - **Android App** — standalone APK with Material Design 3 UI and JNI bridge, now including 3D surface plotting with touch rotation and parametric curve support
+ - **Android App** — standalone APK with Liquid Glass UI and JNI bridge, now including 3D surface plotting with touch rotation and parametric curve support
  - **Chinese Language Support** — full Chinese (zh-CN) localization for both desktop (Python) and Android. Desktop auto-detects system locale or accepts `SUPERCALC_LANG=zh` env var. Android follows system language automatically.
 
 ## Pre-compiled Binaries

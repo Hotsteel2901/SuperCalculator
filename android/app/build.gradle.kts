@@ -11,8 +11,8 @@ android {
         applicationId = "com.supercalc"
         minSdk = 26
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "2.0.0"
         ndk {
             // Support multiple ABIs for broader device compatibility
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
