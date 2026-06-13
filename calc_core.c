@@ -435,8 +435,8 @@ static int eval_rpn(RPN* rpn, int nrpn, double x, double y, double* result) {
                     case '+': stack[sp++] = a+b; break;
                     case '-': stack[sp++] = a-b; break;
                     case '*': stack[sp++] = a*b; break;
-                    case '/': stack[sp++] = b ? a/b : (set_error("Division by zero"),NAN); break;
-                    case '%': stack[sp++] = b ? fmod(a,b) : (set_error("Modulo by zero"),NAN); break;
+                    case '/': stack[sp++] = fabs(b) > 1e-15 ? a/b : (set_error("Division by zero"),NAN); break;
+                    case '%': stack[sp++] = fabs(b) > 1e-15 ? fmod(a,b) : (set_error("Modulo by zero"),NAN); break;
                     case '^':
                         if (a < 0.0 && floor(b) != b) {
                             set_error("Negative base with non-integer exponent");
@@ -995,7 +995,7 @@ static Complex complex_mul(Complex a, Complex b) {
 
 static Complex complex_div(Complex a, Complex b) {
     double denom = b.re * b.re + b.im * b.im;
-    if (denom == 0.0) {
+    if (denom < 1e-30) {
         set_error("Complex division by zero");
         return complex_make(NAN, NAN);
     }
