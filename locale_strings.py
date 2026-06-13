@@ -3342,6 +3342,56 @@ STRINGS = {
         "zh": "Lotka-Volterra (x*(1-y), y*(x-1))",
     },
 
+    # --- Custom Function Definition ---
+    "sec_custom_func": {
+        "en": "Custom Function Definition",
+        "zh": "自定义函数",
+    },
+    "label_custom_func_name": {
+        "en": "f",
+        "zh": "f",
+    },
+    "btn_custom_func_define": {
+        "en": "Define",
+        "zh": "定义",
+    },
+    "btn_custom_func_delete": {
+        "en": "Delete",
+        "zh": "删除",
+    },
+    "btn_custom_func_clear": {
+        "en": "Clear All",
+        "zh": "清除全部",
+    },
+    "label_custom_func_defined": {
+        "en": "Defined",
+        "zh": "已定义",
+    },
+    "label_custom_func_none": {
+        "en": "No custom functions defined",
+        "zh": "暂无自定义函数",
+    },
+    "msg_custom_func_enter_name_body": {
+        "en": "Please enter both function name and body expression.",
+        "zh": "请输入函数名和表达式。",
+    },
+    "msg_custom_func_enter_name": {
+        "en": "Please enter a function name to delete.",
+        "zh": "请输入要删除的函数名。",
+    },
+    "msg_custom_func_error": {
+        "en": "Could not define function: {0}",
+        "zh": "无法定义函数：{0}",
+    },
+    "msg_custom_func_not_found": {
+        "en": "Function not found.",
+        "zh": "未找到该函数。",
+    },
+    "err_custom_func": {
+        "en": "Custom Function Error",
+        "zh": "自定义函数错误",
+    },
+
     "sec_volume_presets": {
         "en": "Volume Presets",
         "zh": "体积预设",

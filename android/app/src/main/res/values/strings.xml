@@ -651,4 +651,17 @@
     <string name="ode_compare_improved_euler">Improved Euler (2nd order)</string>
     <string name="ode_compare_midpoint">Midpoint (2nd order)</string>
     <string name="ode_compare_rk4">RK4 (4th order)</string>
+
+    <!-- Custom Function Definition -->
+    <string name="custom_func_title">Custom Function Definition</string>
+    <string name="custom_func_hint">Define f(x) = expr, then use f(...) in expressions</string>
+    <string name="custom_func_name_hint">Name</string>
+    <string name="custom_func_body_hint">x^2 + 1</string>
+    <string name="custom_func_define">Define</string>
+    <string name="custom_func_clear_all">Clear All</string>
+    <string name="custom_func_none">No custom functions defined</string>
+    <string name="custom_func_enter_name_body">Please enter both function name and body expression.</string>
+    <string name="custom_func_error" formatted="false">Custom function error: %s</string>
+    <string name="custom_func_defined" formatted="false">Defined: %s(x) = %s</string>
+    <string name="custom_func_all_cleared">All custom functions cleared.</string>
 </resources>

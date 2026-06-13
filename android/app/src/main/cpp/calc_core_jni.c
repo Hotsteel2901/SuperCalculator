@@ -66,6 +66,12 @@ int solve_system_2d(const char* f_expr, const char* g_expr,
                     double x0, double y0, double tol, int max_iter,
                     double* out_x, double* out_y);
 
+/* Custom function registry */
+int custom_func_define(const char* name, const char* body);
+void custom_func_clear(void);
+int custom_func_delete(const char* name);
+int custom_func_list(char* output, int max_out);
+
 /* Helper: extract UTF-8 string from jstring, call fn, release, return */
 static jdouble call_with_expr(JNIEnv* env, jstring expr, double x,
                               double (*fn)(const char*, double)) {
@@ -981,4 +987,45 @@ Java_com_supercalc_CalcEngine_odeSolveMidpoint(JNIEnv* env, jclass clazz,
                                                 jstring expr, jdouble x0, jdouble y0,
                                                 jdouble x_end, jint n_steps) {
     return ode_solve_helper(env, clazz, expr, x0, y0, x_end, n_steps, ode_solve_midpoint);
+}
+
+/* ---- Custom Function Registry ---- */
+
+JNIEXPORT jboolean JNICALL
+Java_com_supercalc_CalcEngine_customFuncDefine(JNIEnv* env, jclass clazz,
+                                                jstring name, jstring body) {
+    const char* nameStr = (*env)->GetStringUTFChars(env, name, NULL);
+    const char* bodyStr = (*env)->GetStringUTFChars(env, body, NULL);
+    if (!nameStr || !bodyStr) {
+        if (nameStr) (*env)->ReleaseStringUTFChars(env, name, nameStr);
+        if (bodyStr) (*env)->ReleaseStringUTFChars(env, body, bodyStr);
+        return JNI_FALSE;
+    }
+    int result = custom_func_define(nameStr, bodyStr);
+    (*env)->ReleaseStringUTFChars(env, name, nameStr);
+    (*env)->ReleaseStringUTFChars(env, body, bodyStr);
+    return result ? JNI_TRUE : JNI_FALSE;
+}
+
+JNIEXPORT void JNICALL
+Java_com_supercalc_CalcEngine_customFuncClear(JNIEnv* env, jclass clazz) {
+    custom_func_clear();
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_supercalc_CalcEngine_customFuncDelete(JNIEnv* env, jclass clazz,
+                                                jstring name) {
+    const char* nameStr = (*env)->GetStringUTFChars(env, name, NULL);
+    if (!nameStr) return JNI_FALSE;
+    int result = custom_func_delete(nameStr);
+    (*env)->ReleaseStringUTFChars(env, name, nameStr);
+    return result ? JNI_TRUE : JNI_FALSE;
+}
+
+JNIEXPORT jstring JNICALL
+Java_com_supercalc_CalcEngine_customFuncList(JNIEnv* env, jclass clazz) {
+    char buf[4096];
+    int len = custom_func_list(buf, sizeof(buf));
+    if (len <= 0) return (*env)->NewStringUTF(env, "");
+    return (*env)->NewStringUTF(env, buf);
 }

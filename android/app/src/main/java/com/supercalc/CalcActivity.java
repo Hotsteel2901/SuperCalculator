@@ -383,6 +383,9 @@ public class CalcActivity extends AppCompatActivity {
 
         // Data Interpolation Calculator
         setupInterpolation();
+
+        // Custom Function Definition
+        setupCustomFunctions();
     }
 
     private String getExpr()  { return exprInput.getText().toString().trim(); }
@@ -4183,5 +4186,60 @@ public class CalcActivity extends AppCompatActivity {
         }
         double dx = x - xs[seg];
         return ys[seg] + b[seg] * dx + c[seg] * dx * dx + d[seg] * dx * dx * dx;
+    }
+
+    // ---- Custom Function Definition ----
+    private EditText customFuncNameInput, customFuncBodyInput;
+    private TextView customFuncListView;
+
+    private void setupCustomFunctions() {
+        customFuncNameInput = findViewById(R.id.custom_func_name_input);
+        customFuncBodyInput = findViewById(R.id.custom_func_body_input);
+        customFuncListView = findViewById(R.id.custom_func_list_view);
+
+        MaterialButton btnDefine = findViewById(R.id.btn_custom_func_define);
+        MaterialButton btnClearAll = findViewById(R.id.btn_custom_func_clear);
+
+        btnDefine.setOnClickListener(v -> onCustomFuncDefine());
+        btnClearAll.setOnClickListener(v -> onCustomFuncClearAll());
+
+        refreshCustomFuncList();
+    }
+
+    private void onCustomFuncDefine() {
+        String name = customFuncNameInput.getText().toString().trim();
+        String body = customFuncBodyInput.getText().toString().trim();
+        if (name.isEmpty() || body.isEmpty()) {
+            toast(getString(R.string.custom_func_enter_name_body));
+            return;
+        }
+        boolean ok = CalcEngine.customFuncDefine(name, body);
+        if (!ok) {
+            String err = CalcEngine.getLastError();
+            resultView.append(String.format(getString(R.string.custom_func_error), err.isEmpty() ? getString(R.string.result_computation_failed) : err) + "\n");
+            scrollToResult();
+            return;
+        }
+        resultView.append(String.format(getString(R.string.custom_func_defined), name, body) + "\n");
+        scrollToResult();
+        refreshCustomFuncList();
+        customFuncNameInput.setText("");
+        customFuncBodyInput.setText("");
+    }
+
+    private void onCustomFuncClearAll() {
+        CalcEngine.customFuncClear();
+        resultView.append(getString(R.string.custom_func_all_cleared) + "\n");
+        scrollToResult();
+        refreshCustomFuncList();
+    }
+
+    private void refreshCustomFuncList() {
+        String list = CalcEngine.customFuncList();
+        if (list == null || list.isEmpty()) {
+            customFuncListView.setText(getString(R.string.custom_func_none));
+        } else {
+            customFuncListView.setText(list);
+        }
     }
 }

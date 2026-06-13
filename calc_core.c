@@ -89,7 +89,7 @@ EXPORT const char* get_last_error(void) { return g_error; }
 #define MAX_RPN    512
 
 typedef enum {
-    T_NUMBER, T_VARIABLE_X, T_VARIABLE_Y, T_OP, T_FUNC, T_LPAREN, T_RPAREN, T_COMMA, T_END
+    T_NUMBER, T_VARIABLE_X, T_VARIABLE_Y, T_OP, T_FUNC, T_LPAREN, T_RPAREN, T_COMMA, T_END, T_CUSTOM_FUNC
 } TokenKind;
 
 typedef enum {
@@ -102,6 +102,7 @@ typedef struct {
     double   val;
     char     op;
     FuncId   func;
+    int      custom_idx;  /* Index into g_custom_funcs for T_CUSTOM_FUNC */
 } Token;
 
 typedef struct {
@@ -109,7 +110,24 @@ typedef struct {
     double   num;
     char     op;
     FuncId   func;
+    int      custom_idx;  /* Index into g_custom_funcs for tag==5 */
 } RPN;
+
+/* Custom function registry - forward declarations */
+#define MAX_CUSTOM_FUNCS 64
+#define MAX_FUNC_NAME    32
+#define MAX_FUNC_BODY    512
+
+typedef struct {
+    char name[MAX_FUNC_NAME];
+    char body[MAX_FUNC_BODY];
+    int  defined;
+} CustomFunc;
+
+static CustomFunc g_custom_funcs[MAX_CUSTOM_FUNCS];
+static int g_custom_func_count = 0;
+static CustomFunc* custom_func_find(const char* name);
+static int parse_and_eval(const char* expr, double x, double y, double* result);
 
 static int tokenize(const char* s, Token* toks, int max_toks) {
     int n = 0;
@@ -155,7 +173,24 @@ static int tokenize(const char* s, Token* toks, int max_toks) {
             else if (!strcmp(name, "floor")) { toks[n].kind=T_FUNC; toks[n].func=F_FLOOR; n++; continue; }
             else if (!strcmp(name, "ceil"))  { toks[n].kind=T_FUNC; toks[n].func=F_CEIL;  n++; continue; }
             else if (!strcmp(name, "mod"))   { toks[n].kind=T_OP;   toks[n].op='%';        n++; continue; }
-            else { set_error("Unknown function"); return -1; }
+            else {
+                /* Check custom function registry (allow names up to 31 chars) */
+                char full_name[32] = {0};
+                int fi = i;
+                strncpy(full_name, name, 7);
+                while (isalpha(*s) && fi < 31) full_name[fi++] = *s++;
+                full_name[fi] = '\0';
+                CustomFunc* cf = custom_func_find(full_name);
+                if (cf) {
+                    toks[n].kind = T_CUSTOM_FUNC;
+                    toks[n].custom_idx = (int)(cf - g_custom_funcs);
+                    n++;
+                    continue;
+                } else {
+                    set_error("Unknown function");
+                    return -1;
+                }
+            }
         }
         switch (*s) {
             case '+': case '-': case '*': case '/': case '^': case '%':
@@ -202,6 +237,10 @@ static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
             if (sp >= MAX_STACK) { set_error("Expression too deeply nested"); return -1; }
             stack[sp++] = t;
             prev_was_op_or_lp = 1;
+        } else if (t.kind == T_CUSTOM_FUNC) {
+            if (sp >= MAX_STACK) { set_error("Expression too deeply nested"); return -1; }
+            stack[sp++] = t;
+            prev_was_op_or_lp = 1;
         } else if (t.kind == T_COMMA) {
             while (sp > 0 && stack[sp-1].kind != T_LPAREN) {
                 if (out_n >= max_out) { set_error("Expression too long"); return -1; }
@@ -210,6 +249,8 @@ static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
                     output[out_n].tag=2; output[out_n].op=top.op; out_n++;
                 } else if (top.kind == T_FUNC) {
                     output[out_n].tag=3; output[out_n].func=top.func; out_n++;
+                } else if (top.kind == T_CUSTOM_FUNC) {
+                    output[out_n].tag=5; output[out_n].custom_idx=top.custom_idx; out_n++;
                 }
             }
             prev_was_op_or_lp = 1;
@@ -234,6 +275,10 @@ static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
                     } else if (top.kind == T_FUNC) {
                         sp--;
                         output[out_n].tag=3; output[out_n].func=top.func; out_n++;
+                        continue;
+                    } else if (top.kind == T_CUSTOM_FUNC) {
+                        sp--;
+                        output[out_n].tag=5; output[out_n].custom_idx=top.custom_idx; out_n++;
                         continue;
                     }
                     break;
@@ -265,6 +310,10 @@ static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
                         sp--;
                         output[out_n].tag=3; output[out_n].func=top.func; out_n++;
                         continue;
+                    } else if (top.kind == T_CUSTOM_FUNC) {
+                        sp--;
+                        output[out_n].tag=5; output[out_n].custom_idx=top.custom_idx; out_n++;
+                        continue;
                     }
                     break;
                 }
@@ -284,6 +333,8 @@ static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
                     output[out_n].tag=2; output[out_n].op=top.op; out_n++;
                 } else if (top.kind == T_FUNC) {
                     output[out_n].tag=3; output[out_n].func=top.func; out_n++;
+                } else if (top.kind == T_CUSTOM_FUNC) {
+                    output[out_n].tag=5; output[out_n].custom_idx=top.custom_idx; out_n++;
                 }
             }
             if (t.kind == T_RPAREN && sp > 0 && stack[sp-1].kind == T_LPAREN)
@@ -306,6 +357,8 @@ static int shunt(Token* toks, int ntoks, RPN* output, int max_out) {
                         output[out_n].tag=2; output[out_n].op=top.op; out_n++;
                     } else if (top.kind == T_FUNC) {
                         output[out_n].tag=3; output[out_n].func=top.func; out_n++;
+                    } else if (top.kind == T_CUSTOM_FUNC) {
+                        output[out_n].tag=5; output[out_n].custom_idx=top.custom_idx; out_n++;
                     } else if (top.kind == T_LPAREN) {
                         set_error("Mismatched parentheses"); return -1;
                     }
@@ -398,6 +451,21 @@ static int eval_rpn(RPN* rpn, int nrpn, double x, double y, double* result) {
         } else if (t.tag == 3) {
             if (sp < 1) { set_error("Invalid expression"); return -1; }
             stack[sp-1] = apply_func(t.func, stack[sp-1]);
+        } else if (t.tag == 5) {
+            /* Custom function: substitute argument into body and evaluate */
+            if (sp < 1) { set_error("Invalid expression"); return -1; }
+            double arg_val = stack[--sp];
+            CustomFunc* cf = &g_custom_funcs[t.custom_idx];
+            /* Build expression: substitute x with (arg_val) in body */
+            char eval_expr[MAX_FUNC_BODY + 64];
+            snprintf(eval_expr, sizeof(eval_expr), "(%s)", cf->body);
+            /* Simple approach: re-evaluate the body with x = arg_val */
+            double body_result;
+            if (parse_and_eval(cf->body, arg_val, 0.0, &body_result) != 0) {
+                stack[sp++] = NAN;
+            } else {
+                stack[sp++] = body_result;
+            }
         }
     }
     if (sp != 1) { set_error("Invalid expression"); return -1; }
@@ -1314,6 +1382,94 @@ EXPORT int solve_system_2d(const char* f_expr, const char* g_expr,
     *out_y = y;
     set_error("solve_system_2d did not converge within max_iter iterations");
     return 0;
+}
+
+/* --------------------------------------------------------------------------
+ *  Custom Function Registry
+ *  Allows users to define named functions like f(x) = x^2 + 1
+ *  and reference them in expressions as f(expr).
+ * -------------------------------------------------------------------------- */
+
+EXPORT int custom_func_define(const char* name, const char* body) {
+    if (!name || !body) { set_error("NULL argument in custom_func_define"); return 0; }
+    clear_error();
+
+    size_t nlen = strlen(name);
+    if (nlen == 0 || nlen >= MAX_FUNC_NAME) { set_error("Function name too long (max 31)"); return 0; }
+    if (!isalpha(name[0])) { set_error("Function name must start with a letter"); return 0; }
+    for (size_t i = 0; i < nlen; i++) {
+        if (!isalnum(name[i])) { set_error("Function name must be alphanumeric"); return 0; }
+    }
+    if (strlen(body) >= MAX_FUNC_BODY) { set_error("Function body too long (max 511)"); return 0; }
+
+    /* Check if function already exists — update it */
+    for (int i = 0; i < g_custom_func_count; i++) {
+        if (g_custom_funcs[i].defined && !strcmp(g_custom_funcs[i].name, name)) {
+            strcpy(g_custom_funcs[i].body, body);
+            return 1;
+        }
+    }
+
+    /* Register new function */
+    if (g_custom_func_count >= MAX_CUSTOM_FUNCS) {
+        set_error("Too many custom functions (max 64)");
+        return 0;
+    }
+
+    CustomFunc* f = &g_custom_funcs[g_custom_func_count];
+    strcpy(f->name, name);
+    strcpy(f->body, body);
+    f->defined = 1;
+    g_custom_func_count++;
+    return 1;
+}
+
+EXPORT void custom_func_clear(void) {
+    for (int i = 0; i < g_custom_func_count; i++) {
+        g_custom_funcs[i].defined = 0;
+        g_custom_funcs[i].name[0] = '\0';
+        g_custom_funcs[i].body[0] = '\0';
+    }
+    g_custom_func_count = 0;
+    clear_error();
+}
+
+EXPORT int custom_func_delete(const char* name) {
+    if (!name) return 0;
+    clear_error();
+    for (int i = 0; i < g_custom_func_count; i++) {
+        if (g_custom_funcs[i].defined && !strcmp(g_custom_funcs[i].name, name)) {
+            g_custom_funcs[i].defined = 0;
+            return 1;
+        }
+    }
+    set_error("Function not found");
+    return 0;
+}
+
+static CustomFunc* custom_func_find(const char* name) {
+    for (int i = 0; i < g_custom_func_count; i++) {
+        if (g_custom_funcs[i].defined && !strcmp(g_custom_funcs[i].name, name)) {
+            return &g_custom_funcs[i];
+        }
+    }
+    return NULL;
+}
+
+EXPORT int custom_func_list(char* output, int max_out) {
+    if (!output || max_out <= 0) return 0;
+    clear_error();
+    int pos = 0;
+    for (int i = 0; i < g_custom_func_count && pos < max_out - 1; i++) {
+        if (g_custom_funcs[i].defined) {
+            int written = snprintf(output + pos, max_out - pos, "%s(x)=%s%s",
+                g_custom_funcs[i].name, g_custom_funcs[i].body,
+                (i < g_custom_func_count - 1) ? ";" : "");
+            if (written > 0) pos += written;
+        }
+    }
+    output[pos] = '\0';
+    return pos;
 }
 
 /* --------------------------------------------------------------------------

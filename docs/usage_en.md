@@ -323,6 +323,38 @@ The program shows three input fields:
 
 You can modify parameters in real-time and the curve updates dynamically!
 
+### 4.7 Custom Function Definition
+
+Define your own named functions that can be referenced in any expression.
+
+**Steps:**
+
+1. Enter a function name (e.g., `f`) in the name field
+2. Enter a function body expression using `x` as the variable (e.g., `x^2 + 1`)
+3. Click **"Define"**
+4. The function is now available for use anywhere
+
+**Using custom functions:**
+
+After defining `f(x) = x^2 + 1`, you can:
+- Evaluate: `f(2)` → 5
+- Plot: enter `f(x)` and click Plot
+- Compose: `f(sin(x))` → sin²(x) + 1
+- Chain: `f(f(x))` → (x²+1)² + 1
+
+**Management:**
+
+- **Delete**: Enter a function name and click "Delete" to remove it
+- **Clear All**: Click "Clear" to remove all custom functions
+- **List**: All defined functions are shown in the list area
+
+**Rules:**
+
+- Function names must start with a letter and contain only letters and digits
+- Maximum 64 custom functions
+- Function body can use any valid expression including built-in functions and constants
+- Re-defining the same name updates the existing function
+
 ---
 
 ## 5. 3D Function Plotting
