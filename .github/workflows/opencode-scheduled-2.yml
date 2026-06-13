@@ -33,7 +33,8 @@ jobs:
             ## 项目技术背景
             - Android：纯 Java + XML，AGP 8.2.0 / Gradle 8.4 / compileSdk 34 / minSdk 26
             - C 核心：`calc_core.c` → JNI `calc_core_jni.c` → `CalcEngine.java` (native methods)
-            - Python：`calc_bridge.py` (ctypes) → `super_calc_bridged.py` (Tkinter)
+            - Python：`calc_bridge.py` (ctypes) → `super_calc_bridged.py` (Tkinter, 6506 行)
+            - Python 原生模块：`locale_strings.py`（本地化，3523 行）、`stat_dist.py`（统计分布，635 行）、`finance_calc.py`（金融，312 行）、`probability_calc.py`（概率，227 行）
             - Web：`index.html` (4539 行，内联 CSS/JS)
             - 文档：`README.md`、`README_CN.md`、`docs/usage_en.md`、`docs/usage_cn.md`
             - 字符串：`strings.xml` (EN) 和 `strings-zh-rCN/strings.xml` (ZH)
@@ -64,6 +65,12 @@ jobs:
             - [ ] `Surface3DView.java`：Canvas 绘制前检查尺寸 > 0
             - [ ] 所有 `startActivity(intent)` 的 extra 在接收端有 null 检查和默认值
             - [ ] `onSaveInstanceState` 和恢复逻辑一致（如有）
+
+            ### Python 原生模块 `locale_strings.py`、`stat_dist.py`、`finance_calc.py`、`probability_calc.py`
+            - [ ] `locale_strings.py`：中英文 string key 一一对应，无遗漏
+            - [ ] `stat_dist.py`：PDF/CDF/PPF 在边界参数（df=0、p=0/1、x=±Inf）下的表现
+            - [ ] `finance_calc.py`：IRR 牛顿迭代收敛判断、除零保护
+            - [ ] `probability_calc.py`：阶乘/组合数在 n>170 时的溢出处理
 
             ### Python `calc_bridge.py`
             - [ ] 所有 ctypes 函数调用前检查 `self.lib` 是否加载成功
