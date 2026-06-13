@@ -651,4 +651,17 @@
     <string name="ode_compare_improved_euler">改进欧拉法（2阶）</string>
     <string name="ode_compare_midpoint">中点法（2阶）</string>
     <string name="ode_compare_rk4">RK4（4阶）</string>
+
+    <!-- Custom Function Definition -->
+    <string name="custom_func_title">自定义函数</string>
+    <string name="custom_func_hint">定义 f(x) = 表达式，然后在表达式中使用 f(...)</string>
+    <string name="custom_func_name_hint">函数名</string>
+    <string name="custom_func_body_hint">x^2 + 1</string>
+    <string name="custom_func_define">定义</string>
+    <string name="custom_func_clear_all">清除全部</string>
+    <string name="custom_func_none">暂无自定义函数</string>
+    <string name="custom_func_enter_name_body">请输入函数名和表达式。</string>
+    <string name="custom_func_error" formatted="false">自定义函数错误：%s</string>
+    <string name="custom_func_defined" formatted="false">已定义：%s(x) = %s</string>
+    <string name="custom_func_all_cleared">所有自定义函数已清除。</string>
 </resources>

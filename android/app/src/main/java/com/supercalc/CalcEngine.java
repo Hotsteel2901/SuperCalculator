@@ -142,4 +142,17 @@ public class CalcEngine {
     /** Convert a number string to binary, octal, decimal, and hexadecimal.
      *  Returns HashMap with "bin", "oct", "dec", "hex" keys. */
     public static native HashMap<String, String> convertBaseAll(String input, int fromBase);
+
+    // Custom function registry
+    /** Define a custom function: f(x) = body. Returns true on success. */
+    public static native boolean customFuncDefine(String name, String body);
+
+    /** Clear all custom function definitions. */
+    public static native void customFuncClear();
+
+    /** Delete a custom function by name. Returns true if found and deleted. */
+    public static native boolean customFuncDelete(String name);
+
+    /** List all custom functions as "name(x)=body;..." string. */
+    public static native String customFuncList();
 }

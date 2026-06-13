@@ -1326,6 +1326,7 @@
             <a href="#calendar" class="nav-link"><span>万年历</span></a>
             <a href="#finance-calculator" class="nav-link"><span>金融计算</span></a>
             <a href="#direction-field" class="nav-link"><span>方向场</span></a>
+            <a href="#custom-function" class="nav-link"><span>自定义函数</span></a>
             <a href="#ode-compare" class="nav-link"><span>数值方法对比</span></a>
             <a href="#interpolation" class="nav-link"><span>数据插值</span></a>
             <a href="#quick-start" class="nav-link"><span>快速开始</span></a>
@@ -1356,6 +1357,7 @@
         <a href="#calendar" class="mobile-nav-link">万年历</a>
         <a href="#finance-calculator" class="mobile-nav-link">金融计算</a>
         <a href="#direction-field" class="mobile-nav-link">方向场</a>
+        <a href="#custom-function" class="mobile-nav-link">自定义函数</a>
         <a href="#ode-compare" class="mobile-nav-link">数值方法对比</a>
         <a href="#interpolation" class="mobile-nav-link">数据插值</a>
         <a href="#quick-start" class="mobile-nav-link">快速开始</a>
@@ -2158,9 +2160,30 @@
             }
 
             /* ---- Numerical methods ---- */
+            function expandCustomFuncs(expr) {
+                var expanded = expr;
+                var safety = 0;
+                var changed = true;
+                while (changed && safety < 10) {
+                    changed = false;
+                    safety++;
+                    for (var name in customFuncs) {
+                        if (!customFuncs.hasOwnProperty(name)) continue;
+                        var regex = new RegExp('\\b' + name + '\\s*\\(([^)]+)\\)', 'g');
+                        var newExpanded = expanded.replace(regex, function(match, arg) {
+                            changed = true;
+                            return '(' + customFuncs[name].replace(/\bx\b/g, '(' + arg + ')') + ')';
+                        });
+                        expanded = newExpanded;
+                    }
+                }
+                return expanded;
+            }
+
             function evalExpr(expr,x,y){
                 try{
-                    return Function('x','y','with(Math){return ('+expr+')}')(x,y);
+                    var expanded = expandCustomFuncs(expr);
+                    return Function('x','y','with(Math){return ('+expanded+')}')(x,y);
                 }catch(e){return NaN;}
             }
 
@@ -3234,6 +3257,37 @@
                     <div style="position:relative;width:100%;border-radius:12px;overflow:hidden;border:1px solid var(--glass-border);background:rgba(17,17,27,0.5);">
                         <canvas id="dfCanvas" style="width:100%;height:320px;display:block;"></canvas>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="custom-function">
+            <div class="section-header">
+                <div class="section-label">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                    </svg>
+                    Custom Function
+                </div>
+                <h2 class="section-title">自定义函数</h2>
+                <p class="section-subtitle">定义 f(x) = 表达式，然后在计算器中使用 f(...)</p>
+            </div>
+            <div class="card glass reveal" style="max-width: 700px; margin: 0 auto;">
+                <div style="display:flex;flex-direction:column;gap:16px;">
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+                        <div style="flex:1;min-width:80px;">
+                            <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">函数名</label>
+                            <input type="text" id="cfName" value="" placeholder="f" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;">
+                        </div>
+                        <div style="font-size:18px;color:var(--text-subtle);padding-bottom:12px;">(x) =</div>
+                        <div style="flex:2;min-width:200px;">
+                            <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">表达式</label>
+                            <input type="text" id="cfBody" value="x^2 + 1" placeholder="x^2 + 1" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;">
+                        </div>
+                        <button class="base-btn" style="padding:12px 20px;" onclick="defineCustomFunction()">定义</button>
+                        <button class="base-btn" style="padding:12px 20px;background:rgba(243,139,168,0.15);border-color:rgba(243,139,168,0.3);" onclick="clearCustomFunctions()">清除</button>
+                    </div>
+                    <div id="cfList" style="font-size:13px;color:var(--text-subtle);font-family:monospace;min-height:20px;"></div>
                 </div>
             </div>
         </section>
@@ -4533,6 +4587,49 @@
                     resizeTimer = setTimeout(plotDirectionField, 150);
                 });
             }
+
+            // --- Custom Function Definition ---
+            var customFuncs = {};
+
+            function defineCustomFunction() {
+                var name = document.getElementById('cfName').value.trim();
+                var body = document.getElementById('cfBody').value.trim();
+                if (!name || !body) {
+                    alert(isZh ? '请输入函数名和表达式。' : 'Please enter both function name and body expression.');
+                    return;
+                }
+                if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(name)) {
+                    alert(isZh ? '函数名必须以字母开头，只含字母和数字。' : 'Function name must start with a letter and contain only letters and digits.');
+                    return;
+                }
+                customFuncs[name] = body;
+                document.getElementById('cfName').value = '';
+                refreshCustomFuncList();
+            }
+            window.defineCustomFunction = defineCustomFunction;
+
+            function clearCustomFunctions() {
+                customFuncs = {};
+                refreshCustomFuncList();
+            }
+            window.clearCustomFunctions = clearCustomFunctions;
+
+            function refreshCustomFuncList() {
+                var el = document.getElementById('cfList');
+                if (!el) return;
+                var keys = Object.keys(customFuncs);
+                if (keys.length === 0) {
+                    el.textContent = isZh ? '暂无自定义函数' : 'No custom functions defined';
+                } else {
+                    var parts = keys.map(function(k) { return k + '(x) = ' + customFuncs[k]; });
+                    el.textContent = (isZh ? '已定义：' : 'Defined: ') + parts.join('; ');
+                }
+            }
+            window.refreshCustomFuncList = refreshCustomFuncList;
+
+            // Initialize custom function list
+            refreshCustomFuncList();
+
         })();
     </script>
 </body>

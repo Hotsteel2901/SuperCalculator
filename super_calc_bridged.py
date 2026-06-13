@@ -1047,6 +1047,38 @@ class SuperCalcApp:
         ttk.Button(df_row4, text=t("btn_df_clear"),
                    command=lambda: self._var_df_ic.set("")).pack(side=tk.LEFT, padx=2)
 
+        # --- Custom Function Definition ---
+        frm_custom = ttk.LabelFrame(scroll_frame, text=t("sec_custom_func"),
+                                    style="Dark.TLabelframe")
+        frm_custom.pack(fill=tk.X, padx=8, pady=4)
+
+        cfr1 = ttk.Frame(frm_custom, style="Dark.TFrame")
+        cfr1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(cfr1, text=t("label_custom_func_name"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_cf_name = tk.StringVar(value="")
+        ttk.Entry(cfr1, textvariable=self._var_cf_name, width=10,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+        ttk.Label(cfr1, text="(", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(cfr1, text="x", style="Dark.TLabel").pack(side=tk.LEFT)
+        ttk.Label(cfr1, text=") =", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_cf_body = tk.StringVar(value="x^2")
+        ttk.Entry(cfr1, textvariable=self._var_cf_body, width=20,
+                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+
+        cfr2 = ttk.Frame(frm_custom, style="Dark.TFrame")
+        cfr2.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Button(cfr2, text=t("btn_custom_func_define"),
+                   command=self._on_custom_func_define).pack(side=tk.LEFT, padx=2)
+        ttk.Button(cfr2, text=t("btn_custom_func_delete"),
+                   command=self._on_custom_func_delete).pack(side=tk.LEFT, padx=2)
+        ttk.Button(cfr2, text=t("btn_custom_func_clear"),
+                   command=self._on_custom_func_clear).pack(side=tk.LEFT, padx=2)
+
+        self._custom_func_list_var = tk.StringVar(value="")
+        ttk.Label(cfr2, textvariable=self._custom_func_list_var,
+                  style="Dark.TLabel", wraplength=300).pack(side=tk.LEFT, padx=4)
+        self._refresh_custom_func_list()
+
         # --- Statistics Calculator ---
         frm_stats = ttk.LabelFrame(scroll_frame, text=t("sec_stats"),
                                     style="Dark.TLabelframe")
@@ -4041,6 +4073,46 @@ class SuperCalcApp:
         self.ax_2d.set_facecolor("#1e1e2e")
         self.canvas_2d.draw()
         self.status_var.set(t("status_df_plotted", n_arrows, n_arrows, n_solutions))
+
+    # ------------------------------------------------------------------
+    #  Custom Function Definition
+    # ------------------------------------------------------------------
+    def _on_custom_func_define(self):
+        name = self._var_cf_name.get().strip()
+        body = self._var_cf_body.get().strip()
+        if not name or not body:
+            messagebox.showwarning(t("err_input"), t("msg_custom_func_enter_name_body"))
+            return
+        ok = CalcEngine.custom_func_define(name, body)
+        if not ok:
+            err = CalcEngine.get_last_error()
+            messagebox.showerror(t("err_custom_func"),
+                                 t("msg_custom_func_error", err))
+            return
+        self._refresh_custom_func_list()
+        self._var_cf_name.set("")
+        self._var_cf_body.set("x^2")
+
+    def _on_custom_func_delete(self):
+        name = self._var_cf_name.get().strip()
+        if not name:
+            messagebox.showwarning(t("err_input"), t("msg_custom_func_enter_name"))
+            return
+        ok = CalcEngine.custom_func_delete(name)
+        if not ok:
+            messagebox.showinfo(t("info"), t("msg_custom_func_not_found"))
+        self._refresh_custom_func_list()
+
+    def _on_custom_func_clear(self):
+        CalcEngine.custom_func_clear()
+        self._refresh_custom_func_list()
+
+    def _refresh_custom_func_list(self):
+        lst = CalcEngine.custom_func_list()
+        if lst:
+            self._custom_func_list_var.set(t("label_custom_func_defined") + ": " + lst)
+        else:
+            self._custom_func_list_var.set(t("label_custom_func_none"))
 
     # ------------------------------------------------------------------
     #  Equation Solver

@@ -287,6 +287,19 @@ _lib.volume_shell.argtypes = [ctypes.c_char_p, ctypes.c_double,
                                ctypes.c_double, ctypes.c_double]
 _lib.volume_shell.restype = ctypes.c_double
 
+# Custom function registry
+_lib.custom_func_define.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
+_lib.custom_func_define.restype = ctypes.c_int
+
+_lib.custom_func_clear.argtypes = []
+_lib.custom_func_clear.restype = None
+
+_lib.custom_func_delete.argtypes = [ctypes.c_char_p]
+_lib.custom_func_delete.restype = ctypes.c_int
+
+_lib.custom_func_list.argtypes = [ctypes.POINTER(ctypes.c_char), ctypes.c_int]
+_lib.custom_func_list.restype = ctypes.c_int
+
 
 def _is_invalid(x: float) -> bool:
     try:
@@ -1372,3 +1385,32 @@ class CalcEngine:
             }
         except Exception:
             return None
+
+    # Custom function registry
+    @staticmethod
+    def custom_func_define(name: str, body: str) -> bool:
+        """Define a custom function: f(x) = body.
+        
+        After definition, the function can be used in any expression as name(expr).
+        Returns True on success, False on error.
+        """
+        result = _lib.custom_func_define(name.encode("utf-8"), body.encode("utf-8"))
+        return result != 0
+
+    @staticmethod
+    def custom_func_clear() -> None:
+        """Clear all custom function definitions."""
+        _lib.custom_func_clear()
+
+    @staticmethod
+    def custom_func_delete(name: str) -> bool:
+        """Delete a custom function by name. Returns True if found and deleted."""
+        result = _lib.custom_func_delete(name.encode("utf-8"))
+        return result != 0
+
+    @staticmethod
+    def custom_func_list() -> str:
+        """List all custom functions as 'name(x)=body;...' string."""
+        buf = ctypes.create_string_buffer(4096)
+        _lib.custom_func_list(buf, 4096)
+        return buf.value.decode("utf-8") if buf.value else ""
