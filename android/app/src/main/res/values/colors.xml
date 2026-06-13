@@ -11,6 +11,13 @@
     <color name="glass_card_border">#30FFFFFF</color>
     <color name="glass_card_border_focused">#50FFFFFF</color>
 
+    <!-- Liquid Glass glow colors -->
+    <color name="glass_glow_green">#4000E676</color>
+    <color name="glass_glow_cyan">#4000E5FF</color>
+    <color name="glass_glow_indigo">#40536DFE</color>
+    <color name="glass_glow_amber">#40FFD740</color>
+    <color name="glass_glow_pink">#40EA80FC</color>
+
     <!-- Spectral accent colors - vibrant glass tones -->
     <color name="spectral_evaluate">#FF00E676</color>
     <color name="spectral_derivative">#FF00E5FF</color>

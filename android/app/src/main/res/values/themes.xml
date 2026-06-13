@@ -21,11 +21,9 @@
 
     <!-- Liquid Glass Card -->
     <style name="Widget.SuperCalc.Card" parent="Widget.Material3.CardView.Elevated">
-        <item name="cardBackgroundColor">@color/glass_card_bg</item>
-        <item name="strokeColor">@color/glass_card_border</item>
-        <item name="strokeWidth">1dp</item>
-        <item name="cardCornerRadius">20dp</item>
         <item name="cardElevation">0dp</item>
+        <item name="cardCornerRadius">20dp</item>
+        <item name="strokeWidth">0dp</item>
         <item name="rippleColor">@color/spectral_evaluate</item>
     </style>
 
@@ -39,5 +37,125 @@
         <item name="boxCornerRadiusBottomStart">12dp</item>
         <item name="boxCornerRadiusBottomEnd">12dp</item>
         <item name="android:backgroundTint">#18FFFFFF</item>
+    </style>
+
+    <!-- Liquid Glass Button - Green (Evaluate, Plot, etc.) -->
+    <style name="Widget.SuperCalc.Button.Green" parent="Widget.Material3.Button">
+        <item name="android:background">@drawable/bg_liquid_glass_green</item>
+        <item name="android:textColor">@color/spectral_evaluate</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="cornerRadius">14dp</item>
+        <item name="elevation">0dp</item>
+        <item name="strokeWidth">0dp</item>
+        <item name="rippleColor">@color/spectral_evaluate</item>
+    </style>
+
+    <!-- Liquid Glass Button - Cyan (Derivative, Limit) -->
+    <style name="Widget.SuperCalc.Button.Cyan" parent="Widget.Material3.Button">
+        <item name="android:background">@drawable/bg_liquid_glass_cyan</item>
+        <item name="android:textColor">@color/spectral_derivative</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="cornerRadius">14dp</item>
+        <item name="elevation">0dp</item>
+        <item name="strokeWidth">0dp</item>
+        <item name="rippleColor">@color/spectral_derivative</item>
+    </style>
+
+    <!-- Liquid Glass Button - Indigo (Normal, 2nd Derivative) -->
+    <style name="Widget.SuperCalc.Button.Indigo" parent="Widget.Material3.Button">
+        <item name="android:background">@drawable/bg_liquid_glass_indigo</item>
+        <item name="android:textColor">@color/spectral_derivative2</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="cornerRadius">14dp</item>
+        <item name="elevation">0dp</item>
+        <item name="strokeWidth">0dp</item>
+        <item name="rippleColor">@color/spectral_derivative2</item>
+    </style>
+
+    <!-- Liquid Glass Button - Amber (Integrate, Min/Max) -->
+    <style name="Widget.SuperCalc.Button.Amber" parent="Widget.Material3.Button">
+        <item name="android:background">@drawable/bg_liquid_glass_amber</item>
+        <item name="android:textColor">@color/spectral_integrate</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="cornerRadius">14dp</item>
+        <item name="elevation">0dp</item>
+        <item name="strokeWidth">0dp</item>
+        <item name="rippleColor">@color/spectral_integrate</item>
+    </style>
+
+    <!-- Liquid Glass Button - Pink (Solve, Find Max) -->
+    <style name="Widget.SuperCalc.Button.Pink" parent="Widget.Material3.Button">
+        <item name="android:background">@drawable/bg_liquid_glass_pink</item>
+        <item name="android:textColor">@color/spectral_solve</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="cornerRadius">14dp</item>
+        <item name="elevation">0dp</item>
+        <item name="strokeWidth">0dp</item>
+        <item name="rippleColor">@color/spectral_solve</item>
+    </style>
+
+    <!-- Liquid Glass Button - Neutral (Clear, Back) -->
+    <style name="Widget.SuperCalc.Button.Neutral" parent="Widget.Material3.Button">
+        <item name="android:background">@drawable/bg_liquid_glass_neutral</item>
+        <item name="android:textColor">@color/m3_on_surface_variant</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="cornerRadius">14dp</item>
+        <item name="elevation">0dp</item>
+        <item name="strokeWidth">0dp</item>
+        <item name="rippleColor">@color/m3_on_surface_variant</item>
+    </style>
+
+    <!-- Liquid Glass Button - Primary (Main action) -->
+    <style name="Widget.SuperCalc.Button.Primary" parent="Widget.Material3.Button">
+        <item name="android:background">@drawable/bg_liquid_glass_primary</item>
+        <item name="android:textColor">@color/m3_primary</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="cornerRadius">14dp</item>
+        <item name="elevation">0dp</item>
+        <item name="strokeWidth">0dp</item>
+        <item name="rippleColor">@color/m3_primary</item>
+    </style>
+
+    <!-- Liquid Glass Small Button - Green -->
+    <style name="Widget.SuperCalc.Button.Small.Green" parent="Widget.SuperCalc.Button.Green">
+        <item name="android:textSize">12sp</item>
+        <item name="cornerRadius">10dp</item>
+    </style>
+
+    <!-- Liquid Glass Small Button - Cyan -->
+    <style name="Widget.SuperCalc.Button.Small.Cyan" parent="Widget.SuperCalc.Button.Cyan">
+        <item name="android:textSize">12sp</item>
+        <item name="cornerRadius">10dp</item>
+    </style>
+
+    <!-- Liquid Glass Small Button - Indigo -->
+    <style name="Widget.SuperCalc.Button.Small.Indigo" parent="Widget.SuperCalc.Button.Indigo">
+        <item name="android:textSize">12sp</item>
+        <item name="cornerRadius">10dp</item>
+    </style>
+
+    <!-- Liquid Glass Small Button - Amber -->
+    <style name="Widget.SuperCalc.Button.Small.Amber" parent="Widget.SuperCalc.Button.Amber">
+        <item name="android:textSize">12sp</item>
+        <item name="cornerRadius">10dp</item>
+    </style>
+
+    <!-- Liquid Glass Small Button - Pink -->
+    <style name="Widget.SuperCalc.Button.Small.Pink" parent="Widget.SuperCalc.Button.Pink">
+        <item name="android:textSize">12sp</item>
+        <item name="cornerRadius">10dp</item>
+    </style>
+
+    <!-- Liquid Glass Small Button - Neutral -->
+    <style name="Widget.SuperCalc.Button.Small.Neutral" parent="Widget.SuperCalc.Button.Neutral">
+        <item name="android:textSize">12sp</item>
+        <item name="cornerRadius">10dp</item>
     </style>
 </resources>

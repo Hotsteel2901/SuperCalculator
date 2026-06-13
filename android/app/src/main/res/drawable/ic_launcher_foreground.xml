@@ -4,27 +4,56 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <group android:scaleX="2.5"
-        android:scaleY="2.5"
-        android:translateX="10"
-        android:translateY="10">
-        <path
-            android:fillColor="#FF00E676"
-            android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM12,20c-4.42,0 -8,-3.58 -8,-8s3.58,-8 8,-8 8,3.58 8,8 -3.58,8 -8,8z"/>
-        <path
-            android:fillColor="#FF00BCD4"
-            android:pathData="M10,8h2v2h-2z"/>
-        <path
-            android:fillColor="#FFE040FB"
-            android:pathData="M14,8h2v2h-2z"/>
-        <path
-            android:fillColor="#FFFFC107"
-            android:pathData="M10,12h2v2h-2z"/>
-        <path
-            android:fillColor="#FF448AFF"
-            android:pathData="M14,12h2v2h-2z"/>
-        <path
-            android:fillColor="#FF6EC6FF"
-            android:pathData="M12,14l-3,3 1.41,1.41L12,16.83l1.59,1.58L15,17z"/>
+    <group android:scaleX="2.4"
+        android:scaleY="2.4"
+        android:translateX="12"
+        android:translateY="12">
+        <!-- Outer glass circle -->
+        <path android:fillColor="#18FFFFFF"
+            android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2z"/>
+        <!-- Glass border glow -->
+        <path android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2z"
+            android:strokeWidth="0.6"
+            android:strokeColor="#50FFFFFF"
+            android:fillColor="#00000000"/>
+        <!-- Inner glass highlight -->
+        <path android:fillColor="#10FFFFFF"
+            android:pathData="M12,3.5C7.31,3.5 3.5,7.31 3.5,12s3.81,8.5 8.5,8.5 8.5,-3.81 8.5,-8.5S16.69,3.5 12,3.5z"/>
+        <!-- Glass grid cells -->
+        <!-- Top-left cell - cyan glow -->
+        <path android:fillColor="#FF00E5FF"
+            android:pathData="M8.5,8.5h2.5v2.5h-2.5z"/>
+        <path android:fillColor="#00000000"
+            android:strokeWidth="0.2"
+            android:strokeColor="#6000E5FF"
+            android:pathData="M8.5,8.5h2.5v2.5h-2.5z"/>
+        <!-- Top-right cell - pink glow -->
+        <path android:fillColor="#FFE040FB"
+            android:pathData="M13,8.5h2.5v2.5H13z"/>
+        <path android:fillColor="#00000000"
+            android:strokeWidth="0.2"
+            android:strokeColor="#60E040FB"
+            android:pathData="M13,8.5h2.5v2.5H13z"/>
+        <!-- Bottom-left cell - amber glow -->
+        <path android:fillColor="#FFFFC107"
+            android:pathData="M8.5,13h2.5v2.5h-2.5z"/>
+        <path android:fillColor="#00000000"
+            android:strokeWidth="0.2"
+            android:strokeColor="#60FFC107"
+            android:pathData="M8.5,13h2.5v2.5h-2.5z"/>
+        <!-- Bottom-right cell - blue glow -->
+        <path android:fillColor="#FF448AFF"
+            android:pathData="M13,13h2.5v2.5H13z"/>
+        <path android:fillColor="#00000000"
+            android:strokeWidth="0.2"
+            android:strokeColor="#60448AFF"
+            android:pathData="M13,13h2.5v2.5H13z"/>
+        <!-- Arrow - green with glow -->
+        <path android:fillColor="#FF00E676"
+            android:pathData="M12,15.5l-3,3 1.41,1.41L12,18.33l1.59,1.58L15,18.5z"/>
+        <path android:fillColor="#00000000"
+            android:strokeWidth="0.3"
+            android:strokeColor="#8000E676"
+            android:pathData="M12,15l-3.5,3.5 1.76,1.76L12,17.58l1.74,1.74L15.5,18.5z"/>
     </group>
 </vector>

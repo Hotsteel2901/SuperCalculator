@@ -86,38 +86,38 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_add_curve"
-                            style="@style/Widget.Material3.Button.TonalButton"
+                            style="@style/Widget.SuperCalc.Button.Green"
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="42dp"
                             android:text="@string/add_curve"
                             android:fontFamily="@font/jetbrains_mono"
                             android:textSize="12sp"
-                            app:cornerRadius="12dp"
+                            app:cornerRadius="14dp"
                             android:layout_marginEnd="4dp" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_remove_curve"
-                            style="@style/Widget.Material3.Button.TonalButton"
+                            style="@style/Widget.SuperCalc.Button.Green"
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="42dp"
                             android:text="@string/remove_curve"
                             android:fontFamily="@font/jetbrains_mono"
                             android:textSize="12sp"
-                            app:cornerRadius="12dp"
+                            app:cornerRadius="14dp"
                             android:layout_marginEnd="4dp" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_find_intersections"
-                            style="@style/Widget.Material3.Button.TonalButton"
+                            style="@style/Widget.SuperCalc.Button.Green"
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="42dp"
                             android:text="@string/intersect"
                             android:fontFamily="@font/jetbrains_mono"
                             android:textSize="12sp"
-                            app:cornerRadius="12dp"
+                            app:cornerRadius="14dp"
                             android:layout_marginStart="4dp" />
 
                     </LinearLayout>
@@ -247,13 +247,13 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_plot_all"
-                        style="@style/Widget.Material3.Button"
+                        style="@style/Widget.SuperCalc.Button.Primary"
                         android:layout_width="match_parent"
                         android:layout_height="56dp"
                         android:text="@string/plot_all_curves"
                         android:fontFamily="@font/jetbrains_mono"
                         android:textSize="14sp"
-                        app:cornerRadius="12dp"
+                        app:cornerRadius="14dp"
                         android:layout_marginTop="12dp" />
 
                 </LinearLayout>
@@ -290,14 +290,14 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_zoom"
-                            style="@style/Widget.Material3.Button.TonalButton"
+                            style="@style/Widget.SuperCalc.Button.Green"
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="42dp"
                             android:text="@string/full_screen"
                             android:fontFamily="@font/jetbrains_mono"
                             android:textSize="12sp"
-                            app:cornerRadius="12dp" />
+                            app:cornerRadius="14dp" />
 
                     </LinearLayout>
 
@@ -312,13 +312,13 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_back"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+                style="@style/Widget.SuperCalc.Button.Neutral"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:text="@string/back_to_calc"
                 android:fontFamily="@font/jetbrains_mono"
                 android:textSize="14sp"
-                app:cornerRadius="12dp"
+                app:cornerRadius="14dp"
                 android:layout_marginBottom="24dp" />
 
         </LinearLayout>
