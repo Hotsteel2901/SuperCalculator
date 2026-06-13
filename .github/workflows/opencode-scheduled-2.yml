@@ -70,6 +70,23 @@ jobs:
             - [ ] `c_char_p` 返回值用 `decode('utf-8')` 处理 None
             - [ ] numpy 数组类型与 C 函数参数匹配（float64 → c_double）
 
+            ### Python GUI `super_calc_bridged.py`
+            - [ ] tkinter 控件创建后有 `pack()`/`grid()`/`place()` 调用
+            - [ ] `StringVar`/`DoubleVar` 在函数内使用时生命期不随函数结束销毁
+            - [ ] matplotlib Figure/Canvas 正确关闭和清理，避免内存泄漏
+            - [ ] 用户输入字符串直接传给 C 核心前做基本合法性检查
+            - [ ] 按钮事件绑定无重复（不会一个按钮触发两次）
+
+            ### Python 本地化 `locale_strings.py`
+            - [ ] 新增字符串在 `strings_en` 和 `strings_zh` 两个字典中都有对应条目
+            - [ ] `t(key)` 调用传入的 key 在字典中存在，避免 KeyError
+            - [ ] 格式化字符串中的 `%s`/`%d`/`%.4g` 占位符中英一致
+
+            ### Python 其他模块
+            - [ ] `stat_dist.py`：分布函数在边界输入（df=0、x<0 等）有检查
+            - [ ] `finance_calc.py`：利率/期数非负检查，IRR 迭代有收敛保护
+            - [ ] `probability_calc.py`：组合数/排列数的参数范围检查（n>=k, n>=0）
+
             ### Web `index.html`
             - [ ] JS 函数中 DOM 查询结果（`querySelector`/`getElementById`）有 null 检查
             - [ ] 移动端触摸事件和桌面端点击事件同时处理
@@ -78,7 +95,8 @@ jobs:
 
             ### 跨平台一致性
             - [ ] C/Python/Android 三端同一功能使用相同的数值方法和默认参数
-            - [ ] 字符串资源的 key 在英文和中文 XML 中一一对应
+            - [ ] Android `strings.xml` 和 `strings-zh-rCN/strings.xml` 的 key 一一对应
+            - [ ] Python `locale_strings.py` 中 `strings_en` 和 `strings_zh` 的 key 一一对应
 
             ## 修复原则
             - 最小改动：只修 bug，不重构

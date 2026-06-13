@@ -56,18 +56,20 @@ jobs:
             2. **JNI 桥接** `calc_core_jni.c`：添加 JNI 函数，函数名格式 `Java_com_supercalc_CalcEngine_<方法名>`，正确处理 jstring 编码/释放
             3. **Java 引擎** `CalcEngine.java`：声明 `static native` 方法，签名与 JNI 完全匹配
             4. **Android UI** `CalcActivity.java`：在对应功能区域添加 MaterialCardView 卡片 + MaterialButton 按钮，绑定点击事件
-            5. **Python 桥接** `calc_bridge.py`：在 `CalcEngine` 类中添加 ctypes 包装方法
-            6. **Python GUI** `super_calc_bridged.py`：在 `main_window` 类中添加 UI 控件和事件处理
-            7. **Web 前端** `index.html`：如果是面向用户的功能，在对应区域添加交互演示
-            8. **字符串资源**：在 `strings.xml` 和 `strings-zh-rCN/strings.xml` 中同步添加所有新字符串
-            9. **文档**：更新 `README.md`、`README_CN.md`、`docs/usage_en.md`、`docs/usage_cn.md`
+            5. **Python 桥接** `calc_bridge.py`：在 `CalcEngine` 类中添加 ctypes 包装方法，注意 `c_char_p` 返回值 decode 和 None 处理
+            6. **Python GUI** `super_calc_bridged.py`：在 `main_window` 类中添加 UI 控件和事件处理，遵循现有 tkinter 模式
+            7. **本地化** `locale_strings.py`：在对应的功能 section 中同步添加中英文字符串，格式与现有条目一致
+            8. **Web 前端** `index.html`：如果是面向用户的功能，在对应区域添加交互演示
+            9. **Android 字符串资源**：在 `strings.xml` 和 `strings-zh-rCN/strings.xml` 中同步添加所有新字符串
+            10. **文档**：更新 `README.md`、`README_CN.md`、`docs/usage_en.md`、`docs/usage_cn.md`
 
             ### 第 3 步：质量检查
             - JNI 函数签名与 Java `native` 声明完全匹配（参数数量、类型、返回类型）
             - C 代码无内存泄漏（`GetStringUTFChars` 对应 `ReleaseStringUTFChars`）
             - Android findViewById 后有空值检查
             - Web 端在移动设备和桌面端都能正常显示
-            - 所有新增字符串都有英文和中文两份
+            - 所有新增字符串在 Android（strings.xml ×2）、Python（locale_strings.py ×2）都有中英两份
+            - Python GUI 新增的 `t(key)` 调用确保 key 在 `locale_strings.py` 中存在
             - ProGuard 规则 `proguard-rules.pro` 如有需要则更新
             - 不删除、不重命名、不破坏任何已有功能
 
