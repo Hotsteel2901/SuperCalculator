@@ -287,18 +287,20 @@ class SuperCalcApp:
     def _on_main_close(self):
         """Clean up child plot windows before exiting."""
         import matplotlib.pyplot as plt
-        if self.window_2d is not None and self.window_2d.winfo_exists():
-            try: plt.close(self.fig_2d)
-            except Exception: pass
-            self.window_2d.destroy()
-        if self.window_3d is not None and self.window_3d.winfo_exists():
-            try: plt.close(self.fig_3d)
-            except Exception: pass
-            self.window_3d.destroy()
-        if self.window_fft is not None and self.window_fft.winfo_exists():
-            try: plt.close(self.fig_fft)
-            except Exception: pass
-            self.window_fft.destroy()
+        for fig, window in [
+            (self.fig_2d, self.window_2d),
+            (self.fig_3d, self.window_3d),
+            (self.fig_fft, self.window_fft),
+        ]:
+            if window is not None and window.winfo_exists():
+                try:
+                    plt.close(fig)
+                except Exception:
+                    pass
+                window.destroy()
+        self.window_2d = self.fig_2d = self.ax_2d = self.canvas_2d = self.toolbar_2d = None
+        self.window_3d = self.fig_3d = self.ax_3d = self.canvas_3d = self.toolbar_3d = None
+        self.window_fft = self.fig_fft = self.ax_fft_amp = self.ax_fft_phase = self.canvas_fft = self.toolbar_fft = None
         self.root.destroy()
 
     # ------------------------------------------------------------------
@@ -2441,7 +2443,7 @@ class SuperCalcApp:
         """Show or hide parametric input fields."""
         if self._var_parametric.get():
             for child in self._frame_param_inputs.winfo_children():
-                child.pack()
+                child.pack(fill=tk.X, pady=2)
         else:
             for child in self._frame_param_inputs.winfo_children():
                 child.pack_forget()
@@ -2462,7 +2464,7 @@ class SuperCalcApp:
         """Show or hide polar input fields."""
         if self._var_polar.get():
             for child in self._frame_polar_inputs.winfo_children():
-                child.pack()
+                child.pack(fill=tk.X, pady=2)
         else:
             for child in self._frame_polar_inputs.winfo_children():
                 child.pack_forget()
@@ -2482,7 +2484,7 @@ class SuperCalcApp:
         """Show or hide implicit input fields."""
         if self._var_implicit.get():
             for child in self._frame_implicit_inputs.winfo_children():
-                child.pack()
+                child.pack(fill=tk.X, pady=2)
         else:
             for child in self._frame_implicit_inputs.winfo_children():
                 child.pack_forget()
@@ -5983,8 +5985,7 @@ class SuperCalcApp:
             self._frame_prob_hypergeo,
         ]
         for f in all_frames:
-            for child in f.winfo_children():
-                child.pack_forget()
+            f.pack_forget()
 
         mode_to_frame = {
             "combo": self._frame_prob_combo,
@@ -5997,8 +5998,7 @@ class SuperCalcApp:
             "hypergeo": self._frame_prob_hypergeo,
         }
         target = mode_to_frame.get(mode, self._frame_prob_combo)
-        for child in target.winfo_children():
-            child.pack(fill=tk.X, pady=2)
+        target.pack(fill=tk.X, padx=6, pady=2)
 
     def _prob_parse_int(self, val: str, name: str = "n") -> Optional[int]:
         try:
@@ -6192,8 +6192,7 @@ class SuperCalcApp:
             self._frame_fin_retire,
         ]
         for f in all_frames:
-            for child in f.winfo_children():
-                child.pack_forget()
+            f.pack_forget()
         mode_to_frame = {
             "loan": self._frame_fin_loan,
             "compound": self._frame_fin_compound,
@@ -6203,8 +6202,7 @@ class SuperCalcApp:
             "retirement": self._frame_fin_retire,
         }
         target = mode_to_frame.get(mode, self._frame_fin_loan)
-        for child in target.winfo_children():
-            child.pack(fill=tk.X, pady=2)
+        target.pack(fill=tk.X, padx=6, pady=2)
 
     def _fin_parse_float(self, s: str, name: str) -> Optional[float]:
         try:
