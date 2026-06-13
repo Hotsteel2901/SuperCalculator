@@ -7,7 +7,13 @@ import java.util.HashMap;
  * All methods are static — no instance needed.
  */
 public class CalcEngine {
-    static { System.loadLibrary("calc_core"); }
+    static {
+        try {
+            System.loadLibrary("calc_core");
+        } catch (UnsatisfiedLinkError e) {
+            throw new RuntimeException("Failed to load calc_core native library", e);
+        }
+    }
 
     /** Evaluate f(x) at a point. Returns NaN on error. */
     public static native double evaluate(String expr, double x);
