@@ -125,12 +125,22 @@ def binomial_probability(n: int, k: int, p: float) -> Optional[float]:
     """Compute P(X = k) for Binomial(n, p).
     
     P(X = k) = C(n, k) * p^k * (1-p)^(n-k)
+    Uses log-space computation to avoid overflow for large n.
     """
     if n < 0 or k < 0 or k > n or n != int(n) or k != int(k):
         return None
     if not (0 <= p <= 1):
         return None
     n, k = int(n), int(k)
+    if p == 0.0:
+        return 1.0 if k == 0 else 0.0
+    if p == 1.0:
+        return 1.0 if k == n else 0.0
+    # Use log-space for large n to avoid overflow
+    if n > 170:
+        log_result = (math.lgamma(n + 1) - math.lgamma(k + 1) - math.lgamma(n - k + 1)
+                     + k * math.log(p) + (n - k) * math.log(1 - p))
+        return math.exp(log_result)
     return float(math.comb(n, k)) * (p ** k) * ((1 - p) ** (n - k))
 
 
@@ -143,8 +153,10 @@ def binomial_cdf(n: int, k: int, p: float) -> Optional[float]:
     n, k = int(n), int(k)
     total = 0.0
     for i in range(min(k, n) + 1):
-        total += float(math.comb(n, i)) * (p ** i) * ((1 - p) ** (n - i))
-    return total
+        pbm = binomial_probability(n, i, p)
+        if pbm is not None:
+            total += pbm
+    return min(total, 1.0)
 
 
 def binomial_mean(n: int, p: float) -> Optional[float]:
