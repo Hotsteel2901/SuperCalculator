@@ -2149,6 +2149,7 @@
         /* ---- ODE Method Comparison Web Demo ---- */
         (function(){
             var canvas=document.getElementById('odeCompareCanvas');
+            if(!canvas) return;
             var ctx=canvas.getContext('2d');
             var dpr=window.devicePixelRatio||1;
 
@@ -2390,6 +2391,7 @@
         /* ---- Interpolation Web Demo ---- */
         (function(){
             var canvas=document.getElementById('interpWebCanvas');
+            if(!canvas) return;
             var ctx=canvas.getContext('2d');
             var points=[];
 
@@ -3370,6 +3372,8 @@
             var scrollTopBtn = document.getElementById('scrollTop');
             var body = document.body;
 
+            if (!themeToggle || !themeIcon || !menuToggle || !menuIcon || !mobileNav || !scrollTopBtn) return;
+
             var isDarkMode = true;
 
             var currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
@@ -4043,6 +4047,9 @@
                     if (Math.abs(dpv) < 1e-18) break;
                     var rNew = rGuess - pv / dpv;
                     if (Math.abs(rNew - rGuess) < 1e-10) { irrVal = rNew * 100; break; }
+                    // Clamp step to prevent divergence
+                    if (rNew < -0.99) rNew = -0.99;
+                    else if (rNew > 10.0) rNew = 10.0;
                     rGuess = rNew;
                 }
                 if (isNaN(irrVal) && Math.abs(pv) < 0.01) irrVal = rGuess * 100;
@@ -4376,7 +4383,9 @@
                 if (type === 'linear') {
                     var sx=0,sy=0,sxy=0,sxx=0;
                     for(var i=0;i<n;i++){sx+=xs[i];sy+=ys[i];sxy+=xs[i]*ys[i];sxx+=xs[i]*xs[i];}
-                    var b=(n*sxy-sx*sy)/(n*sxx-sx*sx);
+                    var denom=n*sxx-sx*sx;
+                    if(Math.abs(denom)<1e-15) return null;
+                    var b=(n*sxy-sx*sy)/denom;
                     var a=(sy-b*sx)/n;
                     return {p:[b,a], eq:'y = ' + b.toFixed(4) + 'x + ' + a.toFixed(4)};
                 } else if (type === 'quadratic') {
@@ -4390,7 +4399,9 @@
                     var slnx=0,sy=0,slnx2=0,sylnx=0,cnt=0;
                     for(var i=0;i<n;i++){if(ys[i]>0){var lnx=Math.log(xs[i]);slnx+=lnx;sy+=Math.log(ys[i]);slnx2+=lnx*lnx;sylnx+=Math.log(ys[i])*lnx;cnt++;}}
                     if(cnt<2) return null;
-                    var b=(cnt*sylnx-slnx*sy)/(cnt*slnx2-slnx*slnx);
+                    var edenom=cnt*slnx2-slnx*slnx;
+                    if(Math.abs(edenom)<1e-15) return null;
+                    var b=(cnt*sylnx-slnx*sy)/edenom;
                     var a=(sy-b*slnx)/cnt;
                     return {p:[Math.exp(a),b], eq:'y = '+Math.exp(a).toFixed(4)+'·e^('+b.toFixed(4)+'x)'};
                 }
