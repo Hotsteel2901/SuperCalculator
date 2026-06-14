@@ -3392,6 +3392,28 @@ STRINGS = {
         "zh": "自定义函数错误",
     },
 
+    # --- Calculation History ---
+    "sec_history": {
+        "en": "Calculation History",
+        "zh": "计算历史",
+    },
+    "label_history_empty": {
+        "en": "No history entries",
+        "zh": "暂无历史记录",
+    },
+    "label_history_entries": {
+        "en": "Recent calculations",
+        "zh": "最近的计算",
+    },
+    "btn_history_clear": {
+        "en": "Clear History",
+        "zh": "清除历史",
+    },
+    "btn_history_use_last": {
+        "en": "Use Last Expression",
+        "zh": "使用上次表达式",
+    },
+
     "sec_volume_presets": {
         "en": "Volume Presets",
         "zh": "体积预设",

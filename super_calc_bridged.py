@@ -1081,6 +1081,26 @@ class SuperCalcApp:
                   style="Dark.TLabel", wraplength=300).pack(side=tk.LEFT, padx=4)
         self._refresh_custom_func_list()
 
+        # --- Calculation History ---
+        frm_history = ttk.LabelFrame(scroll_frame, text=t("sec_history"),
+                                     style="Dark.TLabelframe")
+        frm_history.pack(fill=tk.X, padx=8, pady=4)
+
+        hfr1 = ttk.Frame(frm_history, style="Dark.TFrame")
+        hfr1.pack(fill=tk.X, padx=6, pady=2)
+
+        self._history_list_var = tk.StringVar(value="")
+        ttk.Label(hfr1, textvariable=self._history_list_var,
+                  style="Dark.TLabel", wraplength=400, justify=tk.LEFT).pack(anchor=tk.W, padx=2)
+
+        hfr2 = ttk.Frame(frm_history, style="Dark.TFrame")
+        hfr2.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Button(hfr2, text=t("btn_history_clear"),
+                   command=self._on_history_clear).pack(side=tk.LEFT, padx=2)
+        ttk.Button(hfr2, text=t("btn_history_use_last"),
+                   command=self._on_history_use_last).pack(side=tk.LEFT, padx=2)
+        self._refresh_history_list()
+
         # --- Statistics Calculator ---
         frm_stats = ttk.LabelFrame(scroll_frame, text=t("sec_stats"),
                                     style="Dark.TLabelframe")
@@ -3406,6 +3426,7 @@ class SuperCalcApp:
             f"f(x) = {expr}\n"
             f"f'({x_val}) = {result:.10g}")
         self.status_var.set(t("status_deriv_result", x_val, f"{result:.10g}"))
+        self.record_history(f"d/dx({expr}) @ x={x_val}", result)
 
     def _on_derivative2(self):
         expr = self._get_active_expression()
@@ -3449,6 +3470,7 @@ class SuperCalcApp:
             f"f(x) = {expr}\n"
             f"Integrate [{a}, {b}] f(x) dx = {result:.10g}")
         self.status_var.set(t("status_integrate", a, b, f"{result:.10g}"))
+        self.record_history(f"∫({expr}) [{a},{b}]", result)
 
     def _on_arc_length(self):
         expr = self._get_active_expression()
@@ -4117,6 +4139,40 @@ class SuperCalcApp:
             self._custom_func_list_var.set(t("label_custom_func_none"))
 
     # ------------------------------------------------------------------
+    #  Calculation History
+    # ------------------------------------------------------------------
+
+    def record_history(self, expr: str, result: float) -> None:
+        """Record a calculation in history and refresh the display."""
+        CalcEngine.history_add(expr, result)
+        self._refresh_history_list()
+
+    def _refresh_history_list(self):
+        count = CalcEngine.history_count()
+        if count == 0:
+            self._history_list_var.set(t("label_history_empty"))
+            return
+        all_entries = CalcEngine.history_get_all()
+        self._history_list_var.set(t("label_history_entries") + ":\n" + all_entries)
+
+    def _on_history_clear(self):
+        CalcEngine.history_clear()
+        self._refresh_history_list()
+
+    def _on_history_use_last(self):
+        count = CalcEngine.history_count()
+        if count == 0:
+            return
+        all_str = CalcEngine.history_get_all()
+        entries = [e.strip() for e in all_str.split(";") if e.strip()]
+        if entries:
+            last = entries[-1]
+            eq_idx = last.rfind("=")
+            if eq_idx > 0:
+                expr = last[:eq_idx].strip()
+                self._var_expr.set(expr)
+
+    # ------------------------------------------------------------------
     #  Equation Solver
     # ------------------------------------------------------------------
     def _on_solve(self):
@@ -4147,6 +4203,7 @@ class SuperCalcApp:
             f"f(x) = {expr} = 0\n"
             f"Root: x = {result:.12g}\n"
             f"Verification: f({result:.6g}) = {verify_str}")
+        self.record_history(f"solve({expr})=0", result)
         self.status_var.set(t("status_root", f"{result:.12g}"))
 
     def _on_solve_bisection(self):

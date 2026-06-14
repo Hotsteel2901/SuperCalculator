@@ -1976,3 +1976,87 @@ EXPORT int ode_solve_rkf45(const char* expr, double x0, double y0, double x_end,
 
     return count;
 }
+
+/* --------------------------------------------------------------------------
+ *  Calculation History
+ *  Circular buffer storing the most recent HISTORY_MAX expressions and results.
+ *  Each entry stores the expression string and its computed result.
+ * -------------------------------------------------------------------------- */
+
+#define HISTORY_MAX 10
+#define HISTORY_EXPR_MAX 256
+
+typedef struct {
+    char expr[HISTORY_EXPR_MAX];
+    double result;
+    int valid;
+} HistoryEntry;
+
+static HistoryEntry g_history[HISTORY_MAX];
+static int g_history_count = 0;
+static int g_history_head = 0;  /* Next write position */
+
+EXPORT void history_add(const char* expr, double result) {
+    if (!expr) return;
+    clear_error();
+    HistoryEntry* e = &g_history[g_history_head];
+    strncpy(e->expr, expr, HISTORY_EXPR_MAX - 1);
+    e->expr[HISTORY_EXPR_MAX - 1] = '\0';
+    e->result = result;
+    e->valid = 1;
+    g_history_head = (g_history_head + 1) % HISTORY_MAX;
+    if (g_history_count < HISTORY_MAX) g_history_count++;
+}
+
+EXPORT int history_count(void) {
+    return g_history_count;
+}
+
+EXPORT int history_get(int index, char* expr_out, int expr_max, double* result_out) {
+    if (!expr_out || expr_max <= 0) return 0;
+    clear_error();
+    if (index < 0 || index >= g_history_count) {
+        expr_out[0] = '\0';
+        if (result_out) *result_out = NAN;
+        return 0;
+    }
+    /* Translate logical index to physical: oldest first */
+    int physical = (g_history_head - g_history_count + index + HISTORY_MAX) % HISTORY_MAX;
+    HistoryEntry* e = &g_history[physical];
+    strncpy(expr_out, e->expr, expr_max - 1);
+    expr_out[expr_max - 1] = '\0';
+    if (result_out) *result_out = e->result;
+    return 1;
+}
+
+EXPORT void history_clear(void) {
+    for (int i = 0; i < HISTORY_MAX; i++) {
+        g_history[i].valid = 0;
+        g_history[i].expr[0] = '\0';
+        g_history[i].result = NAN;
+    }
+    g_history_count = 0;
+    g_history_head = 0;
+    clear_error();
+}
+
+EXPORT int history_get_all(char* output, int max_out) {
+    if (!output || max_out <= 0) return 0;
+    clear_error();
+    int pos = 0;
+    for (int i = 0; i < g_history_count && pos < max_out - 1; i++) {
+        int physical = (g_history_head - g_history_count + i + HISTORY_MAX) % HISTORY_MAX;
+        HistoryEntry* e = &g_history[physical];
+        int written;
+        if (isnan(e->result)) {
+            written = snprintf(output + pos, max_out - pos, "%s = NaN%s",
+                e->expr, (i < g_history_count - 1) ? ";" : "");
+        } else {
+            written = snprintf(output + pos, max_out - pos, "%s = %.10g%s",
+                e->expr, e->result, (i < g_history_count - 1) ? ";" : "");
+        }
+        if (written > 0) pos += written;
+    }
+    output[pos] = '\0';
+    return pos;
+}

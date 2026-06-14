@@ -300,6 +300,19 @@ _lib.custom_func_delete.restype = ctypes.c_int
 _lib.custom_func_list.argtypes = [ctypes.POINTER(ctypes.c_char), ctypes.c_int]
 _lib.custom_func_list.restype = ctypes.c_int
 
+# Calculation History
+_lib.history_add.argtypes = [ctypes.c_char_p, ctypes.c_double]
+_lib.history_add.restype = None
+
+_lib.history_count.argtypes = []
+_lib.history_count.restype = ctypes.c_int
+
+_lib.history_clear.argtypes = []
+_lib.history_clear.restype = None
+
+_lib.history_get_all.argtypes = [ctypes.POINTER(ctypes.c_char), ctypes.c_int]
+_lib.history_get_all.restype = ctypes.c_int
+
 
 def _is_invalid(x: float) -> bool:
     try:
@@ -1413,4 +1426,27 @@ class CalcEngine:
         """List all custom functions as 'name(x)=body;...' string."""
         buf = ctypes.create_string_buffer(4096)
         _lib.custom_func_list(buf, 4096)
+        return buf.value.decode("utf-8") if buf.value else ""
+
+    # Calculation History
+    @staticmethod
+    def history_add(expr: str, result: float) -> None:
+        """Add an expression and its result to the history buffer."""
+        _lib.history_add(expr.encode("utf-8"), result)
+
+    @staticmethod
+    def history_count() -> int:
+        """Get the number of history entries (max 10)."""
+        return _lib.history_count()
+
+    @staticmethod
+    def history_clear() -> None:
+        """Clear all history entries."""
+        _lib.history_clear()
+
+    @staticmethod
+    def history_get_all() -> str:
+        """Get all history entries as a formatted string 'expr=result;...'"""
+        buf = ctypes.create_string_buffer(8192)
+        _lib.history_get_all(buf, 8192)
         return buf.value.decode("utf-8") if buf.value else ""

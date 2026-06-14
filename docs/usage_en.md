@@ -355,6 +355,26 @@ After defining `f(x) = x^2 + 1`, you can:
 - Function body can use any valid expression including built-in functions and constants
 - Re-defining the same name updates the existing function
 
+### 4.8 Calculation History
+
+The calculator automatically records your most recent 10 calculations.
+
+**Features:**
+
+- **Automatic recording**: Each time you evaluate an expression, compute a derivative, integrate, solve an equation, or find an extremum, the calculation is recorded
+- **History display**: The history list shows recent calculations in the format `expression = result`
+- **Clear history**: Click "Clear History" to remove all recorded calculations
+- **Use last expression**: Click "Use Last Expression" to load the most recent expression into the input field
+- **Persistence (Android)**: History is saved using SharedPreferences and persists across app restarts
+
+**Supported operations:**
+
+- Expression evaluation
+- First and second derivatives
+- Definite integration
+- Equation solving (Newton and Bisection methods)
+- Extremum finding (minimum/maximum)
+
 ---
 
 ## 5. 3D Function Plotting
