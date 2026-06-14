@@ -670,4 +670,13 @@
     <string name="history_empty">暂无历史记录</string>
     <string name="history_clear">清除历史</string>
     <string name="history_cleared">历史已清除。</string>
+
+    <!-- Laplace Transform -->
+    <string name="laplace_title">拉普拉斯变换</string>
+    <string name="laplace_hint_expr">f(t) 表达式</string>
+    <string name="laplace_hint_param">s 或 t</string>
+    <string name="laplace_forward">L{f(t)}</string>
+    <string name="laplace_inverse">L⁻¹{F(s)}</string>
+    <string name="laplace_empty_expr">请输入拉普拉斯变换的表达式。</string>
+    <string name="laplace_invalid_param">请输入有效的正参数值。</string>
 </resources>

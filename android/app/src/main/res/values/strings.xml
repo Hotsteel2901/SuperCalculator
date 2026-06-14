@@ -670,4 +670,13 @@
     <string name="history_empty">No history entries</string>
     <string name="history_clear">Clear History</string>
     <string name="history_cleared">History cleared.</string>
+
+    <!-- Laplace Transform -->
+    <string name="laplace_title">Laplace Transform</string>
+    <string name="laplace_hint_expr">f(t) expression</string>
+    <string name="laplace_hint_param">s or t</string>
+    <string name="laplace_forward">L{f(t)}</string>
+    <string name="laplace_inverse">L⁻¹{F(s)}</string>
+    <string name="laplace_empty_expr">Enter an expression for the Laplace transform.</string>
+    <string name="laplace_invalid_param">Enter a valid positive parameter value.</string>
 </resources>

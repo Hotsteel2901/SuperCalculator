@@ -72,6 +72,10 @@ void custom_func_clear(void);
 int custom_func_delete(const char* name);
 int custom_func_list(char* output, int max_out);
 
+/* Laplace Transform */
+double laplace_transform(const char* expr, double s);
+double inverse_laplace(const char* expr, double t);
+
 /* Calculation History */
 void history_add(const char* expr, double result);
 int history_count(void);
@@ -1035,6 +1039,28 @@ Java_com_supercalc_CalcEngine_customFuncList(JNIEnv* env, jclass clazz) {
     int len = custom_func_list(buf, sizeof(buf));
     if (len <= 0) return (*env)->NewStringUTF(env, "");
     return (*env)->NewStringUTF(env, buf);
+}
+
+/* ---- Laplace Transform ---- */
+
+JNIEXPORT jdouble JNICALL
+Java_com_supercalc_CalcEngine_laplaceTransform(JNIEnv* env, jclass clazz,
+                                               jstring expr, jdouble s) {
+    const char* str = (*env)->GetStringUTFChars(env, expr, NULL);
+    if (!str) return NAN;
+    double result = laplace_transform(str, s);
+    (*env)->ReleaseStringUTFChars(env, expr, str);
+    return result;
+}
+
+JNIEXPORT jdouble JNICALL
+Java_com_supercalc_CalcEngine_inverseLaplace(JNIEnv* env, jclass clazz,
+                                             jstring expr, jdouble t) {
+    const char* str = (*env)->GetStringUTFChars(env, expr, NULL);
+    if (!str) return NAN;
+    double result = inverse_laplace(str, t);
+    (*env)->ReleaseStringUTFChars(env, expr, str);
+    return result;
 }
 
 /* ---- Calculation History ---- */

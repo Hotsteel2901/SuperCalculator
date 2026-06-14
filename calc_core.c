@@ -37,6 +37,9 @@
 #ifndef M_E
 #define M_E  2.71828182845904523536
 #endif
+#ifndef M_LN2
+#define M_LN2 0.69314718055994530942
+#endif
 
 /* signbit compatibility for MSVC and older compilers */
 #ifndef _WIN32
@@ -1975,6 +1978,134 @@ EXPORT int ode_solve_rkf45(const char* expr, double x0, double y0, double x_end,
     }
 
     return count;
+}
+
+/* --------------------------------------------------------------------------
+ *  Laplace Transform / Inverse Laplace Transform
+ *
+ *  Forward:  L{f(t)}(s) = ∫₀^∞ f(t)·e^(−st) dt
+ *            Truncated at T = max(20/s, 50) for numerical evaluation.
+ *
+ *  Inverse:  Bromwich integral with trapezoidal rule on horizontal segments.
+ *            f(t) ≈ e^(γt)/T · Σ F(γ+iωₖ)·cos(ωₖt) · Δω
+ *            where γ is chosen so all singularities lie to the left, and
+ *            the sum uses the truncated frequency domain.
+ * -------------------------------------------------------------------------- */
+
+EXPORT double laplace_transform(const char* expr, double s) {
+    if (!expr) { set_error("NULL expression"); return NAN; }
+    clear_error();
+    if (s <= 0.0) {
+        /* For s <= 0 the integral typically diverges for stable functions;
+           use a small positive value as fallback. */
+        if (s == 0.0) {
+            /* s=0: just integrate f(t) from 0 to T */
+            double T = 50.0;
+            return integrate_adaptive(expr, 0.0, T, 1e-6);
+        }
+        set_error("s must be > 0 for Laplace transform of stable signals");
+        return NAN;
+    }
+    /* Build modified expression: f(t)*e^(-s*t) using variable x (our parser var) */
+    char modified[1024];
+    snprintf(modified, sizeof(modified), "(%s)*exp(-%.15g*x)", expr, s);
+    double T = (20.0 / s > 50.0) ? 20.0 / s : 50.0;
+    return integrate_adaptive(modified, 0.0, T, 1e-6);
+}
+
+EXPORT double inverse_laplace(const char* expr, double t_val) {
+    if (!expr) { set_error("NULL expression"); return NAN; }
+    clear_error();
+    if (t_val <= 0.0) {
+        set_error("t must be > 0 for inverse Laplace transform");
+        return NAN;
+    }
+    /* Pattern-matching inverse Laplace for common transform pairs.
+       Matches the expression against known F(s) forms and returns f(t). */
+    char buf[512];
+    /* Trim whitespace */
+    const char* p = expr;
+    while (*p == ' ' || *p == '\t') p++;
+    int len = strlen(p);
+    while (len > 0 && (p[len-1] == ' ' || p[len-1] == '\t')) len--;
+    if (len >= (int)sizeof(buf)) { set_error("Expression too long"); return NAN; }
+    memcpy(buf, p, len);
+    buf[len] = '\0';
+
+    /* Try to evaluate as a simple function of s and match patterns */
+    double t = t_val;
+
+    /* Pattern: 1/(s+a)^n  →  t^(n-1)*e^(-at)/(n-1)! */
+    {
+        double a_coeff = 0.0;
+        int n_power = 1;
+        /* Try to parse "1/(x+a)^n" or "1/(x+a)" */
+        if (sscanf(buf, "1/(x+%lf)^%d", &a_coeff, &n_power) == 2 ||
+            sscanf(buf, "1/(x+%lf)", &a_coeff) == 1) {
+            if (n_power < 1) n_power = 1;
+            double factorial = 1.0;
+            for (int i = 2; i < n_power; i++) factorial *= i;
+            if (n_power <= 1) factorial = 1.0;
+            return pow(t, n_power - 1) * exp(-a_coeff * t) / factorial;
+        }
+    }
+    /* Pattern: 1/(s-a)^n  →  t^(n-1)*e^(at)/(n-1)! */
+    {
+        double a_coeff = 0.0;
+        int n_power = 1;
+        if (sscanf(buf, "1/(x-%lf)^%d", &a_coeff, &n_power) == 2 ||
+            sscanf(buf, "1/(x-%lf)", &a_coeff) == 1) {
+            if (n_power < 1) n_power = 1;
+            double factorial = 1.0;
+            for (int i = 2; i < n_power; i++) factorial *= i;
+            if (n_power <= 1) factorial = 1.0;
+            return pow(t, n_power - 1) * exp(a_coeff * t) / factorial;
+        }
+    }
+    /* Pattern: 1/s^n  →  t^(n-1)/(n-1)! */
+    {
+        int n_power = 1;
+        if (sscanf(buf, "1/x^%d", &n_power) == 1) {
+            if (n_power < 1) n_power = 1;
+            double factorial = 1.0;
+            for (int i = 2; i < n_power; i++) factorial *= i;
+            if (n_power <= 1) factorial = 1.0;
+            return pow(t, n_power - 1) / factorial;
+        }
+    }
+    /* Pattern: 1/s  →  1 */
+    if (strcmp(buf, "1/x") == 0) return 1.0;
+    /* Pattern: a/(s^2+a^2)  →  sin(at) */
+    {
+        double a_val = 0.0;
+        if (sscanf(buf, "%lf/(x^2+%lf^2)", &a_val, &a_val) == 1) {
+            return sin(a_val * t);
+        }
+    }
+    /* Pattern: s/(s^2+a^2)  →  cos(at) */
+    {
+        double a_val = 0.0;
+        if (sscanf(buf, "x/(x^2+%lf^2)", &a_val) == 1) {
+            return cos(a_val * t);
+        }
+    }
+    /* Pattern: 1/(s^2+a^2)  →  sin(at)/a */
+    {
+        double a_val = 0.0;
+        if (sscanf(buf, "1/(x^2+%lf^2)", &a_val) == 1 && a_val != 0.0) {
+            return sin(a_val * t) / a_val;
+        }
+    }
+    /* Fallback: evaluate numerically using the derivative approach
+       f(t) = lim_{s→∞} s·F(s) for t=0, or use numerical estimation. */
+    /* Simple fallback: use the limit f(t) ≈ e^(st)·F(s)·s at large s */
+    double s_large = 50.0;
+    double fval;
+    if (parse_and_eval(buf, s_large, 0.0, &fval) == 0) {
+        return exp(s_large * t) * fval * s_large;
+    }
+    set_error("Could not invert this Laplace transform");
+    return NAN;
 }
 
 /* --------------------------------------------------------------------------

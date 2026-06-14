@@ -313,6 +313,13 @@ _lib.history_clear.restype = None
 _lib.history_get_all.argtypes = [ctypes.POINTER(ctypes.c_char), ctypes.c_int]
 _lib.history_get_all.restype = ctypes.c_int
 
+# Laplace Transform
+_lib.laplace_transform.argtypes = [ctypes.c_char_p, ctypes.c_double]
+_lib.laplace_transform.restype = ctypes.c_double
+
+_lib.inverse_laplace.argtypes = [ctypes.c_char_p, ctypes.c_double]
+_lib.inverse_laplace.restype = ctypes.c_double
+
 
 def _is_invalid(x: float) -> bool:
     try:
@@ -1450,3 +1457,21 @@ class CalcEngine:
         buf = ctypes.create_string_buffer(8192)
         _lib.history_get_all(buf, 8192)
         return buf.value.decode("utf-8") if buf.value else ""
+
+    @staticmethod
+    def laplace_transform(expr: str, s: float) -> float:
+        """Compute Laplace transform L{f(t)}(s). Expression uses variable t."""
+        result = _lib.laplace_transform(expr.encode("utf-8"), s)
+        if _is_invalid(result):
+            err = _lib.get_last_error()
+            raise ValueError(err.decode("utf-8") if err else "Laplace transform failed")
+        return result
+
+    @staticmethod
+    def inverse_laplace(expr: str, t: float) -> float:
+        """Compute inverse Laplace transform f(t) given F(s). Expression uses variable s."""
+        result = _lib.inverse_laplace(expr.encode("utf-8"), t)
+        if _is_invalid(result):
+            err = _lib.get_last_error()
+            raise ValueError(err.decode("utf-8") if err else "Inverse Laplace transform failed")
+        return result

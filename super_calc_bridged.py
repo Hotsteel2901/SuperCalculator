@@ -1101,6 +1101,34 @@ class SuperCalcApp:
                    command=self._on_history_use_last).pack(side=tk.LEFT, padx=2)
         self._refresh_history_list()
 
+        # --- Laplace Transform ---
+        frm_laplace = ttk.LabelFrame(scroll_frame, text=t("sec_laplace"),
+                                     style="Dark.TLabelframe")
+        frm_laplace.pack(fill=tk.X, padx=8, pady=4)
+
+        lfr1 = ttk.Frame(frm_laplace, style="Dark.TFrame")
+        lfr1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(lfr1, text=t("label_laplace_expr"),
+                  style="Dark.TLabel").pack(anchor=tk.W, padx=2)
+        self._var_laplace_expr = tk.StringVar(value="exp(-t)")
+        ttk.Entry(lfr1, textvariable=self._var_laplace_expr, width=30,
+                  font=("JetBrains Mono", 11)).pack(fill=tk.X, padx=2)
+
+        lfr2 = ttk.Frame(frm_laplace, style="Dark.TFrame")
+        lfr2.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(lfr2, text=t("label_laplace_param"),
+                  style="Dark.TLabel").pack(side=tk.LEFT, padx=2)
+        self._var_laplace_param = tk.StringVar(value="1")
+        ttk.Entry(lfr2, textvariable=self._var_laplace_param, width=10,
+                  font=("JetBrains Mono", 11)).pack(side=tk.LEFT, padx=2)
+
+        lfr3 = ttk.Frame(frm_laplace, style="Dark.TFrame")
+        lfr3.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Button(lfr3, text=t("btn_laplace_forward"),
+                   command=self._on_laplace_forward).pack(side=tk.LEFT, padx=2)
+        ttk.Button(lfr3, text=t("btn_laplace_inverse"),
+                   command=self._on_laplace_inverse).pack(side=tk.LEFT, padx=2)
+
         # --- Statistics Calculator ---
         frm_stats = ttk.LabelFrame(scroll_frame, text=t("sec_stats"),
                                     style="Dark.TLabelframe")
@@ -4137,6 +4165,49 @@ class SuperCalcApp:
             self._custom_func_list_var.set(t("label_custom_func_defined") + ": " + lst)
         else:
             self._custom_func_list_var.set(t("label_custom_func_none"))
+
+    # ------------------------------------------------------------------
+    #  Laplace Transform
+    # ------------------------------------------------------------------
+
+    def _on_laplace_forward(self):
+        expr = self._var_laplace_expr.get().strip()
+        if not expr:
+            messagebox.showerror(t("err_error"), t("laplace_empty_expr"))
+            return
+        try:
+            s = float(self._var_laplace_param.get())
+        except ValueError:
+            messagebox.showerror(t("err_error"), t("laplace_invalid_param"))
+            return
+        try:
+            result = CalcEngine.laplace_transform(expr, s)
+            msg = "L{%s}(%.6g) = %.10g" % (expr, s, result)
+            self._status_var.set(msg)
+            self.record_history("L{%s}(%.6g)" % (expr, s), result)
+        except Exception as e:
+            messagebox.showerror(t("err_error"), str(e))
+
+    def _on_laplace_inverse(self):
+        expr = self._var_laplace_expr.get().strip()
+        if not expr:
+            messagebox.showerror(t("err_error"), t("laplace_empty_expr"))
+            return
+        try:
+            t_val = float(self._var_laplace_param.get())
+        except ValueError:
+            messagebox.showerror(t("err_error"), t("laplace_invalid_param"))
+            return
+        if t_val <= 0:
+            messagebox.showerror(t("err_error"), t("laplace_invalid_param"))
+            return
+        try:
+            result = CalcEngine.inverse_laplace(expr, t_val)
+            msg = "L^{-1}{%s}(%.6g) = %.10g" % (expr, t_val, result)
+            self._status_var.set(msg)
+            self.record_history("L^{-1}{%s}(%.6g)" % (expr, t_val), result)
+        except Exception as e:
+            messagebox.showerror(t("err_error"), str(e))
 
     # ------------------------------------------------------------------
     #  Calculation History

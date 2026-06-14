@@ -3392,6 +3392,36 @@ STRINGS = {
         "zh": "自定义函数错误",
     },
 
+    # --- Laplace Transform ---
+    "sec_laplace": {
+        "en": "Laplace Transform",
+        "zh": "拉普拉斯变换",
+    },
+    "label_laplace_expr": {
+        "en": "Expression f(t) or F(s):",
+        "zh": "表达式 f(t) 或 F(s)：",
+    },
+    "label_laplace_param": {
+        "en": "s or t:",
+        "zh": "s 或 t：",
+    },
+    "btn_laplace_forward": {
+        "en": "L{f(t)}",
+        "zh": "L{f(t)}",
+    },
+    "btn_laplace_inverse": {
+        "en": "L⁻¹{F(s)}",
+        "zh": "L⁻¹{F(s)}",
+    },
+    "laplace_empty_expr": {
+        "en": "Enter an expression for the Laplace transform.",
+        "zh": "请输入拉普拉斯变换的表达式。",
+    },
+    "laplace_invalid_param": {
+        "en": "Enter a valid positive parameter value.",
+        "zh": "请输入有效的正参数值。",
+    },
+
     # --- Calculation History ---
     "sec_history": {
         "en": "Calculation History",
