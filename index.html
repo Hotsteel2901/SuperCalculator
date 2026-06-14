@@ -2235,13 +2235,19 @@
 
             window.odeComparePlot=function(){
                 resizeCanvas();
-                var expr=document.getElementById('odeCompareExpr').value.trim();
-                var x0=parseFloat(document.getElementById('odeCompareX0').value);
-                var y0=parseFloat(document.getElementById('odeCompareY0').value);
-                var xEnd=parseFloat(document.getElementById('odeCompareXEnd').value);
-                var n=parseInt(document.getElementById('odeCompareSteps').value);
+                var exprEl=document.getElementById('odeCompareExpr');
+                var x0El=document.getElementById('odeCompareX0');
+                var y0El=document.getElementById('odeCompareY0');
+                var xEndEl=document.getElementById('odeCompareXEnd');
+                var stepsEl=document.getElementById('odeCompareSteps');
                 var statusEl=document.getElementById('odeCompareStatus');
                 var legendEl=document.getElementById('odeCompareLegend');
+                if(!exprEl||!x0El||!y0El||!xEndEl||!stepsEl||!statusEl)return;
+                var expr=exprEl.value.trim();
+                var x0=parseFloat(x0El.value);
+                var y0=parseFloat(y0El.value);
+                var xEnd=parseFloat(xEndEl.value);
+                var n=parseInt(stepsEl.value);
 
                 if(!expr||isNaN(x0)||isNaN(y0)||isNaN(xEnd)||isNaN(n)||n<2||n>200){
                     statusEl.textContent='请输入有效参数';return;
@@ -2404,7 +2410,10 @@
 
             window.interpWebPlot=function(){
                 resizeCanvas();
-                var raw=document.getElementById('interpWebData').value.trim();
+                var dataEl=document.getElementById('interpWebData');
+                var methodEl=document.getElementById('interpWebMethod');
+                if(!dataEl||!methodEl)return;
+                var raw=dataEl.value.trim();
                 if(!raw)return;
                 points=[];
                 raw.split(';').forEach(function(seg){
@@ -2418,7 +2427,7 @@
                 points.sort(function(a,b){return a.x-b.x;});
                 if(points.length<2)return;
 
-                var method=document.getElementById('interpWebMethod').value;
+                var method=methodEl.value;
                 var xs=points.map(function(p){return p.x;});
                 var ys=points.map(function(p){return p.y;});
                 var xMin=xs[0],xMax=xs[xs.length-1];
@@ -3600,9 +3609,12 @@
                 document.getElementById('resHexVal').textContent = toBaseString(value, 16);
             }
 
-            document.getElementById('baseInput').addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') { e.preventDefault(); convertBases(); }
-            });
+            var baseInputEl = document.getElementById('baseInput');
+            if (baseInputEl) {
+                baseInputEl.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') { e.preventDefault(); convertBases(); }
+                });
+            }
 
             window.setFromBase = setFromBase;
             window.convertBases = convertBases;
@@ -3784,9 +3796,11 @@
             };
 
             window.calcBitwise = function() {
-                var a = parseDecimal(document.getElementById('bwInputA').value);
+                var inputA = document.getElementById('bwInputA');
                 var resultDiv = document.getElementById('bwResult');
                 var errorDiv = document.getElementById('bwError');
+                if (!inputA || !resultDiv || !errorDiv) return;
+                var a = parseDecimal(inputA.value);
 
                 if (a === null) {
                     resultDiv.style.display = 'none';
@@ -3795,7 +3809,8 @@
 
                 var b = 0;
                 if (bwOp !== 'NOT') {
-                    b = parseDecimal(document.getElementById('bwInputB').value);
+                    var inputB = document.getElementById('bwInputB');
+                    b = inputB ? parseDecimal(inputB.value) : 0;
                     if (b === null) {
                         resultDiv.style.display = 'block';
                         errorDiv.style.display = 'block';
@@ -3822,23 +3837,31 @@
                 resultDiv.style.display = 'block';
 
                 renderBitGrid('bwBitGridA', a, true, 'A');
-                document.getElementById('bwBitsA').style.display = '';
+                var bwBitsA = document.getElementById('bwBitsA');
+                if (bwBitsA) bwBitsA.style.display = '';
                 if (bwOp !== 'NOT') {
                     renderBitGrid('bwBitGridB', b, true, 'B');
-                    document.getElementById('bwBitsB').style.display = '';
+                    var bwBitsB = document.getElementById('bwBitsB');
+                    if (bwBitsB) bwBitsB.style.display = '';
                 }
                 renderBitGrid('bwBitGridR', result, false, 'R');
 
-                document.getElementById('bwResBin').textContent = toBinPadded(result, bwWidth);
-                document.getElementById('bwResOct').textContent = toBaseString(result, 8);
-                document.getElementById('bwResDec').textContent = String(toSigned(result));
-                document.getElementById('bwResHex').textContent = toBaseString(result, 16).toUpperCase();
+                var resBin = document.getElementById('bwResBin');
+                var resOct = document.getElementById('bwResOct');
+                var resDec = document.getElementById('bwResDec');
+                var resHex = document.getElementById('bwResHex');
+                if (resBin) resBin.textContent = toBinPadded(result, bwWidth);
+                if (resOct) resOct.textContent = toBaseString(result, 8);
+                if (resDec) resDec.textContent = String(toSigned(result));
+                if (resHex) resHex.textContent = toBaseString(result, 16).toUpperCase();
             };
 
-            document.getElementById('bwInputA').addEventListener('keydown', function(e) {
+            var bwInputAEl = document.getElementById('bwInputA');
+            if (bwInputAEl) bwInputAEl.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') { e.preventDefault(); calcBitwise(); }
             });
-            document.getElementById('bwInputB').addEventListener('keydown', function(e) {
+            var bwInputBEl = document.getElementById('bwInputB');
+            if (bwInputBEl) bwInputBEl.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') { e.preventDefault(); calcBitwise(); }
             });
 

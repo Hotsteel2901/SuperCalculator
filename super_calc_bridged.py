@@ -4170,7 +4170,8 @@ class SuperCalcApp:
             eq_idx = last.rfind("=")
             if eq_idx > 0:
                 expr = last[:eq_idx].strip()
-                self._var_expr.set(expr)
+                self.entry_expr.delete(0, tk.END)
+                self.entry_expr.insert(0, expr)
 
     # ------------------------------------------------------------------
     #  Equation Solver
