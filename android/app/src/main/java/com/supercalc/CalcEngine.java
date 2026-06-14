@@ -177,4 +177,11 @@ public class CalcEngine {
 
     /** Get all history entries as a formatted string "expr=result;..." */
     public static native String historyGetAll();
+
+    // Laplace Transform
+    /** Compute Laplace transform L{f(t)}(s) = ∫₀^∞ f(t)·e^(-st) dt. The expression uses variable t. */
+    public static native double laplaceTransform(String expr, double s);
+
+    /** Compute inverse Laplace transform f(t) given F(s). The expression uses variable s. */
+    public static native double inverseLaplace(String expr, double t);
 }

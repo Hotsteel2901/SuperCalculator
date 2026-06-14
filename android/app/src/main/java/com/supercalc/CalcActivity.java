@@ -44,6 +44,7 @@ public class CalcActivity extends AppCompatActivity {
     private EditText sysFInput, sysGInput, sysX0Input, sysY0Input;
     private EditText dfExprInput, dfGridInput, dfXminInput, dfXmaxInput, dfYminInput, dfYmaxInput, dfIcInput;
     private EditText matrixAInput, matrixBInput;
+    private EditText laplaceExprInput, laplaceParamInput;
     private TextView resultView;
     private NestedScrollView scrollView;
     private LineChart lineChart;
@@ -387,6 +388,9 @@ public class CalcActivity extends AppCompatActivity {
 
         // Data Interpolation Calculator
         setupInterpolation();
+
+        // Laplace Transform
+        setupLaplace();
 
         // Custom Function Definition
         setupCustomFunctions();
@@ -4202,6 +4206,69 @@ public class CalcActivity extends AppCompatActivity {
         }
         double dx = x - xs[seg];
         return ys[seg] + b[seg] * dx + c[seg] * dx * dx + d[seg] * dx * dx * dx;
+    }
+
+    // ---- Laplace Transform ----
+
+    private void setupLaplace() {
+        laplaceExprInput = findViewById(R.id.laplace_expr_input);
+        laplaceParamInput = findViewById(R.id.laplace_param_input);
+        MaterialButton btnLaplaceFwd = findViewById(R.id.btn_laplace_forward);
+        MaterialButton btnLaplaceInv = findViewById(R.id.btn_laplace_inverse);
+        btnLaplaceFwd.setOnClickListener(v -> onLaplaceForward());
+        btnLaplaceInv.setOnClickListener(v -> onLaplaceInverse());
+    }
+
+    private void onLaplaceForward() {
+        String expr = laplaceExprInput.getText().toString().trim();
+        if (expr.isEmpty()) {
+            toast(getString(R.string.laplace_empty_expr));
+            return;
+        }
+        double s = parse(laplaceParamInput);
+        if (Double.isNaN(s)) {
+            toast(getString(R.string.laplace_invalid_param));
+            return;
+        }
+        try {
+            double result = CalcEngine.laplaceTransform(expr, s);
+            if (Double.isNaN(result)) {
+                String err = CalcEngine.getLastError();
+                resultView.append("L{" + expr + "}(" + fmt(s) + ") = Error: " + (err != null ? err : "NaN") + "\n");
+            } else {
+                resultView.append("L{" + expr + "}(" + fmt(s) + ") = " + fmt(result) + "\n");
+                recordHistory("L{" + expr + "}(" + fmt(s) + ")", result);
+            }
+        } catch (Exception e) {
+            resultView.append("L{" + expr + "} = Error: " + e.getMessage() + "\n");
+        }
+        scrollToResult();
+    }
+
+    private void onLaplaceInverse() {
+        String expr = laplaceExprInput.getText().toString().trim();
+        if (expr.isEmpty()) {
+            toast(getString(R.string.laplace_empty_expr));
+            return;
+        }
+        double t = parse(laplaceParamInput);
+        if (Double.isNaN(t) || t <= 0) {
+            toast(getString(R.string.laplace_invalid_param));
+            return;
+        }
+        try {
+            double result = CalcEngine.inverseLaplace(expr, t);
+            if (Double.isNaN(result)) {
+                String err = CalcEngine.getLastError();
+                resultView.append("L⁻¹{" + expr + "}(" + fmt(t) + ") = Error: " + (err != null ? err : "NaN") + "\n");
+            } else {
+                resultView.append("L⁻¹{" + expr + "}(" + fmt(t) + ") = " + fmt(result) + "\n");
+                recordHistory("L⁻¹{" + expr + "}(" + fmt(t) + ")", result);
+            }
+        } catch (Exception e) {
+            resultView.append("L⁻¹{" + expr + "} = Error: " + e.getMessage() + "\n");
+        }
+        scrollToResult();
     }
 
     // ---- Custom Function Definition ----
