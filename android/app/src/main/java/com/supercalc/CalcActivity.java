@@ -1,6 +1,7 @@
 package com.supercalc;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.widget.ArrayAdapter;
@@ -52,6 +53,9 @@ public class CalcActivity extends AppCompatActivity {
     private TextView dataStatusView;
     private List<double[]> dataRows = new ArrayList<>();
     private String dataFileName = "";
+    private TextView historyListView;
+    private static final String PREFS_NAME = "SuperCalcPrefs";
+    private static final String KEY_HISTORY = "calc_history";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -386,6 +390,9 @@ public class CalcActivity extends AppCompatActivity {
 
         // Custom Function Definition
         setupCustomFunctions();
+
+        // Calculation History
+        setupHistory();
     }
 
     private String getExpr()  { return exprInput.getText().toString().trim(); }
@@ -426,23 +433,30 @@ public class CalcActivity extends AppCompatActivity {
 
     private void onEvaluate() {
         String e = getExpr(); if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
-        appendResult(String.format(getString(R.string.result_fx), getX()), CalcEngine.evaluate(e, getX()));
+        double result = CalcEngine.evaluate(e, getX());
+        appendResult(String.format(getString(R.string.result_fx), getX()), result);
+        recordHistory(e + " @ x=" + fmt(getX()), result);
     }
 
     private void onDerivative() {
         String e = getExpr(); if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
-        appendResult(String.format(getString(R.string.result_f_prime_x), getX()), CalcEngine.derivative(e, getX(), 1e-6));
+        double result = CalcEngine.derivative(e, getX(), 1e-6);
+        appendResult(String.format(getString(R.string.result_f_prime_x), getX()), result);
+        recordHistory("d/dx(" + e + ") @ x=" + fmt(getX()), result);
     }
 
     private void onDerivative2() {
         String e = getExpr(); if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
-        appendResult(String.format(getString(R.string.result_f_double_prime_x), getX()), CalcEngine.derivative2(e, getX(), 1e-6));
+        double result = CalcEngine.derivative2(e, getX(), 1e-6);
+        appendResult(String.format(getString(R.string.result_f_double_prime_x), getX()), result);
+        recordHistory("d²/dx²(" + e + ") @ x=" + fmt(getX()), result);
     }
 
     private void onIntegrate() {
         String e = getExpr(); if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
-        appendResult(String.format(getString(R.string.result_integral), getA(), getB()),
-                     CalcEngine.integrate(e, getA(), getB()));
+        double result = CalcEngine.integrate(e, getA(), getB());
+        appendResult(String.format(getString(R.string.result_integral), getA(), getB()), result);
+        recordHistory("∫(" + e + ") [" + fmt(getA()) + "," + fmt(getB()) + "]", result);
     }
 
     private void onSolve() {
@@ -455,6 +469,7 @@ public class CalcActivity extends AppCompatActivity {
             resultView.append(String.format(getString(R.string.result_root_fval), CalcEngine.evaluate(e, root)) + "\n");
             scrollToResult();
         }
+        recordHistory("solve(" + e + ")=0", root);
     }
 
     private void onFindExtremum(boolean minimum) {
@@ -472,6 +487,7 @@ public class CalcActivity extends AppCompatActivity {
         } else {
             resultView.append(String.format(getString(minimum ? R.string.result_min : R.string.result_max), result, CalcEngine.evaluate(e, result)) + "\n");
         }
+        recordHistory((minimum ? "min" : "max") + "(" + e + ") [" + fmt(a) + "," + fmt(b) + "]", result);
     }
 
     private void openPlot() {
@@ -4241,5 +4257,88 @@ public class CalcActivity extends AppCompatActivity {
         } else {
             customFuncListView.setText(list);
         }
+    }
+
+    // ------------------------------------------------------------------
+    //  Calculation History
+    // ------------------------------------------------------------------
+
+    private void setupHistory() {
+        historyListView = findViewById(R.id.history_list_view);
+        MaterialButton btnHistoryClear = findViewById(R.id.btn_history_clear);
+        btnHistoryClear.setOnClickListener(v -> onHistoryClear());
+        loadHistoryFromPrefs();
+        refreshHistoryList();
+    }
+
+    private void loadHistoryFromPrefs() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        String saved = prefs.getString(KEY_HISTORY, "");
+        if (saved.isEmpty()) return;
+        String[] entries = saved.split(";");
+        for (String entry : entries) {
+            entry = entry.trim();
+            if (entry.isEmpty()) continue;
+            int eqIdx = entry.lastIndexOf('=');
+            if (eqIdx < 0) continue;
+            String expr = entry.substring(0, eqIdx).trim();
+            String resultStr = entry.substring(eqIdx + 1).trim();
+            try {
+                double result = Double.parseDouble(resultStr);
+                CalcEngine.historyAdd(expr, result);
+            } catch (NumberFormatException e) {
+                CalcEngine.historyAdd(expr, Double.NaN);
+            }
+        }
+    }
+
+    private void saveHistoryToPrefs() {
+        String all = CalcEngine.historyGetAll();
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        prefs.edit().putString(KEY_HISTORY, all).apply();
+    }
+
+    private void recordHistory(String expr, double result) {
+        CalcEngine.historyAdd(expr, result);
+        saveHistoryToPrefs();
+        refreshHistoryList();
+    }
+
+    private void refreshHistoryList() {
+        int count = CalcEngine.historyCount();
+        if (count == 0) {
+            historyListView.setText(getString(R.string.history_empty));
+            return;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = count - 1; i >= 0; i--) {
+            HashMap<String, Object> entry = new HashMap<>();
+            if (CalcEngine.historyGet(i, entry)) {
+                String expr = (String) entry.get("expr");
+                Object resultObj = entry.get("result");
+                double result = resultObj instanceof Double ? (Double) resultObj : Double.NaN;
+                String resultStr = Double.isNaN(result) ? "NaN" : fmt(result);
+                sb.append(expr).append(" = ").append(resultStr);
+                if (i > 0) sb.append("\n");
+            }
+        }
+        historyListView.setText(sb.toString());
+        historyListView.setOnClickListener(v -> {
+            if (count > 0) {
+                HashMap<String, Object> lastEntry = new HashMap<>();
+                if (CalcEngine.historyGet(count - 1, lastEntry)) {
+                    String lastExpr = (String) lastEntry.get("expr");
+                    exprInput.setText(lastExpr);
+                }
+            }
+        });
+    }
+
+    private void onHistoryClear() {
+        CalcEngine.historyClear();
+        saveHistoryToPrefs();
+        refreshHistoryList();
+        resultView.append(getString(R.string.history_cleared) + "\n");
+        scrollToResult();
     }
 }

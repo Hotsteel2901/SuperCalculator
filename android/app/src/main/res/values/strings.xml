@@ -664,4 +664,10 @@
     <string name="custom_func_error" formatted="false">Custom function error: %s</string>
     <string name="custom_func_defined" formatted="false">Defined: %s(x) = %s</string>
     <string name="custom_func_all_cleared">All custom functions cleared.</string>
+
+    <!-- Calculation History -->
+    <string name="history_title">Calculation History</string>
+    <string name="history_empty">No history entries</string>
+    <string name="history_clear">Clear History</string>
+    <string name="history_cleared">History cleared.</string>
 </resources>

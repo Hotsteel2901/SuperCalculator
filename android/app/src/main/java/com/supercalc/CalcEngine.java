@@ -161,4 +161,20 @@ public class CalcEngine {
 
     /** List all custom functions as "name(x)=body;..." string. */
     public static native String customFuncList();
+
+    // Calculation History
+    /** Add an expression and its result to the history buffer. */
+    public static native void historyAdd(String expr, double result);
+
+    /** Get the number of history entries (max 10). */
+    public static native int historyCount();
+
+    /** Get a history entry by index (0=oldest). Populates the HashMap with "expr" and "result" keys. Returns true on success. */
+    public static native boolean historyGet(int index, HashMap<String, Object> result);
+
+    /** Clear all history entries. */
+    public static native void historyClear();
+
+    /** Get all history entries as a formatted string "expr=result;..." */
+    public static native String historyGetAll();
 }

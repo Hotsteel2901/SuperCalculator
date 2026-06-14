@@ -72,6 +72,13 @@ void custom_func_clear(void);
 int custom_func_delete(const char* name);
 int custom_func_list(char* output, int max_out);
 
+/* Calculation History */
+void history_add(const char* expr, double result);
+int history_count(void);
+int history_get(int index, char* expr_out, int expr_max, double* result_out);
+void history_clear(void);
+int history_get_all(char* output, int max_out);
+
 /* Helper: extract UTF-8 string from jstring, call fn, release, return */
 static jdouble call_with_expr(JNIEnv* env, jstring expr, double x,
                               double (*fn)(const char*, double)) {
@@ -1026,6 +1033,69 @@ JNIEXPORT jstring JNICALL
 Java_com_supercalc_CalcEngine_customFuncList(JNIEnv* env, jclass clazz) {
     char buf[4096];
     int len = custom_func_list(buf, sizeof(buf));
+    if (len <= 0) return (*env)->NewStringUTF(env, "");
+    return (*env)->NewStringUTF(env, buf);
+}
+
+/* ---- Calculation History ---- */
+
+JNIEXPORT void JNICALL
+Java_com_supercalc_CalcEngine_historyAdd(JNIEnv* env, jclass clazz,
+                                          jstring expr, jdouble result) {
+    const char* str = (*env)->GetStringUTFChars(env, expr, NULL);
+    if (!str) return;
+    history_add(str, result);
+    (*env)->ReleaseStringUTFChars(env, expr, str);
+}
+
+JNIEXPORT jint JNICALL
+Java_com_supercalc_CalcEngine_historyCount(JNIEnv* env, jclass clazz) {
+    return (jint)history_count();
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_supercalc_CalcEngine_historyGet(JNIEnv* env, jclass clazz,
+                                          jint index, jobject resultObj) {
+    char exprBuf[256];
+    double resultVal = 0.0;
+    int ok = history_get((int)index, exprBuf, sizeof(exprBuf), &resultVal);
+    if (!ok) return JNI_FALSE;
+
+    /* Put expression and result into the HashMap */
+    jclass hashMapClass = (*env)->FindClass(env, "java/util/HashMap");
+    if (!hashMapClass) return JNI_FALSE;
+    jmethodID putMethod = (*env)->GetMethodID(env, hashMapClass, "put",
+        "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+    if (!putMethod) { (*env)->DeleteLocalRef(env, hashMapClass); return JNI_FALSE; }
+
+    jstring keyExpr = (*env)->NewStringUTF(env, "expr");
+    jstring valExpr = (*env)->NewStringUTF(env, exprBuf);
+    (*env)->CallObjectMethod(env, resultObj, putMethod, keyExpr, valExpr);
+    (*env)->DeleteLocalRef(env, keyExpr);
+    (*env)->DeleteLocalRef(env, valExpr);
+
+    jclass doubleClass = (*env)->FindClass(env, "java/lang/Double");
+    jmethodID valueOfDouble = (*env)->GetStaticMethodID(env, doubleClass, "valueOf", "(D)Ljava/lang/Double;");
+    jobject resultDouble = (*env)->CallStaticObjectMethod(env, doubleClass, valueOfDouble, resultVal);
+    jstring keyResult = (*env)->NewStringUTF(env, "result");
+    (*env)->CallObjectMethod(env, resultObj, putMethod, keyResult, resultDouble);
+    (*env)->DeleteLocalRef(env, keyResult);
+    (*env)->DeleteLocalRef(env, resultDouble);
+    (*env)->DeleteLocalRef(env, doubleClass);
+    (*env)->DeleteLocalRef(env, hashMapClass);
+
+    return JNI_TRUE;
+}
+
+JNIEXPORT void JNICALL
+Java_com_supercalc_CalcEngine_historyClear(JNIEnv* env, jclass clazz) {
+    history_clear();
+}
+
+JNIEXPORT jstring JNICALL
+Java_com_supercalc_CalcEngine_historyGetAll(JNIEnv* env, jclass clazz) {
+    char buf[8192];
+    int len = history_get_all(buf, sizeof(buf));
     if (len <= 0) return (*env)->NewStringUTF(env, "");
     return (*env)->NewStringUTF(env, buf);
 }

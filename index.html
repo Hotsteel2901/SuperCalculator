@@ -2813,6 +2813,12 @@
                         <code>CalcEngine.taylor_coefficients("sin(x)", 0, 6)<br># -> [0, 1, 0, -0.1667, 0, 0.00833, 0]<br><br>CalcEngine.taylor_evaluate("sin(x)", 0, 0.5, 8)<br># -> ~0.4794 (Taylor polynomial at x=0.5)</code>
                     </div>
                 </div>
+                <div class="card glass reveal">
+                    <h3 class="card-title">计算历史</h3>
+                    <div class="code-block">
+                        <code># 记录最近 10 次计算<br>CalcEngine.history_add("x^2 = 9", 9.0)<br># -> true<br><br># 获取历史记录数<br>CalcEngine.history_count()  # -> 1<br><br># 获取全部历史记录<br>CalcEngine.history_get_all()  # -> "x^2 = 9=9.0"<br><br># 清空历史记录<br>CalcEngine.history_clear()  # -> true</code>
+                    </div>
+                </div>
             </div>
         </section>
 
