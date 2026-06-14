@@ -213,6 +213,12 @@ def hypergeometric_probability(N: int, K: int, n: int, k: int) -> Optional[float
     _N, _K, _n, _k = int(N), int(K), int(n), int(k)
     if _K > _N or _n > _N or _k > min(_K, _n) or _k < max(0, _n - (_N - _K)):
         return 0.0
+    # Use log-space for large N to avoid math.comb overflow
+    if _N > 500:
+        log_num = (math.lgamma(_K + 1) - math.lgamma(_k + 1) - math.lgamma(_K - _k + 1)
+                   + math.lgamma(_N - _K + 1) - math.lgamma(_n - _k + 1) - math.lgamma(_N - _K - _n + _k + 1))
+        log_den = math.lgamma(_N + 1) - math.lgamma(_n + 1) - math.lgamma(_N - _n + 1)
+        return math.exp(log_num - log_den)
     return (math.comb(_K, _k) * math.comb(_N - _K, _n - _k)) / math.comb(_N, _n)
 
 

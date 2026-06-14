@@ -187,6 +187,8 @@ def _erfinv_approx(y: float) -> float:
     # For small range, use Newton's method with erf approximation
     if y < -1 or y > 1:
         raise ValueError("y must be in [-1, 1]")
+    if abs(y) >= 1.0:
+        return float(np.sign(y))
     if abs(y) < 1e-10:
         return y * np.sqrt(np.pi) / 2.0
     # Initial guess
@@ -522,6 +524,8 @@ class PoissonDist:
         q = float(q)
         if q <= 0:
             return 0
+        if q >= 1:
+            return int(self.lam + 4 * np.sqrt(self.lam)) + 100
         total = 0.0
         k = 0
         cap = max(1000, int(self.lam * 4) + 100)

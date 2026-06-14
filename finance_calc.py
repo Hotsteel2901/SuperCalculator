@@ -165,6 +165,8 @@ def npv(rate: float, cashflows: List[float]) -> Optional[float]:
     if not cashflows:
         return None
     r = rate / 100.0
+    if abs(1 + r) < 1e-15:
+        return None
     return sum(cf / (1 + r) ** t for t, cf in enumerate(cashflows))
 
 
@@ -253,6 +255,8 @@ def bond_price(face_value: float, coupon_rate: float, yield_rate: float,
     m = coupons_per_year
     c = face_value * coupon_rate / 100.0 / m
     y = yield_rate / 100.0 / m
+    if abs(1 + y) < 1e-15:
+        return None
     n = int(years * m)
     pv_coupons = sum(c / (1 + y) ** t for t in range(1, n + 1))
     pv_face = face_value / (1 + y) ** n
@@ -280,6 +284,11 @@ def bond_yield(face_value: float, coupon_rate: float, price: float,
         r_new = r - (pv - price) / dpv
         if abs(r_new - r) < 1e-12:
             return r_new * m * 100.0
+        # Clamp step to prevent divergence
+        if r_new < -0.99 / m:
+            r_new = -0.99 / m
+        elif r_new > 10.0 / m:
+            r_new = 10.0 / m
         r = r_new
     # Recompute pv with final r for accurate check
     n = int(years * m)

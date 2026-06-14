@@ -173,6 +173,10 @@ public class Surface3DView extends View {
         super.onDraw(canvas);
         canvas.drawColor(Color.parseColor("#181825"));
 
+        if (getWidth() <= 0 || getHeight() <= 0) {
+            return;
+        }
+
         if (zValues == null || zValues.length == 0 || zValues[0].length == 0 || colors == null) {
             canvas.drawText(getContext().getString(R.string.no_3d_data), getWidth() / 2f - 60, getHeight() / 2f, textPaint);
             return;
