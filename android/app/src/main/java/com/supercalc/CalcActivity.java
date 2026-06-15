@@ -63,6 +63,23 @@ public class CalcActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_calc);
 
+        // Restore state from savedInstanceState if available
+        if (savedInstanceState != null) {
+            String savedExpr = savedInstanceState.getString("expr_input", "");
+            String savedX = savedInstanceState.getString("x_input", "");
+            String savedA = savedInstanceState.getString("a_input", "");
+            String savedB = savedInstanceState.getString("b_input", "");
+            String savedGuess = savedInstanceState.getString("guess_input", "");
+            String savedResult = savedInstanceState.getString("result_text", "");
+            // Defer setting until EditText fields are initialized below
+            savedInstanceState.putString("_restore_expr", savedExpr);
+            savedInstanceState.putString("_restore_x", savedX);
+            savedInstanceState.putString("_restore_a", savedA);
+            savedInstanceState.putString("_restore_b", savedB);
+            savedInstanceState.putString("_restore_guess", savedGuess);
+            savedInstanceState.putString("_restore_result", savedResult);
+        }
+
         exprInput  = findViewById(R.id.expr_input);
         xInput     = findViewById(R.id.x_input);
         aInput     = findViewById(R.id.a_input);
@@ -397,6 +414,33 @@ public class CalcActivity extends AppCompatActivity {
 
         // Calculation History
         setupHistory();
+
+        // Restore saved state after all views are initialized
+        if (savedInstanceState != null) {
+            String savedExpr = savedInstanceState.getString("_restore_expr", "");
+            String savedX = savedInstanceState.getString("_restore_x", "");
+            String savedA = savedInstanceState.getString("_restore_a", "");
+            String savedB = savedInstanceState.getString("_restore_b", "");
+            String savedGuess = savedInstanceState.getString("_restore_guess", "");
+            String savedResult = savedInstanceState.getString("_restore_result", "");
+            if (!savedExpr.isEmpty() && exprInput != null) exprInput.setText(savedExpr);
+            if (!savedX.isEmpty() && xInput != null) xInput.setText(savedX);
+            if (!savedA.isEmpty() && aInput != null) aInput.setText(savedA);
+            if (!savedB.isEmpty() && bInput != null) bInput.setText(savedB);
+            if (!savedGuess.isEmpty() && guessInput != null) guessInput.setText(savedGuess);
+            if (!savedResult.isEmpty() && resultView != null) resultView.setText(savedResult);
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (exprInput != null) outState.putString("expr_input", exprInput.getText().toString());
+        if (xInput != null) outState.putString("x_input", xInput.getText().toString());
+        if (aInput != null) outState.putString("a_input", aInput.getText().toString());
+        if (bInput != null) outState.putString("b_input", bInput.getText().toString());
+        if (guessInput != null) outState.putString("guess_input", guessInput.getText().toString());
+        if (resultView != null) outState.putString("result_text", resultView.getText().toString());
     }
 
     private String getExpr()  { return exprInput.getText().toString().trim(); }
