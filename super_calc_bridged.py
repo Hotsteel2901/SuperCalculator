@@ -4184,7 +4184,7 @@ class SuperCalcApp:
         try:
             result = CalcEngine.laplace_transform(expr, s)
             msg = "L{%s}(%.6g) = %.10g" % (expr, s, result)
-            self._status_var.set(msg)
+            self.status_var.set(msg)
             self.record_history("L{%s}(%.6g)" % (expr, s), result)
         except Exception as e:
             messagebox.showerror(t("err_error"), str(e))
@@ -4205,7 +4205,7 @@ class SuperCalcApp:
         try:
             result = CalcEngine.inverse_laplace(expr, t_val)
             msg = "L^{-1}{%s}(%.6g) = %.10g" % (expr, t_val, result)
-            self._status_var.set(msg)
+            self.status_var.set(msg)
             self.record_history("L^{-1}{%s}(%.6g)" % (expr, t_val), result)
         except Exception as e:
             messagebox.showerror(t("err_error"), str(e))
@@ -5570,8 +5570,8 @@ class SuperCalcApp:
             try:
                 result = CalcEngine.complex_pow(z1, z2)
                 self._show_complex_result(self._format_complex(result))
-            except Exception:
-                messagebox.showerror(t("err_complex"), t("msg_cplx_div_zero"))
+            except Exception as e:
+                messagebox.showerror(t("err_complex"), str(e))
 
     def _on_complex_sin(self):
         z = self._parse_complex(self._var_complex_z.get())
