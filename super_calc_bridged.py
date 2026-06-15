@@ -2198,6 +2198,7 @@ class SuperCalcApp:
             (t("interp_method_lagrange"), "lagrange"),
             (t("interp_method_newton"), "newton"),
             (t("interp_method_spline"), "spline"),
+            (t("interp_method_akima"), "akima"),
         ]
         interp_combo = ttk.Combobox(ip_row0, textvariable=self._var_interp_method,
                                      values=[m[0] for m in interp_methods],
@@ -6603,6 +6604,14 @@ class SuperCalcApp:
         dx = x - xs[seg]
         return ys[seg] + b[seg] * dx + c[seg] * dx ** 2 + d[seg] * dx ** 3
 
+    @staticmethod
+    def _interp_akima(xs: List[float], ys: List[float], x: float) -> float:
+        """Akima interpolation — reduces overshoot vs cubic spline."""
+        result = CalcEngine.interp_akima(xs, ys, x)
+        if result is None:
+            raise ValueError("Akima interpolation failed")
+        return float(result)
+
     def _on_interp_compute(self):
         points = self._interp_parse_data()
         if points is None:
@@ -6628,6 +6637,9 @@ class SuperCalcApp:
             elif method == "spline":
                 result = self._interp_spline(xs, ys, x_val)
                 self._var_interp_formula.set("Cubic spline interpolation")
+            elif method == "akima":
+                result = self._interp_akima(xs, ys, x_val)
+                self._var_interp_formula.set("Akima interpolation")
             else:
                 result = self._interp_linear(xs, ys, x_val)
             self._var_interp_result.set(t("status_interp_ok", x_val, result))
@@ -6663,6 +6675,8 @@ class SuperCalcApp:
                     y_plot.append(val)
                 elif method == "spline":
                     y_plot.append(self._interp_spline(xs, ys, float(xv)))
+                elif method == "akima":
+                    y_plot.append(self._interp_akima(xs, ys, float(xv)))
                 else:
                     y_plot.append(self._interp_linear(xs, ys, float(xv)))
             method_names = {
@@ -6670,6 +6684,7 @@ class SuperCalcApp:
                 "lagrange": t("interp_method_lagrange"),
                 "newton": t("interp_method_newton"),
                 "spline": t("interp_method_spline"),
+                "akima": t("interp_method_akima"),
             }
             self.ax_2d.plot(x_plot, y_plot, color="#4f8cff", linewidth=2,
                            label=method_names.get(method, method))

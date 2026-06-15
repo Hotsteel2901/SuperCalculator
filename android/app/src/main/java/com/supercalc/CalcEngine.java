@@ -184,4 +184,8 @@ public class CalcEngine {
 
     /** Compute inverse Laplace transform f(t) given F(s). The expression uses variable s. */
     public static native double inverseLaplace(String expr, double t);
+
+    // Interpolation
+    /** Akima interpolation on data points (xs, ys) evaluated at x. Reduces overshoot vs cubic spline. */
+    public static native double interpAkima(double[] xs, double[] ys, double x);
 }

@@ -3490,6 +3490,10 @@ STRINGS = {
         "en": "Cubic Spline",
         "zh": "三次样条",
     },
+    "interp_method_akima": {
+        "en": "Akima Spline",
+        "zh": "Akima 样条",
+    },
     "label_interp_data": {
         "en": "Data points (x,y):",
         "zh": "数据点 (x,y)：",

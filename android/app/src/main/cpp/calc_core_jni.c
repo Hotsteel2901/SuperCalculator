@@ -76,6 +76,9 @@ int custom_func_list(char* output, int max_out);
 double laplace_transform(const char* expr, double s);
 double inverse_laplace(const char* expr, double t);
 
+/* Akima Interpolation */
+double interp_akima(const double* xs, const double* ys, int n, double x);
+
 /* Calculation History */
 void history_add(const char* expr, double result);
 int history_count(void);
@@ -1286,4 +1289,29 @@ Java_com_supercalc_CalcEngine_historyGetAll(JNIEnv* env, jclass clazz) {
     int len = history_get_all(buf, sizeof(buf));
     if (len <= 0) return (*env)->NewStringUTF(env, "");
     return (*env)->NewStringUTF(env, buf);
+}
+
+/* ---- Akima Interpolation ---- */
+
+JNIEXPORT jdouble JNICALL
+Java_com_supercalc_CalcEngine_interpAkima(JNIEnv* env, jclass clazz,
+                                           jdoubleArray xs, jdoubleArray ys,
+                                           jdouble x) {
+    jsize n = (*env)->GetArrayLength(env, xs);
+    jsize ny = (*env)->GetArrayLength(env, ys);
+    if (n != ny || n < 2) return NAN;
+
+    jdouble* x_vals = (*env)->GetDoubleArrayElements(env, xs, NULL);
+    jdouble* y_vals = (*env)->GetDoubleArrayElements(env, ys, NULL);
+    if (!x_vals || !y_vals) {
+        if (x_vals) (*env)->ReleaseDoubleArrayElements(env, xs, x_vals, JNI_ABORT);
+        if (y_vals) (*env)->ReleaseDoubleArrayElements(env, ys, y_vals, JNI_ABORT);
+        return NAN;
+    }
+
+    double result = interp_akima(x_vals, y_vals, (int)n, x);
+
+    (*env)->ReleaseDoubleArrayElements(env, xs, x_vals, JNI_ABORT);
+    (*env)->ReleaseDoubleArrayElements(env, ys, y_vals, JNI_ABORT);
+    return result;
 }

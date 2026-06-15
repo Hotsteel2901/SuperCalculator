@@ -320,6 +320,12 @@ _lib.laplace_transform.restype = ctypes.c_double
 _lib.inverse_laplace.argtypes = [ctypes.c_char_p, ctypes.c_double]
 _lib.inverse_laplace.restype = ctypes.c_double
 
+# Akima Interpolation
+_lib.interp_akima.argtypes = [ctypes.POINTER(ctypes.c_double),
+                               ctypes.POINTER(ctypes.c_double),
+                               ctypes.c_int, ctypes.c_double]
+_lib.interp_akima.restype = ctypes.c_double
+
 
 def _is_invalid(x: float) -> bool:
     try:
@@ -1475,3 +1481,18 @@ class CalcEngine:
             err = _lib.get_last_error()
             raise ValueError(err.decode("utf-8") if err else "Inverse Laplace transform failed")
         return result
+
+    @staticmethod
+    def interp_akima(xs: List[float], ys: List[float], x: float) -> Optional[float]:
+        """Akima interpolation on data points (xs, ys) evaluated at x.
+
+        Uses Akima's method which reduces overshoot compared to cubic spline.
+        Requires at least 2 data points with distinct x values.
+        """
+        n = len(xs)
+        if n != len(ys) or n < 2:
+            return None
+        arr_x = (ctypes.c_double * n)(*xs)
+        arr_y = (ctypes.c_double * n)(*ys)
+        result = _lib.interp_akima(arr_x, arr_y, n, x)
+        return None if _is_invalid(result) else result
