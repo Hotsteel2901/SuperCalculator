@@ -103,12 +103,14 @@ public class StatDistCalc {
 
     // --- Student's t-distribution ---
     private static double tPdf(double x, int nu) {
+        if (nu < 1) return Double.NaN;
         double coeff = Math.exp(logGamma((nu + 1.0) / 2.0) - logGamma(nu / 2.0))
                 / (Math.sqrt(nu * Math.PI));
         return coeff * Math.pow(1.0 + x * x / nu, -(nu + 1.0) / 2.0);
     }
 
     private static double tCdf(double x, int nu) {
+        if (nu < 1) return Double.NaN;
         // Use numerical integration (trapezoidal) from 0 to x, plus 0.5 offset
         // to get integral from -infinity to x
         if (x > 10) return 1.0;
@@ -125,6 +127,7 @@ public class StatDistCalc {
 
     // --- Chi-squared distribution ---
     private static double chi2Pdf(double x, int k) {
+        if (k < 1) return Double.NaN;
         if (x <= 0) return 0.0;
         double logPdf = (k / 2.0 - 1) * Math.log(x) - x / 2.0
                 - (k / 2.0) * Math.log(2.0) - logGamma(k / 2.0);
@@ -132,12 +135,14 @@ public class StatDistCalc {
     }
 
     private static double chi2Cdf(double x, int k) {
+        if (k < 1) return Double.NaN;
         if (x <= 0) return 0.0;
         return lowerIncompleteGamma(k / 2.0, x / 2.0);
     }
 
     // --- F-distribution ---
     private static double fPdf(double x, double d1, double d2) {
+        if (d1 < 1 || d2 < 1) return Double.NaN;
         if (x <= 0) return 0.0;
         double logPdf = (d1 / 2.0) * Math.log(d1) + (d2 / 2.0) * Math.log(d2)
                 + ((d1 / 2.0) - 1) * Math.log(x)
@@ -148,6 +153,7 @@ public class StatDistCalc {
     }
 
     private static double fCdf(double x, double d1, double d2) {
+        if (d1 < 1 || d2 < 1) return Double.NaN;
         if (x <= 0) return 0.0;
         double z = d1 * x / (d1 * x + d2);
         return incompleteBeta(d1 / 2.0, d2 / 2.0, z);
