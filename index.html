@@ -2360,7 +2360,7 @@
                     Interactive Demo
                 </div>
                 <h2 class="section-title">数据插值</h2>
-                <p class="section-subtitle">支持线性、拉格朗日、牛顿和三次样条插值，可视化数据拟合曲线</p>
+                <p class="section-subtitle">支持线性、拉格朗日、牛顿、三次样条和 Akima 样条插值，可视化数据拟合曲线</p>
             </div>
             <div class="card glass reveal" style="max-width: 850px; margin: 0 auto;">
                 <h3 style="font-size: 20px; margin-bottom: 16px; color: var(--text-main);">Data Interpolation Calculator</h3>
@@ -2372,6 +2372,7 @@
                         <option value="lagrange">Polynomial (Lagrange)</option>
                         <option value="newton">Polynomial (Newton)</option>
                         <option value="spline">Cubic Spline</option>
+                        <option value="akima">Akima Spline</option>
                     </select>
                     <button onclick="interpWebPlot()" style="flex:1;min-width:100px;padding:12px 16px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;">Plot</button>
                     <button onclick="interpWebClear()" style="padding:12px 16px;border-radius:12px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-muted);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;">Clear</button>
@@ -2475,6 +2476,7 @@
                     if(method==='linear')y=interpLinearJS(xs,ys,x);
                     else if(method==='lagrange')y=interpLagrangeJS(xs,ys,x);
                     else if(method==='newton')y=interpNewtonJS(xs,ys,x);
+                    else if(method==='akima')y=interpAkimaJS(xs,ys,x);
                     else y=interpSplineJS(xs,ys,x);
                     if(isFinite(y))curvePts.push({x:x,y:y});
                 }
@@ -2509,6 +2511,7 @@
                 if(method==='linear')y=interpLinearJS(xs,ys,x);
                 else if(method==='lagrange')y=interpLagrangeJS(xs,ys,x);
                 else if(method==='newton')y=interpNewtonJS(xs,ys,x);
+                else if(method==='akima')y=interpAkimaJS(xs,ys,x);
                 else y=interpSplineJS(xs,ys,x);
                 document.getElementById('interpWebResult').textContent='f('+x+') = '+y.toFixed(6);
             };
@@ -2583,6 +2586,37 @@
                 var seg=0;for(var i=0;i<n;i++){if(x>=xs[i])seg=i;}
                 var dx=x-xs[seg];
                 return ys[seg]+b[seg]*dx+c[seg]*dx*dx+d[seg]*dx*dx*dx;
+            }
+
+            function interpAkimaJS(xs,ys,x){
+                var n=xs.length,m=n-1;
+                if(x<=xs[0])return ys[0];
+                if(x>=xs[n-1])return ys[n-1];
+                var t=[];
+                for(var i=0;i<m;i++){
+                    var dx=xs[i+1]-xs[i];
+                    t[i]=(ys[i+1]-ys[i])/dx;
+                }
+                t[m]=t[m-1];t[m+1]=t[m];
+                var seg=0;
+                for(var i=0;i<m;i++){if(x>=xs[i])seg=i;}
+                var ml,mr;
+                if(seg===0){ml=t[0];}
+                else{
+                    var w1=Math.abs(t[seg+1]-t[seg]);
+                    var w2=(seg>=2)?Math.abs(t[seg-1]-t[seg-2]):0;
+                    ml=(w1+w2===0)?t[seg]:(w1*t[seg]+w2*t[seg+1])/(w1+w2);
+                }
+                if(seg+1>=m){mr=t[m-1];}
+                else{
+                    var w1=Math.abs(t[seg+2]-t[seg+1]);
+                    var w2=(seg>=1)?Math.abs(t[seg]-t[seg-1]):0;
+                    mr=(w1+w2===0)?t[seg+1]:(w1*t[seg+1]+w2*t[seg+2])/(w1+w2);
+                }
+                var dx=xs[seg+1]-xs[seg];
+                var a=ys[seg],b=ml,c=(3*t[seg]-2*ml-mr)/dx,d=(ml+mr-2*t[seg])/(dx*dx);
+                var s=x-xs[seg];
+                return a+b*s+c*s*s+d*s*s*s;
             }
         })();
         </script>

@@ -2191,3 +2191,86 @@ EXPORT int history_get_all(char* output, int max_out) {
     output[pos] = '\0';
     return pos;
 }
+
+/* --------------------------------------------------------------------------
+ *  Akima Interpolation
+ *  Akima's method uses a local polynomial of degree ≤ 3 on each subinterval,
+ *  with slopes computed from a weighted average of adjacent secant slopes.
+ *  This reduces overshoot compared to cubic spline.
+ *  Reference: H. Akima, "A New Method of Interpolation and Smooth Curve
+ *  Fitting Based on Local Procedures", JACM 17(4), 1970.
+ * -------------------------------------------------------------------------- */
+
+EXPORT double interp_akima(const double* xs, const double* ys, int n, double x) {
+    if (!xs || !ys || n < 2) {
+        set_error("interp_akima: need at least 2 data points");
+        return NAN;
+    }
+    clear_error();
+
+    /* Clamp to boundary */
+    if (x <= xs[0]) return ys[0];
+    if (x >= xs[n - 1]) return ys[n - 1];
+
+    /* Compute secant slopes t[i] = (ys[i+1]-ys[i]) / (xs[i+1]-xs[i]) for i=0..n-2 */
+    int m = n - 1;  /* number of intervals */
+    double* t = (double*)malloc((m + 2) * sizeof(double));
+    if (!t) { set_error("interp_akima: out of memory"); return NAN; }
+
+    for (int i = 0; i < m; i++) {
+        double dx = xs[i + 1] - xs[i];
+        if (dx == 0.0) {
+            set_error("interp_akima: duplicate x values");
+            free(t);
+            return NAN;
+        }
+        t[i] = (ys[i + 1] - ys[i]) / dx;
+    }
+
+    /* Extend with ghost points: t[-1] = t[0], t[m] = t[m-1] */
+    t[m] = t[m - 1];
+    t[m + 1] = t[m];
+
+    /* Find segment containing x */
+    int seg = 0;
+    for (int i = 0; i < m; i++) {
+        if (x >= xs[i]) seg = i;
+    }
+
+    /* Compute slopes using Akima's formula:
+     * m[i] = (w1*t[i-1] + w2*t[i]) / (w1+w2) if w1+w2 != 0
+     * m[i] = t[i] otherwise
+     * where w1 = |t[i+1]-t[i]|, w2 = |t[i-1]-t[i-2]|
+     * Boundary: m[0] = t[0], m[n-1] = t[n-2]
+     * Ghost points: t[-1] = t[0], t[n-1] = t[n-2]
+     */
+    double m_left, m_right;
+
+    /* Left slope at seg */
+    if (seg == 0) {
+        m_left = t[0];
+    } else {
+        double w1l = fabs(t[seg + 1] - t[seg]);
+        double w2l = (seg >= 2) ? fabs(t[seg - 1] - t[seg - 2]) : 0.0;
+        m_left = (w1l + w2l == 0.0) ? t[seg] : (w1l * t[seg] + w2l * t[seg + 1]) / (w1l + w2l);
+    }
+
+    /* Right slope at seg+1 */
+    if (seg + 1 >= m) {
+        m_right = t[m - 1];
+    } else {
+        double w1r = fabs(t[seg + 2] - t[seg + 1]);
+        double w2r = (seg >= 1) ? fabs(t[seg] - t[seg - 1]) : 0.0;
+        m_right = (w1r + w2r == 0.0) ? t[seg + 1] : (w1r * t[seg + 1] + w2r * t[seg + 2]) / (w1r + w2r);
+    }
+
+    double dx = xs[seg + 1] - xs[seg];
+    double a = ys[seg];
+    double b = m_left;
+    double c = (3.0 * t[seg] - 2.0 * m_left - m_right) / dx;
+    double d = (m_left + m_right - 2.0 * t[seg]) / (dx * dx);
+
+    double s = x - xs[seg];
+    free(t);
+    return a + b * s + c * s * s + d * s * s * s;
+}
