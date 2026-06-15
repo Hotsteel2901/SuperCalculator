@@ -2242,7 +2242,7 @@
                 var stepsEl=document.getElementById('odeCompareSteps');
                 var statusEl=document.getElementById('odeCompareStatus');
                 var legendEl=document.getElementById('odeCompareLegend');
-                if(!exprEl||!x0El||!y0El||!xEndEl||!stepsEl||!statusEl)return;
+                if(!exprEl||!x0El||!y0El||!xEndEl||!stepsEl||!statusEl||!legendEl)return;
                 var expr=exprEl.value.trim();
                 var x0=parseFloat(x0El.value);
                 var y0=parseFloat(y0El.value);
@@ -3569,7 +3569,7 @@
 
             function setFromBase(base) {
                 currentFromBase = base;
-                var btns = document.querySelectorAll('.base-btn');
+                var btns = document.querySelectorAll('#baseButtons .base-btn');
                 for (var i = 0; i < btns.length; i++) {
                     btns[i].classList.toggle('active', parseInt(btns[i].getAttribute('data-base')) === base);
                 }
@@ -3719,7 +3719,8 @@
                     : fmt(dt) + ' + ' + days + ' days = ' + fmt(result);
             };
 
-            document.getElementById('calDays').addEventListener('keydown', function(e) {
+            var calDaysEl = document.getElementById('calDays');
+            if (calDaysEl) calDaysEl.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') { e.preventDefault(); calAdd(); }
             });
         })();
@@ -3821,10 +3822,10 @@
                 var bWrap = document.getElementById('bwOperandBWrap');
                 var bBits = document.getElementById('bwBitsB');
                 if (op === 'NOT') {
-                    bWrap.style.display = 'none';
-                    bBits.style.display = 'none';
+                    if (bWrap) bWrap.style.display = 'none';
+                    if (bBits) bBits.style.display = 'none';
                 } else {
-                    bWrap.style.display = '';
+                    if (bWrap) bWrap.style.display = '';
                 }
                 calcBitwise();
             };
@@ -3945,11 +3946,12 @@
                 for (var i = 0; i < btns.length; i++) {
                     btns[i].classList.toggle('active', btns[i].getAttribute('data-mode') === mode);
                 }
-                document.getElementById('probComboInputs').style.display = (mode === 'combo') ? '' : 'none';
-                document.getElementById('probEventInputs').style.display = (mode === 'event') ? '' : 'none';
-                document.getElementById('probBayesInputs').style.display = (mode === 'bayes') ? '' : 'none';
-                document.getElementById('probBinomInputs').style.display = (mode === 'binom') ? '' : 'none';
-                document.getElementById('probResults').style.display = 'none';
+                var el;
+                el = document.getElementById('probComboInputs'); if (el) el.style.display = (mode === 'combo') ? '' : 'none';
+                el = document.getElementById('probEventInputs'); if (el) el.style.display = (mode === 'event') ? '' : 'none';
+                el = document.getElementById('probBayesInputs'); if (el) el.style.display = (mode === 'bayes') ? '' : 'none';
+                el = document.getElementById('probBinomInputs'); if (el) el.style.display = (mode === 'binom') ? '' : 'none';
+                el = document.getElementById('probResults'); if (el) el.style.display = 'none';
                 if (mode === 'combo') computeProb();
                 else if (mode === 'event') computeProbEvent();
                 else if (mode === 'bayes') computeProbBayes();
@@ -3981,7 +3983,7 @@
                 res.style.display = 'block';
                 res.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
                     '<div><span style="color:var(--text-muted);">P(A∪B) = </span><span style="color:var(--glow-primary);">' + fmtNum(union) + '</span></div>' +
-                    '<div><span style="color:var(--text-muted);">P(A∩B) = </span><span style="color:var(--glow-primary);">' + fmtNum(pa * pb) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">P(A∩B) = </span><span style="color:var(--glow-primary);">' + fmtNum(pab) + '</span></div>' +
                     '<div><span style="color:var(--text-muted);">P(A\') = </span><span style="color:var(--glow-primary);">' + fmtNum(compA) + '</span></div>' +
                     '<div><span style="color:var(--text-muted);">P(B\') = </span><span style="color:var(--glow-primary);">' + fmtNum(1 - pb) + '</span></div>' +
                     '</div>';
@@ -4036,16 +4038,17 @@
             }
 
             window.setFinMode = function(mode) {
-                document.getElementById('finLoanInputs').style.display = mode === 'loan' ? '' : 'none';
-                document.getElementById('finCompoundInputs').style.display = mode === 'compound' ? '' : 'none';
-                document.getElementById('finNpvInputs').style.display = mode === 'npv' ? '' : 'none';
-                document.getElementById('finBondInputs').style.display = mode === 'bond' ? '' : 'none';
-                document.getElementById('finRetireInputs').style.display = mode === 'retire' ? '' : 'none';
+                var el;
+                el = document.getElementById('finLoanInputs'); if (el) el.style.display = mode === 'loan' ? '' : 'none';
+                el = document.getElementById('finCompoundInputs'); if (el) el.style.display = mode === 'compound' ? '' : 'none';
+                el = document.getElementById('finNpvInputs'); if (el) el.style.display = mode === 'npv' ? '' : 'none';
+                el = document.getElementById('finBondInputs'); if (el) el.style.display = mode === 'bond' ? '' : 'none';
+                el = document.getElementById('finRetireInputs'); if (el) el.style.display = mode === 'retire' ? '' : 'none';
                 ['Loan','Compound','Npv','Bond','Retire'].forEach(function(c) {
-                    document.getElementById('finChip' + c).classList.remove('active');
+                    el = document.getElementById('finChip' + c); if (el) el.classList.remove('active');
                 });
                 var map = {loan:'Loan',compound:'Compound',npv:'Npv',bond:'Bond',retire:'Retire'};
-                document.getElementById('finChip' + map[mode]).classList.add('active');
+                el = document.getElementById('finChip' + map[mode]); if (el) el.classList.add('active');
                 var computeMap = {loan: computeFinLoan, compound: computeFinCompound, npv: computeFinNPV, bond: computeFinBond, retire: computeFinRetire};
                 if (computeMap[mode]) computeMap[mode]();
             };
@@ -4169,10 +4172,11 @@
 
             window.setVolMode = function(mode) {
                 volMode = mode;
-                document.getElementById('volChipDisk').classList.toggle('active', mode === 'disk');
-                document.getElementById('volChipWasher').classList.toggle('active', mode === 'washer');
-                document.getElementById('volChipShell').classList.toggle('active', mode === 'shell');
-                document.getElementById('volGxDiv').style.display = mode === 'washer' ? '' : 'none';
+                var el;
+                el = document.getElementById('volChipDisk'); if (el) el.classList.toggle('active', mode === 'disk');
+                el = document.getElementById('volChipWasher'); if (el) el.classList.toggle('active', mode === 'washer');
+                el = document.getElementById('volChipShell'); if (el) el.classList.toggle('active', mode === 'shell');
+                el = document.getElementById('volGxDiv'); if (el) el.style.display = mode === 'washer' ? '' : 'none';
                 computeVolume();
             };
 
@@ -4459,14 +4463,14 @@
                     var s=solve3(m,r);
                     if(s) return {p:s, eq:'y = '+s[0].toFixed(4)+'x² + '+s[1].toFixed(4)+'x + '+s[2].toFixed(4)};
                 } else if (type === 'exponential') {
-                    var slnx=0,sy=0,slnx2=0,sylnx=0,cnt=0;
-                    for(var i=0;i<n;i++){if(ys[i]>0){var lnx=Math.log(xs[i]);slnx+=lnx;sy+=Math.log(ys[i]);slnx2+=lnx*lnx;sylnx+=Math.log(ys[i])*lnx;cnt++;}}
+                    var sx=0,sx2=0,sy=0,sxy=0,cnt=0;
+                    for(var i=0;i<n;i++){if(ys[i]>0){var x=xs[i],ly=Math.log(ys[i]);sx+=x;sx2+=x*x;sy+=ly;sxy+=x*ly;cnt++;}}
                     if(cnt<2) return null;
-                    var edenom=cnt*slnx2-slnx*slnx;
+                    var edenom=cnt*sx2-sx*sx;
                     if(Math.abs(edenom)<1e-15) return null;
-                    var b=(cnt*sylnx-slnx*sy)/edenom;
-                    var a=(sy-b*slnx)/cnt;
-                    return {p:[Math.exp(a),b], eq:'y = '+Math.exp(a).toFixed(4)+'·e^('+b.toFixed(4)+'x)'};
+                    var b=(cnt*sxy-sx*sy)/edenom;
+                    var lnA=(sy-b*sx)/cnt;
+                    return {p:[Math.exp(lnA),b], eq:'y = '+Math.exp(lnA).toFixed(4)+'·e^('+b.toFixed(4)+'x)'};
                 }
                 return null;
             }
