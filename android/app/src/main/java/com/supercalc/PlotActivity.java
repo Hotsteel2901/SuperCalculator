@@ -116,6 +116,16 @@ public class PlotActivity extends AppCompatActivity {
             if (savedPolar != null) polarExprs.addAll(savedPolar);
             colorIndex = savedInstanceState.getInt("color_index", 0);
             
+            // Restore axis ranges
+            String savedXMin = savedInstanceState.getString("x_min");
+            String savedXMax = savedInstanceState.getString("x_max");
+            String savedYMin = savedInstanceState.getString("y_min");
+            String savedYMax = savedInstanceState.getString("y_max");
+            if (savedXMin != null) xMinInput.setText(savedXMin);
+            if (savedXMax != null) xMaxInput.setText(savedXMax);
+            if (savedYMin != null) yMinInput.setText(savedYMin);
+            if (savedYMax != null) yMaxInput.setText(savedYMax);
+            
             // Restore parametric/polar parameters
             ArrayList<String> savedParamTMin = savedInstanceState.getStringArrayList("param_t_min");
             ArrayList<String> savedParamTMax = savedInstanceState.getStringArrayList("param_t_max");
@@ -162,7 +172,7 @@ public class PlotActivity extends AppCompatActivity {
         btnZoom.setOnClickListener(v -> openFullScreen());
         
         NestedScrollView scrollView = findViewById(R.id.scroll_view);
-        scrollView.setNestedScrollingEnabled(false);
+        if (scrollView != null) scrollView.setNestedScrollingEnabled(false);
         
         lineChart.setTouchEnabled(true);
         lineChart.setPinchZoom(true);
@@ -185,7 +195,7 @@ public class PlotActivity extends AppCompatActivity {
         
         // Handle polar curve from intent
         if (intent != null && intent.getBooleanExtra("is_polar", false)) {
-            String rExpr = intent.getStringExtra("parametric_x");
+            String rExpr = intent.getStringExtra("polar_r");
             double thetaMin = intent.getDoubleExtra("t_min", 0);
             double thetaMax = intent.getDoubleExtra("t_max", 6.2832);
             if (rExpr != null) {

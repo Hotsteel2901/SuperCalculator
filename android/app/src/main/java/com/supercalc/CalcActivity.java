@@ -101,7 +101,7 @@ public class CalcActivity extends AppCompatActivity {
         odeXEndInput = findViewById(R.id.ode_xend_input);
         odeStepsInput = findViewById(R.id.ode_steps_input);
         resultView = findViewById(R.id.result_view);
-        resultView.setMovementMethod(new ScrollingMovementMethod());
+        if (resultView != null) resultView.setMovementMethod(new ScrollingMovementMethod());
         scrollView = findViewById(R.id.main_scroll);
         lineChart  = findViewById(R.id.line_chart);
         graphCard  = findViewById(R.id.graph_card);
@@ -432,12 +432,12 @@ public class CalcActivity extends AppCompatActivity {
 
         // Restore saved state after all views are initialized
         if (savedInstanceState != null) {
-            String savedExpr = savedInstanceState.getString("_restore_expr", "");
-            String savedX = savedInstanceState.getString("_restore_x", "");
-            String savedA = savedInstanceState.getString("_restore_a", "");
-            String savedB = savedInstanceState.getString("_restore_b", "");
-            String savedGuess = savedInstanceState.getString("_restore_guess", "");
-            String savedResult = savedInstanceState.getString("_restore_result", "");
+            String savedExpr = savedInstanceState.getString("expr_input", "");
+            String savedX = savedInstanceState.getString("x_input", "");
+            String savedA = savedInstanceState.getString("a_input", "");
+            String savedB = savedInstanceState.getString("b_input", "");
+            String savedGuess = savedInstanceState.getString("guess_input", "");
+            String savedResult = savedInstanceState.getString("result_text", "");
             if (!savedExpr.isEmpty() && exprInput != null) exprInput.setText(savedExpr);
             if (!savedX.isEmpty() && xInput != null) xInput.setText(savedX);
             if (!savedA.isEmpty() && aInput != null) aInput.setText(savedA);
@@ -2737,7 +2737,7 @@ public class CalcActivity extends AppCompatActivity {
         }
 
         Intent intent = new Intent(this, PlotActivity.class);
-        intent.putExtra("parametric_x", rExpr);
+        intent.putExtra("polar_r", rExpr);
         intent.putExtra("is_polar", true);
         intent.putExtra("t_min", thetaMin);
         intent.putExtra("t_max", thetaMax);
@@ -3025,7 +3025,7 @@ public class CalcActivity extends AppCompatActivity {
         yAxis.setTextColor(0xFFCDD6F4);
         yAxis.setGridColor(0xFF45475A);
         lineChart.invalidate();
-        graphCard.setVisibility(android.view.View.VISIBLE);
+        if (graphCard != null) graphCard.setVisibility(android.view.View.VISIBLE);
         toast(getString(R.string.toast_dist_plotted, distName));
     }
 
@@ -4239,7 +4239,7 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private void showDataChart(LineData lineData) {
-        graphCard.setVisibility(android.view.View.VISIBLE);
+        if (graphCard != null) graphCard.setVisibility(android.view.View.VISIBLE);
         lineChart.setData(lineData);
         lineChart.getDescription().setText("");
         XAxis xAxis = lineChart.getXAxis();
@@ -4258,7 +4258,7 @@ public class CalcActivity extends AppCompatActivity {
         dataFileName = "";
         dataStatusView.setText("");
         lineChart.clear();
-        graphCard.setVisibility(android.view.View.GONE);
+        if (graphCard != null) graphCard.setVisibility(android.view.View.GONE);
     }
 
     // ------------------------------------------------------------------
