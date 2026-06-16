@@ -681,4 +681,15 @@
     <string name="laplace_inverse">L⁻¹{F(s)}</string>
     <string name="laplace_empty_expr">请输入拉普拉斯变换的表达式。</string>
     <string name="laplace_invalid_param">请输入有效的正参数值。</string>
+
+    <!-- 等高线图 -->
+    <string name="contour_plot">等高线图 f(x,y) = c</string>
+    <string name="contour_plot_btn">绘制等高线</string>
+    <string name="contour_plot_filled">填充等高线</string>
+    <string name="hint_contour_expr">f(x,y) =</string>
+    <string name="hint_contour_grid">分辨率</string>
+    <string name="hint_contour_levels">等高线数</string>
+    <string name="toast_contour_plotted">等高线图已绘制</string>
+    <string name="dialog_contour">等高线图</string>
+    <string name="contour_error">等高线图错误：%s</string>
 </resources>

@@ -43,6 +43,8 @@ public class CalcActivity extends AppCompatActivity {
     private String volMode = "disk";
     private EditText sysFInput, sysGInput, sysX0Input, sysY0Input;
     private EditText dfExprInput, dfGridInput, dfXminInput, dfXmaxInput, dfYminInput, dfYmaxInput, dfIcInput;
+    private EditText contourExprInput, contourGridInput, contourLevelsInput;
+    private EditText contourXminInput, contourXmaxInput, contourYminInput, contourYmaxInput;
     private EditText matrixAInput, matrixBInput;
     private EditText laplaceExprInput, laplaceParamInput;
     private TextView resultView;
@@ -178,6 +180,19 @@ public class CalcActivity extends AppCompatActivity {
         MaterialButton btnDfSolve = findViewById(R.id.btn_df_solve);
         btnDfPlot.setOnClickListener(v -> onDirectionField(false));
         btnDfSolve.setOnClickListener(v -> onDirectionField(true));
+
+        // Contour Plot
+        contourExprInput = findViewById(R.id.contour_expr_input);
+        contourGridInput = findViewById(R.id.contour_grid_input);
+        contourLevelsInput = findViewById(R.id.contour_levels_input);
+        contourXminInput = findViewById(R.id.contour_xmin_input);
+        contourXmaxInput = findViewById(R.id.contour_xmax_input);
+        contourYminInput = findViewById(R.id.contour_ymin_input);
+        contourYmaxInput = findViewById(R.id.contour_ymax_input);
+        MaterialButton btnContourPlot = findViewById(R.id.btn_contour_plot);
+        MaterialButton btnContourFilled = findViewById(R.id.btn_contour_filled);
+        btnContourPlot.setOnClickListener(v -> onContourPlot(false));
+        btnContourFilled.setOnClickListener(v -> onContourPlot(true));
 
         // Statistics
         statsDataInput = findViewById(R.id.stats_data_input);
@@ -1527,6 +1542,230 @@ public class CalcActivity extends AppCompatActivity {
         dialog.getWindow().setLayout(android.view.WindowManager.LayoutParams.MATCH_PARENT,
             android.view.WindowManager.LayoutParams.MATCH_PARENT);
         dialog.show();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void onContourPlot(boolean filled) {
+        String expr = contourExprInput.getText().toString().trim();
+        if (expr.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+
+        int grid, nLevels;
+        double xmin, xmax, ymin, ymax;
+        try {
+            grid = Integer.parseInt(contourGridInput.getText().toString().trim());
+            nLevels = Integer.parseInt(contourLevelsInput.getText().toString().trim());
+            xmin = Double.parseDouble(contourXminInput.getText().toString().trim());
+            xmax = Double.parseDouble(contourXmaxInput.getText().toString().trim());
+            ymin = Double.parseDouble(contourYminInput.getText().toString().trim());
+            ymax = Double.parseDouble(contourYmaxInput.getText().toString().trim());
+        } catch (NumberFormatException ex) {
+            toast(getString(R.string.toast_invalid_ode));
+            return;
+        }
+        if (grid < 10) grid = 10;
+        if (grid > 100) grid = 100;
+        if (nLevels < 2) nLevels = 2;
+        if (nLevels > 30) nLevels = 30;
+        if (xmin >= xmax || ymin >= ymax) {
+            toast(getString(R.string.toast_min_max));
+            return;
+        }
+
+        double[] values = CalcEngine.contourGridEval(expr, xmin, xmax, ymin, ymax, grid, grid);
+        if (values == null) {
+            resultView.append(String.format(getString(R.string.contour_error), CalcEngine.getLastError()) + "\n");
+            return;
+        }
+
+        // Compute contour levels
+        double vMin = Double.MAX_VALUE, vMax = -Double.MAX_VALUE;
+        for (double v : values) {
+            if (!Double.isNaN(v) && !Double.isInfinite(v)) {
+                if (v < vMin) vMin = v;
+                if (v > vMax) vMax = v;
+            }
+        }
+        if (vMin >= vMax) { vMin -= 1; vMax += 1; }
+
+        double[] levels = new double[nLevels];
+        for (int i = 0; i < nLevels; i++) {
+            levels[i] = vMin + (vMax - vMin) * (i + 1) / (nLevels + 1);
+        }
+
+        // Show contour in a dialog with custom Canvas drawing
+        showContourDialog(expr, values, grid, grid, xmin, xmax, ymin, ymax, levels, filled);
+        resultView.append(getString(R.string.toast_contour_plotted) + "\n");
+    }
+
+    private void showContourDialog(String expr, double[] values, int nCols, int nRows,
+                                    double xmin, double xmax, double ymin, double ymax,
+                                    double[] levels, boolean filled) {
+        android.app.Dialog dialog = new android.app.Dialog(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert);
+        dialog.setTitle(getString(R.string.dialog_contour));
+
+        android.widget.FrameLayout container = new android.widget.FrameLayout(this);
+        container.setPadding(16, 16, 16, 16);
+
+        android.view.View contourView = new android.view.View(this) {
+            @Override
+            protected void onDraw(android.graphics.Canvas canvas) {
+                super.onDraw(canvas);
+                int w = getWidth();
+                int h = getHeight();
+                android.graphics.Paint bgPaint = new android.graphics.Paint();
+                bgPaint.setColor(android.graphics.Color.parseColor("#181825"));
+                canvas.drawRect(0, 0, w, h, bgPaint);
+
+                float margin = 20f;
+                float plotW = w - 2 * margin;
+                float plotH = h - 2 * margin;
+
+                if (filled) {
+                    // Draw filled contour as colored cells
+                    float cellW = plotW / nCols;
+                    float cellH = plotH / nRows;
+                    for (int j = 0; j < nRows; j++) {
+                        for (int i = 0; i < nCols; i++) {
+                            double val = values[j * nCols + i];
+                            if (Double.isNaN(val) || Double.isInfinite(val)) continue;
+                            float t = (float)((val - levels[0]) / (levels[levels.length - 1] - levels[0]));
+                            t = Math.max(0f, Math.min(1f, t));
+                            int color = heatmapColor(t);
+                            android.graphics.Paint cellPaint = new android.graphics.Paint();
+                            cellPaint.setColor(color);
+                            canvas.drawRect(margin + i * cellW, margin + (nRows - 1 - j) * cellH,
+                                            margin + (i + 1) * cellW, margin + (nRows - j) * cellH, cellPaint);
+                        }
+                    }
+                }
+
+                // Draw contour lines using simple thresholding
+                android.graphics.Paint linePaint = new android.graphics.Paint();
+                linePaint.setStyle(android.graphics.Paint.Style.STROKE);
+                linePaint.setStrokeWidth(2f);
+                float cellW = plotW / (nCols - 1);
+                float cellH = plotH / (nRows - 1);
+
+                int[] contourColors = {
+                    android.graphics.Color.parseColor("#89b4fa"),
+                    android.graphics.Color.parseColor("#a6e3a1"),
+                    android.graphics.Color.parseColor("#f9e2af"),
+                    android.graphics.Color.parseColor("#f38ba8"),
+                    android.graphics.Color.parseColor("#cba6f7"),
+                    android.graphics.Color.parseColor("#fab387"),
+                };
+
+                for (int li = 0; li < levels.length; li++) {
+                    double level = levels[li];
+                    linePaint.setColor(contourColors[li % contourColors.length]);
+                    for (int j = 0; j < nRows - 1; j++) {
+                        for (int i = 0; i < nCols - 1; i++) {
+                            double v00 = values[j * nCols + i];
+                            double v10 = values[j * nCols + i + 1];
+                            double v01 = values[(j + 1) * nCols + i];
+                            double v11 = values[(j + 1) * nCols + i + 1];
+                            drawMarchingSquaresCell(canvas, margin, plotW, plotH, nRows,
+                                i, j, cellW, cellH, v00, v10, v01, v11, level, linePaint);
+                        }
+                    }
+                }
+
+                // Draw axes
+                android.graphics.Paint axisPaint = new android.graphics.Paint();
+                axisPaint.setColor(android.graphics.Color.parseColor("#585b70"));
+                axisPaint.setStrokeWidth(1f);
+                float axX = margin + (float)((0 - xmin) / (xmax - xmin) * plotW);
+                float axY = margin + (float)((ymax - 0) / (ymax - ymin) * plotH);
+                if (axX >= margin && axX <= margin + plotW) {
+                    canvas.drawLine(axX, margin, axX, margin + plotH, axisPaint);
+                }
+                if (axY >= margin && axY <= margin + plotH) {
+                    canvas.drawLine(margin, axY, margin + plotW, axY, axisPaint);
+                }
+
+                // Draw labels
+                android.graphics.Paint textPaint = new android.graphics.Paint();
+                textPaint.setColor(android.graphics.Color.parseColor("#cdd6f4"));
+                textPaint.setTextSize(20f);
+                textPaint.setAntiAlias(true);
+                canvas.drawText(String.format("f(x,y) = %s", expr), margin, margin - 4, textPaint);
+            }
+        };
+
+        container.addView(contourView);
+        dialog.setContentView(container);
+        dialog.getWindow().setLayout(android.view.WindowManager.LayoutParams.MATCH_PARENT,
+            android.view.WindowManager.LayoutParams.MATCH_PARENT);
+        dialog.show();
+    }
+
+    private static int heatmapColor(float t) {
+        // Blue -> Cyan -> Green -> Yellow -> Red
+        float r, g, b;
+        if (t < 0.25f) {
+            float s = t / 0.25f;
+            r = 0; g = s; b = 1;
+        } else if (t < 0.5f) {
+            float s = (t - 0.25f) / 0.25f;
+            r = 0; g = 1; b = 1 - s;
+        } else if (t < 0.75f) {
+            float s = (t - 0.5f) / 0.25f;
+            r = s; g = 1; b = 0;
+        } else {
+            float s = (t - 0.75f) / 0.25f;
+            r = 1; g = 1 - s; b = 0;
+        }
+        return android.graphics.Color.rgb((int)(r * 255), (int)(g * 255), (int)(b * 255));
+    }
+
+    private static void drawMarchingSquaresCell(android.graphics.Canvas canvas,
+            float margin, float plotW, float plotH, int nRows,
+            int i, int j, float cellW, float cellH,
+            double v00, double v10, double v01, double v11,
+            double level, android.graphics.Paint paint) {
+        int config = 0;
+        if (v00 >= level) config |= 1;
+        if (v10 >= level) config |= 2;
+        if (v11 >= level) config |= 4;
+        if (v01 >= level) config |= 8;
+
+        if (config == 0 || config == 15) return;
+
+        float x0 = margin + i * cellW;
+        float y0 = margin + (nRows - 1 - j) * cellH;
+
+        float topX = (float)(x0 + _lerpFrac(v00, v10, level) * cellW);
+        float topY = y0;
+        float rightX = x0 + cellW;
+        float rightY = (float)(y0 + _lerpFrac(v10, v11, level) * cellH);
+        float bottomX = (float)(x0 + _lerpFrac(v01, v11, level) * cellW);
+        float bottomY = y0 + cellH;
+        float leftX = x0;
+        float leftY = (float)(y0 + _lerpFrac(v00, v01, level) * cellH);
+
+        switch (config) {
+            case 1: case 14: canvas.drawLine(leftX, leftY, topX, topY, paint); break;
+            case 2: case 13: canvas.drawLine(topX, topY, rightX, rightY, paint); break;
+            case 3: case 12: canvas.drawLine(leftX, leftY, rightX, rightY, paint); break;
+            case 4: case 11: canvas.drawLine(rightX, rightY, bottomX, bottomY, paint); break;
+            case 5:
+                canvas.drawLine(leftX, leftY, topX, topY, paint);
+                canvas.drawLine(rightX, rightY, bottomX, bottomY, paint);
+                break;
+            case 6: case 9: canvas.drawLine(topX, topY, bottomX, bottomY, paint); break;
+            case 7: case 8: canvas.drawLine(leftX, leftY, bottomX, bottomY, paint); break;
+            case 10:
+                canvas.drawLine(leftX, leftY, topX, topY, paint);
+                canvas.drawLine(rightX, rightY, bottomX, bottomY, paint);
+                break;
+        }
+    }
+
+    private static double _lerpFrac(double va, double vb, double level) {
+        double d = vb - va;
+        if (Math.abs(d) < 1e-15) return 0.5;
+        double t = (level - va) / d;
+        return Math.max(0.0, Math.min(1.0, t));
     }
 
     private void onTaylorPlot() {

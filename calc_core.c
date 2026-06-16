@@ -2345,3 +2345,57 @@ EXPORT double interp_natural_spline(const double* xs, const double* ys, int n, d
     free(h); free(alpha); free(l); free(mu); free(z); free(c); free(b); free(d);
     return result;
 }
+
+/* --------------------------------------------------------------------------
+ *  Contour Grid Evaluation
+ *  Evaluates f(x,y) on a regular grid for contour plotting.
+ *  Fills out[] with n_cols * n_rows values in row-major order (y varies first).
+ *  out[j * n_cols + i] = evaluate_xy(expr, x_min + i*dx, y_min + j*dy)
+ *  Returns 0 on success, -1 on error (check get_last_error()).
+ * -------------------------------------------------------------------------- */
+
+EXPORT int contour_grid_eval(const char* expr, double x_min, double x_max,
+                             double y_min, double y_max, int n_cols, int n_rows,
+                             double* out) {
+    if (!expr || !out || n_cols < 2 || n_rows < 2) {
+        set_error("contour_grid_eval: invalid parameters");
+        return -1;
+    }
+    if (x_min >= x_max || y_min >= y_max) {
+        set_error("contour_grid_eval: invalid range");
+        return -1;
+    }
+    clear_error();
+
+    double dx = (x_max - x_min) / (n_cols - 1);
+    double dy = (y_max - y_min) / (n_rows - 1);
+
+    /* Tokenize and build RPN once for efficiency */
+    Token toks[MAX_TOKENS];
+    RPN   rpn[MAX_RPN];
+    int nt = tokenize(expr, toks, MAX_TOKENS);
+    if (nt < 0) {
+        int total = n_cols * n_rows;
+        for (int i = 0; i < total; i++) out[i] = NAN;
+        return -1;
+    }
+    int nr = shunt(toks, nt, rpn, MAX_RPN);
+    if (nr < 0) {
+        int total = n_cols * n_rows;
+        for (int i = 0; i < total; i++) out[i] = NAN;
+        return -1;
+    }
+
+    for (int j = 0; j < n_rows; j++) {
+        double y = y_min + j * dy;
+        for (int i = 0; i < n_cols; i++) {
+            double x = x_min + i * dx;
+            double r;
+            if (eval_rpn(rpn, nr, x, y, &r) != 0)
+                out[j * n_cols + i] = NAN;
+            else
+                out[j * n_cols + i] = r;
+        }
+    }
+    return 0;
+}

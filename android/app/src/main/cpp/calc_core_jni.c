@@ -89,6 +89,11 @@ int history_get(int index, char* expr_out, int expr_max, double* result_out);
 void history_clear(void);
 int history_get_all(char* output, int max_out);
 
+/* Contour Grid Evaluation */
+int contour_grid_eval(const char* expr, double x_min, double x_max,
+                      double y_min, double y_max, int n_cols, int n_rows,
+                      double* out);
+
 /* Helper: extract UTF-8 string from jstring, call fn, release, return */
 static jdouble call_with_expr(JNIEnv* env, jstring expr, double x,
                               double (*fn)(const char*, double)) {
@@ -1341,5 +1346,38 @@ Java_com_supercalc_CalcEngine_interpNaturalSpline(JNIEnv* env, jclass clazz,
 
     (*env)->ReleaseDoubleArrayElements(env, xs, x_vals, JNI_ABORT);
     (*env)->ReleaseDoubleArrayElements(env, ys, y_vals, JNI_ABORT);
+    return result;
+}
+
+/* ---- Contour Grid Evaluation ---- */
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_supercalc_CalcEngine_contourGridEval(JNIEnv* env, jclass clazz,
+                                               jstring expr, jdouble xMin, jdouble xMax,
+                                               jdouble yMin, jdouble yMax,
+                                               jint nCols, jint nRows) {
+    const char* str = (*env)->GetStringUTFChars(env, expr, NULL);
+    if (!str) return NULL;
+
+    int total = nCols * nRows;
+    double* buf = (double*)malloc(total * sizeof(double));
+    if (!buf) {
+        (*env)->ReleaseStringUTFChars(env, expr, str);
+        return NULL;
+    }
+
+    int rc = contour_grid_eval(str, xMin, xMax, yMin, yMax, nCols, nRows, buf);
+    (*env)->ReleaseStringUTFChars(env, expr, str);
+
+    if (rc != 0) {
+        free(buf);
+        return NULL;
+    }
+
+    jdoubleArray result = (*env)->NewDoubleArray(env, total);
+    if (result) {
+        (*env)->SetDoubleArrayRegion(env, result, 0, total, buf);
+    }
+    free(buf);
     return result;
 }

@@ -35,6 +35,7 @@ The bridge layer auto-detects platform and CPU architecture at load time, select
 - **Parametric Curve Plotting** — plot curves defined as x(t) and y(t), with 10 built-in presets (circle, ellipse, Lissajous, spiral, cardioid, heart, etc.)
 - **Polar Coordinate Plotting** — plot curves defined as r(theta), with 12 built-in presets (cardioid, rose curves, clover, spiral, lemniscate, etc.)
 - **Implicit Function Plotting** — plot implicit equations of the form f(x,y)=0 (e.g., circles, ellipses, hyperbolas, cardioids, lemniscates, folium of Descartes) using contour-based rendering with 8 built-in presets and adjustable resolution
+- **Contour Plot (Level Sets)** — visualize level curves f(x,y)=c for arbitrary expressions with adjustable resolution and contour count. Supports both line contour and filled contour modes with colorbar. Includes 5 built-in presets (circle, paraboloid, saddle, Gaussian, peaks). Available on desktop (Python), Android (Java), and web landing page interactive demo.
 - **Multi-Curve Overlay** — plot multiple functions simultaneously with different colors
 - **Numerical Derivatives** — first and second derivative via central difference
 - **Numerical Integration** — adaptive Simpson's rule for definite integrals
@@ -181,6 +182,7 @@ SuperCalculator/
 
 ## What's New
 
+- **Contour Plot (Level Sets)** — visualize level curves f(x,y)=c for arbitrary expressions with adjustable resolution and contour count. Supports both line contour and filled contour modes. Includes 5 built-in presets. Available on desktop (Python), Android (Java), and web landing page interactive demo.
 - **Data Interpolation Calculator** — fit data points using six interpolation methods: Linear, Polynomial (Lagrange), Polynomial (Newton), Cubic Spline, Natural Spline (S''(x₀)=S''(xₙ)=0), and Akima Spline. Evaluate the interpolated function at any x, visualize the interpolation curve with data points annotated. Interactive demo on the project landing page. Available on desktop (Python), Android (Java), and web landing page interactive demo.
 - **Probability Calculator** — compute combinations C(n,r), permutations P(n,r), event probabilities (union P(A∪B), intersection P(A∩B), complement P(A')), conditional probability P(A|B), Bayes' theorem with full posterior calculation, and binomial distribution P(X=k) with mean/variance. Interactive demo on the project landing page. Available on both desktop (Python) and Android (Java).
 - **Bitwise Operations Calculator** — perform bitwise AND, OR, XOR, NOT, left shift (<<), and right shift (>>) operations with configurable bit width (8/16/32). Real-time multi-base result display (binary, octal, decimal, hex). Interactive binary bit grid on the web landing page. Available on both desktop (Python) and Android (Java).

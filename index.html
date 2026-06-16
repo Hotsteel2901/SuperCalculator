@@ -1326,6 +1326,7 @@
             <a href="#calendar" class="nav-link"><span>万年历</span></a>
             <a href="#finance-calculator" class="nav-link"><span>金融计算</span></a>
             <a href="#direction-field" class="nav-link"><span>方向场</span></a>
+            <a href="#contour-plot" class="nav-link"><span>等高线图</span></a>
             <a href="#custom-function" class="nav-link"><span>自定义函数</span></a>
             <a href="#ode-compare" class="nav-link"><span>数值方法对比</span></a>
             <a href="#interpolation" class="nav-link"><span>数据插值</span></a>
@@ -1357,6 +1358,7 @@
         <a href="#calendar" class="mobile-nav-link">万年历</a>
         <a href="#finance-calculator" class="mobile-nav-link">金融计算</a>
         <a href="#direction-field" class="mobile-nav-link">方向场</a>
+        <a href="#contour-plot" class="mobile-nav-link">等高线图</a>
         <a href="#custom-function" class="mobile-nav-link">自定义函数</a>
         <a href="#ode-compare" class="mobile-nav-link">数值方法对比</a>
         <a href="#interpolation" class="mobile-nav-link">数据插值</a>
@@ -3341,6 +3343,46 @@
             </div>
         </section>
 
+        <!-- Contour Plot Section -->
+        <section class="section" id="contour-plot">
+            <div class="section-header">
+                <div class="section-label">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 3h18v18H3zM7 7h2v2H7zM15 7h2v2h-2zM11 11h2v2h-2zM7 15h2v2H7zM15 15h2v2h-2z"/>
+                    </svg>
+                    Contour Plot
+                </div>
+                <h2 class="section-title">等高线图</h2>
+                <p class="section-subtitle">输入 f(x,y) 表达式，可视化水平集 f(x,y) = c</p>
+            </div>
+            <div class="card glass reveal" style="max-width: 700px; margin: 0 auto;">
+                <div style="display:flex;flex-direction:column;gap:16px;">
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <div style="flex:2;min-width:200px;">
+                            <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">f(x,y) =</label>
+                            <input type="text" id="contourExpr" value="x^2+y^2" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="debouncedPlotContour()">
+                        </div>
+                        <div style="flex:1;min-width:100px;">
+                            <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">分辨率</label>
+                            <input type="range" id="contourGridSize" min="15" max="60" value="35" style="width:100%;margin-top:8px;accent-color:var(--glow-primary);" oninput="debouncedPlotContour()">
+                        </div>
+                        <div style="flex:1;min-width:100px;">
+                            <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">等高线数</label>
+                            <input type="range" id="contourLevels" min="3" max="25" value="12" style="width:100%;margin-top:8px;accent-color:var(--glow-primary);" oninput="debouncedPlotContour()">
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <div style="flex:1;min-width:80px;display:flex;align-items:flex-end;">
+                            <button class="base-btn" style="width:100%;padding:12px 20px;" onclick="plotContour()">Plot</button>
+                        </div>
+                    </div>
+                    <div style="position:relative;width:100%;border-radius:12px;overflow:hidden;border:1px solid var(--glass-border);background:rgba(17,17,27,0.5);">
+                        <canvas id="contourCanvas" style="width:100%;height:360px;display:block;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="section" id="custom-function">
             <div class="section-header">
                 <div class="section-label">
@@ -4692,6 +4734,174 @@
                 window.addEventListener('resize', function() {
                     clearTimeout(resizeTimer);
                     resizeTimer = setTimeout(plotDirectionField, 150);
+                });
+            }
+
+            // --- Contour Plot ---
+            function plotContour() {
+                var canvas = document.getElementById('contourCanvas');
+                if (!canvas) return;
+                var ctx = canvas.getContext('2d');
+                var dpr = window.devicePixelRatio || 1;
+                var rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+                ctx.scale(dpr, dpr);
+                var W = rect.width, H = rect.height;
+                ctx.fillStyle = '#181825';
+                ctx.fillRect(0, 0, W, H);
+
+                var expr = document.getElementById('contourExpr').value || 'x^2+y^2';
+                var gridN = parseInt(document.getElementById('contourGridSize').value) || 35;
+                var nLevels = parseInt(document.getElementById('contourLevels').value) || 12;
+
+                var xMin = -3, xMax = 3, yMin = -3, yMax = 3;
+                var dx = (xMax - xMin) / (gridN - 1);
+                var dy = (yMax - yMin) / (gridN - 1);
+
+                // Evaluate on grid
+                var grid = [];
+                var vMin = Infinity, vMax = -Infinity;
+                for (var j = 0; j < gridN; j++) {
+                    grid[j] = [];
+                    for (var i = 0; i < gridN; i++) {
+                        var x = xMin + i * dx;
+                        var y = yMin + j * dy;
+                        var v = evalExpr(expr, x, y);
+                        grid[j][i] = v;
+                        if (!isNaN(v) && isFinite(v)) {
+                            if (v < vMin) vMin = v;
+                            if (v > vMax) vMax = v;
+                        }
+                    }
+                }
+                if (vMin >= vMax) { vMin -= 1; vMax += 1; }
+
+                var margin = 30;
+                var pw = W - 2 * margin;
+                var ph = H - 2 * margin;
+                var cellW = pw / gridN;
+                var cellH = ph / gridN;
+
+                // Compute levels
+                var levels = [];
+                for (var l = 0; l < nLevels; l++) {
+                    levels.push(vMin + (vMax - vMin) * (l + 1) / (nLevels + 1));
+                }
+
+                // Color map (viridis-like)
+                function contourColor(t) {
+                    t = Math.max(0, Math.min(1, t));
+                    var r = Math.round(68 + t * 187);
+                    var g = Math.round(1 + t * 200);
+                    var b = Math.round(84 + (1 - t) * 170);
+                    return 'rgb(' + r + ',' + g + ',' + b + ')';
+                }
+
+                // Draw filled cells
+                for (var j = 0; j < gridN; j++) {
+                    for (var i = 0; i < gridN; i++) {
+                        var v = grid[j][i];
+                        if (isNaN(v) || !isFinite(v)) continue;
+                        var t = (v - vMin) / (vMax - vMin);
+                        ctx.fillStyle = contourColor(t);
+                        ctx.fillRect(margin + i * cellW, margin + (gridN - 1 - j) * cellH, cellW + 0.5, cellH + 0.5);
+                    }
+                }
+
+                // Draw contour lines (marching squares simplified)
+                function lerpFrac(va, vb, level) {
+                    var d = vb - va;
+                    if (Math.abs(d) < 1e-15) return 0.5;
+                    return Math.max(0, Math.min(1, (level - va) / d));
+                }
+
+                var lineColors = ['#89b4fa', '#a6e3a1', '#f9e2af', '#f38ba8', '#cba6f7', '#fab387'];
+                ctx.lineWidth = 1.5;
+
+                for (var li = 0; li < levels.length; li++) {
+                    var level = levels[li];
+                    ctx.strokeStyle = lineColors[li % lineColors.length];
+                    ctx.beginPath();
+                    for (var j = 0; j < gridN - 1; j++) {
+                        for (var i = 0; i < gridN - 1; i++) {
+                            var v00 = grid[j][i], v10 = grid[j][i+1];
+                            var v01 = grid[j+1][i], v11 = grid[j+1][i+1];
+                            var config = 0;
+                            if (v00 >= level) config |= 1;
+                            if (v10 >= level) config |= 2;
+                            if (v11 >= level) config |= 4;
+                            if (v01 >= level) config |= 8;
+                            if (config === 0 || config === 15) continue;
+
+                            var x0 = margin + i * cellW;
+                            var y0 = margin + (gridN - 1 - j) * cellH;
+                            var topX = x0 + lerpFrac(v00, v10, level) * cellW;
+                            var topY = y0;
+                            var rightX = x0 + cellW;
+                            var rightY = y0 + lerpFrac(v10, v11, level) * cellH;
+                            var bottomX = x0 + lerpFrac(v01, v11, level) * cellW;
+                            var bottomY = y0 + cellH;
+                            var leftX = x0;
+                            var leftY = y0 + lerpFrac(v00, v01, level) * cellH;
+
+                            switch (config) {
+                                case 1: case 14: ctx.moveTo(leftX, leftY); ctx.lineTo(topX, topY); break;
+                                case 2: case 13: ctx.moveTo(topX, topY); ctx.lineTo(rightX, rightY); break;
+                                case 3: case 12: ctx.moveTo(leftX, leftY); ctx.lineTo(rightX, rightY); break;
+                                case 4: case 11: ctx.moveTo(rightX, rightY); ctx.lineTo(bottomX, bottomY); break;
+                                case 5:
+                                    ctx.moveTo(leftX, leftY); ctx.lineTo(topX, topY);
+                                    ctx.moveTo(rightX, rightY); ctx.lineTo(bottomX, bottomY);
+                                    break;
+                                case 6: case 9: ctx.moveTo(topX, topY); ctx.lineTo(bottomX, bottomY); break;
+                                case 7: case 8: ctx.moveTo(leftX, leftY); ctx.lineTo(bottomX, bottomY); break;
+                                case 10:
+                                    ctx.moveTo(leftX, leftY); ctx.lineTo(topX, topY);
+                                    ctx.moveTo(rightX, rightY); ctx.lineTo(bottomX, bottomY);
+                                    break;
+                            }
+                        }
+                    }
+                    ctx.stroke();
+                }
+
+                // Draw axes
+                ctx.strokeStyle = '#585b70';
+                ctx.lineWidth = 1;
+                var axX = margin + (0 - xMin) / (xMax - xMin) * pw;
+                var axY = margin + (yMax - 0) / (yMax - yMin) * ph;
+                if (axX >= margin && axX <= margin + pw) {
+                    ctx.beginPath(); ctx.moveTo(axX, margin); ctx.lineTo(axX, margin + ph); ctx.stroke();
+                }
+                if (axY >= margin && axY <= margin + ph) {
+                    ctx.beginPath(); ctx.moveTo(margin, axY); ctx.lineTo(margin + pw, axY); ctx.stroke();
+                }
+
+                // Draw labels
+                ctx.fillStyle = '#cdd6f4';
+                ctx.font = '13px monospace';
+                ctx.fillText('f(x,y) = ' + expr, margin, margin - 8);
+                ctx.fillText('x: [' + xMin + ', ' + xMax + ']  y: [' + yMin + ', ' + yMax + ']', margin, H - 8);
+            }
+
+            var contourAnimFrame = null;
+            function debouncedPlotContour() {
+                if (contourAnimFrame) cancelAnimationFrame(contourAnimFrame);
+                contourAnimFrame = requestAnimationFrame(function() {
+                    plotContour();
+                    contourAnimFrame = null;
+                });
+            }
+            window.debouncedPlotContour = debouncedPlotContour;
+
+            var contourCanvas = document.getElementById('contourCanvas');
+            if (contourCanvas) {
+                plotContour();
+                var resizeTimer2;
+                window.addEventListener('resize', function() {
+                    clearTimeout(resizeTimer2);
+                    resizeTimer2 = setTimeout(plotContour, 150);
                 });
             }
 
