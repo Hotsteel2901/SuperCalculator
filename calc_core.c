@@ -2274,3 +2274,74 @@ EXPORT double interp_akima(const double* xs, const double* ys, int n, double x) 
     free(t);
     return a + b * s + c * s * s + d * s * s * s;
 }
+
+/* --------------------------------------------------------------------------
+ *  Natural Cubic Spline Interpolation
+ *  Boundary conditions: S''(x₀) = S''(xₙ) = 0
+ *  Solves a tridiagonal system for the second derivatives c[i], then
+ *  evaluates the cubic polynomial on the appropriate segment.
+ * -------------------------------------------------------------------------- */
+
+EXPORT double interp_natural_spline(const double* xs, const double* ys, int n, double x) {
+    if (!xs || !ys || n < 2) {
+        set_error("interp_natural_spline: need at least 2 data points");
+        return NAN;
+    }
+    clear_error();
+
+    if (x <= xs[0]) return ys[0];
+    if (x >= xs[n - 1]) return ys[n - 1];
+
+    int m = n - 1;
+    double* h = (double*)malloc(m * sizeof(double));
+    double* alpha = (double*)malloc(n * sizeof(double));
+    double* l = (double*)malloc(n * sizeof(double));
+    double* mu = (double*)malloc(n * sizeof(double));
+    double* z = (double*)malloc(n * sizeof(double));
+    double* c = (double*)malloc(n * sizeof(double));
+    double* b = (double*)malloc(m * sizeof(double));
+    double* d = (double*)malloc(m * sizeof(double));
+
+    if (!h || !alpha || !l || !mu || !z || !c || !b || !d) {
+        free(h); free(alpha); free(l); free(mu); free(z); free(c); free(b); free(d);
+        set_error("interp_natural_spline: out of memory");
+        return NAN;
+    }
+
+    for (int i = 0; i < m; i++) {
+        h[i] = xs[i + 1] - xs[i];
+        if (h[i] == 0.0) {
+            free(h); free(alpha); free(l); free(mu); free(z); free(c); free(b); free(d);
+            set_error("interp_natural_spline: duplicate x values");
+            return NAN;
+        }
+    }
+
+    for (int i = 1; i < m; i++) {
+        alpha[i] = 3.0 / h[i] * (ys[i + 1] - ys[i]) - 3.0 / h[i - 1] * (ys[i] - ys[i - 1]);
+    }
+
+    l[0] = 1.0; mu[0] = 0.0; z[0] = 0.0;
+    for (int i = 1; i < m; i++) {
+        l[i] = 2.0 * (xs[i + 1] - xs[i - 1]) - h[i - 1] * mu[i - 1];
+        mu[i] = h[i] / l[i];
+        z[i] = (alpha[i] - h[i - 1] * z[i - 1]) / l[i];
+    }
+    l[m] = 1.0; z[m] = 0.0; c[m] = 0.0;
+
+    for (int j = m - 1; j >= 0; j--) {
+        c[j] = z[j] - mu[j] * c[j + 1];
+        b[j] = (ys[j + 1] - ys[j]) / h[j] - h[j] * (c[j + 1] + 2.0 * c[j]) / 3.0;
+        d[j] = (c[j + 1] - c[j]) / (3.0 * h[j]);
+    }
+
+    int seg = 0;
+    for (int i = 0; i < m; i++) {
+        if (x >= xs[i]) seg = i;
+    }
+    double dx = x - xs[seg];
+    double result = ys[seg] + b[seg] * dx + c[seg] * dx * dx + d[seg] * dx * dx * dx;
+
+    free(h); free(alpha); free(l); free(mu); free(z); free(c); free(b); free(d);
+    return result;
+}

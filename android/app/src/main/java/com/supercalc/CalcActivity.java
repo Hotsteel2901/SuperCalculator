@@ -4041,6 +4041,7 @@ public class CalcActivity extends AppCompatActivity {
             getString(R.string.interp_lagrange),
             getString(R.string.interp_newton),
             getString(R.string.interp_spline),
+            getString(R.string.interp_natural_spline),
             getString(R.string.interp_akima)
         };
         interpMethodAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, methods);
@@ -4113,6 +4114,8 @@ public class CalcActivity extends AppCompatActivity {
             result = interpSpline(xs, ys, xVal);
         } else if (method.equals(getString(R.string.interp_akima))) {
             result = CalcEngine.interpAkima(xs, ys, xVal);
+        } else if (method.equals(getString(R.string.interp_natural_spline))) {
+            result = CalcEngine.interpNaturalSpline(xs, ys, xVal);
         } else {
             result = interpLinear(xs, ys, xVal);
         }
@@ -4149,6 +4152,8 @@ public class CalcActivity extends AppCompatActivity {
                 y = interpSpline(xs, ys, x);
             } else if (method.equals(getString(R.string.interp_akima))) {
                 y = CalcEngine.interpAkima(xs, ys, x);
+            } else if (method.equals(getString(R.string.interp_natural_spline))) {
+                y = CalcEngine.interpNaturalSpline(xs, ys, x);
             } else {
                 y = interpLinear(xs, ys, x);
             }

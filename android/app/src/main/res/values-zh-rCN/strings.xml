@@ -630,6 +630,7 @@
     <string name="interp_newton">多项式 (牛顿)</string>
     <string name="interp_spline">三次样条</string>
     <string name="interp_akima">Akima 样条</string>
+    <string name="interp_natural_spline">自然样条</string>
     <string name="interp_data_hint">数据点 (x,y)：0,0; 1,1; 2,4; 3,9</string>
     <string name="interp_eval_x">在 x = 处求值</string>
     <string name="interp_compute">插值计算</string>

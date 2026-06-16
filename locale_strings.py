@@ -3494,6 +3494,10 @@ STRINGS = {
         "en": "Akima Spline",
         "zh": "Akima 样条",
     },
+    "interp_method_natural_spline": {
+        "en": "Natural Spline",
+        "zh": "自然样条",
+    },
     "label_interp_data": {
         "en": "Data points (x,y):",
         "zh": "数据点 (x,y)：",

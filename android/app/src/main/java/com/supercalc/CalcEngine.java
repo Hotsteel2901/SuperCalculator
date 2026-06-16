@@ -188,4 +188,7 @@ public class CalcEngine {
     // Interpolation
     /** Akima interpolation on data points (xs, ys) evaluated at x. Reduces overshoot vs cubic spline. */
     public static native double interpAkima(double[] xs, double[] ys, double x);
+
+    /** Natural cubic spline interpolation with S''(x₀)=S''(xₙ)=0 boundary conditions. */
+    public static native double interpNaturalSpline(double[] xs, double[] ys, double x);
 }

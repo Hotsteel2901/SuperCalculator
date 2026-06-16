@@ -326,6 +326,12 @@ _lib.interp_akima.argtypes = [ctypes.POINTER(ctypes.c_double),
                                ctypes.c_int, ctypes.c_double]
 _lib.interp_akima.restype = ctypes.c_double
 
+# Natural Spline Interpolation
+_lib.interp_natural_spline.argtypes = [ctypes.POINTER(ctypes.c_double),
+                                       ctypes.POINTER(ctypes.c_double),
+                                       ctypes.c_int, ctypes.c_double]
+_lib.interp_natural_spline.restype = ctypes.c_double
+
 
 def _is_invalid(x: float) -> bool:
     try:
@@ -1495,4 +1501,18 @@ class CalcEngine:
         arr_x = (ctypes.c_double * n)(*xs)
         arr_y = (ctypes.c_double * n)(*ys)
         result = _lib.interp_akima(arr_x, arr_y, n, x)
+        return None if _is_invalid(result) else result
+
+    @staticmethod
+    def interp_natural_spline(xs: List[float], ys: List[float], x: float) -> Optional[float]:
+        """Natural cubic spline interpolation with S''(x₀)=S''(xₙ)=0 boundary conditions.
+
+        Requires at least 2 data points with distinct x values.
+        """
+        n = len(xs)
+        if n != len(ys) or n < 2:
+            return None
+        arr_x = (ctypes.c_double * n)(*xs)
+        arr_y = (ctypes.c_double * n)(*ys)
+        result = _lib.interp_natural_spline(arr_x, arr_y, n, x)
         return None if _is_invalid(result) else result
