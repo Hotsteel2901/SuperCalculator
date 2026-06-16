@@ -2372,6 +2372,7 @@
                         <option value="lagrange">Polynomial (Lagrange)</option>
                         <option value="newton">Polynomial (Newton)</option>
                         <option value="spline">Cubic Spline</option>
+                        <option value="natural_spline">Natural Spline</option>
                         <option value="akima">Akima Spline</option>
                     </select>
                     <button onclick="interpWebPlot()" style="flex:1;min-width:100px;padding:12px 16px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;">Plot</button>
@@ -2477,6 +2478,7 @@
                     else if(method==='lagrange')y=interpLagrangeJS(xs,ys,x);
                     else if(method==='newton')y=interpNewtonJS(xs,ys,x);
                     else if(method==='akima')y=interpAkimaJS(xs,ys,x);
+                    else if(method==='natural_spline')y=interpNaturalSplineJS(xs,ys,x);
                     else y=interpSplineJS(xs,ys,x);
                     if(isFinite(y))curvePts.push({x:x,y:y});
                 }
@@ -2512,6 +2514,7 @@
                 else if(method==='lagrange')y=interpLagrangeJS(xs,ys,x);
                 else if(method==='newton')y=interpNewtonJS(xs,ys,x);
                 else if(method==='akima')y=interpAkimaJS(xs,ys,x);
+                else if(method==='natural_spline')y=interpNaturalSplineJS(xs,ys,x);
                 else y=interpSplineJS(xs,ys,x);
                 document.getElementById('interpWebResult').textContent='f('+x+') = '+y.toFixed(6);
             };
@@ -2577,6 +2580,32 @@
                     mu[i]=h[i]/l[i];
                     z[i]=(alpha[i]-h[i-1]*z[i-1])/l[i];
                 }
+                var c=new Array(n+1).fill(0),b=new Array(n).fill(0),d=new Array(n).fill(0);
+                for(var j=n-1;j>=0;j--){
+                    c[j]=z[j]-mu[j]*c[j+1];
+                    b[j]=(ys[j+1]-ys[j])/h[j]-h[j]*(c[j+1]+2*c[j])/3;
+                    d[j]=(c[j+1]-c[j])/(3*h[j]);
+                }
+                var seg=0;for(var i=0;i<n;i++){if(x>=xs[i])seg=i;}
+                var dx=x-xs[seg];
+                return ys[seg]+b[seg]*dx+c[seg]*dx*dx+d[seg]*dx*dx*dx;
+            }
+
+            function interpNaturalSplineJS(xs,ys,x){
+                var n=xs.length-1;
+                var h=[];for(var i=0;i<n;i++)h[i]=xs[i+1]-xs[i];
+                var alpha=new Array(n+1).fill(0);
+                for(var i=1;i<n;i++){
+                    alpha[i]=3/h[i]*(ys[i+1]-ys[i])-3/h[i-1]*(ys[i]-ys[i-1]);
+                }
+                var l=new Array(n+1).fill(1),mu=new Array(n+1).fill(0),z=new Array(n+1).fill(0);
+                l[0]=1;mu[0]=0;z[0]=0;
+                for(var i=1;i<n;i++){
+                    l[i]=2*(xs[i+1]-xs[i-1])-h[i-1]*mu[i-1];
+                    mu[i]=h[i]/l[i];
+                    z[i]=(alpha[i]-h[i-1]*z[i-1])/l[i];
+                }
+                l[n]=1;z[n]=0;
                 var c=new Array(n+1).fill(0),b=new Array(n).fill(0),d=new Array(n).fill(0);
                 for(var j=n-1;j>=0;j--){
                     c[j]=z[j]-mu[j]*c[j+1];

@@ -630,6 +630,7 @@
     <string name="interp_newton">Polynomial (Newton)</string>
     <string name="interp_spline">Cubic Spline</string>
     <string name="interp_akima">Akima Spline</string>
+    <string name="interp_natural_spline">Natural Spline</string>
     <string name="interp_data_hint">Data points (x,y): 0,0; 1,1; 2,4; 3,9</string>
     <string name="interp_eval_x">Evaluate at x =</string>
     <string name="interp_compute">Interpolate</string>
