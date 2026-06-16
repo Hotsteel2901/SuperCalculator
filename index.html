@@ -3683,9 +3683,11 @@
             }
 
             function convertBases() {
-                var input = document.getElementById('baseInput').value.trim();
+                var inputEl = document.getElementById('baseInput');
                 var resultsDiv = document.getElementById('baseResults');
                 var errorDiv = document.getElementById('baseError');
+                if (!inputEl || !resultsDiv || !errorDiv) return;
+                var input = inputEl.value.trim();
 
                 if (!input) {
                     resultsDiv.style.display = 'none';
@@ -4030,9 +4032,12 @@
             };
 
             window.computeProb = function() {
-                var n = parseInt(document.getElementById('probN').value, 10);
-                var r = parseInt(document.getElementById('probR').value, 10);
+                var elN = document.getElementById('probN');
+                var elR = document.getElementById('probR');
                 var res = document.getElementById('probResults');
+                if (!elN || !elR || !res) return;
+                var n = parseInt(elN.value, 10);
+                var r = parseInt(elR.value, 10);
                 if (isNaN(n) || isNaN(r) || n < 0 || r < 0) { res.style.display = 'none'; return; }
                 var c = comb(n, r);
                 var p = perm(n, r);
@@ -4042,10 +4047,14 @@
             };
 
             window.computeProbEvent = function() {
-                var pa = parseFloat(document.getElementById('probPA').value);
-                var pb = parseFloat(document.getElementById('probPB').value);
-                var pab = parseFloat(document.getElementById('probPAB').value);
+                var elPA = document.getElementById('probPA');
+                var elPB = document.getElementById('probPB');
+                var elPAB = document.getElementById('probPAB');
                 var res = document.getElementById('probResults');
+                if (!elPA || !elPB || !elPAB || !res) return;
+                var pa = parseFloat(elPA.value);
+                var pb = parseFloat(elPB.value);
+                var pab = parseFloat(elPAB.value);
                 if (isNaN(pa) || isNaN(pb) || isNaN(pab)) { res.style.display = 'none'; return; }
                 var union = Math.max(0, Math.min(1, pa + pb - pab));
                 var inter = pa * pb;
@@ -4061,10 +4070,14 @@
             };
 
             window.computeProbBayes = function() {
-                var pba = parseFloat(document.getElementById('probPBA').value);
-                var pa = parseFloat(document.getElementById('probBayesPA').value);
-                var pbna = parseFloat(document.getElementById('probPBNA').value);
+                var elPBA = document.getElementById('probPBA');
+                var elPA = document.getElementById('probBayesPA');
+                var elPBNA = document.getElementById('probPBNA');
                 var res = document.getElementById('probResults');
+                if (!elPBA || !elPA || !elPBNA || !res) return;
+                var pba = parseFloat(elPBA.value);
+                var pa = parseFloat(elPA.value);
+                var pbna = parseFloat(elPBNA.value);
                 if (isNaN(pba) || isNaN(pa) || isNaN(pbna)) { res.style.display = 'none'; return; }
                 var pNotA = 1 - pa;
                 var pB = pba * pa + pbna * pNotA;
@@ -4076,10 +4089,14 @@
             };
 
             window.computeProbBinom = function() {
-                var n = parseInt(document.getElementById('probBinomN').value, 10);
-                var k = parseInt(document.getElementById('probBinomK').value, 10);
-                var p = parseFloat(document.getElementById('probBinomP').value);
+                var elN = document.getElementById('probBinomN');
+                var elK = document.getElementById('probBinomK');
+                var elP = document.getElementById('probBinomP');
                 var res = document.getElementById('probResults');
+                if (!elN || !elK || !elP || !res) return;
+                var n = parseInt(elN.value, 10);
+                var k = parseInt(elK.value, 10);
+                var p = parseFloat(elP.value);
                 if (isNaN(n) || isNaN(k) || isNaN(p) || n < 0 || k < 0 || k > n || p < 0 || p > 1) { res.style.display = 'none'; return; }
                 var pmf = binomPMF(n, k, p);
                 var mean = n * p;
@@ -4125,10 +4142,14 @@
             };
 
             window.computeFinLoan = function() {
-                var p = parseFloat(document.getElementById('finLoanPrincipal').value);
-                var rate = parseFloat(document.getElementById('finLoanRate').value);
-                var months = parseInt(document.getElementById('finLoanMonths').value);
+                var elP = document.getElementById('finLoanPrincipal');
+                var elRate = document.getElementById('finLoanRate');
+                var elMonths = document.getElementById('finLoanMonths');
                 var res = document.getElementById('finResults');
+                if (!elP || !elRate || !elMonths || !res) return;
+                var p = parseFloat(elP.value);
+                var rate = parseFloat(elRate.value);
+                var months = parseInt(elMonths.value);
                 if (isNaN(p) || isNaN(rate) || isNaN(months) || p <= 0 || months <= 0) { res.innerHTML = ''; return; }
                 var r = rate / 100 / 12;
                 var pmt;
@@ -4144,11 +4165,16 @@
             };
 
             window.computeFinCompound = function() {
-                var pv = parseFloat(document.getElementById('finCompoundPV').value);
-                var rate = parseFloat(document.getElementById('finCompoundRate').value);
-                var years = parseInt(document.getElementById('finCompoundYears').value);
-                var n = parseInt(document.getElementById('finCompoundN').value);
+                var elPV = document.getElementById('finCompoundPV');
+                var elRate = document.getElementById('finCompoundRate');
+                var elYears = document.getElementById('finCompoundYears');
+                var elN = document.getElementById('finCompoundN');
                 var res = document.getElementById('finResults');
+                if (!elPV || !elRate || !elYears || !elN || !res) return;
+                var pv = parseFloat(elPV.value);
+                var rate = parseFloat(elRate.value);
+                var years = parseInt(elYears.value);
+                var n = parseInt(elN.value);
                 if (isNaN(pv) || isNaN(rate) || isNaN(years) || isNaN(n) || pv <= 0 || years < 0 || n <= 0) { res.innerHTML = ''; return; }
                 var r = rate / 100;
                 var fv = pv * Math.pow(1 + r / n, n * years);
@@ -4160,9 +4186,12 @@
             };
 
             window.computeFinNPV = function() {
-                var rate = parseFloat(document.getElementById('finNpvRate').value);
-                var flowsStr = document.getElementById('finNpvFlows').value;
+                var elRate = document.getElementById('finNpvRate');
+                var elFlows = document.getElementById('finNpvFlows');
                 var res = document.getElementById('finResults');
+                if (!elRate || !elFlows || !res) return;
+                var rate = parseFloat(elRate.value);
+                var flowsStr = elFlows.value;
                 var parts = flowsStr.split(',').map(function(s){return s.trim();}).filter(function(s){return s !== '';});
                 if (isNaN(rate) || parts.length < 2) { res.innerHTML = ''; return; }
                 var r = rate / 100;
@@ -4197,11 +4226,16 @@
             };
 
             window.computeFinBond = function() {
-                var face = parseFloat(document.getElementById('finBondFace').value);
-                var coupon = parseFloat(document.getElementById('finBondCoupon').value);
-                var yld = parseFloat(document.getElementById('finBondYield').value);
-                var years = parseInt(document.getElementById('finBondYears').value);
+                var elFace = document.getElementById('finBondFace');
+                var elCoupon = document.getElementById('finBondCoupon');
+                var elYield = document.getElementById('finBondYield');
+                var elYears = document.getElementById('finBondYears');
                 var res = document.getElementById('finResults');
+                if (!elFace || !elCoupon || !elYield || !elYears || !res) return;
+                var face = parseFloat(elFace.value);
+                var coupon = parseFloat(elCoupon.value);
+                var yld = parseFloat(elYield.value);
+                var years = parseInt(elYears.value);
                 if (isNaN(face) || isNaN(coupon) || isNaN(yld) || isNaN(years) || face <= 0 || years <= 0) { res.innerHTML = ''; return; }
                 var m = 2;
                 var c = face * coupon / 100 / m;
@@ -4260,10 +4294,15 @@
                 };
                 var p = presets[preset];
                 if (!p) return;
-                document.getElementById('volFx').value = p.f;
-                document.getElementById('volGx').value = p.g;
-                document.getElementById('volA').value = p.a;
-                document.getElementById('volB').value = p.b;
+                var elFx = document.getElementById('volFx');
+                var elGx = document.getElementById('volGx');
+                var elA = document.getElementById('volA');
+                var elB = document.getElementById('volB');
+                if (!elFx || !elGx || !elA || !elB) return;
+                elFx.value = p.f;
+                elGx.value = p.g;
+                elA.value = p.a;
+                elB.value = p.b;
                 window.setVolMode(p.mode);
             };
 
@@ -4289,11 +4328,16 @@
             }
 
             window.computeVolume = function() {
-                var fxExpr = document.getElementById('volFx').value.trim();
-                var gxExpr = document.getElementById('volGx').value.trim();
-                var a = parseFloat(document.getElementById('volA').value);
-                var b = parseFloat(document.getElementById('volB').value);
+                var elFx = document.getElementById('volFx');
+                var elGx = document.getElementById('volGx');
+                var elA = document.getElementById('volA');
+                var elB = document.getElementById('volB');
                 var res = document.getElementById('volResults');
+                if (!elFx || !elGx || !elA || !elB || !res) return;
+                var fxExpr = elFx.value.trim();
+                var gxExpr = elGx.value.trim();
+                var a = parseFloat(elA.value);
+                var b = parseFloat(elB.value);
                 if (!fxExpr || isNaN(a) || isNaN(b) || a >= b) { res.innerHTML = ''; return; }
                 if (volMode === 'washer' && !gxExpr) { res.innerHTML = ''; return; }
 
@@ -4354,7 +4398,8 @@
             function setDataChartType(t) {
                 dataChartType = t;
                 document.querySelectorAll('#dataChartScatter,#dataChartLine,#dataChartBar').forEach(function(b){b.classList.remove('active');});
-                document.getElementById('dataChart' + t.charAt(0).toUpperCase() + t.slice(1)).classList.add('active');
+                var el = document.getElementById('dataChart' + t.charAt(0).toUpperCase() + t.slice(1));
+                if (el) el.classList.add('active');
                 drawDataChart();
             }
             window.setDataChartType = setDataChartType;
@@ -4363,15 +4408,19 @@
                 dataTrendType = t;
                 document.querySelectorAll('#dataTrendNone,#dataTrendLinear,#dataTrendQuad,#dataTrendExp').forEach(function(b){b.classList.remove('active');});
                 var id = 'dataTrend' + ({'none':'None','linear':'Linear','quadratic':'Quad','exponential':'Exp'})[t];
-                document.getElementById(id).classList.add('active');
+                var el = document.getElementById(id);
+                if (el) el.classList.add('active');
                 drawDataChart();
             }
             window.setDataTrend = setDataTrend;
 
             function parseDataCSV() {
-                var raw = document.getElementById('dataCsvInput').value.trim();
+                var elRaw = document.getElementById('dataCsvInput');
+                var res = document.getElementById('dataResults');
+                if (!elRaw || !res) return;
+                var raw = elRaw.value.trim();
                 dataX = []; dataY = [];
-                if (!raw) { document.getElementById('dataResults').style.display = 'none'; return; }
+                if (!raw) { res.style.display = 'none'; return; }
                 var lines = raw.split('\n');
                 for (var i = 0; i < lines.length; i++) {
                     var line = lines[i].trim();
@@ -4384,10 +4433,10 @@
                     }
                 }
                 if (dataX.length > 0) {
-                    document.getElementById('dataResults').style.display = 'block';
+                    res.style.display = 'block';
                     drawDataChart();
                 } else {
-                    document.getElementById('dataResults').style.display = 'none';
+                    res.style.display = 'none';
                 }
             }
             window.parseDataCSV = parseDataCSV;
@@ -4751,9 +4800,13 @@
                 ctx.fillStyle = '#181825';
                 ctx.fillRect(0, 0, W, H);
 
-                var expr = document.getElementById('contourExpr').value || 'x^2+y^2';
-                var gridN = parseInt(document.getElementById('contourGridSize').value) || 35;
-                var nLevels = parseInt(document.getElementById('contourLevels').value) || 12;
+                var elExpr = document.getElementById('contourExpr');
+                var elGrid = document.getElementById('contourGridSize');
+                var elLevels = document.getElementById('contourLevels');
+                if (!elExpr || !elGrid || !elLevels) return;
+                var expr = elExpr.value || 'x^2+y^2';
+                var gridN = parseInt(elGrid.value) || 35;
+                var nLevels = parseInt(elLevels.value) || 12;
 
                 var xMin = -3, xMax = 3, yMin = -3, yMax = 3;
                 var dx = (xMax - xMin) / (gridN - 1);
@@ -4909,8 +4962,11 @@
             var customFuncs = {};
 
             function defineCustomFunction() {
-                var name = document.getElementById('cfName').value.trim();
-                var body = document.getElementById('cfBody').value.trim();
+                var elName = document.getElementById('cfName');
+                var elBody = document.getElementById('cfBody');
+                if (!elName || !elBody) return;
+                var name = elName.value.trim();
+                var body = elBody.value.trim();
                 if (!name || !body) {
                     alert(isZh ? '请输入函数名和表达式。' : 'Please enter both function name and body expression.');
                     return;
@@ -4920,7 +4976,7 @@
                     return;
                 }
                 customFuncs[name] = body;
-                document.getElementById('cfName').value = '';
+                elName.value = '';
                 refreshCustomFuncList();
             }
             window.defineCustomFunction = defineCustomFunction;
