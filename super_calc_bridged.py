@@ -1049,6 +1049,62 @@ class SuperCalcApp:
         ttk.Button(df_row4, text=t("btn_df_clear"),
                    command=lambda: self._var_df_ic.set("")).pack(side=tk.LEFT, padx=2)
 
+        # --- Contour Plot ---
+        CONTOUR_PRESETS = {
+            "Circle (x^2+y^2-1)": ("x^2+y^2-1", -3, 3, -3, 3),
+            "Paraboloid (x^2+y^2)": ("x^2+y^2", -3, 3, -3, 3),
+            "Saddle (x^2-y^2)": ("x^2-y^2", -3, 3, -3, 3),
+            "Gaussian (exp(-(x^2+y^2)))": ("exp(-(x^2+y^2))", -3, 3, -3, 3),
+            "Peaks (3*(1-x)^2*exp(-x^2-(y+1)^2))": ("3*(1-x)^2*exp(-x^2-(y+1)^2)-10*(x/5-x^3-y^5)*exp(-x^2-y^2)-1/3*exp(-(x+1)^2-y^2)", -3, 3, -3, 3),
+        }
+
+        frm_contour = ttk.LabelFrame(scroll_frame, text=t("sec_contour_plot"),
+                                     style="Dark.TLabelframe")
+        frm_contour.pack(fill=tk.X, padx=8, pady=4)
+
+        cr1 = ttk.Frame(frm_contour, style="Dark.TFrame")
+        cr1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(cr1, text=t("label_contour_expr"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_contour_expr = tk.StringVar(value="x^2+y^2")
+        ttk.Entry(cr1, textvariable=self._var_contour_expr, width=22).pack(
+            side=tk.LEFT, padx=4)
+
+        cr1b = ttk.Frame(frm_contour, style="Dark.TFrame")
+        cr1b.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(cr1b, text=t("label_preset"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_contour_preset = tk.StringVar()
+        contour_preset_combo = ttk.Combobox(cr1b, textvariable=self._var_contour_preset,
+                                            values=list(CONTOUR_PRESETS.keys()),
+                                            state="readonly", font=("Consolas", 10), width=24)
+        contour_preset_combo.pack(side=tk.LEFT, padx=4)
+
+        def _on_contour_preset(event=None):
+            key = self._var_contour_preset.get()
+            if key in CONTOUR_PRESETS:
+                expr, xmin, xmax, ymin, ymax = CONTOUR_PRESETS[key]
+                self._var_contour_expr.set(expr)
+
+        contour_preset_combo.bind("<<ComboboxSelected>>", _on_contour_preset)
+
+        cr2 = ttk.Frame(frm_contour, style="Dark.TFrame")
+        cr2.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(cr2, text=t("label_contour_grid"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_contour_grid = tk.StringVar(value="40")
+        ttk.Entry(cr2, textvariable=self._var_contour_grid, width=5).pack(
+            side=tk.LEFT, padx=2)
+        ttk.Label(cr2, text=t("label_contour_levels"), style="Dark.TLabel").pack(
+            side=tk.LEFT, padx=(8, 0))
+        self._var_contour_levels = tk.StringVar(value="12")
+        ttk.Entry(cr2, textvariable=self._var_contour_levels, width=5).pack(
+            side=tk.LEFT, padx=2)
+
+        cr3 = ttk.Frame(frm_contour, style="Dark.TFrame")
+        cr3.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Button(cr3, text=t("btn_contour_plot"),
+                   command=self._on_contour_plot).pack(side=tk.LEFT, padx=2)
+        ttk.Button(cr3, text=t("btn_contour_filled_plot"),
+                   command=lambda: self._on_contour_plot(filled=True)).pack(side=tk.LEFT, padx=2)
+
         # --- Custom Function Definition ---
         frm_custom = ttk.LabelFrame(scroll_frame, text=t("sec_custom_func"),
                                     style="Dark.TLabelframe")
@@ -4127,6 +4183,67 @@ class SuperCalcApp:
         self.ax_2d.set_facecolor("#1e1e2e")
         self.canvas_2d.draw()
         self.status_var.set(t("status_df_plotted", n_arrows, n_arrows, n_solutions))
+
+    # ------------------------------------------------------------------
+    #  Contour Plot
+    # ------------------------------------------------------------------
+
+    def _on_contour_plot(self, filled: bool = False):
+        expr = self._var_contour_expr.get().strip()
+        if not expr:
+            messagebox.showwarning(t("err_input"), t("msg_contour_invalid_expr"))
+            return
+        try:
+            n_grid = int(self._var_contour_grid.get())
+            n_levels = int(self._var_contour_levels.get())
+        except ValueError:
+            messagebox.showerror(t("err_contour"), t("msg_contour_invalid_grid"))
+            return
+        if n_grid < 10 or n_grid > 100:
+            messagebox.showerror(t("err_contour"), t("msg_contour_invalid_grid"))
+            return
+        if n_levels < 2:
+            n_levels = 2
+
+        self._ensure_2d_window()
+        self.ax_2d.clear()
+        self._setup_axes(self.ax_2d, is_3d=False)
+
+        x_min, x_max = self.x_min, self.x_max
+        y_min, y_max = self.y_min, self.y_max
+
+        x_vals = np.linspace(x_min, x_max, n_grid)
+        y_vals = np.linspace(y_min, y_max, n_grid)
+        X, Y = np.meshgrid(x_vals, y_vals)
+
+        flat_z = CalcEngine.contour_grid_eval(expr, x_min, x_max, y_min, y_max, n_grid, n_grid)
+        if flat_z is None:
+            messagebox.showerror(t("err_contour"),
+                                 t("msg_contour_plot_failed", CalcEngine.get_last_error() or "unknown"))
+            return
+
+        Z = np.array([v if v is not None else np.nan for v in flat_z]).reshape(X.shape)
+
+        try:
+            if filled:
+                cs = self.ax_2d.contourf(X, Y, Z, levels=n_levels, cmap='viridis')
+                self.fig_2d.colorbar(cs, ax=self.ax_2d, shrink=0.8)
+            else:
+                cs = self.ax_2d.contour(X, Y, Z, levels=n_levels, cmap='viridis',
+                                        linewidths=1.2)
+                self.ax_2d.clabel(cs, inline=True, fontsize=8, fmt='%.2f')
+        except Exception as e:
+            messagebox.showerror(t("err_contour"),
+                                 t("msg_contour_plot_failed", str(e)))
+            return
+
+        self.ax_2d.set_xlabel("x", color="#cdd6f4")
+        self.ax_2d.set_ylabel("y", color="#cdd6f4")
+        self.ax_2d.set_title(f"Contour: {expr}", color="#cdd6f4")
+        self.ax_2d.grid(True, alpha=0.3, color="#585b70")
+        self.ax_2d.set_facecolor("#1e1e2e")
+        self.canvas_2d.draw()
+        self.status_var.set(t("status_contour_plotted", n_grid, n_grid, n_levels))
 
     # ------------------------------------------------------------------
     #  Custom Function Definition

@@ -328,9 +328,15 @@ _lib.interp_akima.restype = ctypes.c_double
 
 # Natural Spline Interpolation
 _lib.interp_natural_spline.argtypes = [ctypes.POINTER(ctypes.c_double),
-                                       ctypes.POINTER(ctypes.c_double),
-                                       ctypes.c_int, ctypes.c_double]
+                                        ctypes.POINTER(ctypes.c_double),
+                                        ctypes.c_int, ctypes.c_double]
 _lib.interp_natural_spline.restype = ctypes.c_double
+
+# Contour Grid Evaluation
+_lib.contour_grid_eval.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_double,
+                                    ctypes.c_double, ctypes.c_double, ctypes.c_int,
+                                    ctypes.c_int, ctypes.POINTER(ctypes.c_double)]
+_lib.contour_grid_eval.restype = ctypes.c_int
 
 
 def _is_invalid(x: float) -> bool:
@@ -1516,3 +1522,22 @@ class CalcEngine:
         arr_y = (ctypes.c_double * n)(*ys)
         result = _lib.interp_natural_spline(arr_x, arr_y, n, x)
         return None if _is_invalid(result) else result
+
+    @staticmethod
+    def contour_grid_eval(expr: str, x_min: float, x_max: float,
+                          y_min: float, y_max: float,
+                          n_cols: int, n_rows: int) -> Optional[List[float]]:
+        """Evaluate f(x,y) on a regular grid for contour plotting.
+
+        Returns a flat list of n_cols * n_rows values in row-major order
+        (y varies first), or None on error.
+        """
+        if n_cols < 2 or n_rows < 2:
+            return None
+        total = n_cols * n_rows
+        buf = (ctypes.c_double * total)()
+        rc = _lib.contour_grid_eval(expr.encode("utf-8"), x_min, x_max,
+                                     y_min, y_max, n_cols, n_rows, buf)
+        if rc != 0:
+            return None
+        return list(buf)

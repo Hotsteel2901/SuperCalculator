@@ -3342,6 +3342,72 @@ STRINGS = {
         "zh": "Lotka-Volterra (x*(1-y), y*(x-1))",
     },
 
+    # ---- Contour Plot (Level Sets) ----
+    "sec_contour_plot": {
+        "en": "Contour Plot (f(x,y) = c)",
+        "zh": "等高线图 (f(x,y) = c)",
+    },
+    "label_contour_expr": {
+        "en": "f(x,y) =",
+        "zh": "f(x,y) =",
+    },
+    "label_contour_grid": {
+        "en": "Resolution:",
+        "zh": "分辨率：",
+    },
+    "label_contour_levels": {
+        "en": "Levels:",
+        "zh": "等高线数：",
+    },
+    "label_contour_filled": {
+        "en": "Filled",
+        "zh": "填充",
+    },
+    "btn_contour_plot": {
+        "en": "Plot Contour",
+        "zh": "绘制等高线",
+    },
+    "btn_contour_filled_plot": {
+        "en": "Filled Contour",
+        "zh": "填充等高线",
+    },
+    "status_contour_plotted": {
+        "en": "Contour plot: {0}×{1} grid, {2} levels",
+        "zh": "等高线图：{0}×{1} 网格，{2} 条等高线",
+    },
+    "err_contour": {
+        "en": "Contour Plot Error",
+        "zh": "等高线图错误",
+    },
+    "msg_contour_invalid_expr": {
+        "en": "Please enter a valid f(x,y) expression.",
+        "zh": "请输入有效的 f(x,y) 表达式。",
+    },
+    "msg_contour_invalid_grid": {
+        "en": "Resolution must be between 10 and 100.",
+        "zh": "分辨率必须在 10 到 100 之间。",
+    },
+    "msg_contour_plot_failed": {
+        "en": "Could not plot contour.\n{0}",
+        "zh": "无法绘制等高线。\n{0}",
+    },
+    "contour_preset_circle": {
+        "en": "Circle (x^2+y^2-1)",
+        "zh": "圆 (x^2+y^2-1)",
+    },
+    "contour_preset_paraboloid": {
+        "en": "Paraboloid (x^2+y^2)",
+        "zh": "抛物面 (x^2+y^2)",
+    },
+    "contour_preset_saddle": {
+        "en": "Saddle (x^2-y^2)",
+        "zh": "马鞍面 (x^2-y^2)",
+    },
+    "contour_preset_gaussian": {
+        "en": "Gaussian (exp(-(x^2+y^2)))",
+        "zh": "高斯 (exp(-(x^2+y^2)))",
+    },
+
     # --- Custom Function Definition ---
     "sec_custom_func": {
         "en": "Custom Function Definition",

@@ -32,7 +32,8 @@
 5. [3D Function Plotting](#5-3d-function-plotting)
 6. [Parametric Curve Plotting](#6-parametric-curve-plotting)
 7. [Polar Coordinate Plotting](#7-polar-coordinate-plotting)
-8. [Implicit Function Plotting](#8-implicit-function-plotting)
+ 8. [Implicit Function Plotting](#8-implicit-function-plotting)
+ 8.1. [Contour Plot (Level Sets)](#81-contour-plot-level-sets)
  9. [Numerical Computation](#9-numerical-computation)
    - [9.1 Evaluation](#91-evaluation)
    - [9.2 Numerical Derivatives](#92-numerical-derivatives)
@@ -508,6 +509,32 @@ Click: Plot
 Check "Enable implicit curve"
 Input: (x^2+y^2-x)^2-(x^2+y^2)
 Click: Plot
+```
+
+### 8.1 Contour Plot (Level Sets)
+
+Contour plots visualize level curves **f(x,y) = c** for arbitrary expressions, showing multiple contour lines at different values of c.
+
+**How to use:**
+
+1. Enter an expression using both `x` and `y` (e.g., `x^2+y^2`)
+2. Adjust resolution (10-100, default 40)
+3. Adjust number of contour levels (2-30, default 12)
+4. Click **"Plot Contour"** for line contours or **"Filled Contour"** for filled regions
+
+**Built-in Presets:**
+- Circle: `x^2+y^2-1`
+- Paraboloid: `x^2+y^2`
+- Saddle: `x^2-y^2`
+- Gaussian: `exp(-(x^2+y^2))`
+
+**Example: Gaussian contour plot**
+
+```
+Input: exp(-(x^2+y^2))
+Resolution: 40
+Levels: 12
+Click: Plot Contour
 ```
 
 ---

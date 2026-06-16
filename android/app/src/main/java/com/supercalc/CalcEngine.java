@@ -191,4 +191,9 @@ public class CalcEngine {
 
     /** Natural cubic spline interpolation with S''(x₀)=S''(xₙ)=0 boundary conditions. */
     public static native double interpNaturalSpline(double[] xs, double[] ys, double x);
+
+    /** Evaluate f(x,y) on a regular grid for contour plotting.
+     *  Returns double[nCols * nRows] in row-major order (y varies first), or null on error. */
+    public static native double[] contourGridEval(String expr, double xMin, double xMax,
+                                                   double yMin, double yMax, int nCols, int nRows);
 }
