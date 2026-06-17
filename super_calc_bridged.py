@@ -1105,6 +1105,79 @@ class SuperCalcApp:
         ttk.Button(cr3, text=t("btn_contour_filled_plot"),
                    command=lambda: self._on_contour_plot(filled=True)).pack(side=tk.LEFT, padx=2)
 
+        # --- Vector Field (dx/dt = P(x,y), dy/dt = Q(x,y)) ---
+        frm_vf = ttk.LabelFrame(scroll_frame, text=t("sec_vector_field", fallback="Vector Field (dx/dt=P(x,y), dy/dt=Q(x,y))"),
+                                 style="Dark.TLabelframe")
+        frm_vf.pack(fill=tk.X, padx=8, pady=4)
+
+        vfr1 = ttk.Frame(frm_vf, style="Dark.TFrame")
+        vfr1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(vfr1, text=t("label_vf_expr_p", fallback="dx/dt=P(x,y):"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_vf_expr_p = tk.StringVar(value="y")
+        ttk.Entry(vfr1, textvariable=self._var_vf_expr_p, width=18,
+                  font=("JetBrains Mono", 11)).pack(side=tk.LEFT, padx=2)
+        ttk.Label(vfr1, text=t("label_vf_expr_q", fallback="dy/dt=Q(x,y):"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_vf_expr_q = tk.StringVar(value="-x")
+        ttk.Entry(vfr1, textvariable=self._var_vf_expr_q, width=18,
+                  font=("JetBrains Mono", 11)).pack(side=tk.LEFT, padx=2)
+
+        vfr1b = ttk.Frame(frm_vf, style="Dark.TFrame")
+        vfr1b.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(vfr1b, text=t("label_vf_preset", fallback="Preset:"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_vf_preset = tk.StringVar()
+        vf_presets = [
+            t("label_vf_preset_harmonic", fallback="Harmonic: y, -x"),
+            t("label_vf_preset_predator", fallback="Predator-Prey: x(1-y), -y(1-x)"),
+            t("label_vf_preset_duffing", fallback="Simple: 1, x*y"),
+        ]
+        vf_preset_combo = ttk.Combobox(vfr1b, textvariable=self._var_vf_preset,
+                                        values=vf_presets, state="readonly", width=35)
+        vf_preset_combo.pack(side=tk.LEFT, padx=4)
+        def _on_vf_preset(event=None):
+            key = self._var_vf_preset.get()
+            if "Harmonic" in key:
+                self._var_vf_expr_p.set("y")
+                self._var_vf_expr_q.set("-x")
+            elif "Predator" in key:
+                self._var_vf_expr_p.set("x*(1-y)")
+                self._var_vf_expr_q.set("-y*(1-x)")
+            elif "Simple" in key:
+                self._var_vf_expr_p.set("1")
+                self._var_vf_expr_q.set("x*y")
+        vf_preset_combo.bind("<<ComboboxSelected>>", _on_vf_preset)
+
+        vfr2 = ttk.Frame(frm_vf, style="Dark.TFrame")
+        vfr2.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(vfr2, text=t("label_df_grid", fallback="Grid:"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_vf_grid = tk.StringVar(value="12")
+        ttk.Entry(vfr2, textvariable=self._var_vf_grid, width=5).pack(side=tk.LEFT, padx=2)
+        ttk.Label(vfr2, text="x:", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_vf_xmin = tk.StringVar(value="-5")
+        ttk.Entry(vfr2, textvariable=self._var_vf_xmin, width=5).pack(side=tk.LEFT, padx=2)
+        ttk.Label(vfr2, text="~", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_vf_xmax = tk.StringVar(value="5")
+        ttk.Entry(vfr2, textvariable=self._var_vf_xmax, width=5).pack(side=tk.LEFT, padx=2)
+        ttk.Label(vfr2, text="y:", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_vf_ymin = tk.StringVar(value="-5")
+        ttk.Entry(vfr2, textvariable=self._var_vf_ymin, width=5).pack(side=tk.LEFT, padx=2)
+        ttk.Label(vfr2, text="~", style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_vf_ymax = tk.StringVar(value="5")
+        ttk.Entry(vfr2, textvariable=self._var_vf_ymax, width=5).pack(side=tk.LEFT, padx=2)
+
+        vfr3 = ttk.Frame(frm_vf, style="Dark.TFrame")
+        vfr3.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(vfr3, text=t("label_df_ic", fallback="IC (x0,y0;...):"), style="Dark.TLabel").pack(side=tk.LEFT)
+        self._var_vf_ic = tk.StringVar(value="")
+        ttk.Entry(vfr3, textvariable=self._var_vf_ic, width=20,
+                  font=("JetBrains Mono", 10)).pack(side=tk.LEFT, padx=2)
+
+        vfr4 = ttk.Frame(frm_vf, style="Dark.TFrame")
+        vfr4.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Button(vfr4, text=t("label_df_plot", fallback="Plot Vector Field"),
+                   command=self._on_vector_field_plot).pack(side=tk.LEFT, padx=2)
+        ttk.Button(vfr4, text=t("btn_vector_field_solve", fallback="Solve & Plot"),
+                   command=self._on_vector_field_solve).pack(side=tk.LEFT, padx=2)
+
         # --- Custom Function Definition ---
         frm_custom = ttk.LabelFrame(scroll_frame, text=t("sec_custom_func"),
                                     style="Dark.TLabelframe")
@@ -4244,6 +4317,151 @@ class SuperCalcApp:
         self.ax_2d.set_facecolor("#1e1e2e")
         self.canvas_2d.draw()
         self.status_var.set(t("status_contour_plotted", n_grid, n_grid, n_levels))
+
+    # ------------------------------------------------------------------
+    #  Vector Field (dx/dt = P(x,y), dy/dt = Q(x,y))
+    # ------------------------------------------------------------------
+    def _on_vector_field_plot(self):
+        self._on_vector_field_impl(solve=False)
+
+    def _on_vector_field_solve(self):
+        self._on_vector_field_impl(solve=True)
+
+    def _on_vector_field_impl(self, solve: bool = False):
+        import numpy as np
+        expr_p = self._var_vf_expr_p.get().strip()
+        expr_q = self._var_vf_expr_q.get().strip()
+        if not expr_p or not expr_q:
+            messagebox.showwarning(t("err_input"),
+                                   t("msg_vf_enter_expr", fallback="Please enter both P(x,y) and Q(x,y) expressions"))
+            return
+        try:
+            n_grid = int(self._var_vf_grid.get())
+            xmin = float(self._var_vf_xmin.get())
+            xmax = float(self._var_vf_xmax.get())
+            ymin = float(self._var_vf_ymin.get())
+            ymax = float(self._var_vf_ymax.get())
+        except ValueError:
+            messagebox.showerror(t("err_vector_field", fallback="Vector Field Error"),
+                                 t("msg_vf_invalid_params", fallback="Invalid grid or range parameters"))
+            return
+        if n_grid < 3 or n_grid > 40:
+            messagebox.showerror(t("err_vector_field", fallback="Vector Field Error"),
+                                 t("msg_vf_invalid_grid", fallback="Grid must be 3-40"))
+            return
+        if xmin >= xmax or ymin >= ymax:
+            messagebox.showerror(t("err_vector_field", fallback="Vector Field Error"),
+                                 t("msg_vf_invalid_range", fallback="xmin must be < xmax, ymin < ymax"))
+            return
+
+        result = CalcEngine.vector_field_grid_eval(expr_p, expr_q, xmin, xmax, ymin, ymax, n_grid, n_grid)
+        if result is None:
+            messagebox.showerror(t("err_vector_field", fallback="Vector Field Error"),
+                                 t("msg_vf_eval_failed", fallback="Could not evaluate vector field.\n{0}").format(
+                                     CalcEngine.get_last_error() or "unknown"))
+            return
+
+        px = np.array(result['px']).reshape(n_grid, n_grid)
+        py = np.array(result['py']).reshape(n_grid, n_grid)
+
+        self._ensure_2d_window()
+        self.ax_2d.clear()
+        self._setup_axes(self.ax_2d, is_3d=False)
+
+        x_vals = np.linspace(xmin, xmax, n_grid)
+        y_vals = np.linspace(ymin, ymax, n_grid)
+        X, Y = np.meshgrid(x_vals, y_vals)
+
+        # Compute magnitude for color
+        mag = np.sqrt(px**2 + py**2)
+        mag[mag == 0] = 1.0
+        # Normalize arrows to unit length, then scale by magnitude for color
+        px_norm = px / mag
+        py_norm = py / mag
+
+        # Use quiver for vector field
+        self.ax_2d.quiver(X, Y, px_norm, py_norm, mag, cmap='cool', alpha=0.8,
+                          scale=n_grid * 2, width=0.004, headwidth=4, headlength=5)
+
+        # Draw solution curves if requested
+        if solve:
+            ic_str = self._var_vf_ic.get().strip()
+            if ic_str:
+                pairs = ic_str.split(";")
+                for pair in pairs:
+                    pair = pair.strip()
+                    if not pair:
+                        continue
+                    parts = pair.split(",")
+                    if len(parts) == 2:
+                        try:
+                            icx = float(parts[0].strip())
+                            icy = float(parts[1].strip())
+                            # Solve system using RK4
+                            curve = self._solve_vf_rk4(expr_p, expr_q, icx, icy, xmin, xmax, ymin, ymax, n_grid)
+                            if curve is not None and len(curve[0]) > 1:
+                                self.ax_2d.plot(curve[0], curve[1], color='#f38ba8', linewidth=2.0, alpha=0.9)
+                        except ValueError:
+                            pass
+
+        self.ax_2d.set_xlabel("x", color="#cdd6f4")
+        self.ax_2d.set_ylabel("y", color="#cdd6f4")
+        self.ax_2d.set_title(f"Vector Field: dx/dt={expr_p}, dy/dt={expr_q}", color="#cdd6f4", fontsize=11)
+        self.ax_2d.grid(True, alpha=0.3, color="#585b70")
+        self.ax_2d.set_facecolor("#1e1e2e")
+        self.canvas_2d.draw()
+        self.status_var.set(t("status_vf_plotted", fallback="Vector field plotted: {0}x{0} grid").format(n_grid))
+
+    def _solve_vf_rk4(self, expr_p, expr_q, x0, y0, xmin, xmax, ymin, ymax, n_grid):
+        """Solve dx/dt=P(x,y), dy/dt=Q(x,y) using RK4 from (x0,y0)."""
+        import numpy as np
+        n_steps = 500
+        # Forward
+        fwd_xs, fwd_ys = [x0], [y0]
+        x, y = x0, y0
+        hx = (xmax - xmin) / n_steps
+        for _ in range(n_steps):
+            p1 = CalcEngine.evaluate_xy(expr_p, x, y)
+            q1 = CalcEngine.evaluate_xy(expr_q, x, y)
+            p2 = CalcEngine.evaluate_xy(expr_p, x + hx/2, y + q1*hx/2)
+            q2 = CalcEngine.evaluate_xy(expr_q, x + hx/2, y + q1*hx/2)
+            p3 = CalcEngine.evaluate_xy(expr_p, x + hx/2, y + q2*hx/2)
+            q3 = CalcEngine.evaluate_xy(expr_q, x + hx/2, y + q2*hx/2)
+            p4 = CalcEngine.evaluate_xy(expr_p, x + hx, y + q3*hx)
+            q4 = CalcEngine.evaluate_xy(expr_q, x + hx, y + q3*hx)
+            x_new = x + hx/6 * (p1 + 2*p2 + 2*p3 + p4)
+            y_new = y + hx/6 * (q1 + 2*q2 + 2*q3 + q4)
+            if x_new < xmin or x_new > xmax or y_new < ymin - 10 or y_new > ymax + 10:
+                break
+            x, y = x_new, y_new
+            fwd_xs.append(x)
+            fwd_ys.append(y)
+        # Backward
+        bwd_xs, bwd_ys = [x0], [y0]
+        x, y = x0, y0
+        hx = (xmin - x0) / n_steps
+        for _ in range(n_steps):
+            p1 = CalcEngine.evaluate_xy(expr_p, x, y)
+            q1 = CalcEngine.evaluate_xy(expr_q, x, y)
+            p2 = CalcEngine.evaluate_xy(expr_p, x + hx/2, y + q1*hx/2)
+            q2 = CalcEngine.evaluate_xy(expr_q, x + hx/2, y + q1*hx/2)
+            p3 = CalcEngine.evaluate_xy(expr_p, x + hx/2, y + q2*hx/2)
+            q3 = CalcEngine.evaluate_xy(expr_q, x + hx/2, y + q2*hx/2)
+            p4 = CalcEngine.evaluate_xy(expr_p, x + hx, y + q3*hx)
+            q4 = CalcEngine.evaluate_xy(expr_q, x + hx, y + q3*hx)
+            x_new = x + hx/6 * (p1 + 2*p2 + 2*p3 + p4)
+            y_new = y + hx/6 * (q1 + 2*q2 + 2*q3 + q4)
+            if x_new > xmax or x_new < xmin or y_new < ymin - 10 or y_new > ymax + 10:
+                break
+            x, y = x_new, y_new
+            bwd_xs.append(x)
+            bwd_ys.append(y)
+        # Combine
+        all_x = list(reversed(bwd_xs[:-1])) + fwd_xs
+        all_y = list(reversed(bwd_ys[:-1])) + fwd_ys
+        if len(all_x) < 2:
+            return None
+        return (all_x, all_y)
 
     # ------------------------------------------------------------------
     #  Custom Function Definition

@@ -682,6 +682,16 @@
     <string name="laplace_empty_expr">请输入拉普拉斯变换的表达式。</string>
     <string name="laplace_invalid_param">请输入有效的正参数值。</string>
 
+    <!-- 向量场 -->
+    <string name="vector_field">向量场 dx/dt=P(x,y), dy/dt=Q(x,y)</string>
+    <string name="hint_vf_expr_p">dx/dt = P(x,y)</string>
+    <string name="hint_vf_expr_q">dy/dt = Q(x,y)</string>
+    <string name="vector_field_plot">绘制向量场</string>
+    <string name="vector_field_solve">求解并绘制</string>
+    <string name="toast_vector_field_plotted">向量场已绘制</string>
+    <string name="toast_enter_vf_expr">请输入P(x,y)和Q(x,y)表达式</string>
+    <string name="dialog_vector_field">向量场</string>
+
     <!-- 等高线图 -->
     <string name="contour_plot">等高线图 f(x,y) = c</string>
     <string name="contour_plot_btn">绘制等高线</string>

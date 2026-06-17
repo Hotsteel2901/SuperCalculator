@@ -2399,3 +2399,80 @@ EXPORT int contour_grid_eval(const char* expr, double x_min, double x_max,
     }
     return 0;
 }
+
+/* --------------------------------------------------------------------------
+ *  Vector Field Grid Evaluation
+ *  Evaluates P(x,y) and Q(x,y) on a regular grid for vector field plotting.
+ *  For a 2D autonomous system: dx/dt = P(x,y), dy/dt = Q(x,y).
+ *  out_p[j*n_cols+i] = P(x_min+i*dx, y_min+j*dy)
+ *  out_q[j*n_cols+i] = Q(x_min+i*dx, y_min+j*dy)
+ *  Returns 0 on success, -1 on error.
+ * -------------------------------------------------------------------------- */
+
+EXPORT int vector_field_grid_eval(const char* expr_p, const char* expr_q,
+                                   double x_min, double x_max,
+                                   double y_min, double y_max,
+                                   int n_cols, int n_rows,
+                                   double* out_p, double* out_q) {
+    if (!expr_p || !expr_q || !out_p || !out_q || n_cols < 2 || n_rows < 2) {
+        set_error("vector_field_grid_eval: invalid parameters");
+        return -1;
+    }
+    if (x_min >= x_max || y_min >= y_max) {
+        set_error("vector_field_grid_eval: invalid range");
+        return -1;
+    }
+    clear_error();
+
+    double dx = (x_max - x_min) / (n_cols - 1);
+    double dy = (y_max - y_min) / (n_rows - 1);
+
+    /* Tokenize and build RPN for P */
+    Token toks_p[MAX_TOKENS];
+    RPN   rpn_p[MAX_RPN];
+    int nt_p = tokenize(expr_p, toks_p, MAX_TOKENS);
+    if (nt_p < 0) {
+        int total = n_cols * n_rows;
+        for (int i = 0; i < total; i++) { out_p[i] = NAN; out_q[i] = NAN; }
+        return -1;
+    }
+    int nr_p = shunt(toks_p, nt_p, rpn_p, MAX_RPN);
+    if (nr_p < 0) {
+        int total = n_cols * n_rows;
+        for (int i = 0; i < total; i++) { out_p[i] = NAN; out_q[i] = NAN; }
+        return -1;
+    }
+
+    /* Tokenize and build RPN for Q */
+    Token toks_q[MAX_TOKENS];
+    RPN   rpn_q[MAX_RPN];
+    int nt_q = tokenize(expr_q, toks_q, MAX_TOKENS);
+    if (nt_q < 0) {
+        int total = n_cols * n_rows;
+        for (int i = 0; i < total; i++) { out_p[i] = NAN; out_q[i] = NAN; }
+        return -1;
+    }
+    int nr_q = shunt(toks_q, nt_q, rpn_q, MAX_RPN);
+    if (nr_q < 0) {
+        int total = n_cols * n_rows;
+        for (int i = 0; i < total; i++) { out_p[i] = NAN; out_q[i] = NAN; }
+        return -1;
+    }
+
+    for (int j = 0; j < n_rows; j++) {
+        double y = y_min + j * dy;
+        for (int i = 0; i < n_cols; i++) {
+            double x = x_min + i * dx;
+            double rp, rq;
+            if (eval_rpn(rpn_p, nr_p, x, y, &rp) != 0)
+                out_p[j * n_cols + i] = NAN;
+            else
+                out_p[j * n_cols + i] = rp;
+            if (eval_rpn(rpn_q, nr_q, x, y, &rq) != 0)
+                out_q[j * n_cols + i] = NAN;
+            else
+                out_q[j * n_cols + i] = rq;
+        }
+    }
+    return 0;
+}
