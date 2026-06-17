@@ -49,6 +49,7 @@ public class CalcActivity extends AppCompatActivity {
     private EditText contourXminInput, contourXmaxInput, contourYminInput, contourYmaxInput;
     private EditText matrixAInput, matrixBInput;
     private EditText laplaceExprInput, laplaceParamInput;
+    private EditText sparseMatrixInput, sparseRhsInput;
     private TextView resultView;
     private NestedScrollView scrollView;
     private LineChart lineChart;
@@ -442,6 +443,9 @@ public class CalcActivity extends AppCompatActivity {
 
         // Custom Function Definition
         setupCustomFunctions();
+
+        // Sparse Matrix Solver
+        setupSparseMatrix();
 
         // Calculation History
         setupHistory();
@@ -4934,6 +4938,186 @@ public class CalcActivity extends AppCompatActivity {
         } else {
             customFuncListView.setText(list);
         }
+    }
+
+    // ------------------------------------------------------------------
+    //  Sparse Matrix Solver
+    // ------------------------------------------------------------------
+
+    private void setupSparseMatrix() {
+        sparseMatrixInput = findViewById(R.id.sparse_matrix_input);
+        sparseRhsInput = findViewById(R.id.sparse_rhs_input);
+
+        MaterialButton btnToDense = findViewById(R.id.btn_sparse_to_dense);
+        MaterialButton btnSpmv = findViewById(R.id.btn_sparse_spmv);
+        MaterialButton btnSolveCg = findViewById(R.id.btn_sparse_solve_cg);
+
+        btnToDense.setOnClickListener(v -> onSparseToDense());
+        btnSpmv.setOnClickListener(v -> onSparseSpmv());
+        btnSolveCg.setOnClickListener(v -> onSparseSolveCg());
+    }
+
+    private int[] parseTriplets(String text, int[] outRows, int[] outCols, double[] outVals, int maxNnz) {
+        int count = 0;
+        String[] entries = text.split(";");
+        for (String entry : entries) {
+            entry = entry.trim();
+            if (entry.isEmpty()) continue;
+            String[] parts = entry.split(",");
+            if (parts.length != 3) continue;
+            try {
+                if (count >= maxNnz) break;
+                outRows[count] = Integer.parseInt(parts[0].trim());
+                outCols[count] = Integer.parseInt(parts[1].trim());
+                outVals[count] = Double.parseDouble(parts[2].trim());
+                count++;
+            } catch (NumberFormatException e) {
+                continue;
+            }
+        }
+        return count;
+    }
+
+    private int getMatrixDim(String tripletsText, int[] outRows, int[] outCols, double[] outVals) {
+        int nnz = parseTriplets(tripletsText, outRows, outCols, outVals, 10000);
+        if (nnz == 0) return -1;
+        int maxRow = 0, maxCol = 0;
+        for (int i = 0; i < nnz; i++) {
+            if (outRows[i] > maxRow) maxRow = outRows[i];
+            if (outCols[i] > maxCol) maxCol = outCols[i];
+        }
+        return Math.max(maxRow, maxCol) + 1;
+    }
+
+    private void onSparseToDense() {
+        String text = sparseMatrixInput.getText().toString().trim();
+        if (text.isEmpty()) {
+            resultView.append(getString(R.string.sparse_matrix_invalid_input) + "\n");
+            scrollToResult();
+            return;
+        }
+        int[] rows = new int[10000];
+        int[] cols = new int[10000];
+        double[] vals = new double[10000];
+        int dim = getMatrixDim(text, rows, cols, vals);
+        if (dim <= 0) {
+            resultView.append(getString(R.string.sparse_matrix_invalid_input) + "\n");
+            scrollToResult();
+            return;
+        }
+        double[] dense = CalcEngine.sparseFromTriplets(dim, dim, rows, cols, vals);
+        if (dense == null) {
+            String err = CalcEngine.getLastError();
+            resultView.append(String.format(getString(R.string.sparse_matrix_parse_error), err) + "\n");
+            scrollToResult();
+            return;
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("Sparse → Dense (%dx%d):\n", dim, dim));
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
+                sb.append(String.format("%8.3f", dense[i * dim + j]));
+            }
+            sb.append("\n");
+        }
+        resultView.append(sb.toString());
+        scrollToResult();
+    }
+
+    private void onSparseSpmv() {
+        String matText = sparseMatrixInput.getText().toString().trim();
+        String rhsText = sparseRhsInput.getText().toString().trim();
+        if (matText.isEmpty() || rhsText.isEmpty()) {
+            resultView.append(getString(R.string.sparse_matrix_invalid_input) + "\n");
+            scrollToResult();
+            return;
+        }
+        int[] rows = new int[10000];
+        int[] cols = new int[10000];
+        double[] vals = new double[10000];
+        int dim = getMatrixDim(matText, rows, cols, vals);
+        if (dim <= 0) {
+            resultView.append(getString(R.string.sparse_matrix_invalid_input) + "\n");
+            scrollToResult();
+            return;
+        }
+        String[] bParts = rhsText.split(",");
+        if (bParts.length != dim) {
+            resultView.append(String.format(getString(R.string.sparse_matrix_parse_error), "vector length != matrix dimension") + "\n");
+            scrollToResult();
+            return;
+        }
+        double[] x = new double[dim];
+        try {
+            for (int i = 0; i < dim; i++) x[i] = Double.parseDouble(bParts[i].trim());
+        } catch (NumberFormatException e) {
+            resultView.append(getString(R.string.sparse_matrix_invalid_input) + "\n");
+            scrollToResult();
+            return;
+        }
+        double[] result = CalcEngine.sparseSpmv(dim, dim, rows, cols, vals, x);
+        if (result == null) {
+            String err = CalcEngine.getLastError();
+            resultView.append(String.format(getString(R.string.sparse_matrix_parse_error), err) + "\n");
+            scrollToResult();
+            return;
+        }
+        StringBuilder sb = new StringBuilder("A * x = [");
+        for (int i = 0; i < dim; i++) {
+            sb.append(String.format("%.6g", result[i]));
+            if (i < dim - 1) sb.append(", ");
+        }
+        sb.append("]\n");
+        resultView.append(sb.toString());
+        scrollToResult();
+    }
+
+    private void onSparseSolveCg() {
+        String matText = sparseMatrixInput.getText().toString().trim();
+        String rhsText = sparseRhsInput.getText().toString().trim();
+        if (matText.isEmpty() || rhsText.isEmpty()) {
+            resultView.append(getString(R.string.sparse_matrix_invalid_input) + "\n");
+            scrollToResult();
+            return;
+        }
+        int[] rows = new int[10000];
+        int[] cols = new int[10000];
+        double[] vals = new double[10000];
+        int dim = getMatrixDim(matText, rows, cols, vals);
+        if (dim <= 0) {
+            resultView.append(getString(R.string.sparse_matrix_invalid_input) + "\n");
+            scrollToResult();
+            return;
+        }
+        String[] bParts = rhsText.split(",");
+        if (bParts.length != dim) {
+            resultView.append(String.format(getString(R.string.sparse_matrix_parse_error), "vector length != matrix dimension") + "\n");
+            scrollToResult();
+            return;
+        }
+        double[] b = new double[dim];
+        try {
+            for (int i = 0; i < dim; i++) b[i] = Double.parseDouble(bParts[i].trim());
+        } catch (NumberFormatException e) {
+            resultView.append(getString(R.string.sparse_matrix_invalid_input) + "\n");
+            scrollToResult();
+            return;
+        }
+        double[] solution = CalcEngine.sparseSolveCg(dim, dim, rows, cols, vals, b, 1000, 1e-10);
+        if (solution == null) {
+            String err = CalcEngine.getLastError();
+            resultView.append(String.format(getString(R.string.sparse_matrix_toast_failed), err.isEmpty() ? getString(R.string.sparse_matrix_invalid_input) : err) + "\n");
+            scrollToResult();
+            return;
+        }
+        StringBuilder sb = new StringBuilder("Solution x = [");
+        for (int i = 0; i < dim; i++) {
+            sb.append(String.format("%.6g", solution[i]));
+            if (i < dim - 1) sb.append(", ");
+        }
+        sb.append("]\n");
+        resultView.append(sb.toString());
+        scrollToResult();
     }
 
     // ------------------------------------------------------------------

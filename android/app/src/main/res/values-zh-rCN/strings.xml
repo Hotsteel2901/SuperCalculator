@@ -702,4 +702,19 @@
     <string name="toast_contour_plotted">等高线图已绘制</string>
     <string name="dialog_contour">等高线图</string>
     <string name="contour_error">等高线图错误：%s</string>
+
+    <!-- 稀疏矩阵求解器 -->
+    <string name="sparse_matrix_title">稀疏矩阵求解器</string>
+    <string name="sparse_matrix_hint">输入三元组：行,列,值；行,列,值；...</string>
+    <string name="sparse_matrix_hint_triplets">行,列,值 三元组</string>
+    <string name="sparse_matrix_hint_rhs">右端向量 b（逗号分隔）</string>
+    <string name="sparse_matrix_to_dense">转为稠密矩阵</string>
+    <string name="sparse_matrix_spmv">A * x</string>
+    <string name="sparse_matrix_solve_cg">求解 A*x=b（CG）</string>
+    <string name="sparse_matrix_parse_error">稀疏矩阵错误：%s</string>
+    <string name="sparse_matrix_toast_dense">已显示稠密矩阵</string>
+    <string name="sparse_matrix_toast_spmv">A*x 已计算</string>
+    <string name="sparse_matrix_toast_solved">经 %d 次迭代求解成功</string>
+    <string name="sparse_matrix_toast_failed">CG 求解失败：%s</string>
+    <string name="sparse_matrix_invalid_input">矩阵或向量输入无效。</string>
 </resources>

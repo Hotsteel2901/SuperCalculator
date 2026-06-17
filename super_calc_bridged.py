@@ -1210,6 +1210,34 @@ class SuperCalcApp:
                   style="Dark.TLabel", wraplength=300).pack(side=tk.LEFT, padx=4)
         self._refresh_custom_func_list()
 
+        # --- Sparse Matrix Solver ---
+        frm_sparse = ttk.LabelFrame(scroll_frame, text=t("sec_sparse_matrix"),
+                                     style="Dark.TLabelframe")
+        frm_sparse.pack(fill=tk.X, padx=8, pady=4)
+
+        sfr1 = ttk.Frame(frm_sparse, style="Dark.TFrame")
+        sfr1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(sfr1, text=t("label_sparse_triplets"), style="Dark.TLabel").pack(anchor=tk.W)
+        self._var_sparse_triplets = tk.StringVar(value="0,0,4;0,1,1;1,0,1;1,1,3;1,2,2;2,1,2;2,2,5")
+        ttk.Entry(sfr1, textvariable=self._var_sparse_triplets, width=36,
+                  font=("Consolas", 10)).pack(fill=tk.X, padx=2, pady=2)
+
+        sfr2 = ttk.Frame(frm_sparse, style="Dark.TFrame")
+        sfr2.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(sfr2, text=t("label_sparse_rhs"), style="Dark.TLabel").pack(anchor=tk.W)
+        self._var_sparse_rhs = tk.StringVar(value="1,2,3")
+        ttk.Entry(sfr2, textvariable=self._var_sparse_rhs, width=36,
+                  font=("Consolas", 10)).pack(fill=tk.X, padx=2, pady=2)
+
+        sfr3 = ttk.Frame(frm_sparse, style="Dark.TFrame")
+        sfr3.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Button(sfr3, text=t("btn_sparse_to_dense"),
+                   command=self._on_sparse_to_dense).pack(side=tk.LEFT, padx=2)
+        ttk.Button(sfr3, text=t("btn_sparse_spmv"),
+                   command=self._on_sparse_spmv).pack(side=tk.LEFT, padx=2)
+        ttk.Button(sfr3, text=t("btn_sparse_solve_cg"),
+                   command=self._on_sparse_solve_cg).pack(side=tk.LEFT, padx=2)
+
         # --- Calculation History ---
         frm_history = ttk.LabelFrame(scroll_frame, text=t("sec_history"),
                                      style="Dark.TLabelframe")
@@ -4545,6 +4573,100 @@ class SuperCalcApp:
             self.record_history("L^{-1}{%s}(%.6g)" % (expr, t_val), result)
         except Exception as e:
             messagebox.showerror(t("err_error"), str(e))
+
+    # ------------------------------------------------------------------
+    #  Sparse Matrix Solver
+    # ------------------------------------------------------------------
+
+    def _parse_sparse_triplets(self) -> Optional[Dict[str, object]]:
+        """Parse the sparse matrix triplet input. Returns dict with rows, cols, vals, dim."""
+        text = self._var_sparse_triplets.get().strip()
+        if not text:
+            return None
+        rows, cols, vals = [], [], []
+        for entry in text.split(";"):
+            entry = entry.strip()
+            if not entry:
+                continue
+            parts = entry.split(",")
+            if len(parts) != 3:
+                continue
+            try:
+                rows.append(int(parts[0].strip()))
+                cols.append(int(parts[1].strip()))
+                vals.append(float(parts[2].strip()))
+            except ValueError:
+                continue
+        if not vals:
+            return None
+        dim = max(max(rows), max(cols)) + 1
+        return {'rows': rows, 'cols': cols, 'vals': vals, 'dim': dim}
+
+    def _parse_sparse_rhs(self, dim: int) -> Optional[List[float]]:
+        """Parse the RHS vector input."""
+        text = self._var_sparse_rhs.get().strip()
+        if not text:
+            return None
+        try:
+            parts = [float(x.strip()) for x in text.split(",")]
+        except ValueError:
+            return None
+        if len(parts) != dim:
+            return None
+        return parts
+
+    def _on_sparse_to_dense(self):
+        mat = self._parse_sparse_triplets()
+        if not mat:
+            messagebox.showerror(t("err_sparse_matrix"), t("msg_sparse_invalid_input"))
+            return
+        dense = CalcEngine.sparse_from_triplets(mat['dim'], mat['dim'],
+                                                 mat['rows'], mat['cols'], mat['vals'])
+        if dense is None:
+            messagebox.showerror(t("err_sparse_matrix"), t("msg_sparse_invalid_input"))
+            return
+        dim = mat['dim']
+        lines = [t("label_sparse_result_dense", dim, dim)]
+        for i in range(dim):
+            row = " ".join(f"{dense[i * dim + j]:8.3f}" for j in range(dim))
+            lines.append(row)
+        self.status_var.set("\n".join(lines))
+
+    def _on_sparse_spmv(self):
+        mat = self._parse_sparse_triplets()
+        if not mat:
+            messagebox.showerror(t("err_sparse_matrix"), t("msg_sparse_invalid_input"))
+            return
+        x = self._parse_sparse_rhs(mat['dim'])
+        if x is None:
+            messagebox.showerror(t("err_sparse_matrix"),
+                                  t("msg_sparse_dim_mismatch", "?", mat['dim']))
+            return
+        result = CalcEngine.sparse_spmv(mat['dim'], mat['dim'],
+                                         mat['rows'], mat['cols'], mat['vals'], x)
+        if result is None:
+            messagebox.showerror(t("err_sparse_matrix"), t("msg_sparse_invalid_input"))
+            return
+        result_str = ", ".join(f"{v:.6g}" for v in result)
+        self.status_var.set(t("label_sparse_result_spmv", result_str))
+
+    def _on_sparse_solve_cg(self):
+        mat = self._parse_sparse_triplets()
+        if not mat:
+            messagebox.showerror(t("err_sparse_matrix"), t("msg_sparse_invalid_input"))
+            return
+        b = self._parse_sparse_rhs(mat['dim'])
+        if b is None:
+            messagebox.showerror(t("err_sparse_matrix"),
+                                  t("msg_sparse_dim_mismatch", "?", mat['dim']))
+            return
+        solution = CalcEngine.sparse_solve_cg(mat['dim'], mat['dim'],
+                                               mat['rows'], mat['cols'], mat['vals'], b)
+        if solution is None:
+            messagebox.showerror(t("err_sparse_matrix"), t("msg_sparse_cg_failed", ""))
+            return
+        result_str = ", ".join(f"{v:.6g}" for v in solution)
+        self.status_var.set(t("label_sparse_result_cg", result_str))
 
     # ------------------------------------------------------------------
     #  Calculation History

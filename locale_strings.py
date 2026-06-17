@@ -3739,6 +3739,64 @@ STRINGS = {
         "en": "RKF45 (Adaptive)",
         "zh": "RKF45（自适应）",
     },
+
+    # --- Sparse Matrix Solver ---
+    "sec_sparse_matrix": {
+        "en": "Sparse Matrix Solver",
+        "zh": "稀疏矩阵求解器",
+    },
+    "label_sparse_matrix_hint": {
+        "en": "Enter matrix as triplets: row,col,val; ...",
+        "zh": "输入三元组：行,列,值；...",
+    },
+    "label_sparse_triplets": {
+        "en": "Row,Col,Val triplets:",
+        "zh": "行,列,值 三元组：",
+    },
+    "label_sparse_rhs": {
+        "en": "RHS vector b:",
+        "zh": "右端向量 b：",
+    },
+    "btn_sparse_to_dense": {
+        "en": "To Dense",
+        "zh": "转为稠密矩阵",
+    },
+    "btn_sparse_spmv": {
+        "en": "A * x",
+        "zh": "A * x",
+    },
+    "btn_sparse_solve_cg": {
+        "en": "Solve A*x=b (CG)",
+        "zh": "求解 A*x=b（CG）",
+    },
+    "label_sparse_result_dense": {
+        "en": "Dense matrix ({0}x{1}):",
+        "zh": "稠密矩阵 ({0}x{1})：",
+    },
+    "label_sparse_result_spmv": {
+        "en": "A * x = [{0}]",
+        "zh": "A * x = [{0}]",
+    },
+    "label_sparse_result_cg": {
+        "en": "Solution x = [{0}]",
+        "zh": "解 x = [{0}]",
+    },
+    "err_sparse_matrix": {
+        "en": "Sparse Matrix Error",
+        "zh": "稀疏矩阵错误",
+    },
+    "msg_sparse_invalid_input": {
+        "en": "Invalid matrix or vector input.",
+        "zh": "矩阵或向量输入无效。",
+    },
+    "msg_sparse_cg_failed": {
+        "en": "CG solver failed: {0}",
+        "zh": "CG 求解失败：{0}",
+    },
+    "msg_sparse_dim_mismatch": {
+        "en": "Vector length ({0}) does not match matrix dimension ({1}).",
+        "zh": "向量长度 ({0}) 与矩阵维度 ({1}) 不匹配。",
+    },
 }
 
 

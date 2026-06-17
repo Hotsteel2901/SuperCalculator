@@ -201,7 +201,25 @@ public class CalcEngine {
      *  Returns double[2*nCols*nRows] where [0..n-1] is P values and [n..2n-1] is Q values.
      *  Returns null on error. */
     public static native double[] vectorFieldGridEval(String exprP, String exprQ,
-                                                      double xMin, double xMax,
-                                                      double yMin, double yMax,
-                                                      int nCols, int nRows);
+                                                       double xMin, double xMax,
+                                                       double yMin, double yMax,
+                                                       int nCols, int nRows);
+
+    // Sparse Matrix Solver
+    /** Build a sparse matrix from COO triplets and return it as a dense double[] (nRows*nCols).
+     *  Duplicate entries are summed. Returns null on error. */
+    public static native double[] sparseFromTriplets(int nRows, int nCols,
+                                                      int[] rows, int[] cols, double[] vals);
+
+    /** Compute sparse matrix-vector product y = A*x.
+     *  A is specified by COO triplets. Returns double[nRows] or null on error. */
+    public static native double[] sparseSpmv(int nRows, int nCols,
+                                              int[] rows, int[] cols, double[] vals,
+                                              double[] x);
+
+    /** Solve A*x = b using Conjugate Gradient method.
+     *  A is specified by COO triplets. Returns double[n] solution vector or null on error. */
+    public static native double[] sparseSolveCg(int nRows, int nCols,
+                                                 int[] rows, int[] cols, double[] vals,
+                                                 double[] b, int maxIter, double tol);
 }

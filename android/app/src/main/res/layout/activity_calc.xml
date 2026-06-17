@@ -114,6 +114,33 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="16dp">
+                    <TextView android:text="@string/sparse_matrix_title" android:textSize="12sp" android:textColor="@color/spectral_evaluate" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <TextView android:text="@string/sparse_matrix_hint" android:textSize="11sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/jetbrains_mono" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/sparse_matrix_hint_triplets" style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" app:hintTextColor="@color/m3_outline" android:layout_marginBottom="8dp">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/sparse_matrix_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="0,0,4;0,1,1;1,0,1;1,1,3;1,2,2;2,1,2;2,2,5" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:singleLine="true" android:inputType="text" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/sparse_matrix_hint_rhs" style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" app:hintTextColor="@color/m3_outline" android:layout_marginBottom="8dp">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/sparse_rhs_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="1,2,3" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:singleLine="true" android:inputType="text" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_sparse_to_dense" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="@string/sparse_matrix_to_dense" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp" app:strokeColor="@color/spectral_evaluate" app:strokeWidth="1dp" />
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_sparse_spmv" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="@string/sparse_matrix_spmv" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp" app:strokeColor="@color/spectral_derivative" app:strokeWidth="1dp" />
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_sparse_solve_cg" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="@string/sparse_matrix_solve_cg" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" app:strokeColor="@color/spectral_integrate" app:strokeWidth="1dp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.SuperCalc.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
                     <TextView android:text="@string/history_title" android:textSize="12sp" android:textColor="@color/spectral_evaluate" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
                     <TextView android:id="@+id/history_list_view" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="32dp" android:background="@color/result_bg" android:padding="10dp" android:textSize="12sp" android:textColor="@color/result_text" android:fontFamily="@font/jetbrains_mono" android:layout_marginBottom="8dp" />
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
