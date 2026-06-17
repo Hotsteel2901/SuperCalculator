@@ -130,35 +130,35 @@ public class CalcActivity extends AppCompatActivity {
         MaterialButton btnLimitLeft = findViewById(R.id.btn_limit_left);
         MaterialButton btnLimitRight = findViewById(R.id.btn_limit_right);
 
-        btnEval  .setOnClickListener(v -> onEvaluate());
-        btnDeriv .setOnClickListener(v -> onDerivative());
-        btnDeriv2.setOnClickListener(v -> onDerivative2());
-        btnInt   .setOnClickListener(v -> onIntegrate());
-        btnSolve .setOnClickListener(v -> onSolve());
-        btnPlot  .setOnClickListener(v -> openPlot());
-        btnFindMin.setOnClickListener(v -> onFindExtremum(true));
-        btnFindMax.setOnClickListener(v -> onFindExtremum(false));
-        btnClear .setOnClickListener(v -> resultView.setText(""));
-        btnScanRoots.setOnClickListener(v -> onScanRoots());
-        btnPlot3D.setOnClickListener(v -> openPlot3D());
-        btnTable.setOnClickListener(v -> onGenerateTable());
-        btnTangent.setOnClickListener(v -> onTangentNormal(true));
-        btnNormal.setOnClickListener(v -> onTangentNormal(false));
-        btnArcLength.setOnClickListener(v -> onArcLength());
-        btnFFT.setOnClickListener(v -> onFFT());
-        btnLimit.setOnClickListener(v -> onLimit());
-        btnLimitLeft.setOnClickListener(v -> onLimitSide(true));
-        btnLimitRight.setOnClickListener(v -> onLimitSide(false));
+        if (btnEval != null) btnEval.setOnClickListener(v -> onEvaluate());
+        if (btnDeriv != null) btnDeriv.setOnClickListener(v -> onDerivative());
+        if (btnDeriv2 != null) btnDeriv2.setOnClickListener(v -> onDerivative2());
+        if (btnInt != null) btnInt.setOnClickListener(v -> onIntegrate());
+        if (btnSolve != null) btnSolve.setOnClickListener(v -> onSolve());
+        if (btnPlot != null) btnPlot.setOnClickListener(v -> openPlot());
+        if (btnFindMin != null) btnFindMin.setOnClickListener(v -> onFindExtremum(true));
+        if (btnFindMax != null) btnFindMax.setOnClickListener(v -> onFindExtremum(false));
+        if (btnClear != null) btnClear.setOnClickListener(v -> { if (resultView != null) resultView.setText(""); });
+        if (btnScanRoots != null) btnScanRoots.setOnClickListener(v -> onScanRoots());
+        if (btnPlot3D != null) btnPlot3D.setOnClickListener(v -> openPlot3D());
+        if (btnTable != null) btnTable.setOnClickListener(v -> onGenerateTable());
+        if (btnTangent != null) btnTangent.setOnClickListener(v -> onTangentNormal(true));
+        if (btnNormal != null) btnNormal.setOnClickListener(v -> onTangentNormal(false));
+        if (btnArcLength != null) btnArcLength.setOnClickListener(v -> onArcLength());
+        if (btnFFT != null) btnFFT.setOnClickListener(v -> onFFT());
+        if (btnLimit != null) btnLimit.setOnClickListener(v -> onLimit());
+        if (btnLimitLeft != null) btnLimitLeft.setOnClickListener(v -> onLimitSide(true));
+        if (btnLimitRight != null) btnLimitRight.setOnClickListener(v -> onLimitSide(false));
 
         MaterialButton btnTaylor = findViewById(R.id.btn_taylor);
         MaterialButton btnTaylorPlot = findViewById(R.id.btn_taylor_plot);
-        btnTaylor.setOnClickListener(v -> onTaylor());
-        btnTaylorPlot.setOnClickListener(v -> onTaylorPlot());
+        if (btnTaylor != null) btnTaylor.setOnClickListener(v -> onTaylor());
+        if (btnTaylorPlot != null) btnTaylorPlot.setOnClickListener(v -> onTaylorPlot());
 
         MaterialButton btnOdeSolve = findViewById(R.id.btn_ode_solve);
         MaterialButton btnOdePlot = findViewById(R.id.btn_ode_plot);
-        btnOdeSolve.setOnClickListener(v -> onOdeSolve());
-        btnOdePlot.setOnClickListener(v -> onOdePlot());
+        if (btnOdeSolve != null) btnOdeSolve.setOnClickListener(v -> onOdeSolve());
+        if (btnOdePlot != null) btnOdePlot.setOnClickListener(v -> onOdePlot());
 
         // ODE Method Comparison
         odeCompareExprInput = findViewById(R.id.ode_compare_expr_input);
@@ -168,8 +168,8 @@ public class CalcActivity extends AppCompatActivity {
         odeCompareStepsInput = findViewById(R.id.ode_compare_steps_input);
         MaterialButton btnOdeCompare = findViewById(R.id.btn_ode_compare);
         MaterialButton btnOdeComparePlot = findViewById(R.id.btn_ode_compare_plot);
-        btnOdeCompare.setOnClickListener(v -> onOdeCompare());
-        btnOdeComparePlot.setOnClickListener(v -> onOdeComparePlot());
+        if (btnOdeCompare != null) btnOdeCompare.setOnClickListener(v -> onOdeCompare());
+        if (btnOdeComparePlot != null) btnOdeComparePlot.setOnClickListener(v -> onOdeComparePlot());
 
         // Direction Field
         dfExprInput = findViewById(R.id.df_expr_input);
@@ -181,8 +181,8 @@ public class CalcActivity extends AppCompatActivity {
         dfIcInput = findViewById(R.id.df_ic_input);
         MaterialButton btnDfPlot = findViewById(R.id.btn_df_plot);
         MaterialButton btnDfSolve = findViewById(R.id.btn_df_solve);
-        btnDfPlot.setOnClickListener(v -> onDirectionField(false));
-        btnDfSolve.setOnClickListener(v -> onDirectionField(true));
+        if (btnDfPlot != null) btnDfPlot.setOnClickListener(v -> onDirectionField(false));
+        if (btnDfSolve != null) btnDfSolve.setOnClickListener(v -> onDirectionField(true));
 
         // Vector Field
         vfExprPInput = findViewById(R.id.vf_expr_p_input);
@@ -195,8 +195,8 @@ public class CalcActivity extends AppCompatActivity {
         vfIcInput = findViewById(R.id.vf_ic_input);
         MaterialButton btnVfPlot = findViewById(R.id.btn_vf_plot);
         MaterialButton btnVfSolve = findViewById(R.id.btn_vf_solve);
-        btnVfPlot.setOnClickListener(v -> onVectorField(false));
-        btnVfSolve.setOnClickListener(v -> onVectorField(true));
+        if (btnVfPlot != null) btnVfPlot.setOnClickListener(v -> onVectorField(false));
+        if (btnVfSolve != null) btnVfSolve.setOnClickListener(v -> onVectorField(true));
 
         // Contour Plot
         contourExprInput = findViewById(R.id.contour_expr_input);
@@ -478,13 +478,14 @@ public class CalcActivity extends AppCompatActivity {
         if (resultView != null) outState.putString("result_text", resultView.getText().toString());
     }
 
-    private String getExpr()  { return exprInput.getText().toString().trim(); }
+    private String getExpr()  { return exprInput != null ? exprInput.getText().toString().trim() : ""; }
     private double getX()     { return parse(xInput); }
     private double getA()     { return parse(aInput); }
     private double getB()     { return parse(bInput); }
     private double getGuess() { return parse(guessInput); }
 
     private double parse(EditText e) {
+        if (e == null) return 0.0;
         try { return Double.parseDouble(e.getText().toString().trim()); }
         catch (NumberFormatException ex) { return 0.0; }
     }
@@ -496,6 +497,7 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private void appendResult(String label, double value) {
+        if (resultView == null) return;
         String line = label + " = ";
         if (Double.isNaN(value)) {
             line += getString(R.string.result_error_prefix) + CalcEngine.getLastError();
@@ -509,6 +511,7 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private void appendResult(String label, int value) {
+        if (resultView == null) return;
         String line = label + " = " + String.format(getString(R.string.result_points_plotted), value);
         resultView.append(line + "\n");
         scrollToResult();

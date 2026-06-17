@@ -934,7 +934,8 @@ public class PlotActivity extends AppCompatActivity {
             markedPointDataSet.addEntry(e);
         }
         markedPointDataSet.notifyDataSetChanged();
-        lineChart.getData().notifyDataChanged();
+        LineData lineData = lineChart.getData();
+        if (lineData != null) lineData.notifyDataChanged();
         lineChart.notifyDataSetChanged();
         lineChart.invalidate();
     }
