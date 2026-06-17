@@ -682,6 +682,16 @@
     <string name="laplace_empty_expr">Enter an expression for the Laplace transform.</string>
     <string name="laplace_invalid_param">Enter a valid positive parameter value.</string>
 
+    <!-- Vector Field -->
+    <string name="vector_field">Vector Field dx/dt=P(x,y), dy/dt=Q(x,y)</string>
+    <string name="hint_vf_expr_p">dx/dt = P(x,y)</string>
+    <string name="hint_vf_expr_q">dy/dt = Q(x,y)</string>
+    <string name="vector_field_plot">Plot Vector Field</string>
+    <string name="vector_field_solve">Solve &amp; Plot</string>
+    <string name="toast_vector_field_plotted">Vector field plotted</string>
+    <string name="toast_enter_vf_expr">Enter both P(x,y) and Q(x,y) expressions</string>
+    <string name="dialog_vector_field">Vector Field</string>
+
     <!-- Contour Plot -->
     <string name="contour_plot">Contour Plot f(x,y) = c</string>
     <string name="contour_plot_btn">Plot Contour</string>

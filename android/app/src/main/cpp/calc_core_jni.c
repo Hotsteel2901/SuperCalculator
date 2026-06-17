@@ -94,6 +94,13 @@ int contour_grid_eval(const char* expr, double x_min, double x_max,
                       double y_min, double y_max, int n_cols, int n_rows,
                       double* out);
 
+/* Vector Field Grid Evaluation */
+int vector_field_grid_eval(const char* expr_p, const char* expr_q,
+                           double x_min, double x_max,
+                           double y_min, double y_max,
+                           int n_cols, int n_rows,
+                           double* out_p, double* out_q);
+
 /* Helper: extract UTF-8 string from jstring, call fn, release, return */
 static jdouble call_with_expr(JNIEnv* env, jstring expr, double x,
                               double (*fn)(const char*, double)) {
@@ -1380,4 +1387,58 @@ Java_com_supercalc_CalcEngine_contourGridEval(JNIEnv* env, jclass clazz,
     }
     free(buf);
     return result;
+}
+
+/* ---- Vector Field Grid Evaluation ---- */
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_supercalc_CalcEngine_vectorFieldGridEval(JNIEnv* env, jclass clazz,
+                                                   jstring exprP, jstring exprQ,
+                                                   jdouble xMin, jdouble xMax,
+                                                   jdouble yMin, jdouble yMax,
+                                                   jint nCols, jint nRows) {
+    const char* strP = (*env)->GetStringUTFChars(env, exprP, NULL);
+    const char* strQ = (*env)->GetStringUTFChars(env, exprQ, NULL);
+    if (!strP || !strQ) {
+        if (strP) (*env)->ReleaseStringUTFChars(env, exprP, strP);
+        if (strQ) (*env)->ReleaseStringUTFChars(env, exprQ, strQ);
+        return NULL;
+    }
+
+    int total = nCols * nRows;
+    double* out_p = (double*)malloc(total * sizeof(double));
+    double* out_q = (double*)malloc(total * sizeof(double));
+    if (!out_p || !out_q) {
+        free(out_p);
+        free(out_q);
+        (*env)->ReleaseStringUTFChars(env, exprP, strP);
+        (*env)->ReleaseStringUTFChars(env, exprQ, strQ);
+        return NULL;
+    }
+
+    int rc = vector_field_grid_eval(strP, strQ, xMin, xMax, yMin, yMax,
+                                     nCols, nRows, out_p, out_q);
+
+    (*env)->ReleaseStringUTFChars(env, exprP, strP);
+    (*env)->ReleaseStringUTFChars(env, exprQ, strQ);
+
+    jdoubleArray jresult = NULL;
+    if (rc == 0) {
+        jresult = (*env)->NewDoubleArray(env, 2 * total);
+        if (jresult) {
+            double* flat = (double*)malloc(2 * total * sizeof(double));
+            if (flat) {
+                for (int i = 0; i < total; i++) {
+                    flat[i] = out_p[i];
+                    flat[total + i] = out_q[i];
+                }
+                (*env)->SetDoubleArrayRegion(env, jresult, 0, 2 * total, flat);
+                free(flat);
+            }
+        }
+    }
+
+    free(out_p);
+    free(out_q);
+    return jresult;
 }

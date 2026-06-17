@@ -1326,6 +1326,7 @@
             <a href="#calendar" class="nav-link"><span>万年历</span></a>
             <a href="#finance-calculator" class="nav-link"><span>金融计算</span></a>
             <a href="#direction-field" class="nav-link"><span>方向场</span></a>
+            <a href="#vector-field" class="nav-link"><span>向量场</span></a>
             <a href="#contour-plot" class="nav-link"><span>等高线图</span></a>
             <a href="#custom-function" class="nav-link"><span>自定义函数</span></a>
             <a href="#ode-compare" class="nav-link"><span>数值方法对比</span></a>
@@ -1358,6 +1359,7 @@
         <a href="#calendar" class="mobile-nav-link">万年历</a>
         <a href="#finance-calculator" class="mobile-nav-link">金融计算</a>
         <a href="#direction-field" class="mobile-nav-link">方向场</a>
+        <a href="#vector-field" class="mobile-nav-link">向量场</a>
         <a href="#contour-plot" class="mobile-nav-link">等高线图</a>
         <a href="#custom-function" class="mobile-nav-link">自定义函数</a>
         <a href="#ode-compare" class="mobile-nav-link">数值方法对比</a>
@@ -3343,6 +3345,50 @@
             </div>
         </section>
 
+        <!-- Vector Field Section -->
+        <section class="section" id="vector-field">
+            <div class="section-header">
+                <div class="section-label">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12h4l3-9 4 18 3-9h4"/>
+                    </svg>
+                    Vector Field
+                </div>
+                <h2 class="section-title">向量场可视化</h2>
+                <p class="section-subtitle">输入二维自治系统 dx/dt=P(x,y), dy/dt=Q(x,y)，可视化向量场与解曲线</p>
+            </div>
+            <div class="card glass reveal" style="max-width: 700px; margin: 0 auto;">
+                <div style="display:flex;flex-direction:column;gap:16px;">
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <div style="flex:2;min-width:200px;">
+                            <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">dx/dt = P(x,y)</label>
+                            <input type="text" id="vfExprP" value="y" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="debouncedPlotVF()">
+                        </div>
+                        <div style="flex:2;min-width:200px;">
+                            <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">dy/dt = Q(x,y)</label>
+                            <input type="text" id="vfExprQ" value="-x" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="debouncedPlotVF()">
+                        </div>
+                        <div style="flex:1;min-width:100px;">
+                            <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">网格密度</label>
+                            <input type="range" id="vfGridSize" min="8" max="30" value="14" style="width:100%;margin-top:8px;accent-color:var(--glow-primary);" oninput="debouncedPlotVF()">
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <div style="flex:3;min-width:200px;">
+                            <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">初始条件 <span style="color:var(--text-subtle);font-size:10px;">(x0,y0 分号分隔)</span></label>
+                            <input type="text" id="vfIC" value="" placeholder="0,1; 1,0" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;" oninput="debouncedPlotVF()">
+                        </div>
+                        <div style="flex:1;min-width:120px;display:flex;align-items:flex-end;">
+                            <button class="base-btn" style="width:100%;padding:12px 20px;" onclick="plotVectorField()">Plot</button>
+                        </div>
+                    </div>
+                    <div style="position:relative;width:100%;border-radius:12px;overflow:hidden;border:1px solid var(--glass-border);background:rgba(17,17,27,0.5);">
+                        <canvas id="vfCanvas" style="width:100%;height:360px;display:block;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Contour Plot Section -->
         <section class="section" id="contour-plot">
             <div class="section-header">
@@ -4783,6 +4829,172 @@
                 window.addEventListener('resize', function() {
                     clearTimeout(resizeTimer);
                     resizeTimer = setTimeout(plotDirectionField, 150);
+                });
+            }
+
+            // --- Vector Field ---
+            var vfDebounceTimer = null;
+            var vfAnimFrame = null;
+            function plotVectorField() {
+                var canvas = document.getElementById('vfCanvas');
+                if (!canvas) return;
+                var ctx = canvas.getContext('2d');
+                var dpr = window.devicePixelRatio || 1;
+                var rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+                ctx.scale(dpr, dpr);
+                var W = rect.width, H = rect.height;
+                var pad = {t: 30, r: 20, b: 40, l: 55};
+                var pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+                ctx.clearRect(0, 0, W, H);
+
+                var xMin = -5, xMax = 5, yMin = -5, yMax = 5;
+                function tx(xv) { return pad.l + (xv - xMin) / (xMax - xMin) * pw; }
+                function ty(yv) { return pad.t + ph - (yv - yMin) / (yMax - yMin) * ph; }
+
+                // Grid
+                ctx.strokeStyle = 'rgba(88,91,112,0.3)';
+                ctx.lineWidth = 0.5;
+                for (var i = 0; i <= 5; i++) {
+                    var gy = pad.t + ph * i / 5;
+                    ctx.beginPath(); ctx.moveTo(pad.l, gy); ctx.lineTo(pad.l + pw, gy); ctx.stroke();
+                    ctx.fillStyle = '#6c7086'; ctx.font = '11px monospace'; ctx.textAlign = 'right';
+                    ctx.fillText((yMax - (yMax - yMin) * i / 5).toFixed(1), pad.l - 8, gy + 4);
+                }
+                for (var i = 0; i <= 5; i++) {
+                    var gx = pad.l + pw * i / 5;
+                    ctx.beginPath(); ctx.moveTo(gx, pad.t); ctx.lineTo(gx, pad.t + ph); ctx.stroke();
+                    ctx.fillStyle = '#6c7086'; ctx.textAlign = 'center';
+                    ctx.fillText((xMin + (xMax - xMin) * i / 5).toFixed(1), gx, pad.t + ph + 18);
+                }
+                // Axes
+                ctx.strokeStyle = 'rgba(100,150,255,0.15)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(tx(0), pad.t); ctx.lineTo(tx(0), pad.t + ph); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(pad.l, ty(0)); ctx.lineTo(pad.l + pw, ty(0)); ctx.stroke();
+
+                var exprP = document.getElementById('vfExprP').value.trim() || 'y';
+                var exprQ = document.getElementById('vfExprQ').value.trim() || '-x';
+                var gridSize = parseInt(document.getElementById('vfGridSize').value) || 14;
+
+                // Evaluate and draw arrows
+                var maxMag = 0;
+                var vData = [];
+                for (var j = 0; j <= gridSize; j++) {
+                    for (var i = 0; i <= gridSize; i++) {
+                        var xv = xMin + (xMax - xMin) * i / gridSize;
+                        var yv = yMin + (yMax - yMin) * j / gridSize;
+                        var pv = evalDFExpr(exprP, xv, yv);
+                        var qv = evalDFExpr(exprQ, xv, yv);
+                        var mag = Math.sqrt(pv * pv + qv * qv);
+                        if (isFinite(mag) && mag > maxMag) maxMag = mag;
+                        vData.push({x: xv, y: yv, p: pv, q: qv, mag: mag});
+                    }
+                }
+                if (maxMag === 0) maxMag = 1;
+
+                var arrowLen = Math.min(pw, ph) / gridSize * 0.8;
+                for (var k = 0; k < vData.length; k++) {
+                    var d = vData[k];
+                    if (!isFinite(d.p) || !isFinite(d.q)) continue;
+                    var cx = tx(d.x), cy = ty(d.y);
+                    if (cx < pad.l - 5 || cx > pad.l + pw + 5 || cy < pad.t - 5 || cy > pad.t + ph + 5) continue;
+                    var norm = d.mag / maxMag;
+                    var dxn = d.p / d.mag, dyn = d.q / d.mag;
+                    var halfLen = arrowLen * norm * 0.5;
+                    var sx1 = cx - dxn * halfLen, sy1 = cy + dyn * halfLen;
+                    var sx2 = cx + dxn * halfLen, sy2 = cy - dyn * halfLen;
+                    var hue = 180 + 60 * (1 - norm);
+                    ctx.strokeStyle = 'hsla(' + hue + ',80%,70%,' + (0.4 + 0.6 * norm) + ')';
+                    ctx.lineWidth = 1.2 + norm * 1.2;
+                    ctx.beginPath(); ctx.moveTo(sx1, sy1); ctx.lineTo(sx2, sy2); ctx.stroke();
+                    // Arrowhead
+                    var angle = Math.atan2(-(sy2 - sy1), sx2 - sx1);
+                    var hl = arrowLen * norm * 0.25;
+                    ctx.beginPath();
+                    ctx.moveTo(sx2, sy2);
+                    ctx.lineTo(sx2 - hl * Math.cos(angle - 0.4), sy2 + hl * Math.sin(angle - 0.4));
+                    ctx.moveTo(sx2, sy2);
+                    ctx.lineTo(sx2 - hl * Math.cos(angle + 0.4), sy2 + hl * Math.sin(angle + 0.4));
+                    ctx.stroke();
+                }
+
+                // IC curves
+                var icStr = document.getElementById('vfIC').value.trim();
+                if (icStr) {
+                    var colors = ['#f38ba8','#fab387','#a6e3a1','#89b4fa','#cba6f7','#f9e2af'];
+                    var pairs = icStr.split(/\s*;\s*/);
+                    for (var p = 0; p < pairs.length; p++) {
+                        var parts = pairs[p].split(/[,\s]+/);
+                        if (parts.length < 2) continue;
+                        var icx0 = parseFloat(parts[0]), icy0 = parseFloat(parts[1]);
+                        if (isNaN(icx0) || isNaN(icy0)) continue;
+                        var color = colors[p % colors.length];
+                        ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.beginPath();
+                        var step = 0.02, maxSteps = 3000;
+                        var cx = icx0, cy = icy0;
+                        ctx.moveTo(tx(cx), ty(cy));
+                        // Forward
+                        for (var s = 0; s < maxSteps; s++) {
+                            var p1 = evalDFExpr(exprP, cx, cy), q1 = evalDFExpr(exprQ, cx, cy);
+                            var p2 = evalDFExpr(exprP, cx + step/2, cy + step/2 * q1);
+                            var q2 = evalDFExpr(exprQ, cx + step/2, cy + step/2 * q1);
+                            var p3 = evalDFExpr(exprP, cx + step/2, cy + step/2 * q2);
+                            var q3 = evalDFExpr(exprQ, cx + step/2, cy + step/2 * q2);
+                            var p4 = evalDFExpr(exprP, cx + step, cy + step * q3);
+                            var q4 = evalDFExpr(exprQ, cx + step, cy + step * q3);
+                            if (!isFinite(p1)||!isFinite(q1)||!isFinite(p2)||!isFinite(q2)||!isFinite(p3)||!isFinite(q3)||!isFinite(p4)||!isFinite(q4)) break;
+                            var nx = cx + step/6 * (p1 + 2*p2 + 2*p3 + p4);
+                            var ny = cy + step/6 * (q1 + 2*q2 + 2*q3 + q4);
+                            if (nx > xMax + 1 || nx < xMin - 1 || ny > yMax + 1 || ny < yMin - 1) break;
+                            cx = nx; cy = ny; ctx.lineTo(tx(cx), ty(cy));
+                        }
+                        // Backward
+                        cx = icx0; cy = icy0; ctx.moveTo(tx(cx), ty(cy));
+                        for (var s = 0; s < maxSteps; s++) {
+                            var p1 = evalDFExpr(exprP, cx, cy), q1 = evalDFExpr(exprQ, cx, cy);
+                            var p2 = evalDFExpr(exprP, cx - step/2, cy - step/2 * q1);
+                            var q2 = evalDFExpr(exprQ, cx - step/2, cy - step/2 * q1);
+                            var p3 = evalDFExpr(exprP, cx - step/2, cy - step/2 * q2);
+                            var q3 = evalDFExpr(exprQ, cx - step/2, cy - step/2 * q2);
+                            var p4 = evalDFExpr(exprP, cx - step, cy - step * q3);
+                            var q4 = evalDFExpr(exprQ, cx - step, cy - step * q3);
+                            if (!isFinite(p1)||!isFinite(q1)||!isFinite(p2)||!isFinite(q2)||!isFinite(p3)||!isFinite(q3)||!isFinite(p4)||!isFinite(q4)) break;
+                            var nx = cx - step/6 * (p1 + 2*p2 + 2*p3 + p4);
+                            var ny = cy - step/6 * (q1 + 2*q2 + 2*q3 + q4);
+                            if (nx > xMax + 1 || nx < xMin - 1 || ny > yMax + 1 || ny < yMin - 1) break;
+                            cx = nx; cy = ny; ctx.lineTo(tx(cx), ty(cy));
+                        }
+                        ctx.stroke();
+                        ctx.fillStyle = color; ctx.beginPath();
+                        ctx.arc(tx(icx0), ty(icy0), 5, 0, Math.PI * 2); ctx.fill();
+                    }
+                }
+
+                ctx.fillStyle = '#cdd6f4'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'left';
+                ctx.fillText(isZh ? '向量场 dx/dt=' + exprP + ', dy/dt=' + exprQ : 'Vector Field dx/dt=' + exprP + ', dy/dt=' + exprQ, pad.l, 18);
+            }
+            window.plotVectorField = plotVectorField;
+
+            function debouncedPlotVF() {
+                if (vfDebounceTimer) clearTimeout(vfDebounceTimer);
+                vfDebounceTimer = setTimeout(function() {
+                    if (vfAnimFrame) cancelAnimationFrame(vfAnimFrame);
+                    vfAnimFrame = requestAnimationFrame(function() {
+                        plotVectorField();
+                        vfAnimFrame = null;
+                    });
+                }, 80);
+            }
+            window.debouncedPlotVF = debouncedPlotVF;
+
+            var vfCanvas = document.getElementById('vfCanvas');
+            if (vfCanvas) {
+                plotVectorField();
+                var resizeTimerVF;
+                window.addEventListener('resize', function() {
+                    clearTimeout(resizeTimerVF);
+                    resizeTimerVF = setTimeout(plotVectorField, 150);
                 });
             }
 

@@ -338,6 +338,15 @@ _lib.contour_grid_eval.argtypes = [ctypes.c_char_p, ctypes.c_double, ctypes.c_do
                                     ctypes.c_int, ctypes.POINTER(ctypes.c_double)]
 _lib.contour_grid_eval.restype = ctypes.c_int
 
+# Vector Field Grid Evaluation
+_lib.vector_field_grid_eval.argtypes = [ctypes.c_char_p, ctypes.c_char_p,
+                                         ctypes.c_double, ctypes.c_double,
+                                         ctypes.c_double, ctypes.c_double,
+                                         ctypes.c_int, ctypes.c_int,
+                                         ctypes.POINTER(ctypes.c_double),
+                                         ctypes.POINTER(ctypes.c_double)]
+_lib.vector_field_grid_eval.restype = ctypes.c_int
+
 
 def _is_invalid(x: float) -> bool:
     try:
@@ -1541,3 +1550,31 @@ class CalcEngine:
         if rc != 0:
             return None
         return list(buf)
+
+    @staticmethod
+    def vector_field_grid_eval(expr_p: str, expr_q: str,
+                               x_min: float, x_max: float,
+                               y_min: float, y_max: float,
+                               n_cols: int, n_rows: int) -> Optional[Dict[str, object]]:
+        """Evaluate vector field P(x,y) and Q(x,y) on a regular grid.
+
+        Returns a dict with keys:
+            'px': flat list of P values (n_cols * n_rows, row-major)
+            'py': flat list of Q values (n_cols * n_rows, row-major)
+        Returns None on error.
+        """
+        if n_cols < 2 or n_rows < 2:
+            return None
+        total = n_cols * n_rows
+        buf_p = (ctypes.c_double * total)()
+        buf_q = (ctypes.c_double * total)()
+        rc = _lib.vector_field_grid_eval(expr_p.encode("utf-8"),
+                                          expr_q.encode("utf-8"),
+                                          x_min, x_max, y_min, y_max,
+                                          n_cols, n_rows, buf_p, buf_q)
+        if rc != 0:
+            return None
+        return {
+            'px': list(buf_p),
+            'py': list(buf_q),
+        }

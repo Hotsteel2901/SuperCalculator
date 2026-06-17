@@ -196,4 +196,12 @@ public class CalcEngine {
      *  Returns double[nCols * nRows] in row-major order (y varies first), or null on error. */
     public static native double[] contourGridEval(String expr, double xMin, double xMax,
                                                    double yMin, double yMax, int nCols, int nRows);
+
+    /** Evaluate vector field P(x,y) and Q(x,y) on a grid for vector field plotting.
+     *  Returns double[2*nCols*nRows] where [0..n-1] is P values and [n..2n-1] is Q values.
+     *  Returns null on error. */
+    public static native double[] vectorFieldGridEval(String exprP, String exprQ,
+                                                      double xMin, double xMax,
+                                                      double yMin, double yMax,
+                                                      int nCols, int nRows);
 }

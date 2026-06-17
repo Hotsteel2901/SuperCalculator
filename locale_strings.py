@@ -3342,6 +3342,72 @@ STRINGS = {
         "zh": "Lotka-Volterra (x*(1-y), y*(x-1))",
     },
 
+    # ---- Vector Field (dx/dt = P(x,y), dy/dt = Q(x,y)) ----
+    "sec_vector_field": {
+        "en": "Vector Field (dx/dt=P(x,y), dy/dt=Q(x,y))",
+        "zh": "向量场 (dx/dt=P(x,y), dy/dt=Q(x,y))",
+    },
+    "label_vf_expr_p": {
+        "en": "dx/dt = P(x,y):",
+        "zh": "dx/dt = P(x,y)：",
+    },
+    "label_vf_expr_q": {
+        "en": "dy/dt = Q(x,y):",
+        "zh": "dy/dt = Q(x,y)：",
+    },
+    "label_vf_preset": {
+        "en": "Preset:",
+        "zh": "预设：",
+    },
+    "label_vf_preset_harmonic": {
+        "en": "Harmonic oscillator (y, -x)",
+        "zh": "简谐振子 (y, -x)",
+    },
+    "label_vf_preset_predator": {
+        "en": "Predator-Prey (x*(1-y), -y*(1-x))",
+        "zh": "捕食者-猎物 (x*(1-y), -y*(1-x))",
+    },
+    "label_vf_preset_simple": {
+        "en": "Simple (1, x*y)",
+        "zh": "简单 (1, x*y)",
+    },
+    "btn_vector_field_plot": {
+        "en": "Plot Vector Field",
+        "zh": "绘制向量场",
+    },
+    "btn_vector_field_solve": {
+        "en": "Solve & Plot",
+        "zh": "求解并绘制",
+    },
+    "status_vf_plotted": {
+        "en": "Vector field plotted: {0}x{0} grid",
+        "zh": "向量场已绘制：{0}x{0} 网格",
+    },
+    "err_vector_field": {
+        "en": "Vector Field Error",
+        "zh": "向量场错误",
+    },
+    "msg_vf_enter_expr": {
+        "en": "Please enter both P(x,y) and Q(x,y) expressions.",
+        "zh": "请输入P(x,y)和Q(x,y)表达式。",
+    },
+    "msg_vf_invalid_params": {
+        "en": "Invalid grid or range parameters.",
+        "zh": "无效的网格或范围参数。",
+    },
+    "msg_vf_invalid_grid": {
+        "en": "Grid must be between 3 and 40.",
+        "zh": "网格必须在 3 到 40 之间。",
+    },
+    "msg_vf_invalid_range": {
+        "en": "xmin must be < xmax, ymin < ymax.",
+        "zh": "xmin 必须小于 xmax，ymin 必须小于 ymax。",
+    },
+    "msg_vf_eval_failed": {
+        "en": "Could not evaluate vector field.\n{0}",
+        "zh": "无法计算向量场。\n{0}",
+    },
+
     # ---- Contour Plot (Level Sets) ----
     "sec_contour_plot": {
         "en": "Contour Plot (f(x,y) = c)",

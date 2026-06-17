@@ -21,6 +21,7 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.time.LocalDate;
@@ -43,6 +44,7 @@ public class CalcActivity extends AppCompatActivity {
     private String volMode = "disk";
     private EditText sysFInput, sysGInput, sysX0Input, sysY0Input;
     private EditText dfExprInput, dfGridInput, dfXminInput, dfXmaxInput, dfYminInput, dfYmaxInput, dfIcInput;
+    private EditText vfExprPInput, vfExprQInput, vfGridInput, vfXminInput, vfXmaxInput, vfYminInput, vfYmaxInput, vfIcInput;
     private EditText contourExprInput, contourGridInput, contourLevelsInput;
     private EditText contourXminInput, contourXmaxInput, contourYminInput, contourYmaxInput;
     private EditText matrixAInput, matrixBInput;
@@ -180,6 +182,20 @@ public class CalcActivity extends AppCompatActivity {
         MaterialButton btnDfSolve = findViewById(R.id.btn_df_solve);
         btnDfPlot.setOnClickListener(v -> onDirectionField(false));
         btnDfSolve.setOnClickListener(v -> onDirectionField(true));
+
+        // Vector Field
+        vfExprPInput = findViewById(R.id.vf_expr_p_input);
+        vfExprQInput = findViewById(R.id.vf_expr_q_input);
+        vfGridInput = findViewById(R.id.vf_grid_input);
+        vfXminInput = findViewById(R.id.vf_xmin_input);
+        vfXmaxInput = findViewById(R.id.vf_xmax_input);
+        vfYminInput = findViewById(R.id.vf_ymin_input);
+        vfYmaxInput = findViewById(R.id.vf_ymax_input);
+        vfIcInput = findViewById(R.id.vf_ic_input);
+        MaterialButton btnVfPlot = findViewById(R.id.btn_vf_plot);
+        MaterialButton btnVfSolve = findViewById(R.id.btn_vf_solve);
+        btnVfPlot.setOnClickListener(v -> onVectorField(false));
+        btnVfSolve.setOnClickListener(v -> onVectorField(true));
 
         // Contour Plot
         contourExprInput = findViewById(R.id.contour_expr_input);
@@ -1530,6 +1546,307 @@ public class CalcActivity extends AppCompatActivity {
                 labelPaint.setColor(android.graphics.Color.parseColor("#a6adc8"));
                 labelPaint.setTextSize(24f);
                 canvas.drawText("dy/dx = " + expr, margin, h - margin / 2, labelPaint);
+            }
+        };
+
+        container.addView(fieldView, new android.widget.FrameLayout.LayoutParams(
+            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+            android.view.Gravity.CENTER));
+
+        dialog.setContentView(container);
+        dialog.getWindow().setLayout(android.view.WindowManager.LayoutParams.MATCH_PARENT,
+            android.view.WindowManager.LayoutParams.MATCH_PARENT);
+        dialog.show();
+    }
+
+    private void onVectorField(boolean solveIC) {
+        String exprP = vfExprPInput.getText().toString().trim();
+        String exprQ = vfExprQInput.getText().toString().trim();
+        if (exprP.isEmpty() || exprQ.isEmpty()) {
+            toast(getString(R.string.toast_enter_vf_expr));
+            return;
+        }
+
+        int grid;
+        double xmin, xmax, ymin, ymax;
+        try {
+            grid = Integer.parseInt(vfGridInput.getText().toString().trim());
+            xmin = Double.parseDouble(vfXminInput.getText().toString().trim());
+            xmax = Double.parseDouble(vfXmaxInput.getText().toString().trim());
+            ymin = Double.parseDouble(vfYminInput.getText().toString().trim());
+            ymax = Double.parseDouble(vfYmaxInput.getText().toString().trim());
+        } catch (NumberFormatException ex) {
+            toast(getString(R.string.toast_invalid_ode));
+            return;
+        }
+        if (grid < 3) grid = 3;
+        if (grid > 40) grid = 40;
+        if (xmin >= xmax || ymin >= ymax) {
+            toast(getString(R.string.toast_min_max));
+            return;
+        }
+
+        // Evaluate P and Q on grid
+        double[] result = CalcEngine.vectorFieldGridEval(exprP, exprQ, xmin, xmax, ymin, ymax, grid, grid);
+        if (result == null) {
+            resultView.append(String.format(getString(R.string.ode_error), CalcEngine.getLastError()) + "\n");
+            return;
+        }
+
+        int n = grid * grid;
+        double[] px = new double[n];
+        double[] py = new double[n];
+        System.arraycopy(result, 0, px, 0, n);
+        System.arraycopy(result, n, py, 0, n);
+
+        // Parse initial conditions for solution curves
+        java.util.List<double[]> icList = new java.util.ArrayList<>();
+        if (solveIC) {
+            String icStr = vfIcInput.getText().toString().trim();
+            if (!icStr.isEmpty()) {
+                String[] pairs = icStr.split(";");
+                for (String pair : pairs) {
+                    pair = pair.trim();
+                    if (pair.isEmpty()) continue;
+                    String[] parts = pair.split(",");
+                    if (parts.length == 2) {
+                        try {
+                            double icx = Double.parseDouble(parts[0].trim());
+                            double icy = Double.parseDouble(parts[1].trim());
+                            icList.add(new double[]{icx, icy});
+                        } catch (NumberFormatException e) {
+                            toast(String.format(getString(R.string.toast_invalid_ic), pair));
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Solve system for each IC using RK4
+        java.util.List<double[]> solutionCurves = new java.util.ArrayList<>();
+        for (double[] ic : icList) {
+            double icx = ic[0], icy = ic[1];
+            int odeSteps = 500;
+            // Solve forward
+            double[] fwdXs = null, fwdYs = null;
+            {
+                double hx = (xmax - icx) / odeSteps;
+                double[] xs = new double[odeSteps + 1];
+                double[] ys = new double[odeSteps + 1];
+                xs[0] = icx; ys[0] = icy;
+                for (int s = 0; s < odeSteps; s++) {
+                    double cx = xs[s], cy = ys[s];
+                    double[] pqr = evalPQ(exprP, exprQ, cx, cy);
+                    double k1x = pqr[0], k1y = pqr[1];
+                    pqr = evalPQ(exprP, exprQ, cx + hx / 2, cy + k1y * hx / 2);
+                    double k2x = pqr[0], k2y = pqr[1];
+                    pqr = evalPQ(exprP, exprQ, cx + hx / 2, cy + k2y * hx / 2);
+                    double k3x = pqr[0], k3y = pqr[1];
+                    pqr = evalPQ(exprP, exprQ, cx + hx, cy + k3y * hx);
+                    double k4x = pqr[0], k4y = pqr[1];
+                    xs[s + 1] = cx + hx / 6 * (k1x + 2 * k2x + 2 * k3x + k4x);
+                    ys[s + 1] = cy + hx / 6 * (k1y + 2 * k2y + 2 * k3y + k4y);
+                    if (xs[s + 1] < xmin || xs[s + 1] > xmax || ys[s + 1] < ymin - 10 || ys[s + 1] > ymax + 10) {
+                        fwdXs = Arrays.copyOf(xs, s + 2);
+                        fwdYs = Arrays.copyOf(ys, s + 2);
+                        break;
+                    }
+                    if (s == odeSteps - 1) {
+                        fwdXs = xs; fwdYs = ys;
+                    }
+                }
+                if (fwdXs == null) { fwdXs = xs; fwdYs = ys; }
+            }
+            // Solve backward
+            double[] bwdXs = null, bwdYs = null;
+            {
+                double hx = (xmin - icx) / odeSteps;
+                double[] xs = new double[odeSteps + 1];
+                double[] ys = new double[odeSteps + 1];
+                xs[0] = icx; ys[0] = icy;
+                for (int s = 0; s < odeSteps; s++) {
+                    double cx = xs[s], cy = ys[s];
+                    double[] pqr = evalPQ(exprP, exprQ, cx, cy);
+                    double k1x = pqr[0], k1y = pqr[1];
+                    pqr = evalPQ(exprP, exprQ, cx + hx / 2, cy + k1y * hx / 2);
+                    double k2x = pqr[0], k2y = pqr[1];
+                    pqr = evalPQ(exprP, exprQ, cx + hx / 2, cy + k2y * hx / 2);
+                    double k3x = pqr[0], k3y = pqr[1];
+                    pqr = evalPQ(exprP, exprQ, cx + hx, cy + k3y * hx);
+                    double k4x = pqr[0], k4y = pqr[1];
+                    xs[s + 1] = cx + hx / 6 * (k1x + 2 * k2x + 2 * k3x + k4x);
+                    ys[s + 1] = cy + hx / 6 * (k1y + 2 * k2y + 2 * k3y + k4y);
+                    if (xs[s + 1] > xmax || xs[s + 1] < xmin || ys[s + 1] < ymin - 10 || ys[s + 1] > ymax + 10) {
+                        bwdXs = Arrays.copyOf(xs, s + 2);
+                        bwdYs = Arrays.copyOf(ys, s + 2);
+                        break;
+                    }
+                    if (s == odeSteps - 1) {
+                        bwdXs = xs; bwdYs = ys;
+                    }
+                }
+                if (bwdXs == null) { bwdXs = xs; bwdYs = ys; }
+            }
+            // Combine: reverse backward, then forward
+            java.util.List<double[]> curve = new java.util.ArrayList<>();
+            for (int i = bwdXs.length - 1; i >= 0; i--) {
+                if (bwdXs[i] >= xmin && bwdXs[i] <= xmax && bwdYs[i] >= ymin && bwdYs[i] <= ymax) {
+                    curve.add(new double[]{bwdXs[i], bwdYs[i]});
+                }
+            }
+            for (int i = 0; i < fwdXs.length; i++) {
+                if (fwdXs[i] > xmin && fwdXs[i] <= xmax && fwdYs[i] >= ymin && fwdYs[i] <= ymax) {
+                    curve.add(new double[]{fwdXs[i], fwdYs[i]});
+                }
+            }
+            if (!curve.isEmpty()) {
+                double[] flat = new double[curve.size() * 2];
+                for (int i = 0; i < curve.size(); i++) {
+                    flat[i * 2] = curve.get(i)[0];
+                    flat[i * 2 + 1] = curve.get(i)[1];
+                }
+                solutionCurves.add(flat);
+            }
+        }
+
+        showVectorFieldDialog(exprP, exprQ, px, py, grid, xmin, xmax, ymin, ymax, solutionCurves);
+        resultView.append(getString(R.string.toast_vector_field_plotted) + "\n");
+    }
+
+    private double[] evalPQ(String exprP, String exprQ, double x, double y) {
+        double p = CalcEngine.evaluateXY(exprP, x, y);
+        double q = CalcEngine.evaluateXY(exprQ, x, y);
+        return new double[]{p, q};
+    }
+
+    private void showVectorFieldDialog(String exprP, String exprQ, double[] px, double[] py,
+                                        int grid, double xmin, double xmax, double ymin, double ymax,
+                                        java.util.List<double[]> solutionCurves) {
+        android.app.Dialog dialog = new android.app.Dialog(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert);
+        dialog.setTitle(getString(R.string.dialog_vector_field));
+
+        android.widget.FrameLayout container = new android.widget.FrameLayout(this);
+        container.setPadding(16, 16, 16, 16);
+
+        android.view.View fieldView = new android.view.View(this) {
+            @Override
+            protected void onDraw(android.graphics.Canvas canvas) {
+                super.onDraw(canvas);
+                int w = getWidth();
+                int h = getHeight();
+                android.graphics.Paint bgPaint = new android.graphics.Paint();
+                bgPaint.setColor(android.graphics.Color.parseColor("#181825"));
+                canvas.drawRect(0, 0, w, h, bgPaint);
+
+                float margin = 20f;
+                float plotW = w - 2 * margin;
+                float plotH = h - 2 * margin;
+                float scaleX = plotW / (float)(xmax - xmin);
+                float scaleY = plotH / (float)(ymax - ymin);
+
+                // Draw axes
+                android.graphics.Paint axisPaint = new android.graphics.Paint();
+                axisPaint.setColor(android.graphics.Color.parseColor("#585b70"));
+                axisPaint.setStrokeWidth(1f);
+
+                float axX = margin + (float)((0 - xmin) * scaleX);
+                float axY = margin + (float)((ymax - 0) * scaleY);
+                if (axX >= margin && axX <= margin + plotW) {
+                    canvas.drawLine(axX, margin, axX, margin + plotH, axisPaint);
+                }
+                if (axY >= margin && axY <= margin + plotH) {
+                    canvas.drawLine(margin, axY, margin + plotW, axY, axisPaint);
+                }
+
+                // Compute max magnitude for normalization
+                double maxMag = 0.0;
+                for (int i = 0; i < px.length; i++) {
+                    double mag = Math.sqrt(px[i] * px[i] + py[i] * py[i]);
+                    if (!Double.isNaN(mag) && !Double.isInfinite(mag) && mag > maxMag) {
+                        maxMag = mag;
+                    }
+                }
+                if (maxMag == 0) maxMag = 1.0;
+
+                // Draw vector arrows
+                android.graphics.Paint arrowPaint = new android.graphics.Paint();
+                arrowPaint.setColor(android.graphics.Color.parseColor("#89b4fa"));
+                arrowPaint.setStrokeWidth(2f);
+                arrowPaint.setStyle(android.graphics.Paint.Style.STROKE);
+                arrowPaint.setAntiAlias(true);
+
+                float arrowLen = Math.min(plotW, plotH) / grid * 0.8f;
+
+                for (int i = 0; i < grid; i++) {
+                    for (int j = 0; j < grid; j++) {
+                        int idx = i * grid + j;
+                        double p = px[idx];
+                        double q = py[idx];
+                        if (Double.isNaN(p) || Double.isNaN(q) || Double.isInfinite(p) || Double.isInfinite(q)) continue;
+
+                        float cx = margin + (float)((xmin + j * (xmax - xmin) / (grid - 1) - xmin) * scaleX);
+                        float cy = margin + (float)((ymax - (ymin + i * (ymax - ymin) / (grid - 1))) * scaleY);
+                        if (cx < margin || cx > margin + plotW || cy < margin || cy > margin + plotH) continue;
+
+                        double mag = Math.sqrt(p * p + q * q);
+                        double normFactor = mag / maxMag;
+                        double dxNorm = p / mag;
+                        double dyNorm = q / mag;
+                        double halfLen = arrowLen * normFactor * 0.5;
+
+                        double screenDx = dxNorm * halfLen;
+                        double screenDy = dyNorm * halfLen;
+                        float x1 = (float)(cx - screenDx);
+                        float y1 = (float)(cy + screenDy);
+                        float x2 = (float)(cx + screenDx);
+                        float y2 = (float)(cy - screenDy);
+
+                        canvas.drawLine(x1, y1, x2, y2, arrowPaint);
+
+                        // Draw arrowhead
+                        double angle = Math.atan2(-(y2 - y1), x2 - x1);
+                        double headLen = arrowLen * normFactor * 0.25;
+                        float hx1 = (float)(x2 - headLen * Math.cos(angle - 0.4));
+                        float hy1 = (float)(y2 + headLen * Math.sin(angle - 0.4));
+                        float hx2 = (float)(x2 - headLen * Math.cos(angle + 0.4));
+                        float hy2 = (float)(y2 + headLen * Math.sin(angle + 0.4));
+                        canvas.drawLine(x2, y2, hx1, hy1, arrowPaint);
+                        canvas.drawLine(x2, y2, hx2, hy2, arrowPaint);
+                    }
+                }
+
+                // Draw solution curves
+                android.graphics.Paint curvePaint = new android.graphics.Paint();
+                curvePaint.setColor(android.graphics.Color.parseColor("#f38ba8"));
+                curvePaint.setStrokeWidth(2.5f);
+                curvePaint.setStyle(android.graphics.Paint.Style.STROKE);
+                curvePaint.setAntiAlias(true);
+
+                for (double[] curve : solutionCurves) {
+                    if (curve.length < 4) continue;
+                    android.graphics.Path path = new android.graphics.Path();
+                    boolean started = false;
+                    for (int i = 0; i < curve.length; i += 2) {
+                        float sx = margin + (float)((curve[i] - xmin) * scaleX);
+                        float sy = margin + (float)((ymax - curve[i + 1]) * scaleY);
+                        if (!started) {
+                            path.moveTo(sx, sy);
+                            started = true;
+                        } else {
+                            path.lineTo(sx, sy);
+                        }
+                    }
+                    canvas.drawPath(path, curvePaint);
+                }
+
+                // Draw labels
+                android.graphics.Paint labelPaint = new android.graphics.Paint();
+                labelPaint.setColor(android.graphics.Color.parseColor("#a6adc8"));
+                labelPaint.setTextSize(22f);
+                canvas.drawText("dx/dt = " + exprP, margin, h - margin / 2, labelPaint);
+                canvas.drawText("dy/dt = " + exprQ, margin, h - margin / 2 + 28, labelPaint);
             }
         };
 

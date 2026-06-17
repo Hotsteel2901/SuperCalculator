@@ -48,8 +48,9 @@
    - [9.11 Area Between Curves](#911-area-between-curves)
  10. [Tangent & Normal Lines](#10-tangent--normal-lines)
  11. [Taylor Series Expansion](#11-taylor-series-expansion)
- 12. [ODE Solver (RK4)](#12-ode-solver-rk4)
- 13. [Fourier Transform & Spectrum Analysis](#13-fourier-transform--spectrum-analysis)
+  12. [ODE Solver (RK4)](#12-ode-solver-rk4)
+  13. [Vector Field Plotter](#vector-field-plotter)
+  14. [Fourier Transform & Spectrum Analysis](#13-fourier-transform--spectrum-analysis)
  14. [Statistics Calculator](#14-statistics-calculator)
  15. [Statistical Distribution Calculator](#15-statistical-distribution-calculator)
  16. [Curve Fitting / Regression](#16-curve-fitting--regression)
@@ -776,7 +777,38 @@ Result: Numerical solution of y = e^(-x)
 
 ---
 
-## 24. Fourier Transform & Spectrum Analysis
+## Vector Field Plotter
+
+**Visualize 2D autonomous systems dx/dt=P(x,y), dy/dt=Q(x,y):**
+
+**Steps (Android):**
+
+1. Enter P(x,y) expression, e.g., `y` (for dx/dt = y)
+2. Enter Q(x,y) expression, e.g., `-x` (for dy/dt = -x)
+3. Set grid size (3-40) and x/y ranges
+4. Optionally enter initial conditions: `x0,y0; x1,y1; ...`
+5. Click **"Plot Vector Field"** for arrows only, or **"Solve & Plot"** to include solution curves
+
+**Steps (Python/Desktop):**
+
+1. Navigate to the Vector Field section
+2. Enter P(x,y) and Q(x,y) expressions
+3. Use preset dropdown for common systems (Harmonic oscillator, Predator-Prey, etc.)
+4. Set grid and ranges
+5. Click **"Plot Vector Field"** or **"Solve & Plot"**
+
+**Example: Harmonic Oscillator (dx/dt = y, dy/dt = -x)**
+
+```
+P(x,y) = y
+Q(x,y) = -x
+Grid: 14, Range: [-5,5] × [-5,5]
+Result: Circular vector field showing oscillatory motion
+```
+
+---
+
+## Fourier Transform & Spectrum Analysis
 
 **Perform FFT spectrum analysis on a function:**
 
