@@ -26,6 +26,9 @@ def combinations(n: int, r: int) -> Optional[float]:
     n, r = int(n), int(r)
     if r > n:
         return 0.0
+    if n > 170:
+        log_val = math.lgamma(n + 1) - math.lgamma(r + 1) - math.lgamma(n - r + 1)
+        return math.exp(log_val) if log_val < 709 else float('inf')
     return float(math.comb(n, r))
 
 
@@ -36,6 +39,9 @@ def permutations(n: int, r: int) -> Optional[float]:
     n, r = int(n), int(r)
     if r > n:
         return 0.0
+    if n > 170:
+        log_val = math.lgamma(n + 1) - math.lgamma(n - r + 1)
+        return math.exp(log_val) if log_val < 709 else float('inf')
     return float(math.perm(n, r))
 
 
