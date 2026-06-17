@@ -334,7 +334,7 @@
     <!-- Scan roots -->
     <string name="scan_roots_error">扫描根：错误：%s</string>
     <string name="scan_roots_no_roots" formatted="false">扫描根：在[%.4g, %.4g]中未找到根</string>
-    <string name="scan_roots_found" formatted="false">扫描根：在[%.4g, %.4g]中找到%d个根</string>
+    <string name="scan_roots_found" formatted="false">扫描根：在[%2$.4g, %3$.4g]中找到%1$d个根</string>
 
     <!-- Tangent/Normal -->
     <string name="tangent_label" formatted="false">x=%.6g处切线：y = %.6g(x - %.6g) + %.6g</string>
