@@ -101,7 +101,10 @@ def compound_future_value(present_value: float, annual_rate: float,
     r = annual_rate / 100.0
     n = compounds_per_year
     t = years
-    return present_value * (1 + r / n) ** (n * t)
+    base = 1 + r / n
+    if base <= 0:
+        return None
+    return present_value * base ** (n * t)
 
 
 def compound_present_value(future_value: float, annual_rate: float,
@@ -113,7 +116,10 @@ def compound_present_value(future_value: float, annual_rate: float,
     r = annual_rate / 100.0
     n = compounds_per_year
     t = years
-    denominator = (1 + r / n) ** (n * t)
+    base = 1 + r / n
+    if base <= 0:
+        return None
+    denominator = base ** (n * t)
     if denominator == 0:
         return None
     return future_value / denominator

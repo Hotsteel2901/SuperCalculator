@@ -293,10 +293,11 @@ class SuperCalcApp:
             (self.fig_fft, self.window_fft),
         ]:
             if window is not None and window.winfo_exists():
-                try:
-                    plt.close(fig)
-                except Exception:
-                    pass
+                if fig is not None:
+                    try:
+                        plt.close(fig)
+                    except Exception:
+                        pass
                 window.destroy()
         self.window_2d = self.fig_2d = self.ax_2d = self.canvas_2d = self.toolbar_2d = None
         self.window_3d = self.fig_3d = self.ax_3d = self.canvas_3d = self.toolbar_3d = None

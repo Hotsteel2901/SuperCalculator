@@ -1627,8 +1627,10 @@ class CalcEngine:
             return None
         total = n_rows * n_cols
         dense = (ctypes.c_double * total)()
-        _lib.sparse_to_dense(ptr, dense, total)
+        rc = _lib.sparse_to_dense(ptr, dense, total)
         _lib.sparse_matrix_free(ptr)
+        if rc != 0:
+            return None
         return list(dense)
 
     @staticmethod
@@ -1674,11 +1676,12 @@ class CalcEngine:
         arr_cols = (ctypes.c_int * nnz)(*cols)
         arr_vals = (ctypes.c_double * nnz)(*vals)
         arr_b = (ctypes.c_double * n)(*b)
+        arr_x0 = (ctypes.c_double * n)()
         arr_x = (ctypes.c_double * n)()
         ptr = _lib.sparse_from_triplets(n_rows, n_cols, arr_rows, arr_cols, arr_vals, nnz)
         if not ptr:
             return None
-        rc = _lib.sparse_solve_cg(ptr, arr_b, None, max_iter, tol, arr_x, n)
+        rc = _lib.sparse_solve_cg(ptr, arr_b, arr_x0, max_iter, tol, arr_x, n)
         _lib.sparse_matrix_free(ptr)
         if rc < 0:
             return None

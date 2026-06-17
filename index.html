@@ -3842,8 +3842,10 @@
             };
 
             window.calDow = function() {
-                var dt = calParseDate(document.getElementById('calDate1').value);
+                var el = document.getElementById('calDate1');
                 var r = document.getElementById('calResult');
+                if (!el || !r) return;
+                var dt = calParseDate(el.value);
                 if (!dt) { r.textContent = isZh ? '无效日期' : 'Invalid date'; return; }
                 var msg = isZh
                     ? dt.getFullYear() + '年' + (dt.getMonth()+1) + '月' + dt.getDate() + '日是星期' + dowStr(dt)
@@ -3852,22 +3854,29 @@
             };
 
             window.calDiff = function() {
-                var d1 = calParseDate(document.getElementById('calDate1').value);
-                var d2 = calParseDate(document.getElementById('calDate2').value);
+                var el1 = document.getElementById('calDate1');
+                var el2 = document.getElementById('calDate2');
                 var r = document.getElementById('calResult');
+                if (!el1 || !el2 || !r) return;
+                var d1 = calParseDate(el1.value);
+                var d2 = calParseDate(el2.value);
                 if (!d1 || !d2) { r.textContent = isZh ? '无效日期' : 'Invalid date'; return; }
                 var diff = Math.round((d2 - d1) / 86400000);
                 r.textContent = isZh ? '两日期相差：' + diff + ' 天' : 'Days between dates: ' + diff;
             };
 
             window.calAdd = function() {
-                var dt = calParseDate(document.getElementById('calDate1').value);
+                var el1 = document.getElementById('calDate1');
+                var elD = document.getElementById('calDays');
+                var el2 = document.getElementById('calDate2');
                 var r = document.getElementById('calResult');
+                if (!el1 || !elD || !r) return;
+                var dt = calParseDate(el1.value);
                 if (!dt) { r.textContent = isZh ? '无效日期' : 'Invalid date'; return; }
-                var days = parseInt(document.getElementById('calDays').value, 10);
+                var days = parseInt(elD.value, 10);
                 if (isNaN(days)) { r.textContent = isZh ? '请输入有效数字' : 'Enter a valid number'; return; }
                 var result = new Date(dt.getTime() + days * 86400000);
-                document.getElementById('calDate2').value = fmt(result);
+                if (el2) el2.value = fmt(result);
                 r.textContent = isZh
                     ? fmt(dt) + ' 加 ' + days + ' 天 = ' + fmt(result)
                     : fmt(dt) + ' + ' + days + ' days = ' + fmt(result);
@@ -4333,11 +4342,16 @@
             };
 
             window.computeFinRetire = function() {
-                var monthly = parseFloat(document.getElementById('finRetireMonthly').value);
-                var rate = parseFloat(document.getElementById('finRetireRate').value);
-                var years = parseInt(document.getElementById('finRetireYears').value);
-                var current = parseFloat(document.getElementById('finRetireCurrent').value) || 0;
+                var elM = document.getElementById('finRetireMonthly');
+                var elR = document.getElementById('finRetireRate');
+                var elY = document.getElementById('finRetireYears');
+                var elC = document.getElementById('finRetireCurrent');
                 var res = document.getElementById('finResults');
+                if (!elM || !elR || !elY || !res) return;
+                var monthly = parseFloat(elM.value);
+                var rate = parseFloat(elR.value);
+                var years = parseInt(elY.value);
+                var current = elC ? parseFloat(elC.value) || 0 : 0;
                 if (isNaN(monthly) || isNaN(rate) || isNaN(years) || monthly < 0 || years <= 0) { res.innerHTML = ''; return; }
                 var r = rate / 100 / 12;
                 var n = years * 12;
@@ -4630,13 +4644,15 @@
                             ssTot += (dataY[i] - yMean) * (dataY[i] - yMean);
                         }
                         var r2 = ssTot > 0 ? 1 - ssRes / ssTot : 0;
-                        trendInfo.style.display = 'block';
-                        trendInfo.innerHTML = '<span style="color:var(--text-muted);">' + (isZh ? '趋势线' : 'Trendline') + ':</span> ' + trend.eq + '  <span style="color:var(--text-muted);">R² = </span>' + r2.toFixed(6);
+                        if (trendInfo) {
+                            trendInfo.style.display = 'block';
+                            trendInfo.innerHTML = '<span style="color:var(--text-muted);">' + (isZh ? '趋势线' : 'Trendline') + ':</span> ' + trend.eq + '  <span style="color:var(--text-muted);">R² = </span>' + r2.toFixed(6);
+                        }
                     } else {
-                        trendInfo.style.display = 'none';
+                        if (trendInfo) trendInfo.style.display = 'none';
                     }
                 } else {
-                    trendInfo.style.display = 'none';
+                    if (trendInfo) trendInfo.style.display = 'none';
                 }
 
                 ctx.fillStyle = '#cdd6f4';
@@ -5279,7 +5295,7 @@
             function sparseToDense() {
                 var mat = parseSparseTriplets();
                 var resEl = document.getElementById('sparseResult');
-                if (!mat || !resEl) { resEl.textContent = isZh ? '输入无效' : 'Invalid input'; return; }
+                if (!mat || !resEl) { if (resEl) resEl.textContent = isZh ? '输入无效' : 'Invalid input'; return; }
                 var dim = mat.dim;
                 var dense = [];
                 for (var i = 0; i < dim * dim; i++) dense.push(0);
@@ -5300,7 +5316,7 @@
                 var mat = parseSparseTriplets();
                 var resEl = document.getElementById('sparseResult');
                 var rhsEl = document.getElementById('sparseRhs');
-                if (!mat || !resEl || !rhsEl) { resEl.textContent = isZh ? '输入无效' : 'Invalid input'; return; }
+                if (!mat || !resEl || !rhsEl) { if (resEl) resEl.textContent = isZh ? '输入无效' : 'Invalid input'; return; }
                 var bParts = rhsEl.value.trim().split(',');
                 var x = [];
                 for (var i = 0; i < bParts.length; i++) x.push(parseFloat(bParts[i].trim()));

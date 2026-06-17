@@ -161,6 +161,7 @@ public class StatDistCalc {
 
     // --- Binomial distribution ---
     private static double binomialPmf(int k, int n, double p) {
+        if (n < 0 || p < 0 || p > 1) return Double.NaN;
         if (k < 0 || k > n) return 0.0;
         if (p == 0.0) return (k == 0) ? 1.0 : 0.0;
         if (p == 1.0) return (k == n) ? 1.0 : 0.0;
@@ -181,6 +182,7 @@ public class StatDistCalc {
 
     // --- Poisson distribution ---
     private static double poissonPmf(int k, double lambda) {
+        if (lambda < 0) return Double.NaN;
         if (k < 0) return 0.0;
         if (lambda == 0.0) return (k == 0) ? 1.0 : 0.0;
         double logPmf = k * Math.log(lambda) - lambda - logGamma(k + 1);
@@ -200,6 +202,9 @@ public class StatDistCalc {
 
     // Lanczos approximation for log(Gamma)
     private static double logGamma(double z) {
+        if (z <= 0.0 && z == Math.floor(z)) {
+            return Double.POSITIVE_INFINITY;
+        }
         if (z < 0.5) {
             return Math.log(Math.PI / Math.sin(Math.PI * z)) - logGamma(1.0 - z);
         }
@@ -227,6 +232,7 @@ public class StatDistCalc {
 
     // Lower regularized incomplete gamma P(a, x)
     private static double lowerIncompleteGamma(double a, double x) {
+        if (a <= 0) return Double.NaN;
         if (x <= 0) return 0.0;
         if (x < a + 1) {
             // Series
@@ -264,6 +270,7 @@ public class StatDistCalc {
 
     // Regularized incomplete beta I_x(a, b)
     private static double incompleteBeta(double a, double b, double x) {
+        if (a <= 0 || b <= 0) return Double.NaN;
         if (x <= 0) return 0.0;
         if (x >= 1) return 1.0;
         if (x > (a + 1) / (a + b + 2)) {
