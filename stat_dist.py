@@ -525,7 +525,9 @@ class PoissonDist:
         if q <= 0:
             return 0
         if q >= 1:
-            return int(self.lam + 4 * np.sqrt(self.lam)) + 100
+            if self.lam == 0:
+                return 0
+            return int(self.lam + 10 * np.sqrt(self.lam))
         total = 0.0
         k = 0
         cap = max(1000, int(self.lam * 4) + 100)

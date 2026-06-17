@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN" data-lang="zh">
-<link rel="icon" type="image/x-icon" href="SuperCalculator.ico">
 <head>
+<link rel="icon" type="image/x-icon" href="SuperCalculator.ico">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <meta name="theme-color" content="#0a0a14" media="(prefers-color-scheme: dark)">
@@ -2191,6 +2191,8 @@
                     return Function('x','y','with(Math){return ('+expanded+')}')(x,y);
                 }catch(e){return NaN;}
             }
+            window.evalExpr = evalExpr;
+            window.expandCustomFuncs = expandCustomFuncs;
 
             function eulerMethod(expr,x0,y0,xEnd,n){
                 var h=(xEnd-x0)/n,xs=[x0],ys=[y0],x=x0,y=y0;
@@ -5171,7 +5173,7 @@
             }
 
             // --- Custom Function Definition ---
-            var customFuncs = {};
+            window.customFuncs = {};
 
             function defineCustomFunction() {
                 var elName = document.getElementById('cfName');

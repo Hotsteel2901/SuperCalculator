@@ -186,13 +186,13 @@ def irr(cashflows: List[float], guess: float = 10.0,
         if abs(dpv) < 1e-18:
             break
         r_new = r - pv / dpv
-        if abs(r_new - r) < tol:
-            return r_new * 100.0
         # Clamp step to prevent divergence
         if r_new < -0.99:
             r_new = -0.99
         elif r_new > 10.0:
             r_new = 10.0
+        if abs(r_new - r) < tol:
+            return r_new * 100.0
         r = r_new
     final_npv = sum(cf / (1 + r) ** t for t, cf in enumerate(cashflows))
     return r * 100.0 if abs(final_npv) < 1e-6 else None
