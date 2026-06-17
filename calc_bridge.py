@@ -340,12 +340,39 @@ _lib.contour_grid_eval.restype = ctypes.c_int
 
 # Vector Field Grid Evaluation
 _lib.vector_field_grid_eval.argtypes = [ctypes.c_char_p, ctypes.c_char_p,
-                                         ctypes.c_double, ctypes.c_double,
-                                         ctypes.c_double, ctypes.c_double,
-                                         ctypes.c_int, ctypes.c_int,
-                                         ctypes.POINTER(ctypes.c_double),
-                                         ctypes.POINTER(ctypes.c_double)]
+                                          ctypes.c_double, ctypes.c_double,
+                                          ctypes.c_double, ctypes.c_double,
+                                          ctypes.c_int, ctypes.c_int,
+                                          ctypes.POINTER(ctypes.c_double),
+                                          ctypes.POINTER(ctypes.c_double)]
 _lib.vector_field_grid_eval.restype = ctypes.c_int
+
+# Sparse Matrix functions (opaque pointer based)
+_lib.sparse_from_triplets.argtypes = [ctypes.c_int, ctypes.c_int,
+                                       ctypes.POINTER(ctypes.c_int),
+                                       ctypes.POINTER(ctypes.c_int),
+                                       ctypes.POINTER(ctypes.c_double),
+                                       ctypes.c_int]
+_lib.sparse_from_triplets.restype = ctypes.c_void_p
+
+_lib.sparse_to_dense.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_double), ctypes.c_int]
+_lib.sparse_to_dense.restype = ctypes.c_int
+
+_lib.sparse_spmv.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_double),
+                              ctypes.POINTER(ctypes.c_double), ctypes.c_int]
+_lib.sparse_spmv.restype = ctypes.c_int
+
+_lib.sparse_solve_cg.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_double),
+                                  ctypes.POINTER(ctypes.c_double),
+                                  ctypes.c_int, ctypes.c_double,
+                                  ctypes.POINTER(ctypes.c_double), ctypes.c_int]
+_lib.sparse_solve_cg.restype = ctypes.c_int
+
+_lib.sparse_matrix_nnz.argtypes = [ctypes.c_void_p]
+_lib.sparse_matrix_nnz.restype = ctypes.c_int
+
+_lib.sparse_matrix_free.argtypes = [ctypes.c_void_p]
+_lib.sparse_matrix_free.restype = None
 
 
 def _is_invalid(x: float) -> bool:
@@ -1578,3 +1605,81 @@ class CalcEngine:
             'px': list(buf_p),
             'py': list(buf_q),
         }
+
+    # Sparse Matrix Solver
+    @staticmethod
+    def sparse_from_triplets(n_rows: int, n_cols: int,
+                              rows: List[int], cols: List[int],
+                              vals: List[float]) -> Optional[List[float]]:
+        """Build a sparse matrix from COO triplets and return dense representation.
+
+        Returns a flat list of n_rows * n_cols values (row-major), or None on error.
+        Duplicate entries are summed.
+        """
+        nnz = len(vals)
+        if nnz == 0 or n_rows <= 0 or n_cols <= 0:
+            return None
+        arr_rows = (ctypes.c_int * nnz)(*rows)
+        arr_cols = (ctypes.c_int * nnz)(*cols)
+        arr_vals = (ctypes.c_double * nnz)(*vals)
+        ptr = _lib.sparse_from_triplets(n_rows, n_cols, arr_rows, arr_cols, arr_vals, nnz)
+        if not ptr:
+            return None
+        total = n_rows * n_cols
+        dense = (ctypes.c_double * total)()
+        _lib.sparse_to_dense(ptr, dense, total)
+        _lib.sparse_matrix_free(ptr)
+        return list(dense)
+
+    @staticmethod
+    def sparse_spmv(n_rows: int, n_cols: int,
+                     rows: List[int], cols: List[int],
+                     vals: List[float], x: List[float]) -> Optional[List[float]]:
+        """Compute sparse matrix-vector product y = A*x.
+
+        Returns a list of n_rows values, or None on error.
+        """
+        nnz = len(vals)
+        if nnz == 0 or n_rows <= 0:
+            return None
+        n = len(x)
+        arr_rows = (ctypes.c_int * nnz)(*rows)
+        arr_cols = (ctypes.c_int * nnz)(*cols)
+        arr_vals = (ctypes.c_double * nnz)(*vals)
+        arr_x = (ctypes.c_double * n)(*x)
+        arr_y = (ctypes.c_double * n)()
+        ptr = _lib.sparse_from_triplets(n_rows, n_cols, arr_rows, arr_cols, arr_vals, nnz)
+        if not ptr:
+            return None
+        rc = _lib.sparse_spmv(ptr, arr_x, arr_y, n)
+        _lib.sparse_matrix_free(ptr)
+        if rc != 0:
+            return None
+        return list(arr_y)
+
+    @staticmethod
+    def sparse_solve_cg(n_rows: int, n_cols: int,
+                         rows: List[int], cols: List[int],
+                         vals: List[float], b: List[float],
+                         max_iter: int = 1000, tol: float = 1e-10) -> Optional[List[float]]:
+        """Solve A*x = b using Conjugate Gradient method.
+
+        A is specified by COO triplets. Returns the solution vector or None on error.
+        """
+        nnz = len(vals)
+        if nnz == 0 or n_rows <= 0:
+            return None
+        n = len(b)
+        arr_rows = (ctypes.c_int * nnz)(*rows)
+        arr_cols = (ctypes.c_int * nnz)(*cols)
+        arr_vals = (ctypes.c_double * nnz)(*vals)
+        arr_b = (ctypes.c_double * n)(*b)
+        arr_x = (ctypes.c_double * n)()
+        ptr = _lib.sparse_from_triplets(n_rows, n_cols, arr_rows, arr_cols, arr_vals, nnz)
+        if not ptr:
+            return None
+        rc = _lib.sparse_solve_cg(ptr, arr_b, None, max_iter, tol, arr_x, n)
+        _lib.sparse_matrix_free(ptr)
+        if rc < 0:
+            return None
+        return list(arr_x)

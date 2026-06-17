@@ -2476,3 +2476,276 @@ EXPORT int vector_field_grid_eval(const char* expr_p, const char* expr_q,
     }
     return 0;
 }
+
+/* --------------------------------------------------------------------------
+ *  Sparse Matrix Solver (CSR Format + Conjugate Gradient)
+ *
+ *  Provides sparse matrix storage in Compressed Sparse Row (CSR) format
+ *  and an iterative Conjugate Gradient solver for Ax = b where A is
+ *  symmetric positive definite.
+ *
+ *  API:
+ *    sparse_from_triplets  — build CSR from COO triplet lists
+ *    sparse_to_dense       — convert CSR to dense row-major array
+ *    sparse_spmv           — sparse matrix-vector multiply y = A*x
+ *    sparse_solve_cg       — solve A*x = b via Conjugate Gradient
+ *    sparse_matrix_nnz     — return number of non-zeros
+ *    sparse_matrix_free    — free all allocated memory
+ * -------------------------------------------------------------------------- */
+
+#define SPARSE_MAX_NNZ 1000000
+
+typedef struct {
+    int     n_rows;
+    int     n_cols;
+    int     nnz;        /* number of non-zero entries */
+    int*    row_ptr;    /* row_ptr[i] = index into col_ind/val where row i starts */
+    int*    col_ind;    /* column indices of non-zeros */
+    double* val;        /* non-zero values */
+    int     capacity;   /* allocated capacity for val/col_ind */
+} SparseMatrix;
+
+static void sparse_matrix_free_internal(SparseMatrix* m) {
+    if (!m) return;
+    free(m->row_ptr);
+    free(m->col_ind);
+    free(m->val);
+    free(m);
+}
+
+EXPORT int sparse_matrix_nnz(const SparseMatrix* m) {
+    return m ? m->nnz : 0;
+}
+
+EXPORT SparseMatrix* sparse_from_triplets(int n_rows, int n_cols,
+                                           const int* rows, const int* cols,
+                                           const double* vals, int nnz) {
+    if (!rows || !cols || !vals || nnz <= 0 || n_rows <= 0 || n_cols <= 0) {
+        set_error("sparse_from_triplets: invalid parameters");
+        return NULL;
+    }
+    if (nnz > SPARSE_MAX_NNZ) {
+        set_error("sparse_from_triplets: too many non-zeros (max 1000000)");
+        return NULL;
+    }
+    clear_error();
+
+    /* Count entries per row */
+    int* counts = (int*)calloc(n_rows, sizeof(int));
+    if (!counts) { set_error("Out of memory"); return NULL; }
+
+    for (int i = 0; i < nnz; i++) {
+        if (rows[i] < 0 || rows[i] >= n_rows || cols[i] < 0 || cols[i] >= n_cols) {
+            free(counts);
+            set_error("sparse_from_triplets: index out of range");
+            return NULL;
+        }
+        counts[rows[i]]++;
+    }
+
+    SparseMatrix* m = (SparseMatrix*)malloc(sizeof(SparseMatrix));
+    if (!m) { free(counts); set_error("Out of memory"); return NULL; }
+
+    m->n_rows = n_rows;
+    m->n_cols = n_cols;
+    m->capacity = nnz;
+    m->row_ptr = (int*)malloc((n_rows + 1) * sizeof(int));
+    m->col_ind = (int*)malloc(nnz * sizeof(int));
+    m->val = (double*)malloc(nnz * sizeof(double));
+
+    if (!m->row_ptr || !m->col_ind || !m->val) {
+        free(counts);
+        sparse_matrix_free_internal(m);
+        set_error("Out of memory");
+        return NULL;
+    }
+
+    /* Build row_ptr */
+    m->row_ptr[0] = 0;
+    for (int i = 0; i < n_rows; i++) {
+        m->row_ptr[i + 1] = m->row_ptr[i] + counts[i];
+    }
+
+    /* Fill col_ind and val using a temporary position counter */
+    int* pos = (int*)calloc(n_rows, sizeof(int));
+    if (!pos) { free(counts); sparse_matrix_free_internal(m); set_error("Out of memory"); return NULL; }
+
+    for (int i = 0; i < nnz; i++) {
+        int r = rows[i];
+        int idx = m->row_ptr[r] + pos[r];
+        m->col_ind[idx] = cols[i];
+        m->val[idx] = vals[i];
+        pos[r]++;
+    }
+
+    /* Sort each row by column index for deterministic behavior */
+    for (int i = 0; i < n_rows; i++) {
+        int start = m->row_ptr[i];
+        int end = m->row_ptr[i + 1];
+        /* Simple insertion sort (rows are typically short) */
+        for (int j = start + 1; j < end; j++) {
+            int key_col = m->col_ind[j];
+            double key_val = m->val[j];
+            int k = j - 1;
+            while (k >= start && m->col_ind[k] > key_col) {
+                m->col_ind[k + 1] = m->col_ind[k];
+                m->val[k + 1] = m->val[k];
+                k--;
+            }
+            m->col_ind[k + 1] = key_col;
+            m->val[k + 1] = key_val;
+        }
+    }
+
+    /* Merge duplicate entries (sum values for same row,col) */
+    int write = 0;
+    for (int i = 0; i < n_rows; i++) {
+        int start = m->row_ptr[i];
+        int end = m->row_ptr[i + 1];
+        m->row_ptr[i] = write;
+        int j = start;
+        while (j < end) {
+            int col = m->col_ind[j];
+            double sum = m->val[j];
+            j++;
+            while (j < end && m->col_ind[j] == col) {
+                sum += m->val[j];
+                j++;
+            }
+            if (sum != 0.0) {
+                m->col_ind[write] = col;
+                m->val[write] = sum;
+                write++;
+            }
+        }
+    }
+    /* Update final row_ptr entries */
+    for (int i = 0; i < n_rows; i++) {
+        /* row_ptr[i] already set above */
+    }
+    m->row_ptr[n_rows] = write;
+    m->nnz = write;
+
+    free(counts);
+    free(pos);
+    return m;
+}
+
+EXPORT int sparse_to_dense(const SparseMatrix* m, double* out, int max_out) {
+    if (!m || !out) return -1;
+    int total = m->n_rows * m->n_cols;
+    if (max_out < total) { set_error("Output buffer too small"); return -1; }
+    clear_error();
+
+    for (int i = 0; i < total; i++) out[i] = 0.0;
+
+    for (int i = 0; i < m->n_rows; i++) {
+        for (int j = m->row_ptr[i]; j < m->row_ptr[i + 1]; j++) {
+            out[i * m->n_cols + m->col_ind[j]] = m->val[j];
+        }
+    }
+    return 0;
+}
+
+EXPORT int sparse_spmv(const SparseMatrix* m, const double* x, double* y, int n) {
+    if (!m || !x || !y) return -1;
+    if (n != m->n_cols) { set_error("sparse_spmv: dimension mismatch"); return -1; }
+    clear_error();
+
+    for (int i = 0; i < m->n_rows; i++) {
+        double sum = 0.0;
+        for (int j = m->row_ptr[i]; j < m->row_ptr[i + 1]; j++) {
+            sum += m->val[j] * x[m->col_ind[j]];
+        }
+        y[i] = sum;
+    }
+    return 0;
+}
+
+/* Conjugate Gradient solver: solve A*x = b where A is symmetric positive definite */
+EXPORT int sparse_solve_cg(const SparseMatrix* m, const double* b, double* x,
+                            int max_iter, double tol, double* out_x, int n) {
+    if (!m || !b || !out_x) return -1;
+    if (n != m->n_rows || n != m->n_cols) {
+        set_error("sparse_solve_cg: dimension mismatch");
+        return -1;
+    }
+    if (max_iter <= 0) max_iter = n * 2;
+    if (tol <= 0.0) tol = 1e-10;
+    clear_error();
+
+    /* Allocate working vectors */
+    double* r = (double*)malloc(n * sizeof(double));
+    double* p = (double*)malloc(n * sizeof(double));
+    double* Ap = (double*)malloc(n * sizeof(double));
+    if (!r || !p || !Ap) {
+        free(r); free(p); free(Ap);
+        set_error("Out of memory");
+        return -1;
+    }
+
+    /* x = 0 (initial guess) */
+    for (int i = 0; i < n; i++) out_x[i] = 0.0;
+
+    /* r = b - A*x = b (since x=0) */
+    for (int i = 0; i < n; i++) r[i] = b[i];
+
+    /* p = r */
+    for (int i = 0; i < n; i++) p[i] = r[i];
+
+    double rsold = 0.0;
+    for (int i = 0; i < n; i++) rsold += r[i] * r[i];
+
+    double bnorm = sqrt(rsold);
+    if (bnorm < 1e-15) {
+        /* b is zero, x = 0 is the solution */
+        free(r); free(p); free(Ap);
+        return 0;
+    }
+
+    for (int iter = 0; iter < max_iter; iter++) {
+        /* Ap = A * p */
+        if (sparse_spmv(m, p, Ap, n) != 0) {
+            free(r); free(p); free(Ap);
+            return -1;
+        }
+
+        double pAp = 0.0;
+        for (int i = 0; i < n; i++) pAp += p[i] * Ap[i];
+
+        if (fabs(pAp) < 1e-30) {
+            free(r); free(p); free(Ap);
+            set_error("CG breakdown: p^T A p ≈ 0");
+            return -1;
+        }
+
+        double alpha = rsold / pAp;
+
+        /* x = x + alpha * p */
+        for (int i = 0; i < n; i++) out_x[i] += alpha * p[i];
+
+        /* r = r - alpha * Ap */
+        for (int i = 0; i < n; i++) r[i] -= alpha * Ap[i];
+
+        double rsnew = 0.0;
+        for (int i = 0; i < n; i++) rsnew += r[i] * r[i];
+
+        if (sqrt(rsnew) / bnorm < tol) {
+            free(r); free(p); free(Ap);
+            return iter + 1;  /* converged */
+        }
+
+        double beta = rsnew / rsold;
+        for (int i = 0; i < n; i++) p[i] = r[i] + beta * p[i];
+
+        rsold = rsnew;
+    }
+
+    free(r); free(p); free(Ap);
+    set_error("CG did not converge within max_iter iterations");
+    return -1;  /* did not converge */
+}
+
+EXPORT void sparse_matrix_free(SparseMatrix* m) {
+    sparse_matrix_free_internal(m);
+}

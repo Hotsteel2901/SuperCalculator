@@ -702,4 +702,19 @@
     <string name="toast_contour_plotted">Contour plot drawn</string>
     <string name="dialog_contour">Contour Plot</string>
     <string name="contour_error">Contour plot error: %s</string>
+
+    <!-- Sparse Matrix Solver -->
+    <string name="sparse_matrix_title">Sparse Matrix Solver</string>
+    <string name="sparse_matrix_hint">Enter matrix as triplets: row,col,val; row,col,val; ...</string>
+    <string name="sparse_matrix_hint_triplets">Row,Col,Val triplets</string>
+    <string name="sparse_matrix_hint_rhs">RHS vector b (comma-separated)</string>
+    <string name="sparse_matrix_to_dense">To Dense</string>
+    <string name="sparse_matrix_spmv">A * x</string>
+    <string name="sparse_matrix_solve_cg">Solve A*x=b (CG)</string>
+    <string name="sparse_matrix_parse_error">Sparse matrix error: %s</string>
+    <string name="sparse_matrix_toast_dense">Dense matrix displayed</string>
+    <string name="sparse_matrix_toast_spmv">A*x computed</string>
+    <string name="sparse_matrix_toast_solved">Solution found in %d iterations</string>
+    <string name="sparse_matrix_toast_failed">CG solver failed: %s</string>
+    <string name="sparse_matrix_invalid_input">Invalid matrix or vector input.</string>
 </resources>

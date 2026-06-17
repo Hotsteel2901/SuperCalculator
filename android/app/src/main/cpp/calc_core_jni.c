@@ -1442,3 +1442,167 @@ Java_com_supercalc_CalcEngine_vectorFieldGridEval(JNIEnv* env, jclass clazz,
     free(out_q);
     return jresult;
 }
+
+/* ---- Sparse Matrix Solver ---- */
+
+typedef struct SparseMatrix SparseMatrix;
+
+SparseMatrix* sparse_from_triplets(int n_rows, int n_cols,
+                                    const int* rows, const int* cols,
+                                    const double* vals, int nnz);
+int sparse_to_dense(const SparseMatrix* m, double* out, int max_out);
+int sparse_spmv(const SparseMatrix* m, const double* x, double* y, int n);
+int sparse_solve_cg(const SparseMatrix* m, const double* b, double* x,
+                     int max_iter, double tol, double* out_x, int n);
+int sparse_matrix_nnz(const SparseMatrix* m);
+void sparse_matrix_free(SparseMatrix* m);
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_supercalc_CalcEngine_sparseFromTriplets(JNIEnv* env, jclass clazz,
+                                                  jint nRows, jint nCols,
+                                                  jintArray rows, jintArray cols,
+                                                  jdoubleArray vals) {
+    jsize nnz = (*env)->GetArrayLength(env, vals);
+    if ((*env)->GetArrayLength(env, rows) != nnz || (*env)->GetArrayLength(env, cols) != nnz) {
+        return NULL;
+    }
+
+    jint* row_data = (*env)->GetIntArrayElements(env, rows, NULL);
+    jint* col_data = (*env)->GetIntArrayElements(env, cols, NULL);
+    jdouble* val_data = (*env)->GetDoubleArrayElements(env, vals, NULL);
+    if (!row_data || !col_data || !val_data) {
+        if (row_data) (*env)->ReleaseIntArrayElements(env, rows, row_data, JNI_ABORT);
+        if (col_data) (*env)->ReleaseIntArrayElements(env, cols, col_data, JNI_ABORT);
+        if (val_data) (*env)->ReleaseDoubleArrayElements(env, vals, val_data, JNI_ABORT);
+        return NULL;
+    }
+
+    SparseMatrix* m = sparse_from_triplets(nRows, nCols, row_data, col_data, val_data, (int)nnz);
+
+    (*env)->ReleaseIntArrayElements(env, rows, row_data, JNI_ABORT);
+    (*env)->ReleaseIntArrayElements(env, cols, col_data, JNI_ABORT);
+    (*env)->ReleaseDoubleArrayElements(env, vals, val_data, JNI_ABORT);
+
+    if (!m) return NULL;
+
+    /* Return dense matrix as flat double array */
+    int total = m->n_rows * m->n_cols;
+    double* dense = (double*)malloc(total * sizeof(double));
+    if (!dense) {
+        sparse_matrix_free(m);
+        return NULL;
+    }
+    sparse_to_dense(m, dense, total);
+    sparse_matrix_free(m);
+
+    jdoubleArray result = (*env)->NewDoubleArray(env, total);
+    if (result) {
+        (*env)->SetDoubleArrayRegion(env, result, 0, total, dense);
+    }
+    free(dense);
+    return result;
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_supercalc_CalcEngine_sparseSpmv(JNIEnv* env, jclass clazz,
+                                          jint nRows, jint nCols,
+                                          jintArray rows, jintArray cols,
+                                          jdoubleArray vals, jdoubleArray x) {
+    jsize nnz = (*env)->GetArrayLength(env, vals);
+    jsize n = (*env)->GetArrayLength(env, x);
+    if ((*env)->GetArrayLength(env, rows) != nnz || (*env)->GetArrayLength(env, cols) != nnz) {
+        return NULL;
+    }
+
+    jint* row_data = (*env)->GetIntArrayElements(env, rows, NULL);
+    jint* col_data = (*env)->GetIntArrayElements(env, cols, NULL);
+    jdouble* val_data = (*env)->GetDoubleArrayElements(env, vals, NULL);
+    jdouble* x_data = (*env)->GetDoubleArrayElements(env, x, NULL);
+    if (!row_data || !col_data || !val_data || !x_data) {
+        if (row_data) (*env)->ReleaseIntArrayElements(env, rows, row_data, JNI_ABORT);
+        if (col_data) (*env)->ReleaseIntArrayElements(env, cols, col_data, JNI_ABORT);
+        if (val_data) (*env)->ReleaseDoubleArrayElements(env, vals, val_data, JNI_ABORT);
+        if (x_data) (*env)->ReleaseDoubleArrayElements(env, x, x_data, JNI_ABORT);
+        return NULL;
+    }
+
+    SparseMatrix* m = sparse_from_triplets(nRows, nCols, row_data, col_data, val_data, (int)nnz);
+
+    (*env)->ReleaseIntArrayElements(env, rows, row_data, JNI_ABORT);
+    (*env)->ReleaseIntArrayElements(env, cols, col_data, JNI_ABORT);
+    (*env)->ReleaseDoubleArrayElements(env, vals, val_data, JNI_ABORT);
+
+    if (!m) return NULL;
+
+    double* y_out = (double*)malloc(m->n_rows * sizeof(double));
+    if (!y_out) {
+        sparse_matrix_free(m);
+        return NULL;
+    }
+
+    sparse_spmv(m, x_data, y_out, (int)n);
+    (*env)->ReleaseDoubleArrayElements(env, x, x_data, JNI_ABORT);
+
+    jdoubleArray result = (*env)->NewDoubleArray(env, m->n_rows);
+    if (result) {
+        (*env)->SetDoubleArrayRegion(env, result, 0, m->n_rows, y_out);
+    }
+
+    sparse_matrix_free(m);
+    free(y_out);
+    return result;
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_supercalc_CalcEngine_sparseSolveCg(JNIEnv* env, jclass clazz,
+                                             jint nRows, jint nCols,
+                                             jintArray rows, jintArray cols,
+                                             jdoubleArray vals, jdoubleArray b,
+                                             jint maxIter, jdouble tol) {
+    jsize nnz = (*env)->GetArrayLength(env, vals);
+    jsize n = (*env)->GetArrayLength(env, b);
+    if ((*env)->GetArrayLength(env, rows) != nnz || (*env)->GetArrayLength(env, cols) != nnz) {
+        return NULL;
+    }
+
+    jint* row_data = (*env)->GetIntArrayElements(env, rows, NULL);
+    jint* col_data = (*env)->GetIntArrayElements(env, cols, NULL);
+    jdouble* val_data = (*env)->GetDoubleArrayElements(env, vals, NULL);
+    jdouble* b_data = (*env)->GetDoubleArrayElements(env, b, NULL);
+    if (!row_data || !col_data || !val_data || !b_data) {
+        if (row_data) (*env)->ReleaseIntArrayElements(env, rows, row_data, JNI_ABORT);
+        if (col_data) (*env)->ReleaseIntArrayElements(env, cols, col_data, JNI_ABORT);
+        if (val_data) (*env)->ReleaseDoubleArrayElements(env, vals, val_data, JNI_ABORT);
+        if (b_data) (*env)->ReleaseDoubleArrayElements(env, b, b_data, JNI_ABORT);
+        return NULL;
+    }
+
+    SparseMatrix* m = sparse_from_triplets(nRows, nCols, row_data, col_data, val_data, (int)nnz);
+
+    (*env)->ReleaseIntArrayElements(env, rows, row_data, JNI_ABORT);
+    (*env)->ReleaseIntArrayElements(env, cols, col_data, JNI_ABORT);
+    (*env)->ReleaseDoubleArrayElements(env, vals, val_data, JNI_ABORT);
+
+    if (!m) return NULL;
+
+    double* x_out = (double*)malloc(n * sizeof(double));
+    if (!x_out) {
+        sparse_matrix_free(m);
+        return NULL;
+    }
+
+    int iters = sparse_solve_cg(m, b_data, NULL, (int)maxIter, (double)tol, x_out, (int)n);
+    (*env)->ReleaseDoubleArrayElements(env, b, b_data, JNI_ABORT);
+
+    jdoubleArray result = NULL;
+    if (iters >= 0) {
+        result = (*env)->NewDoubleArray(env, n);
+        if (result) {
+            (*env)->SetDoubleArrayRegion(env, result, 0, n, x_out);
+        }
+    }
+
+    sparse_matrix_free(m);
+    free(x_out);
+    return result;
+}
