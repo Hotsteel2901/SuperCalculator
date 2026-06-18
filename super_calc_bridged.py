@@ -1426,6 +1426,8 @@ class SuperCalcApp:
                   font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
         ttk.Button(reg_row4, text=t("btn_plot_fit"),
                    command=self._on_reg_plot).pack(side=tk.LEFT, padx=(8, 2))
+        ttk.Button(reg_row4, text=t("btn_export_csv"),
+                   command=self._on_reg_export_csv).pack(side=tk.LEFT, padx=2)
 
         # --- CSV Data Import & Scatter Plot ---
         frm_data = ttk.LabelFrame(scroll_frame, text=t("sec_data_import"),
@@ -5484,6 +5486,38 @@ class SuperCalcApp:
 
         self.canvas_2d.draw()
         self.status_var.set(t("status_fit_plotted", result['equation']))
+
+    def _on_reg_export_csv(self):
+        """Export regression data points as CSV."""
+        x_text = self._var_reg_xdata.get().strip()
+        y_text = self._var_reg_ydata.get().strip()
+        if not y_text:
+            messagebox.showinfo(t("err_info"), t("msg_run_regression"))
+            return
+        ys = self._parse_data_list(y_text)
+        if x_text:
+            xs = self._parse_data_list(x_text)
+        else:
+            xs = list(range(1, len(ys) + 1))
+        if not xs or not ys or len(xs) != len(ys):
+            messagebox.showinfo(t("err_info"), t("msg_run_regression"))
+            return
+        path = filedialog.asksaveasfilename(
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+            title=t("title_export_stats"))
+        if not path:
+            return
+        try:
+            import csv as _csv
+            with open(path, 'w', newline='', encoding='utf-8') as f:
+                writer = _csv.writer(f)
+                writer.writerow(["x", "y"])
+                for xv, yv in zip(xs, ys):
+                    writer.writerow([xv, yv])
+            self.status_var.set(t("status_exported_stats", len(xs), os.path.basename(path)))
+        except Exception as e:
+            messagebox.showerror(t("err_export"), str(e))
 
     # ------------------------------------------------------------------
     #  CSV Data Import & Scatter Plot

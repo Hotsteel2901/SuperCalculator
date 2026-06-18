@@ -861,6 +861,7 @@ Results:
 - **Sort data**: Click sort button to arrange from smallest to largest
 - **Histogram**: Visualize data distribution
 - **CSV export**: Export statistics to CSV file
+- **Copy to clipboard**: Copy result text
 
 ---
 
@@ -933,6 +934,8 @@ x: 1, 2, 3, 4, 5
 y: 2, 4, 5, 4, 5
 Result: y = 0.6x + 2.2, R² = 0.739
 ```
+
+**Export:** Regression data (x, y) can be exported to CSV.
 
 ---
 

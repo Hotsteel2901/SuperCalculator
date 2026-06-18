@@ -717,4 +717,13 @@
     <string name="sparse_matrix_toast_solved">Solution found in %d iterations</string>
     <string name="sparse_matrix_toast_failed">CG solver failed: %s</string>
     <string name="sparse_matrix_invalid_input">Invalid matrix or vector input.</string>
+
+    <!-- CSV Export & Clipboard -->
+    <string name="copy_result">Copy</string>
+    <string name="export_csv">Export CSV</string>
+    <string name="result_copied">Results copied to clipboard.</string>
+    <string name="stats_exported_csv">Statistics data exported as CSV (%d entries).</string>
+    <string name="regression_exported_csv">Regression results exported as CSV.</string>
+    <string name="dialog_export_stats">Export Statistics CSV</string>
+    <string name="dialog_export_regression">Export Regression CSV</string>
 </resources>
