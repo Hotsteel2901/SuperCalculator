@@ -119,6 +119,7 @@ public class CalcActivity extends AppCompatActivity {
         MaterialButton btnFindMin = findViewById(R.id.btn_find_min);
         MaterialButton btnFindMax = findViewById(R.id.btn_find_max);
         MaterialButton btnClear  = findViewById(R.id.btn_clear);
+        MaterialButton btnCopyResult = findViewById(R.id.btn_copy_result);
         MaterialButton btnScanRoots = findViewById(R.id.btn_scan_roots);
         MaterialButton btnPlot3D = findViewById(R.id.btn_plot_3d);
         MaterialButton btnTable = findViewById(R.id.btn_table);
@@ -139,6 +140,7 @@ public class CalcActivity extends AppCompatActivity {
         if (btnFindMin != null) btnFindMin.setOnClickListener(v -> onFindExtremum(true));
         if (btnFindMax != null) btnFindMax.setOnClickListener(v -> onFindExtremum(false));
         if (btnClear != null) btnClear.setOnClickListener(v -> { if (resultView != null) resultView.setText(""); });
+        if (btnCopyResult != null) btnCopyResult.setOnClickListener(v -> onCopyResult());
         if (btnScanRoots != null) btnScanRoots.setOnClickListener(v -> onScanRoots());
         if (btnPlot3D != null) btnPlot3D.setOnClickListener(v -> openPlot3D());
         if (btnTable != null) btnTable.setOnClickListener(v -> onGenerateTable());
@@ -219,6 +221,8 @@ public class CalcActivity extends AppCompatActivity {
         btnStatsCompute.setOnClickListener(v -> onStatsCompute());
         btnStatsSort.setOnClickListener(v -> onStatsSort());
         btnStatsHistogram.setOnClickListener(v -> onStatsHistogram());
+        MaterialButton btnStatsExportCsv = findViewById(R.id.btn_stats_export_csv);
+        if (btnStatsExportCsv != null) btnStatsExportCsv.setOnClickListener(v -> onStatsExportCsv());
 
         // Curve Fitting / Regression
         EditText regXInput = findViewById(R.id.reg_x_input);
@@ -242,6 +246,8 @@ public class CalcActivity extends AppCompatActivity {
         btnRegPower.setOnClickListener(v -> onRegPower(regXInput, regYInput));
         btnRegLog.setOnClickListener(v -> onRegLogarithmic(regXInput, regYInput));
         btnRegPlot.setOnClickListener(v -> onRegPlot(regXInput, regYInput));
+        MaterialButton btnRegExportCsv = findViewById(R.id.btn_reg_export_csv);
+        if (btnRegExportCsv != null) btnRegExportCsv.setOnClickListener(v -> onRegExportCsv(regXInput, regYInput));
 
         // Area Between Curves
         areaGInput = findViewById(R.id.area_g_input);
@@ -5204,5 +5210,51 @@ public class CalcActivity extends AppCompatActivity {
         refreshHistoryList();
         resultView.append(getString(R.string.history_cleared) + "\n");
         scrollToResult();
+    }
+
+    // --- CSV Export & Clipboard ---
+
+    private void onCopyResult() {
+        if (resultView == null) return;
+        String text = resultView.getText().toString();
+        if (text.isEmpty()) {
+            toast(getString(R.string.toast_enter_expr));
+            return;
+        }
+        android.content.ClipboardManager clipboard = (android.content.ClipboardManager) getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+        if (clipboard != null) {
+            android.content.ClipData clip = android.content.ClipData.newPlainText("SuperCalc Result", text);
+            clipboard.setPrimaryClip(clip);
+            resultView.append(getString(R.string.result_copied) + "\n");
+            scrollToResult();
+        }
+    }
+
+    private void onStatsExportCsv() {
+        double[] data = parseStatsData();
+        if (data == null) return;
+        StringBuilder csv = new StringBuilder();
+        csv.append("index,value\n");
+        for (int i = 0; i < data.length; i++) {
+            csv.append(i + 1).append(",").append(data[i]).append("\n");
+        }
+        shareText(csv.toString(), "SuperCalc Statistics");
+        resultView.append(String.format(getString(R.string.stats_exported_csv), data.length) + "\n");
+    }
+
+    private void onRegExportCsv(EditText xInput, EditText yInput) {
+        double[] xs = parseRegData(xInput, yInput, true);
+        double[] ys = parseRegData(xInput, yInput, false);
+        if (xs == null || ys == null || xs.length != ys.length) {
+            toast(getString(R.string.toast_enter_data));
+            return;
+        }
+        StringBuilder csv = new StringBuilder();
+        csv.append("x,y\n");
+        for (int i = 0; i < xs.length; i++) {
+            csv.append(xs[i]).append(",").append(ys[i]).append("\n");
+        }
+        shareText(csv.toString(), "SuperCalc Regression");
+        resultView.append(getString(R.string.regression_exported_csv) + "\n");
     }
 }

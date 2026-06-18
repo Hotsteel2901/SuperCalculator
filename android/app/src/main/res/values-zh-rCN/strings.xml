@@ -717,4 +717,13 @@
     <string name="sparse_matrix_toast_solved">经 %d 次迭代求解成功</string>
     <string name="sparse_matrix_toast_failed">CG 求解失败：%s</string>
     <string name="sparse_matrix_invalid_input">矩阵或向量输入无效。</string>
+
+    <!-- CSV Export & Clipboard -->
+    <string name="copy_result">复制</string>
+    <string name="export_csv">导出CSV</string>
+    <string name="result_copied">结果已复制到剪贴板。</string>
+    <string name="stats_exported_csv">统计数据已导出为CSV（%d 条记录）。</string>
+    <string name="regression_exported_csv">回归结果已导出为CSV。</string>
+    <string name="dialog_export_stats">导出统计数据CSV</string>
+    <string name="dialog_export_regression">导出回归结果CSV</string>
 </resources>
