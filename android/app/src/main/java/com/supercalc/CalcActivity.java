@@ -210,17 +210,17 @@ public class CalcActivity extends AppCompatActivity {
         contourYmaxInput = findViewById(R.id.contour_ymax_input);
         MaterialButton btnContourPlot = findViewById(R.id.btn_contour_plot);
         MaterialButton btnContourFilled = findViewById(R.id.btn_contour_filled);
-        btnContourPlot.setOnClickListener(v -> onContourPlot(false));
-        btnContourFilled.setOnClickListener(v -> onContourPlot(true));
+        if (btnContourPlot != null) btnContourPlot.setOnClickListener(v -> onContourPlot(false));
+        if (btnContourFilled != null) btnContourFilled.setOnClickListener(v -> onContourPlot(true));
 
         // Statistics
         statsDataInput = findViewById(R.id.stats_data_input);
         MaterialButton btnStatsCompute = findViewById(R.id.btn_stats_compute);
         MaterialButton btnStatsSort = findViewById(R.id.btn_stats_sort);
         MaterialButton btnStatsHistogram = findViewById(R.id.btn_stats_histogram);
-        btnStatsCompute.setOnClickListener(v -> onStatsCompute());
-        btnStatsSort.setOnClickListener(v -> onStatsSort());
-        btnStatsHistogram.setOnClickListener(v -> onStatsHistogram());
+        if (btnStatsCompute != null) btnStatsCompute.setOnClickListener(v -> onStatsCompute());
+        if (btnStatsSort != null) btnStatsSort.setOnClickListener(v -> onStatsSort());
+        if (btnStatsHistogram != null) btnStatsHistogram.setOnClickListener(v -> onStatsHistogram());
         MaterialButton btnStatsExportCsv = findViewById(R.id.btn_stats_export_csv);
         if (btnStatsExportCsv != null) btnStatsExportCsv.setOnClickListener(v -> onStatsExportCsv());
 
@@ -235,33 +235,33 @@ public class CalcActivity extends AppCompatActivity {
         MaterialButton btnRegPower = findViewById(R.id.btn_reg_power);
         MaterialButton btnRegLog = findViewById(R.id.btn_reg_log);
         MaterialButton btnRegPlot = findViewById(R.id.btn_reg_plot);
-        btnRegLinear.setOnClickListener(v -> onRegLinear(regXInput, regYInput));
-        btnRegQuad.setOnClickListener(v -> onRegPoly(regXInput, regYInput, 2));
-        btnRegPoly.setOnClickListener(v -> {
+        if (btnRegLinear != null) btnRegLinear.setOnClickListener(v -> onRegLinear(regXInput, regYInput));
+        if (btnRegQuad != null) btnRegQuad.setOnClickListener(v -> onRegPoly(regXInput, regYInput, 2));
+        if (btnRegPoly != null) btnRegPoly.setOnClickListener(v -> {
             int deg = 3;
             try { deg = Integer.parseInt(regDegreeInput.getText().toString().trim()); } catch (Exception ignored) {}
             onRegPoly(regXInput, regYInput, deg);
         });
-        btnRegExp.setOnClickListener(v -> onRegExponential(regXInput, regYInput));
-        btnRegPower.setOnClickListener(v -> onRegPower(regXInput, regYInput));
-        btnRegLog.setOnClickListener(v -> onRegLogarithmic(regXInput, regYInput));
-        btnRegPlot.setOnClickListener(v -> onRegPlot(regXInput, regYInput));
+        if (btnRegExp != null) btnRegExp.setOnClickListener(v -> onRegExponential(regXInput, regYInput));
+        if (btnRegPower != null) btnRegPower.setOnClickListener(v -> onRegPower(regXInput, regYInput));
+        if (btnRegLog != null) btnRegLog.setOnClickListener(v -> onRegLogarithmic(regXInput, regYInput));
+        if (btnRegPlot != null) btnRegPlot.setOnClickListener(v -> onRegPlot(regXInput, regYInput));
         MaterialButton btnRegExportCsv = findViewById(R.id.btn_reg_export_csv);
         if (btnRegExportCsv != null) btnRegExportCsv.setOnClickListener(v -> onRegExportCsv(regXInput, regYInput));
 
         // Area Between Curves
         areaGInput = findViewById(R.id.area_g_input);
         MaterialButton btnAreaBetween = findViewById(R.id.btn_area_between);
-        btnAreaBetween.setOnClickListener(v -> onAreaBetweenCurves());
+        if (btnAreaBetween != null) btnAreaBetween.setOnClickListener(v -> onAreaBetweenCurves());
 
         // Volume of Revolution
         volGInput = findViewById(R.id.vol_g_input);
         MaterialButton btnVolDisk = findViewById(R.id.btn_vol_disk);
         MaterialButton btnVolWasher = findViewById(R.id.btn_vol_washer);
         MaterialButton btnVolShell = findViewById(R.id.btn_vol_shell);
-        btnVolDisk.setOnClickListener(v -> { volMode = "disk"; onVolumeCompute(); });
-        btnVolWasher.setOnClickListener(v -> { volMode = "washer"; onVolumeCompute(); });
-        btnVolShell.setOnClickListener(v -> { volMode = "shell"; onVolumeCompute(); });
+        if (btnVolDisk != null) btnVolDisk.setOnClickListener(v -> { volMode = "disk"; onVolumeCompute(); });
+        if (btnVolWasher != null) btnVolWasher.setOnClickListener(v -> { volMode = "washer"; onVolumeCompute(); });
+        if (btnVolShell != null) btnVolShell.setOnClickListener(v -> { volMode = "shell"; onVolumeCompute(); });
 
         // Nonlinear System Solver (2D)
         sysFInput = findViewById(R.id.sys_f_input);
@@ -269,7 +269,7 @@ public class CalcActivity extends AppCompatActivity {
         sysX0Input = findViewById(R.id.sys_x0_input);
         sysY0Input = findViewById(R.id.sys_y0_input);
         MaterialButton btnSolveSystem = findViewById(R.id.btn_solve_system);
-        btnSolveSystem.setOnClickListener(v -> onSolveSystem2d());
+        if (btnSolveSystem != null) btnSolveSystem.setOnClickListener(v -> onSolveSystem2d());
 
         // Matrix Operations
         matrixAInput = findViewById(R.id.matrix_a_input);
@@ -282,14 +282,14 @@ public class CalcActivity extends AppCompatActivity {
         MaterialButton btnMatTrans = findViewById(R.id.btn_mat_trans);
         MaterialButton btnMatRank = findViewById(R.id.btn_mat_rank);
         MaterialButton btnMatEigen = findViewById(R.id.btn_mat_eigen);
-        btnMatAdd.setOnClickListener(v -> onMatrixAdd());
-        btnMatSub.setOnClickListener(v -> onMatrixSub());
-        btnMatMul.setOnClickListener(v -> onMatrixMul());
-        btnMatDet.setOnClickListener(v -> onMatrixDet());
-        btnMatInv.setOnClickListener(v -> onMatrixInv());
-        btnMatTrans.setOnClickListener(v -> onMatrixTranspose());
-        btnMatRank.setOnClickListener(v -> onMatrixRank());
-        btnMatEigen.setOnClickListener(v -> onMatrixEigen());
+        if (btnMatAdd != null) btnMatAdd.setOnClickListener(v -> onMatrixAdd());
+        if (btnMatSub != null) btnMatSub.setOnClickListener(v -> onMatrixSub());
+        if (btnMatMul != null) btnMatMul.setOnClickListener(v -> onMatrixMul());
+        if (btnMatDet != null) btnMatDet.setOnClickListener(v -> onMatrixDet());
+        if (btnMatInv != null) btnMatInv.setOnClickListener(v -> onMatrixInv());
+        if (btnMatTrans != null) btnMatTrans.setOnClickListener(v -> onMatrixTranspose());
+        if (btnMatRank != null) btnMatRank.setOnClickListener(v -> onMatrixRank());
+        if (btnMatEigen != null) btnMatEigen.setOnClickListener(v -> onMatrixEigen());
 
         // Number Theory Calculator
         EditText ntNInput = findViewById(R.id.nt_n_input);
@@ -305,13 +305,13 @@ public class CalcActivity extends AppCompatActivity {
         MaterialButton btnNtFibonacci = findViewById(R.id.btn_nt_fibonacci);
         MaterialButton btnNtModPow = findViewById(R.id.btn_nt_mod_pow);
         MaterialButton btnNtTotient = findViewById(R.id.btn_nt_totient);
-        btnNtFactorize.setOnClickListener(v -> onNtFactorize(ntNInput));
-        btnNtIsPrime.setOnClickListener(v -> onNtIsPrime(ntNInput));
-        btnNtGcd.setOnClickListener(v -> onNtGcd(ntAInput, ntBInput));
-        btnNtLcm.setOnClickListener(v -> onNtLcm(ntAInput, ntBInput));
-        btnNtFibonacci.setOnClickListener(v -> onNtFibonacci(ntNInput));
-        btnNtModPow.setOnClickListener(v -> onNtModPow(ntModpowBaseInput, ntModpowExpInput, ntModpowModInput));
-        btnNtTotient.setOnClickListener(v -> onNtTotient(ntNInput));
+        if (btnNtFactorize != null) btnNtFactorize.setOnClickListener(v -> onNtFactorize(ntNInput));
+        if (btnNtIsPrime != null) btnNtIsPrime.setOnClickListener(v -> onNtIsPrime(ntNInput));
+        if (btnNtGcd != null) btnNtGcd.setOnClickListener(v -> onNtGcd(ntAInput, ntBInput));
+        if (btnNtLcm != null) btnNtLcm.setOnClickListener(v -> onNtLcm(ntAInput, ntBInput));
+        if (btnNtFibonacci != null) btnNtFibonacci.setOnClickListener(v -> onNtFibonacci(ntNInput));
+        if (btnNtModPow != null) btnNtModPow.setOnClickListener(v -> onNtModPow(ntModpowBaseInput, ntModpowExpInput, ntModpowModInput));
+        if (btnNtTotient != null) btnNtTotient.setOnClickListener(v -> onNtTotient(ntNInput));
 
         // Bitwise Operations Calculator
         EditText bwAInput = findViewById(R.id.bw_a_input);
@@ -337,8 +337,8 @@ public class CalcActivity extends AppCompatActivity {
         bwWidthDropdown.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, bwWidths));
         bwWidthDropdown.setText("16", false);
 
-        btnBwCalc.setOnClickListener(v -> onBitwiseCalc(bwAInput, bwBInput, bwOpDropdown, bwWidthDropdown, bwResBin, bwResHex, bwResOct, bwResDec));
-        btnBwClear.setOnClickListener(v -> {
+        if (btnBwCalc != null) btnBwCalc.setOnClickListener(v -> onBitwiseCalc(bwAInput, bwBInput, bwOpDropdown, bwWidthDropdown, bwResBin, bwResHex, bwResOct, bwResDec));
+        if (btnBwClear != null) btnBwClear.setOnClickListener(v -> {
             bwAInput.setText("0");
             bwBInput.setText("0");
             bwResBin.setText("");
@@ -352,14 +352,14 @@ public class CalcActivity extends AppCompatActivity {
         Chip chipCircle = findViewById(R.id.chip_circle);
         Chip chipLissajous = findViewById(R.id.chip_lissajous);
 
-        btnPlotParametric.setOnClickListener(v -> onPlotParametric());
-        chipCircle.setOnClickListener(v -> {
+        if (btnPlotParametric != null) btnPlotParametric.setOnClickListener(v -> onPlotParametric());
+        if (chipCircle != null) chipCircle.setOnClickListener(v -> {
             xParamInput.setText("cos(t)");
             yParamInput.setText("sin(t)");
             tMinInput.setText("0");
             tMaxInput.setText("6.2832");
         });
-        chipLissajous.setOnClickListener(v -> {
+        if (chipLissajous != null) chipLissajous.setOnClickListener(v -> {
             xParamInput.setText("sin(3*t)");
             yParamInput.setText("cos(2*t)");
             tMinInput.setText("0");
@@ -371,13 +371,13 @@ public class CalcActivity extends AppCompatActivity {
         Chip chipCardioid = findViewById(R.id.chip_cardioid);
         Chip chipClover = findViewById(R.id.chip_clover);
 
-        btnPlotPolar.setOnClickListener(v -> onPlotPolar());
-        chipCardioid.setOnClickListener(v -> {
+        if (btnPlotPolar != null) btnPlotPolar.setOnClickListener(v -> onPlotPolar());
+        if (chipCardioid != null) chipCardioid.setOnClickListener(v -> {
             rPolarInput.setText("1+cos(theta)");
             thetaMinInput.setText("0");
             thetaMaxInput.setText("6.2832");
         });
-        chipClover.setOnClickListener(v -> {
+        if (chipClover != null) chipClover.setOnClickListener(v -> {
             rPolarInput.setText("sin(3*theta)");
             thetaMinInput.setText("0");
             thetaMaxInput.setText("6.2832");
@@ -390,11 +390,11 @@ public class CalcActivity extends AppCompatActivity {
         Chip chipImplicitCircle = findViewById(R.id.chip_implicit_circle);
         Chip chipImplicitHyperbola = findViewById(R.id.chip_implicit_hyperbola);
 
-        btnPlotImplicit.setOnClickListener(v -> onPlotImplicit());
-        chipImplicitCircle.setOnClickListener(v -> {
+        if (btnPlotImplicit != null) btnPlotImplicit.setOnClickListener(v -> onPlotImplicit());
+        if (chipImplicitCircle != null) chipImplicitCircle.setOnClickListener(v -> {
             implicitExprInput.setText("x^2+y^2-1");
         });
-        chipImplicitHyperbola.setOnClickListener(v -> {
+        if (chipImplicitHyperbola != null) chipImplicitHyperbola.setOnClickListener(v -> {
             implicitExprInput.setText("x^2-y^2-1");
         });
 
@@ -405,20 +405,20 @@ public class CalcActivity extends AppCompatActivity {
         Chip chipExp = findViewById(R.id.chip_exp);
         Chip chip3D  = findViewById(R.id.chip_3d);
 
-        chipSin.setOnClickListener(v -> { exprInput.setText("sin(x)"); onEvaluate(); });
-        chipCos.setOnClickListener(v -> { exprInput.setText("cos(x)"); onEvaluate(); });
-        chipX2 .setOnClickListener(v -> { exprInput.setText("x^2");     onEvaluate(); });
-        chipExp.setOnClickListener(v -> { exprInput.setText("exp(-x)"); onEvaluate(); });
-        chip3D .setOnClickListener(v -> { exprInput.setText("x^2+y^2"); });
+        if (chipSin != null) chipSin.setOnClickListener(v -> { exprInput.setText("sin(x)"); onEvaluate(); });
+        if (chipCos != null) chipCos.setOnClickListener(v -> { exprInput.setText("cos(x)"); onEvaluate(); });
+        if (chipX2 != null) chipX2 .setOnClickListener(v -> { exprInput.setText("x^2");     onEvaluate(); });
+        if (chipExp != null) chipExp.setOnClickListener(v -> { exprInput.setText("exp(-x)"); onEvaluate(); });
+        if (chip3D != null) chip3D .setOnClickListener(v -> { exprInput.setText("x^2+y^2"); });
 
         // Rounding & modulo chips
         Chip chipFloor = findViewById(R.id.chip_floor);
         Chip chipCeil  = findViewById(R.id.chip_ceil);
         Chip chipMod   = findViewById(R.id.chip_mod);
 
-        chipFloor.setOnClickListener(v -> { exprInput.setText("floor(x)"); onEvaluate(); });
-        chipCeil.setOnClickListener(v -> { exprInput.setText("ceil(x)"); onEvaluate(); });
-        chipMod.setOnClickListener(v -> { exprInput.setText("x mod 3"); onEvaluate(); });
+        if (chipFloor != null) chipFloor.setOnClickListener(v -> { exprInput.setText("floor(x)"); onEvaluate(); });
+        if (chipCeil != null) chipCeil.setOnClickListener(v -> { exprInput.setText("ceil(x)"); onEvaluate(); });
+        if (chipMod != null) chipMod.setOnClickListener(v -> { exprInput.setText("x mod 3"); onEvaluate(); });
 
         // Unit Converter
         setupUnitConverter();
