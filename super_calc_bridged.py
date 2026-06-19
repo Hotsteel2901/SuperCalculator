@@ -3046,6 +3046,8 @@ class SuperCalcApp:
                 y_expr_sub = re.sub(r'\bt\b', 'x', y_expr)
                 xs_param = CalcEngine.evaluate_array(x_expr_sub, t_list)
                 ys_param = CalcEngine.evaluate_array(y_expr_sub, t_list)
+                if xs_param is None or ys_param is None:
+                    continue
                 x_arr = np.array([x if x is not None else np.nan for x in xs_param])
                 y_arr = np.array([y if y is not None else np.nan for y in ys_param])
                 self.ax_2d.plot(x_arr, y_arr, color=curve.color,
@@ -3064,6 +3066,8 @@ class SuperCalcApp:
                 # C core only supports x/y variables; replace theta -> x for evaluation
                 r_expr_sub = re.sub(r'\btheta\b', 'x', r_expr)
                 rs = CalcEngine.evaluate_array(r_expr_sub, theta_list)
+                if rs is None:
+                    continue
                 # Convert polar to Cartesian coordinates
                 x_arr = np.array([r * math.cos(t) if r is not None else np.nan 
                                   for r, t in zip(rs, theta_list)])
@@ -3083,6 +3087,8 @@ class SuperCalcApp:
                     flat_x = X.ravel().tolist()
                     flat_y = Y.ravel().tolist()
                     flat_z = CalcEngine.evaluate_xy_array(imp_expr, flat_x, flat_y)
+                    if flat_z is None:
+                        flat_z = []
                     Z = np.array([v if v is not None else np.nan for v in flat_z]).reshape(X.shape)
                     # Use contour to plot the zero level set
                     self.ax_2d.contour(X, Y, Z, levels=[0], colors=[curve.color],
@@ -3095,6 +3101,8 @@ class SuperCalcApp:
             else:
                 expr = self._substitute_params(curve.expression)
                 ys = CalcEngine.evaluate_array(expr, xs_list)
+                if ys is None:
+                    continue
                 ys_clean = np.array([y if y is not None else np.nan for y in ys])
                 self.ax_2d.plot(xs_np, ys_clean, color=curve.color,
                              linewidth=curve.linewidth, linestyle=curve.linestyle,
@@ -3192,6 +3200,8 @@ class SuperCalcApp:
             X_flat = X.flatten().tolist()
             Y_flat = Y.flatten().tolist()
             Z_flat = CalcEngine.evaluate_xy_array(expr, X_flat, Y_flat)
+            if Z_flat is None:
+                continue
             Z = np.array([np.nan if z is None else z for z in Z_flat]).reshape(n_pts, n_pts)
 
             cmap = CMAP_3D_OPTIONS[cmap_idx % len(CMAP_3D_OPTIONS)]
@@ -3446,6 +3456,9 @@ class SuperCalcApp:
 
         ys_a = CalcEngine.evaluate_array(expr_a, xs_list)
         ys_b = CalcEngine.evaluate_array(expr_b, xs_list)
+        if ys_a is None or ys_b is None:
+            self.intersection_marks = []
+            return []
 
         tol_zero = 1e-6
         tol_dup = 1e-4
@@ -3510,6 +3523,9 @@ class SuperCalcApp:
         expr_sub = self._substitute_params(expr)
         xs = [a + (b - a) * i / (n - 1) for i in range(n)]
         ys = CalcEngine.evaluate_array(expr_sub, xs)
+        if ys is None:
+            messagebox.showerror(t("err_error"), t("msg_invalid_table"))
+            return
 
         self._table_data = []
         valid_count = 0
@@ -4020,7 +4036,10 @@ class SuperCalcApp:
 
         # Original function
         ys_orig = CalcEngine.evaluate_array(expr_sub, xs_list)
-        ys_orig_np = np.array([y if y is not None else np.nan for y in ys_orig])
+        if ys_orig is None:
+            ys_orig_np = np.full(n_pts, np.nan)
+        else:
+            ys_orig_np = np.array([y if y is not None else np.nan for y in ys_orig])
 
         # Taylor polynomial
         dx_arr = xs_np - a
@@ -4211,10 +4230,15 @@ class SuperCalcApp:
                                     label=name, alpha=0.8)
 
         expr = self._var_cmp_expr.get().strip()
-        x0 = self._var_cmp_x0.get()
-        y0 = self._var_cmp_y0.get()
-        self.ax_2d.plot(float(x0), float(y0), 'go', markersize=8,
-                        label=f"y({x0})={y0}")
+        x0_str = self._var_cmp_x0.get()
+        y0_str = self._var_cmp_y0.get()
+        try:
+            x0_val = float(x0_str)
+            y0_val = float(y0_str)
+        except ValueError:
+            return
+        self.ax_2d.plot(x0_val, y0_val, 'go', markersize=8,
+                        label=f"y({x0_str})={y0_str}")
         self.ax_2d.set_title(f"dy/dx = {expr}", color='#cdd6f4', fontsize=12)
         self.ax_2d.set_xlabel('x', color='#cdd6f4')
         self.ax_2d.set_ylabel('y', color='#cdd6f4')
@@ -4470,12 +4494,20 @@ class SuperCalcApp:
         for _ in range(n_steps):
             p1 = CalcEngine.evaluate_xy(expr_p, x, y)
             q1 = CalcEngine.evaluate_xy(expr_q, x, y)
+            if p1 is None or q1 is None:
+                break
             p2 = CalcEngine.evaluate_xy(expr_p, x + hx/2, y + q1*hx/2)
             q2 = CalcEngine.evaluate_xy(expr_q, x + hx/2, y + q1*hx/2)
+            if p2 is None or q2 is None:
+                break
             p3 = CalcEngine.evaluate_xy(expr_p, x + hx/2, y + q2*hx/2)
             q3 = CalcEngine.evaluate_xy(expr_q, x + hx/2, y + q2*hx/2)
+            if p3 is None or q3 is None:
+                break
             p4 = CalcEngine.evaluate_xy(expr_p, x + hx, y + q3*hx)
             q4 = CalcEngine.evaluate_xy(expr_q, x + hx, y + q3*hx)
+            if p4 is None or q4 is None:
+                break
             x_new = x + hx/6 * (p1 + 2*p2 + 2*p3 + p4)
             y_new = y + hx/6 * (q1 + 2*q2 + 2*q3 + q4)
             if x_new < xmin or x_new > xmax or y_new < ymin - 10 or y_new > ymax + 10:
@@ -4490,12 +4522,20 @@ class SuperCalcApp:
         for _ in range(n_steps):
             p1 = CalcEngine.evaluate_xy(expr_p, x, y)
             q1 = CalcEngine.evaluate_xy(expr_q, x, y)
+            if p1 is None or q1 is None:
+                break
             p2 = CalcEngine.evaluate_xy(expr_p, x + hx/2, y + q1*hx/2)
             q2 = CalcEngine.evaluate_xy(expr_q, x + hx/2, y + q1*hx/2)
+            if p2 is None or q2 is None:
+                break
             p3 = CalcEngine.evaluate_xy(expr_p, x + hx/2, y + q2*hx/2)
             q3 = CalcEngine.evaluate_xy(expr_q, x + hx/2, y + q2*hx/2)
+            if p3 is None or q3 is None:
+                break
             p4 = CalcEngine.evaluate_xy(expr_p, x + hx, y + q3*hx)
             q4 = CalcEngine.evaluate_xy(expr_q, x + hx, y + q3*hx)
+            if p4 is None or q4 is None:
+                break
             x_new = x + hx/6 * (p1 + 2*p2 + 2*p3 + p4)
             y_new = y + hx/6 * (q1 + 2*q2 + 2*q3 + q4)
             if x_new > xmax or x_new < xmin or y_new < ymin - 10 or y_new > ymax + 10:
