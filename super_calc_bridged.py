@@ -2540,6 +2540,12 @@ class SuperCalcApp:
     #  Input Panel
     # ------------------------------------------------------------------
     def _open_input_panel(self):
+        if hasattr(self, '_input_panel') and self._input_panel is not None:
+            try:
+                self._input_panel.lift()
+                return
+            except tk.TclError:
+                self._input_panel = None
         panel = tk.Toplevel(self.root)
         panel.title(t("win_input_panel"))
         panel.geometry("500x400")
@@ -2590,7 +2596,17 @@ class SuperCalcApp:
                                 command=lambda t=text: self._insert_text(t))
                 btn.grid(row=0, column=i, padx=2, pady=2)
 
-        ttk.Button(main_frame, text=t("btn_close"), command=panel.destroy).pack(pady=10)
+        ttk.Button(main_frame, text=t("btn_close"), command=self._on_input_panel_close).pack(pady=10)
+        self._input_panel = panel
+        panel.protocol("WM_DELETE_WINDOW", self._on_input_panel_close)
+
+    def _on_input_panel_close(self):
+        if hasattr(self, '_input_panel') and self._input_panel is not None:
+            try:
+                self._input_panel.destroy()
+            except tk.TclError:
+                pass
+            self._input_panel = None
 
     def _insert_text(self, text: str) -> None:
         """Insert text at cursor, replacing any selected text."""
