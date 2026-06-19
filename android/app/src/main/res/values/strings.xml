@@ -653,6 +653,7 @@
     <string name="ode_compare_improved_euler">Improved Euler (2nd order)</string>
     <string name="ode_compare_midpoint">Midpoint (2nd order)</string>
     <string name="ode_compare_rk4">RK4 (4th order)</string>
+    <string name="ode_compare_rkf45">RKF45 (adaptive step)</string>
 
     <!-- Custom Function Definition -->
     <string name="custom_func_title">Custom Function Definition</string>

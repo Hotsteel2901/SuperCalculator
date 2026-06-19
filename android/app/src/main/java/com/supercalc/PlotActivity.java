@@ -602,7 +602,8 @@ public class PlotActivity extends AppCompatActivity {
             Color.parseColor("#f38ba8"),
             Color.parseColor("#fab387"),
             Color.parseColor("#f9e2af"),
-            Color.parseColor("#a6e3a1")
+            Color.parseColor("#a6e3a1"),
+            Color.parseColor("#89b4fa")
         };
 
         allEntries.clear();

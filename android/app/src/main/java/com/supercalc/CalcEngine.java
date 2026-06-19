@@ -76,6 +76,10 @@ public class CalcEngine {
     /** Solve ODE using Midpoint method (2nd order). Returns HashMap with "xs", "ys", "count" keys, or null on error. */
     public static native HashMap<String, Object> odeSolveMidpoint(String expr, double x0, double y0, double xEnd, int nSteps);
 
+    /** Solve ODE using Runge-Kutta-Fehlberg (RKF45) with adaptive step size.
+     *  Returns HashMap with "xs", "ys", "count" keys, or null on error. */
+    public static native HashMap<String, Object> odeSolveRkf45(String expr, double x0, double y0, double xEnd, double tol);
+
     /** Last error message from the C core. */
     public static native String getLastError();
 
