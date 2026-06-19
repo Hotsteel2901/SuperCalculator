@@ -653,6 +653,7 @@
     <string name="ode_compare_improved_euler">改进欧拉法（2阶）</string>
     <string name="ode_compare_midpoint">中点法（2阶）</string>
     <string name="ode_compare_rk4">RK4（4阶）</string>
+    <string name="ode_compare_rkf45">RKF45（自适应步长）</string>
 
     <!-- Custom Function Definition -->
     <string name="custom_func_title">自定义函数</string>

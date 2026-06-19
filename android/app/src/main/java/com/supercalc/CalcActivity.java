@@ -1206,6 +1206,7 @@ public class CalcActivity extends AppCompatActivity {
         HashMap<String, Object> improvedEuler = CalcEngine.odeSolveImprovedEuler(expr, x0, y0, xEnd, steps);
         HashMap<String, Object> midpoint = CalcEngine.odeSolveMidpoint(expr, x0, y0, xEnd, steps);
         HashMap<String, Object> rk4 = CalcEngine.odeSolveRk4(expr, x0, y0, xEnd, steps);
+        HashMap<String, Object> rkf45 = CalcEngine.odeSolveRkf45(expr, x0, y0, xEnd, 1e-6);
 
         StringBuilder sb = new StringBuilder();
         sb.append(String.format(getString(R.string.ode_compare_header), expr, fmt(x0), fmt(y0), fmt(x0), fmt(xEnd), steps)).append("\n\n");
@@ -1214,9 +1215,10 @@ public class CalcActivity extends AppCompatActivity {
             getString(R.string.ode_compare_euler),
             getString(R.string.ode_compare_improved_euler),
             getString(R.string.ode_compare_midpoint),
-            getString(R.string.ode_compare_rk4)
+            getString(R.string.ode_compare_rk4),
+            getString(R.string.ode_compare_rkf45)
         };
-        HashMap<String, Object>[] results = new HashMap[]{euler, improvedEuler, midpoint, rk4};
+        HashMap<String, Object>[] results = new HashMap[]{euler, improvedEuler, midpoint, rk4, rkf45};
 
         for (int i = 0; i < names.length; i++) {
             HashMap<String, Object> result = results[i];
@@ -1246,7 +1248,7 @@ public class CalcActivity extends AppCompatActivity {
             .setPositiveButton(getString(R.string.dialog_close), null)
             .show();
 
-        resultView.append(String.format(getString(R.string.ode_compare_toast), 4, steps) + "\n");
+        resultView.append(String.format(getString(R.string.ode_compare_toast), 5, steps) + "\n");
     }
 
     @SuppressWarnings("unchecked")
@@ -1272,6 +1274,7 @@ public class CalcActivity extends AppCompatActivity {
         HashMap<String, Object> improvedEuler = CalcEngine.odeSolveImprovedEuler(expr, x0, y0, xEnd, steps);
         HashMap<String, Object> midpoint = CalcEngine.odeSolveMidpoint(expr, x0, y0, xEnd, steps);
         HashMap<String, Object> rk4 = CalcEngine.odeSolveRk4(expr, x0, y0, xEnd, steps);
+        HashMap<String, Object> rkf45 = CalcEngine.odeSolveRkf45(expr, x0, y0, xEnd, 1e-6);
 
         // Combine all data for plotting
         ArrayList<double[]> allXs = new ArrayList<>();
@@ -1282,9 +1285,10 @@ public class CalcActivity extends AppCompatActivity {
             "Euler",
             "Improved Euler",
             "Midpoint",
-            "RK4"
+            "RK4",
+            "RKF45"
         };
-        HashMap<String, Object>[] results = new HashMap[]{euler, improvedEuler, midpoint, rk4};
+        HashMap<String, Object>[] results = new HashMap[]{euler, improvedEuler, midpoint, rk4, rkf45};
 
         for (int i = 0; i < names.length; i++) {
             HashMap<String, Object> result = results[i];

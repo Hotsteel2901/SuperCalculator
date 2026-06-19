@@ -32,7 +32,9 @@ int ode_solve_euler(const char* expr, double x0, double y0, double x_end,
 int ode_solve_improved_euler(const char* expr, double x0, double y0, double x_end,
                              int n_steps, double* out_x, double* out_y, int max_out);
 int ode_solve_midpoint(const char* expr, double x0, double y0, double x_end,
-                       int n_steps, double* out_x, double* out_y, int max_out);
+                        int n_steps, double* out_x, double* out_y, int max_out);
+int ode_solve_rkf45(const char* expr, double x0, double y0, double x_end,
+                     double tol, double* out_x, double* out_y, int max_points);
 const char* get_last_error(void);
 
 /* Complex number functions */
@@ -1151,6 +1153,169 @@ Java_com_supercalc_CalcEngine_odeSolveMidpoint(JNIEnv* env, jclass clazz,
                                                 jstring expr, jdouble x0, jdouble y0,
                                                 jdouble x_end, jint n_steps) {
     return ode_solve_helper(env, clazz, expr, x0, y0, x_end, n_steps, ode_solve_midpoint);
+}
+
+/* ---- ODE RKF45 (adaptive step size) ---- */
+
+JNIEXPORT jobject JNICALL
+Java_com_supercalc_CalcEngine_odeSolveRkf45(JNIEnv* env, jclass clazz,
+                                              jstring expr, jdouble x0, jdouble y0,
+                                              jdouble x_end, jdouble tol) {
+    const char* str = (*env)->GetStringUTFChars(env, expr, NULL);
+    if (!str) return NULL;
+
+    int max_points = 100000;
+    double* out_x = malloc(max_points * sizeof(double));
+    double* out_y = malloc(max_points * sizeof(double));
+    if (!out_x || !out_y) {
+        free(out_x);
+        free(out_y);
+        (*env)->ReleaseStringUTFChars(env, expr, str);
+        return NULL;
+    }
+
+    int count = ode_solve_rkf45(str, x0, y0, x_end, tol, out_x, out_y, max_points);
+
+    jobject result = NULL;
+    if (count > 0) {
+        jdoubleArray xs_array = (*env)->NewDoubleArray(env, count);
+        jdoubleArray ys_array = (*env)->NewDoubleArray(env, count);
+        if (!xs_array || !ys_array) {
+            if (xs_array) (*env)->DeleteLocalRef(env, xs_array);
+            if (ys_array) (*env)->DeleteLocalRef(env, ys_array);
+            free(out_x);
+            free(out_y);
+            (*env)->ReleaseStringUTFChars(env, expr, str);
+            return NULL;
+        }
+
+        (*env)->SetDoubleArrayRegion(env, xs_array, 0, count, out_x);
+        (*env)->SetDoubleArrayRegion(env, ys_array, 0, count, out_y);
+
+        jclass hashMapClass = (*env)->FindClass(env, "java/util/HashMap");
+        if (!hashMapClass) {
+            (*env)->DeleteLocalRef(env, xs_array);
+            (*env)->DeleteLocalRef(env, ys_array);
+            free(out_x);
+            free(out_y);
+            (*env)->ReleaseStringUTFChars(env, expr, str);
+            return NULL;
+        }
+
+        jmethodID hashMapInit = (*env)->GetMethodID(env, hashMapClass, "<init>", "(I)V");
+        jmethodID putMethod = (*env)->GetMethodID(env, hashMapClass, "put",
+            "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+        if (!hashMapInit || !putMethod) {
+            (*env)->DeleteLocalRef(env, hashMapClass);
+            (*env)->DeleteLocalRef(env, xs_array);
+            (*env)->DeleteLocalRef(env, ys_array);
+            free(out_x);
+            free(out_y);
+            (*env)->ReleaseStringUTFChars(env, expr, str);
+            return NULL;
+        }
+
+        result = (*env)->NewObject(env, hashMapClass, hashMapInit, 3);
+        if (result) {
+            jstring keyXs = (*env)->NewStringUTF(env, "xs");
+            jstring keyYs = (*env)->NewStringUTF(env, "ys");
+            jstring keyCount = (*env)->NewStringUTF(env, "count");
+
+            jclass integerClass = (*env)->FindClass(env, "java/lang/Integer");
+            if (!integerClass || (*env)->ExceptionCheck(env)) {
+                (*env)->DeleteLocalRef(env, keyXs);
+                (*env)->DeleteLocalRef(env, keyYs);
+                (*env)->DeleteLocalRef(env, keyCount);
+                (*env)->DeleteLocalRef(env, result);
+                (*env)->DeleteLocalRef(env, xs_array);
+                (*env)->DeleteLocalRef(env, ys_array);
+                (*env)->DeleteLocalRef(env, hashMapClass);
+                free(out_x); free(out_y);
+                (*env)->ReleaseStringUTFChars(env, expr, str);
+                return NULL;
+            }
+            jmethodID integerInit = (*env)->GetMethodID(env, integerClass, "<init>", "(I)V");
+            if ((*env)->ExceptionCheck(env)) {
+                (*env)->DeleteLocalRef(env, integerClass);
+                (*env)->DeleteLocalRef(env, keyXs);
+                (*env)->DeleteLocalRef(env, keyYs);
+                (*env)->DeleteLocalRef(env, keyCount);
+                (*env)->DeleteLocalRef(env, result);
+                (*env)->DeleteLocalRef(env, xs_array);
+                (*env)->DeleteLocalRef(env, ys_array);
+                (*env)->DeleteLocalRef(env, hashMapClass);
+                free(out_x); free(out_y);
+                (*env)->ReleaseStringUTFChars(env, expr, str);
+                return NULL;
+            }
+            jobject countObj = (*env)->NewObject(env, integerClass, integerInit, count);
+            if ((*env)->ExceptionCheck(env)) {
+                (*env)->DeleteLocalRef(env, integerClass);
+                (*env)->DeleteLocalRef(env, keyXs);
+                (*env)->DeleteLocalRef(env, keyYs);
+                (*env)->DeleteLocalRef(env, keyCount);
+                (*env)->DeleteLocalRef(env, result);
+                (*env)->DeleteLocalRef(env, xs_array);
+                (*env)->DeleteLocalRef(env, ys_array);
+                (*env)->DeleteLocalRef(env, hashMapClass);
+                free(out_x); free(out_y);
+                (*env)->ReleaseStringUTFChars(env, expr, str);
+                return NULL;
+            }
+
+            (*env)->CallObjectMethod(env, result, putMethod, keyXs, xs_array);
+            if ((*env)->ExceptionCheck(env)) {
+                (*env)->DeleteLocalRef(env, countObj);
+                (*env)->DeleteLocalRef(env, integerClass);
+                (*env)->DeleteLocalRef(env, result);
+                (*env)->DeleteLocalRef(env, xs_array);
+                (*env)->DeleteLocalRef(env, ys_array);
+                (*env)->DeleteLocalRef(env, hashMapClass);
+                free(out_x); free(out_y);
+                (*env)->ReleaseStringUTFChars(env, expr, str);
+                return NULL;
+            }
+            (*env)->CallObjectMethod(env, result, putMethod, keyYs, ys_array);
+            if ((*env)->ExceptionCheck(env)) {
+                (*env)->DeleteLocalRef(env, countObj);
+                (*env)->DeleteLocalRef(env, integerClass);
+                (*env)->DeleteLocalRef(env, result);
+                (*env)->DeleteLocalRef(env, xs_array);
+                (*env)->DeleteLocalRef(env, ys_array);
+                (*env)->DeleteLocalRef(env, hashMapClass);
+                free(out_x); free(out_y);
+                (*env)->ReleaseStringUTFChars(env, expr, str);
+                return NULL;
+            }
+            (*env)->CallObjectMethod(env, result, putMethod, keyCount, countObj);
+            if ((*env)->ExceptionCheck(env)) {
+                (*env)->DeleteLocalRef(env, countObj);
+                (*env)->DeleteLocalRef(env, integerClass);
+                (*env)->DeleteLocalRef(env, result);
+                (*env)->DeleteLocalRef(env, xs_array);
+                (*env)->DeleteLocalRef(env, ys_array);
+                (*env)->DeleteLocalRef(env, hashMapClass);
+                free(out_x); free(out_y);
+                (*env)->ReleaseStringUTFChars(env, expr, str);
+                return NULL;
+            }
+
+            (*env)->DeleteLocalRef(env, keyXs);
+            (*env)->DeleteLocalRef(env, keyYs);
+            (*env)->DeleteLocalRef(env, keyCount);
+            (*env)->DeleteLocalRef(env, countObj);
+            (*env)->DeleteLocalRef(env, integerClass);
+        }
+
+        (*env)->DeleteLocalRef(env, xs_array);
+        (*env)->DeleteLocalRef(env, ys_array);
+        (*env)->DeleteLocalRef(env, hashMapClass);
+    }
+
+    free(out_x);
+    free(out_y);
+    (*env)->ReleaseStringUTFChars(env, expr, str);
+    return result;
 }
 
 /* ---- Custom Function Registry ---- */
