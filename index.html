@@ -2156,6 +2156,7 @@
             if(!canvas) return;
             var ctx=canvas.getContext('2d');
             var dpr=window.devicePixelRatio||1;
+            var isZh=(navigator.language||'').indexOf('zh')===0;
 
             function resizeCanvas(){
                 var r=canvas.parentElement.getBoundingClientRect();
@@ -2256,7 +2257,7 @@
                 var n=parseInt(stepsEl.value);
 
                 if(!expr||isNaN(x0)||isNaN(y0)||isNaN(xEnd)||isNaN(n)||n<2||n>200){
-                    statusEl.textContent='请输入有效参数';return;
+                    statusEl.textContent=isZh?'请输入有效参数':'Invalid parameters';return;
                 }
 
                 var methods=[
@@ -2273,7 +2274,7 @@
                 }
 
                 if(results.length===0){
-                    statusEl.textContent='无法求解该方程';legendEl.innerHTML='';return;
+                    statusEl.textContent=isZh?'无法求解该方程':'Cannot solve this equation';legendEl.innerHTML='';return;
                 }
 
                 /* Compute bounds */
@@ -2350,12 +2351,13 @@
                     html+='<span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted);"><span style="display:inline-block;width:16px;height:3px;background:'+results[i].color+';border-radius:2px;"></span>'+results[i].name+'</span>';
                 }
                 legendEl.innerHTML=html;
-                statusEl.textContent='对比 '+results.length+' 种方法，每种 '+n+' 步';
+                statusEl.textContent=isZh?'对比 '+results.length+' 种方法，每种 '+n+' 步':'Compared '+results.length+' methods, '+n+' steps each';
             };
 
             /* Initial plot */
             setTimeout(function(){odeComparePlot();},300);
-            window.addEventListener('resize',function(){odeComparePlot();});
+            var odeCompareResizeTimer=null;
+            window.addEventListener('resize',function(){if(odeCompareResizeTimer)clearTimeout(odeCompareResizeTimer);odeCompareResizeTimer=setTimeout(function(){odeComparePlot();},150);});
         })();
         </script>
 
@@ -2408,6 +2410,7 @@
             if(!canvas) return;
             var ctx=canvas.getContext('2d');
             var points=[];
+            var isZh=(navigator.language||'').indexOf('zh')===0;
 
             function resizeCanvas(){
                 var r=canvas.parentElement.getBoundingClientRect();
@@ -2505,16 +2508,21 @@
                     ctx.fillText('('+p.x.toFixed(1)+','+p.y.toFixed(1)+')',cx+8,cy-6);
                 });
 
-                document.getElementById('interpWebStatus').textContent='Plotted '+points.length+' points with '+method+' interpolation';
+                var statusEl = document.getElementById('interpWebStatus');
+                if (statusEl) statusEl.textContent=isZh?'已绘制 '+points.length+' 个数据点，使用 '+method+' 插值':'Plotted '+points.length+' points with '+method+' interpolation';
             };
 
             window.interpWebCalc=function(){
-                if(points.length<2){document.getElementById('interpWebResult').textContent='Need ≥2 points';return;}
-                var x=parseFloat(document.getElementById('interpWebEvalX').value);
+                var resultEl = document.getElementById('interpWebResult');
+                var evalXEl = document.getElementById('interpWebEvalX');
+                var methodEl = document.getElementById('interpWebMethod');
+                if(!resultEl||!evalXEl||!methodEl)return;
+                if(points.length<2){resultEl.textContent=isZh?'需要至少 2 个数据点':'Need \u22652 points';return;}
+                var x=parseFloat(evalXEl.value);
                 if(isNaN(x))return;
                 var xs=points.map(function(p){return p.x;});
                 var ys=points.map(function(p){return p.y;});
-                var method=document.getElementById('interpWebMethod').value;
+                var method=methodEl.value;
                 var y;
                 if(method==='linear')y=interpLinearJS(xs,ys,x);
                 else if(method==='lagrange')y=interpLagrangeJS(xs,ys,x);
@@ -2522,7 +2530,7 @@
                 else if(method==='akima')y=interpAkimaJS(xs,ys,x);
                 else if(method==='natural_spline')y=interpNaturalSplineJS(xs,ys,x);
                 else y=interpSplineJS(xs,ys,x);
-                document.getElementById('interpWebResult').textContent='f('+x+') = '+y.toFixed(6);
+                resultEl.textContent='f('+x+') = '+y.toFixed(6);
             };
 
             window.interpWebClear=function(){
@@ -2530,8 +2538,10 @@
                 var c=canvas.getContext('2d');
                 c.clearRect(0,0,canvas.width,canvas.height);
                 c.fillStyle='#181825';c.fillRect(0,0,canvas.width/window.devicePixelRatio,canvas.height/window.devicePixelRatio);
-                document.getElementById('interpWebResult').textContent='';
-                document.getElementById('interpWebStatus').textContent='';
+                var resultEl = document.getElementById('interpWebResult');
+                var statusEl = document.getElementById('interpWebStatus');
+                if(resultEl)resultEl.textContent='';
+                if(statusEl)statusEl.textContent='';
             };
 
             function interpLinearJS(xs,ys,x){
@@ -3573,7 +3583,7 @@
             var scrollTopBtn = document.getElementById('scrollTop');
             var body = document.body;
 
-            if (!themeToggle || !themeIcon || !menuToggle || !menuIcon || !mobileNav || !scrollTopBtn) return;
+            if (!header || !themeToggle || !themeIcon || !menuToggle || !menuIcon || !mobileNav || !scrollTopBtn) return;
 
             var isDarkMode = true;
 
@@ -3782,19 +3792,21 @@
                     errorDiv.textContent = currentFromBase === 16 ? '无效的十六进制输入' :
                                           currentFromBase === 8 ? '无效的八进制输入' :
                                           currentFromBase === 2 ? '无效的二进制输入' : '无效的十进制输入';
-                    document.getElementById('resBinVal').textContent = '—';
-                    document.getElementById('resOctVal').textContent = '—';
-                    document.getElementById('resDecVal').textContent = '—';
-                    document.getElementById('resHexVal').textContent = '—';
+                    var elBin=document.getElementById('resBinVal'),elOct=document.getElementById('resOctVal'),elDec=document.getElementById('resDecVal'),elHex=document.getElementById('resHexVal');
+                    if(elBin)elBin.textContent='\u2014';
+                    if(elOct)elOct.textContent='\u2014';
+                    if(elDec)elDec.textContent='\u2014';
+                    if(elHex)elHex.textContent='\u2014';
                     return;
                 }
 
                 errorDiv.style.display = 'none';
                 resultsDiv.style.display = 'block';
-                document.getElementById('resBinVal').textContent = toBaseString(value, 2);
-                document.getElementById('resOctVal').textContent = toBaseString(value, 8);
-                document.getElementById('resDecVal').textContent = toBaseString(value, 10);
-                document.getElementById('resHexVal').textContent = toBaseString(value, 16);
+                var elBin=document.getElementById('resBinVal'),elOct=document.getElementById('resOctVal'),elDec=document.getElementById('resDecVal'),elHex=document.getElementById('resHexVal');
+                if(elBin)elBin.textContent = toBaseString(value, 2);
+                if(elOct)elOct.textContent = toBaseString(value, 8);
+                if(elDec)elDec.textContent = toBaseString(value, 10);
+                if(elHex)elHex.textContent = toBaseString(value, 16);
             }
 
             var baseInputEl = document.getElementById('baseInput');
@@ -3838,7 +3850,8 @@
             }
 
             window.calToday = function() {
-                document.getElementById('calDate1').value = fmt(new Date());
+                var el = document.getElementById('calDate1');
+                if (el) el.value = fmt(new Date());
             };
 
             window.calDow = function() {
@@ -3959,11 +3972,13 @@
 
             window.toggleBit = function(row, idx) {
                 var inputId = row === 'A' ? 'bwInputA' : 'bwInputB';
-                var val = parseDecimal(document.getElementById(inputId).value);
+                var inputEl = document.getElementById(inputId);
+                if (!inputEl) return;
+                var val = parseDecimal(inputEl.value);
                 if (val === null) return;
                 val = mask(val);
                 val = val ^ (1 << (bwWidth - 1 - idx));
-                document.getElementById(inputId).value = toSigned(val);
+                inputEl.value = toSigned(val);
                 calcBitwise();
             };
 
@@ -5069,6 +5084,7 @@
                 if (!elExpr || !elGrid || !elLevels) return;
                 var expr = elExpr.value || 'x^2+y^2';
                 var gridN = parseInt(elGrid.value) || 35;
+                if (gridN < 2) gridN = 2;
                 var nLevels = parseInt(elLevels.value) || 12;
 
                 var xMin = -3, xMax = 3, yMin = -3, yMax = 3;
