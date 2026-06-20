@@ -3370,6 +3370,62 @@
             </div>
         </section>
 
+        <!-- Laplace Transform Section -->
+        <section class="section" id="laplace-transform">
+            <div class="section-header">
+                <div class="section-label">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 20h16M4 4v16M8 4c0 4 4 4 4 8s-4 4-4 8M16 4c0 4-4 4-4 8s4 4 4 8"/>
+                    </svg>
+                    Laplace Transform
+                </div>
+                <h2 class="section-title">拉普拉斯变换</h2>
+                <p class="section-subtitle">计算拉普拉斯变换 L{f(t)}(s) 和逆拉普拉斯变换 f(t)，支持常见变换对的模式匹配</p>
+            </div>
+            <div class="card glass reveal" style="max-width: 700px; margin: 0 auto;">
+                <div style="display:flex;flex-direction:column;gap:16px;">
+                    <!-- Forward Laplace -->
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+                        <div style="flex:3;min-width:200px;">
+                            <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">f(t) expression (use x as variable)</label>
+                            <input type="text" id="laplaceExpr" value="exp(-2*x)" placeholder="e.g. exp(-2*x), sin(3*x), x^2" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;">
+                        </div>
+                        <div style="flex:1;min-width:80px;">
+                            <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">s value</label>
+                            <input type="text" id="laplaceS" value="1" placeholder="s > 0" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;">
+                        </div>
+                        <div style="min-width:100px;">
+                            <button class="base-btn" style="width:100%;padding:12px 20px;" onclick="computeLaplace()">L{f(t)}(s)</button>
+                        </div>
+                    </div>
+                    <!-- Inverse Laplace -->
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+                        <div style="flex:3;min-width:200px;">
+                            <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">F(s) expression (use x as variable)</label>
+                            <input type="text" id="invLaplaceExpr" value="1/(x+2)" placeholder="e.g. 1/(x+2), 3/(x^2+9), 1/x^2" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;">
+                        </div>
+                        <div style="flex:1;min-width:80px;">
+                            <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">t value</label>
+                            <input type="text" id="invLaplaceT" value="1" placeholder="t > 0" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;box-sizing:border-box;">
+                        </div>
+                        <div style="min-width:100px;">
+                            <button class="base-btn" style="width:100%;padding:12px 20px;" onclick="computeInverseLaplace()">L⁻¹{F(s)}(t)</button>
+                        </div>
+                    </div>
+                    <!-- Presets -->
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <span style="font-size:12px;color:var(--text-subtle);line-height:32px;">Presets:</span>
+                        <button class="base-btn" style="padding:6px 12px;font-size:12px;" onclick="setLaplacePreset('exp(-2*x)','1','exp(-2*t)','1')">e^(-2t) ↔ 1/(s+2)</button>
+                        <button class="base-btn" style="padding:6px 12px;font-size:12px;" onclick="setLaplacePreset('sin(3*x)','1','3/(x^2+9)','1')">sin(3t) ↔ 3/(s²+9)</button>
+                        <button class="base-btn" style="padding:6px 12px;font-size:12px;" onclick="setLaplacePreset('x^2','1','2/x^3','1')">t² ↔ 2/s³</button>
+                        <button class="base-btn" style="padding:6px 12px;font-size:12px;" onclick="setLaplacePreset('1','1','1/x','1')">1 ↔ 1/s</button>
+                    </div>
+                    <!-- Result -->
+                    <div id="laplaceResult" style="padding:16px;border-radius:10px;background:rgba(17,17,27,0.5);border:1px solid var(--glass-border);font-family:monospace;font-size:15px;color:var(--text-main);white-space:pre-wrap;min-height:40px;"></div>
+                </div>
+            </div>
+        </section>
+
         <!-- Vector Field Section -->
         <section class="section" id="vector-field">
             <div class="section-header">
@@ -4909,6 +4965,192 @@
                     clearTimeout(resizeTimer);
                     resizeTimer = setTimeout(plotDirectionField, 150);
                 });
+            }
+
+            // --- Laplace Transform ---
+            function evalLaplaceExpr(expr, tVal) {
+                try {
+                    var e = expr
+                        .replace(/\^/g, '**')
+                        .replace(/sqrt\(/g, 'Math.sqrt(')
+                        .replace(/sin\(/g, 'Math.sin(')
+                        .replace(/cos\(/g, 'Math.cos(')
+                        .replace(/tan\(/g, 'Math.tan(')
+                        .replace(/log\(/g, 'Math.log(')
+                        .replace(/ln\(/g, 'Math.log(')
+                        .replace(/exp\(/g, 'Math.exp(')
+                        .replace(/abs\(/g, 'Math.abs(')
+                        .replace(/floor\(/g, 'Math.floor(')
+                        .replace(/ceil\(/g, 'Math.ceil(')
+                        .replace(/pi/g, 'Math.PI')
+                        .replace(/e(?![xp])/g, 'Math.E');
+                    var fn = new Function('x', 'return ' + e);
+                    return fn(tVal);
+                } catch (err) {
+                    return NaN;
+                }
+            }
+
+            function computeLaplace() {
+                var resEl = document.getElementById('laplaceResult');
+                var exprEl = document.getElementById('laplaceExpr');
+                var sEl = document.getElementById('laplaceS');
+                if (!resEl || !exprEl || !sEl) return;
+                var expr = exprEl.value.trim();
+                var s = parseFloat(sEl.value);
+                if (!expr) { resEl.textContent = 'Please enter f(t)'; return; }
+                if (isNaN(s) || s <= 0) { resEl.textContent = 's must be > 0'; return; }
+                // Numerical integration: L{f(t)}(s) = integral_0^T f(t)*e^(-st) dt
+                // Using composite Simpson's rule
+                var T = Math.max(20 / s, 50);
+                var n = 1000;
+                var h = T / n;
+                var sum = 0;
+                var fa = evalLaplaceExpr(expr, 0) * Math.exp(-s * 0);
+                var fb = evalLaplaceExpr(expr, T) * Math.exp(-s * T);
+                if (isNaN(fa) || isNaN(fb)) { resEl.textContent = 'Error evaluating expression'; return; }
+                sum = fa + fb;
+                for (var i = 1; i < n; i++) {
+                    var ti = i * h;
+                    var fi = evalLaplaceExpr(expr, ti) * Math.exp(-s * ti);
+                    if (isNaN(fi)) fi = 0;
+                    sum += (i % 2 === 0 ? 2 : 4) * fi;
+                }
+                var result = (h / 3) * sum;
+                resEl.textContent = 'L{' + expr.replace(/x/g, 't') + '}(' + s + ') = ' + result.toFixed(10);
+            }
+
+            function computeInverseLaplace() {
+                var resEl = document.getElementById('laplaceResult');
+                var exprEl = document.getElementById('invLaplaceExpr');
+                var tEl = document.getElementById('invLaplaceT');
+                if (!resEl || !exprEl || !tEl) return;
+                var expr = exprEl.value.trim();
+                var t = parseFloat(tEl.value);
+                if (!expr) { resEl.textContent = 'Please enter F(s)'; return; }
+                if (isNaN(t) || t <= 0) { resEl.textContent = 't must be > 0'; return; }
+                var result = inverseLaplaceMatch(expr, t);
+                if (result === null) {
+                    resEl.textContent = 'Could not invert this Laplace transform';
+                } else {
+                    resEl.textContent = 'L⁻¹{' + expr.replace(/x/g, 's') + '}(' + t + ') = ' + result.toFixed(10);
+                }
+            }
+
+            function inverseLaplaceMatch(expr, t) {
+                // Pattern matching for common Laplace transform pairs
+                // x represents s in F(s), result is f(t)
+                var e = expr.replace(/\s+/g, '');
+
+                // Pattern: 1/(x+a)^n -> t^(n-1)*e^(-at)/(n-1)!
+                var m = e.match(/^1\/\(x\+([\d.]+)\)\^(\d+)$/);
+                if (m) {
+                    var a = parseFloat(m[1]);
+                    var n = parseInt(m[2]);
+                    var fact = 1;
+                    for (var i = 2; i < n; i++) fact *= i;
+                    if (n <= 1) fact = 1;
+                    return Math.pow(t, n - 1) * Math.exp(-a * t) / fact;
+                }
+                // Pattern: 1/(x+a) -> e^(-at)
+                m = e.match(/^1\/\(x\+([\d.]+)\)$/);
+                if (m) {
+                    var a = parseFloat(m[1]);
+                    return Math.exp(-a * t);
+                }
+                // Pattern: 1/(x-a)^n -> t^(n-1)*e^(at)/(n-1)!
+                m = e.match(/^1\/\(x\-([\d.]+)\)\^(\d+)$/);
+                if (m) {
+                    var a = parseFloat(m[1]);
+                    var n = parseInt(m[2]);
+                    var fact = 1;
+                    for (var i = 2; i < n; i++) fact *= i;
+                    if (n <= 1) fact = 1;
+                    return Math.pow(t, n - 1) * Math.exp(a * t) / fact;
+                }
+                // Pattern: 1/(x-a) -> e^(at)
+                m = e.match(/^1\/\(x\-([\d.]+)\)$/);
+                if (m) {
+                    var a = parseFloat(m[1]);
+                    return Math.exp(a * t);
+                }
+                // Pattern: 1/x^n -> t^(n-1)/(n-1)!
+                m = e.match(/^1\/x\^(\d+)$/);
+                if (m) {
+                    var n = parseInt(m[1]);
+                    var fact = 1;
+                    for (var i = 2; i < n; i++) fact *= i;
+                    if (n <= 1) fact = 1;
+                    return Math.pow(t, n - 1) / fact;
+                }
+                // Pattern: 1/x -> 1
+                if (e === '1/x') return 1;
+                // Pattern: a/(x^2+a^2) -> sin(at)
+                m = e.match(/^([\d.]+)\/\(x\^2\+([\d.]+)\^2\)$/);
+                if (m) {
+                    var a = parseFloat(m[1]);
+                    var b = parseFloat(m[2]);
+                    if (Math.abs(a - b) < 1e-10) return Math.sin(a * t);
+                }
+                // Pattern: x/(x^2+a^2) -> cos(at)
+                m = e.match(/^x\/\(x\^2\+([\d.]+)\^2\)$/);
+                if (m) {
+                    var a = parseFloat(m[1]);
+                    return Math.cos(a * t);
+                }
+                // Pattern: 1/(x^2+a^2) -> sin(at)/a
+                m = e.match(/^1\/\(x\^2\+([\d.]+)\^2\)$/);
+                if (m) {
+                    var a = parseFloat(m[1]);
+                    if (a !== 0) return Math.sin(a * t) / a;
+                }
+                // Pattern: a/(x^2-a^2) -> sinh(at)/a
+                m = e.match(/^([\d.]+)\/\(x\^2\-([\d.]+)\^2\)$/);
+                if (m) {
+                    var a = parseFloat(m[1]);
+                    var b = parseFloat(m[2]);
+                    if (Math.abs(a - b) < 1e-10) return Math.sinh(a * t);
+                }
+                // Pattern: x/(x^2-a^2) -> cosh(at)
+                m = e.match(/^x\/\(x\^2\-([\d.]+)\^2\)$/);
+                if (m) {
+                    var a = parseFloat(m[1]);
+                    return Math.cosh(a * t);
+                }
+                // Pattern: a/((x-b)^2+a^2) -> e^(bt)*sin(at)
+                m = e.match(/^([\d.]+)\/\(\(x\-([\d.]+)\)\^2\+([\d.]+)\^2\)$/);
+                if (m) {
+                    var a = parseFloat(m[1]);
+                    var b = parseFloat(m[2]);
+                    var c = parseFloat(m[3]);
+                    if (Math.abs(a - c) < 1e-10) return Math.exp(b * t) * Math.sin(a * t);
+                }
+                // Pattern: (x-b)/((x-b)^2+a^2) -> e^(bt)*cos(at)
+                m = e.match(/^\(x\-([\d.]+)\)\/\(\(x\-([\d.]+)\)\^2\+([\d.]+)\^2\)$/);
+                if (m) {
+                    var b = parseFloat(m[1]);
+                    var a = parseFloat(m[3]);
+                    return Math.exp(b * t) * Math.cos(a * t);
+                }
+                // Fallback: numerical estimation using large s
+                var sLarge = 50;
+                var fval = evalLaplaceExpr(expr, sLarge);
+                if (!isNaN(fval)) {
+                    return Math.exp(sLarge * t) * fval * sLarge;
+                }
+                return null;
+            }
+
+            function setLaplacePreset(fExpr, sVal, invExpr, tVal) {
+                var el;
+                el = document.getElementById('laplaceExpr');
+                if (el) el.value = fExpr;
+                el = document.getElementById('laplaceS');
+                if (el) el.value = sVal;
+                el = document.getElementById('invLaplaceExpr');
+                if (el) el.value = invExpr;
+                el = document.getElementById('invLaplaceT');
+                if (el) el.value = tVal;
             }
 
             // --- Vector Field ---
