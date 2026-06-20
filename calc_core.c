@@ -597,6 +597,7 @@ EXPORT double solve_equation(const char* expr, double guess,
                               double tol, int max_iter) {
     if (!expr) { set_error("NULL expression"); return NAN; }
     if (xmin >= xmax) { set_error("Invalid interval: xmin must be < xmax"); return NAN; }
+    if (max_iter <= 0) max_iter = 100;
     clear_error();
     double x = guess;
     if (x < xmin) x = xmin + 0.1*(xmax-xmin);
@@ -856,6 +857,7 @@ EXPORT double nth_derivative(const char* expr, double x, int n, double h) {
     if (!expr) { set_error("NULL expression"); return NAN; }
     if (n < 0) { set_error("Derivative order must be non-negative"); return NAN; }
     if (n > 1000) { set_error("Derivative order too large (max 1000)"); return NAN; }
+    if (n > 400) { set_error("Derivative order too large for numerical stability (max 400)"); return NAN; }
     clear_error();
     if (n == 0) {
         double r;
