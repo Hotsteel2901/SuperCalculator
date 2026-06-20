@@ -3808,19 +3808,20 @@ STRINGS = {
 }
 
 
-def t(key: str, *args: object) -> str:
+def t(key: str, *args: object, fallback: str = "") -> str:
     """Return the translated string for *key* in the current locale.
 
     Positional *args* are interpolated via ``str.format()`` using
-    ``{0}``, ``{1}``, etc.  If the key is not found, the key itself is
-    returned.  If the current locale is not present for a key the English
-    fallback is tried; if even that is missing the key is returned.
+    ``{0}``, ``{1}``, etc.  If the key is not found, *fallback* is returned
+    if provided, otherwise the key itself is returned.  If the current locale
+    is not present for a key the English fallback is tried; if even that is
+    missing the key is returned.
     """
     entry = STRINGS.get(key)
     if entry is None:
-        return key
+        return fallback if fallback else key
 
-    text = entry.get(CURRENT_LANG, entry.get("en", key))
+    text = entry.get(CURRENT_LANG, entry.get("en", fallback or key))
 
     if args:
         try:
