@@ -5608,7 +5608,7 @@
                 var mat = parseSparseTriplets();
                 var resEl = document.getElementById('sparseResult');
                 var rhsEl = document.getElementById('sparseRhs');
-                if (!mat || !resEl || !rhsEl) { resEl.textContent = isZh ? '输入无效' : 'Invalid input'; return; }
+                if (!mat || !resEl || !rhsEl) { if (resEl) resEl.textContent = isZh ? '输入无效' : 'Invalid input'; return; }
                 var bParts = rhsEl.value.trim().split(',');
                 var b = [];
                 for (var i = 0; i < bParts.length; i++) b.push(parseFloat(bParts[i].trim()));
