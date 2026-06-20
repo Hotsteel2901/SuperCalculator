@@ -727,4 +727,8 @@
     <string name="regression_exported_csv">Regression results exported as CSV.</string>
     <string name="dialog_export_stats">Export Statistics CSV</string>
     <string name="dialog_export_regression">Export Regression CSV</string>
+
+    <!-- History CSV Export -->
+    <string name="history_export_csv">Export CSV</string>
+    <string name="history_exported_csv">History exported as CSV (%d entries).</string>
 </resources>

@@ -5141,6 +5141,8 @@ public class CalcActivity extends AppCompatActivity {
         historyListView = findViewById(R.id.history_list_view);
         MaterialButton btnHistoryClear = findViewById(R.id.btn_history_clear);
         btnHistoryClear.setOnClickListener(v -> onHistoryClear());
+        MaterialButton btnHistoryExportCsv = findViewById(R.id.btn_history_export_csv);
+        btnHistoryExportCsv.setOnClickListener(v -> onHistoryExportCsv());
         loadHistoryFromPrefs();
         refreshHistoryList();
     }
@@ -5213,6 +5215,29 @@ public class CalcActivity extends AppCompatActivity {
         saveHistoryToPrefs();
         refreshHistoryList();
         resultView.append(getString(R.string.history_cleared) + "\n");
+        scrollToResult();
+    }
+
+    private void onHistoryExportCsv() {
+        int count = CalcEngine.historyCount();
+        if (count == 0) {
+            toast(getString(R.string.history_empty));
+            return;
+        }
+        StringBuilder csv = new StringBuilder();
+        csv.append("index,expression,result\n");
+        for (int i = count - 1; i >= 0; i--) {
+            HashMap<String, Object> entry = new HashMap<>();
+            if (CalcEngine.historyGet(i, entry)) {
+                String expr = (String) entry.get("expr");
+                Object resultObj = entry.get("result");
+                double result = resultObj instanceof Double ? (Double) resultObj : Double.NaN;
+                String resultStr = Double.isNaN(result) ? "NaN" : fmt(result);
+                csv.append(count - i).append(",\"").append(expr).append("\",").append(resultStr).append("\n");
+            }
+        }
+        shareText(csv.toString(), "SuperCalc History");
+        resultView.append(String.format(getString(R.string.history_exported_csv), count) + "\n");
         scrollToResult();
     }
 

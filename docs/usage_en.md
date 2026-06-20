@@ -367,6 +367,7 @@ The calculator automatically records your most recent 10 calculations.
 - **History display**: The history list shows recent calculations in the format `expression = result`
 - **Clear history**: Click "Clear History" to remove all recorded calculations
 - **Use last expression**: Click "Use Last Expression" to load the most recent expression into the input field
+- **Export history CSV**: Click "Export CSV" to export all history entries as a CSV file with columns: index, expression, result
 - **Persistence (Android)**: History is saved using SharedPreferences and persists across app restarts
 
 **Supported operations:**
