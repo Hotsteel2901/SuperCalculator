@@ -497,7 +497,7 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private void scrollToResult() {
-        if (scrollView != null) {
+        if (scrollView != null && resultView != null) {
             scrollView.post(() -> scrollView.scrollTo(0, resultView.getTop() - 100));
         }
     }
