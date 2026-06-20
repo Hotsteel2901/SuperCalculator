@@ -1767,7 +1767,10 @@ Java_com_supercalc_CalcEngine_sparseSpmv(JNIEnv* env, jclass clazz,
     (*env)->ReleaseIntArrayElements(env, cols, col_data, JNI_ABORT);
     (*env)->ReleaseDoubleArrayElements(env, vals, val_data, JNI_ABORT);
 
-    if (!m) return NULL;
+    if (!m) {
+        (*env)->ReleaseDoubleArrayElements(env, x, x_data, JNI_ABORT);
+        return NULL;
+    }
 
     double* y_out = (double*)malloc(m->n_rows * sizeof(double));
     if (!y_out) {
@@ -1818,7 +1821,10 @@ Java_com_supercalc_CalcEngine_sparseSolveCg(JNIEnv* env, jclass clazz,
     (*env)->ReleaseIntArrayElements(env, cols, col_data, JNI_ABORT);
     (*env)->ReleaseDoubleArrayElements(env, vals, val_data, JNI_ABORT);
 
-    if (!m) return NULL;
+    if (!m) {
+        (*env)->ReleaseDoubleArrayElements(env, b, b_data, JNI_ABORT);
+        return NULL;
+    }
 
     double* x_out = (double*)malloc(n * sizeof(double));
     if (!x_out) {
