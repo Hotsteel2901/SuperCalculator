@@ -727,4 +727,8 @@
     <string name="regression_exported_csv">回归结果已导出为CSV。</string>
     <string name="dialog_export_stats">导出统计数据CSV</string>
     <string name="dialog_export_regression">导出回归结果CSV</string>
+
+    <!-- 历史记录CSV导出 -->
+    <string name="history_export_csv">导出CSV</string>
+    <string name="history_exported_csv">历史记录已导出为CSV（%d 条记录）。</string>
 </resources>

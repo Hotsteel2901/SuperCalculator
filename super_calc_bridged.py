@@ -1257,6 +1257,8 @@ class SuperCalcApp:
                    command=self._on_history_clear).pack(side=tk.LEFT, padx=2)
         ttk.Button(hfr2, text=t("btn_history_use_last"),
                    command=self._on_history_use_last).pack(side=tk.LEFT, padx=2)
+        ttk.Button(hfr2, text=t("btn_history_export_csv"),
+                   command=self._on_history_export_csv).pack(side=tk.LEFT, padx=2)
         self._refresh_history_list()
 
         # --- Laplace Transform ---
@@ -4761,6 +4763,38 @@ class SuperCalcApp:
                 expr = last[:eq_idx].strip()
                 self.entry_expr.delete(0, tk.END)
                 self.entry_expr.insert(0, expr)
+
+    def _on_history_export_csv(self):
+        count = CalcEngine.history_count()
+        if count == 0:
+            self.status_var.set(t("label_history_empty"))
+            return
+        import csv, io, os
+        all_str = CalcEngine.history_get_all()
+        entries = [e.strip() for e in all_str.split(";") if e.strip()]
+        if not entries:
+            self.status_var.set(t("label_history_empty"))
+            return
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(["index", "expression", "result"])
+        for idx, entry in enumerate(entries, 1):
+            eq_idx = entry.rfind("=")
+            if eq_idx > 0:
+                expr = entry[:eq_idx].strip()
+                result = entry[eq_idx + 1:].strip()
+            else:
+                expr = entry
+                result = ""
+            writer.writerow([idx, expr, result])
+        csv_text = buf.getvalue()
+        path = os.path.join(os.path.expanduser("~"), "supercalc_history.csv")
+        try:
+            with open(path, "w", encoding="utf-8", newline="") as f:
+                f.write(csv_text)
+            self.status_var.set(t("status_history_exported_csv").format(count))
+        except Exception as exc:
+            self.status_var.set(t("err_export") + ": " + str(exc))
 
     # ------------------------------------------------------------------
     #  Equation Solver

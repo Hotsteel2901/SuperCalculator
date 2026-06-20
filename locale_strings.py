@@ -3575,6 +3575,14 @@ STRINGS = {
         "en": "Use Last Expression",
         "zh": "使用上次表达式",
     },
+    "btn_history_export_csv": {
+        "en": "Export History CSV",
+        "zh": "导出历史CSV",
+    },
+    "status_history_exported_csv": {
+        "en": "History exported as CSV ({0} entries).",
+        "zh": "历史记录已导出为CSV（{0} 条记录）。",
+    },
 
     "sec_volume_presets": {
         "en": "Volume Presets",
