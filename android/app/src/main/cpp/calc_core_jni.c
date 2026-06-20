@@ -443,10 +443,30 @@ Java_com_supercalc_CalcEngine_odeSolveRk4(JNIEnv* env, jclass clazz,
         }
 
         jobject old1 = (*env)->CallObjectMethod(env, result, putMethod, xsKey, xs_array);
-        if ((*env)->ExceptionCheck(env)) { free(out_x); free(out_y); (*env)->ReleaseStringUTFChars(env, expr, str); return NULL; }
+        if ((*env)->ExceptionCheck(env)) {
+            (*env)->DeleteLocalRef(env, result);
+            (*env)->DeleteLocalRef(env, xsKey);
+            (*env)->DeleteLocalRef(env, ysKey);
+            (*env)->DeleteLocalRef(env, countKey);
+            (*env)->DeleteLocalRef(env, xs_array);
+            (*env)->DeleteLocalRef(env, ys_array);
+            free(out_x); free(out_y);
+            (*env)->ReleaseStringUTFChars(env, expr, str);
+            return NULL;
+        }
         if (old1) (*env)->DeleteLocalRef(env, old1);
         jobject old2 = (*env)->CallObjectMethod(env, result, putMethod, ysKey, ys_array);
-        if ((*env)->ExceptionCheck(env)) { free(out_x); free(out_y); (*env)->ReleaseStringUTFChars(env, expr, str); return NULL; }
+        if ((*env)->ExceptionCheck(env)) {
+            (*env)->DeleteLocalRef(env, result);
+            (*env)->DeleteLocalRef(env, xsKey);
+            (*env)->DeleteLocalRef(env, ysKey);
+            (*env)->DeleteLocalRef(env, countKey);
+            (*env)->DeleteLocalRef(env, xs_array);
+            (*env)->DeleteLocalRef(env, ys_array);
+            free(out_x); free(out_y);
+            (*env)->ReleaseStringUTFChars(env, expr, str);
+            return NULL;
+        }
         if (old2) (*env)->DeleteLocalRef(env, old2);
 
         /* Put count as Integer */
@@ -476,9 +496,32 @@ Java_com_supercalc_CalcEngine_odeSolveRk4(JNIEnv* env, jclass clazz,
             return NULL;
         }
         jobject countObj = (*env)->CallStaticObjectMethod(env, integerClass, valueOfMethod, (jint)count);
-        if ((*env)->ExceptionCheck(env)) { free(out_x); free(out_y); (*env)->ReleaseStringUTFChars(env, expr, str); return NULL; }
+        if ((*env)->ExceptionCheck(env)) {
+            (*env)->DeleteLocalRef(env, integerClass);
+            (*env)->DeleteLocalRef(env, result);
+            (*env)->DeleteLocalRef(env, xsKey);
+            (*env)->DeleteLocalRef(env, ysKey);
+            (*env)->DeleteLocalRef(env, countKey);
+            (*env)->DeleteLocalRef(env, xs_array);
+            (*env)->DeleteLocalRef(env, ys_array);
+            free(out_x); free(out_y);
+            (*env)->ReleaseStringUTFChars(env, expr, str);
+            return NULL;
+        }
         (*env)->CallObjectMethod(env, result, putMethod, countKey, countObj);
-        if ((*env)->ExceptionCheck(env)) { free(out_x); free(out_y); (*env)->ReleaseStringUTFChars(env, expr, str); return NULL; }
+        if ((*env)->ExceptionCheck(env)) {
+            (*env)->DeleteLocalRef(env, countObj);
+            (*env)->DeleteLocalRef(env, integerClass);
+            (*env)->DeleteLocalRef(env, result);
+            (*env)->DeleteLocalRef(env, xsKey);
+            (*env)->DeleteLocalRef(env, ysKey);
+            (*env)->DeleteLocalRef(env, countKey);
+            (*env)->DeleteLocalRef(env, xs_array);
+            (*env)->DeleteLocalRef(env, ys_array);
+            free(out_x); free(out_y);
+            (*env)->ReleaseStringUTFChars(env, expr, str);
+            return NULL;
+        }
 
         (*env)->DeleteLocalRef(env, xsKey);
         (*env)->DeleteLocalRef(env, ysKey);
@@ -1048,6 +1091,9 @@ static jobject ode_solve_helper(JNIEnv* env, jclass clazz, jstring expr,
             
             jclass integerClass = (*env)->FindClass(env, "java/lang/Integer");
             if (!integerClass || (*env)->ExceptionCheck(env)) {
+                (*env)->DeleteLocalRef(env, keyXs);
+                (*env)->DeleteLocalRef(env, keyYs);
+                (*env)->DeleteLocalRef(env, keyCount);
                 (*env)->DeleteLocalRef(env, result);
                 (*env)->DeleteLocalRef(env, xs_array);
                 (*env)->DeleteLocalRef(env, ys_array);
@@ -1059,6 +1105,9 @@ static jobject ode_solve_helper(JNIEnv* env, jclass clazz, jstring expr,
             jmethodID integerInit = (*env)->GetMethodID(env, integerClass, "<init>", "(I)V");
             if ((*env)->ExceptionCheck(env)) {
                 (*env)->DeleteLocalRef(env, integerClass);
+                (*env)->DeleteLocalRef(env, keyXs);
+                (*env)->DeleteLocalRef(env, keyYs);
+                (*env)->DeleteLocalRef(env, keyCount);
                 (*env)->DeleteLocalRef(env, result);
                 (*env)->DeleteLocalRef(env, xs_array);
                 (*env)->DeleteLocalRef(env, ys_array);
@@ -1070,6 +1119,9 @@ static jobject ode_solve_helper(JNIEnv* env, jclass clazz, jstring expr,
             jobject countObj = (*env)->NewObject(env, integerClass, integerInit, count);
             if ((*env)->ExceptionCheck(env)) {
                 (*env)->DeleteLocalRef(env, integerClass);
+                (*env)->DeleteLocalRef(env, keyXs);
+                (*env)->DeleteLocalRef(env, keyYs);
+                (*env)->DeleteLocalRef(env, keyCount);
                 (*env)->DeleteLocalRef(env, result);
                 (*env)->DeleteLocalRef(env, xs_array);
                 (*env)->DeleteLocalRef(env, ys_array);
@@ -1084,6 +1136,9 @@ static jobject ode_solve_helper(JNIEnv* env, jclass clazz, jstring expr,
                 (*env)->DeleteLocalRef(env, countObj);
                 (*env)->DeleteLocalRef(env, integerClass);
                 (*env)->DeleteLocalRef(env, result);
+                (*env)->DeleteLocalRef(env, keyXs);
+                (*env)->DeleteLocalRef(env, keyYs);
+                (*env)->DeleteLocalRef(env, keyCount);
                 (*env)->DeleteLocalRef(env, xs_array);
                 (*env)->DeleteLocalRef(env, ys_array);
                 (*env)->DeleteLocalRef(env, hashMapClass);
@@ -1096,6 +1151,9 @@ static jobject ode_solve_helper(JNIEnv* env, jclass clazz, jstring expr,
                 (*env)->DeleteLocalRef(env, countObj);
                 (*env)->DeleteLocalRef(env, integerClass);
                 (*env)->DeleteLocalRef(env, result);
+                (*env)->DeleteLocalRef(env, keyXs);
+                (*env)->DeleteLocalRef(env, keyYs);
+                (*env)->DeleteLocalRef(env, keyCount);
                 (*env)->DeleteLocalRef(env, xs_array);
                 (*env)->DeleteLocalRef(env, ys_array);
                 (*env)->DeleteLocalRef(env, hashMapClass);
@@ -1108,6 +1166,9 @@ static jobject ode_solve_helper(JNIEnv* env, jclass clazz, jstring expr,
                 (*env)->DeleteLocalRef(env, countObj);
                 (*env)->DeleteLocalRef(env, integerClass);
                 (*env)->DeleteLocalRef(env, result);
+                (*env)->DeleteLocalRef(env, keyXs);
+                (*env)->DeleteLocalRef(env, keyYs);
+                (*env)->DeleteLocalRef(env, keyCount);
                 (*env)->DeleteLocalRef(env, xs_array);
                 (*env)->DeleteLocalRef(env, ys_array);
                 (*env)->DeleteLocalRef(env, hashMapClass);
@@ -1268,6 +1329,9 @@ Java_com_supercalc_CalcEngine_odeSolveRkf45(JNIEnv* env, jclass clazz,
                 (*env)->DeleteLocalRef(env, countObj);
                 (*env)->DeleteLocalRef(env, integerClass);
                 (*env)->DeleteLocalRef(env, result);
+                (*env)->DeleteLocalRef(env, keyXs);
+                (*env)->DeleteLocalRef(env, keyYs);
+                (*env)->DeleteLocalRef(env, keyCount);
                 (*env)->DeleteLocalRef(env, xs_array);
                 (*env)->DeleteLocalRef(env, ys_array);
                 (*env)->DeleteLocalRef(env, hashMapClass);
@@ -1280,6 +1344,9 @@ Java_com_supercalc_CalcEngine_odeSolveRkf45(JNIEnv* env, jclass clazz,
                 (*env)->DeleteLocalRef(env, countObj);
                 (*env)->DeleteLocalRef(env, integerClass);
                 (*env)->DeleteLocalRef(env, result);
+                (*env)->DeleteLocalRef(env, keyXs);
+                (*env)->DeleteLocalRef(env, keyYs);
+                (*env)->DeleteLocalRef(env, keyCount);
                 (*env)->DeleteLocalRef(env, xs_array);
                 (*env)->DeleteLocalRef(env, ys_array);
                 (*env)->DeleteLocalRef(env, hashMapClass);
@@ -1292,6 +1359,9 @@ Java_com_supercalc_CalcEngine_odeSolveRkf45(JNIEnv* env, jclass clazz,
                 (*env)->DeleteLocalRef(env, countObj);
                 (*env)->DeleteLocalRef(env, integerClass);
                 (*env)->DeleteLocalRef(env, result);
+                (*env)->DeleteLocalRef(env, keyXs);
+                (*env)->DeleteLocalRef(env, keyYs);
+                (*env)->DeleteLocalRef(env, keyCount);
                 (*env)->DeleteLocalRef(env, xs_array);
                 (*env)->DeleteLocalRef(env, ys_array);
                 (*env)->DeleteLocalRef(env, hashMapClass);
