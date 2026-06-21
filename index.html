@@ -4882,8 +4882,11 @@
                 ctx.beginPath();
                 ctx.moveTo(pad.l, ty(0)); ctx.lineTo(pad.l + pw, ty(0)); ctx.stroke();
 
-                var expr = document.getElementById('dfExpr').value.trim() || '-y';
-                var gridSize = parseInt(document.getElementById('dfGridSize').value) || 18;
+                var elExpr = document.getElementById('dfExpr');
+                var elGridSize = document.getElementById('dfGridSize');
+                if (!elExpr || !elGridSize) return;
+                var expr = elExpr.value.trim() || '-y';
+                var gridSize = parseInt(elGridSize.value) || 18;
                 var arrowLen = Math.min(pw, ph) / gridSize * 0.7;
 
                 for (var i = 0; i <= gridSize; i++) {
@@ -4901,7 +4904,8 @@
                     }
                 }
 
-                var icStr = document.getElementById('dfIC').value.trim();
+                var elIC = document.getElementById('dfIC');
+                var icStr = elIC ? elIC.value.trim() : '';
                 if (icStr) {
                     var colors = ['#f38ba8','#fab387','#a6e3a1','#89b4fa','#cba6f7','#f9e2af'];
                     var pairs = icStr.split(/\s*;\s*|\s+/);
@@ -5019,6 +5023,7 @@
                 var result = (h / 3) * sum;
                 resEl.textContent = 'L{' + expr.replace(/x/g, 't') + '}(' + s + ') = ' + result.toFixed(10);
             }
+            window.computeLaplace = computeLaplace;
 
             function computeInverseLaplace() {
                 var resEl = document.getElementById('laplaceResult');
@@ -5036,6 +5041,7 @@
                     resEl.textContent = 'L⁻¹{' + expr.replace(/x/g, 's') + '}(' + t + ') = ' + result.toFixed(10);
                 }
             }
+            window.computeInverseLaplace = computeInverseLaplace;
 
             function inverseLaplaceMatch(expr, t) {
                 // Pattern matching for common Laplace transform pairs
@@ -5152,6 +5158,7 @@
                 el = document.getElementById('invLaplaceT');
                 if (el) el.value = tVal;
             }
+            window.setLaplacePreset = setLaplacePreset;
 
             // --- Vector Field ---
             var vfDebounceTimer = null;
@@ -5194,9 +5201,13 @@
                 ctx.beginPath(); ctx.moveTo(tx(0), pad.t); ctx.lineTo(tx(0), pad.t + ph); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(pad.l, ty(0)); ctx.lineTo(pad.l + pw, ty(0)); ctx.stroke();
 
-                var exprP = document.getElementById('vfExprP').value.trim() || 'y';
-                var exprQ = document.getElementById('vfExprQ').value.trim() || '-x';
-                var gridSize = parseInt(document.getElementById('vfGridSize').value) || 14;
+                var elExprP = document.getElementById('vfExprP');
+                var elExprQ = document.getElementById('vfExprQ');
+                var elGridSize = document.getElementById('vfGridSize');
+                if (!elExprP || !elExprQ || !elGridSize) return;
+                var exprP = elExprP.value.trim() || 'y';
+                var exprQ = elExprQ.value.trim() || '-x';
+                var gridSize = parseInt(elGridSize.value) || 14;
 
                 // Evaluate and draw arrows
                 var maxMag = 0;
@@ -5241,7 +5252,8 @@
                 }
 
                 // IC curves
-                var icStr = document.getElementById('vfIC').value.trim();
+                var elIC = document.getElementById('vfIC');
+                var icStr = elIC ? elIC.value.trim() : '';
                 if (icStr) {
                     var colors = ['#f38ba8','#fab387','#a6e3a1','#89b4fa','#cba6f7','#f9e2af'];
                     var pairs = icStr.split(/\s*;\s*/);
@@ -5471,6 +5483,7 @@
                 ctx.fillText('f(x,y) = ' + expr, margin, margin - 8);
                 ctx.fillText('x: [' + xMin + ', ' + xMax + ']  y: [' + yMin + ', ' + yMax + ']', margin, H - 8);
             }
+            window.plotContour = plotContour;
 
             var contourAnimFrame = null;
             function debouncedPlotContour() {
