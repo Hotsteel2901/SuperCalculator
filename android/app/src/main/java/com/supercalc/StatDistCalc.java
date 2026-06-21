@@ -142,6 +142,7 @@ public class StatDistCalc {
 
     // --- F-distribution ---
     private static double fPdf(double x, double d1, double d2) {
+        if (Double.isNaN(d1) || Double.isNaN(d2) || Double.isNaN(x)) return Double.NaN;
         if (d1 < 1 || d2 < 1) return Double.NaN;
         if (x <= 0) return 0.0;
         double logPdf = (d1 / 2.0) * Math.log(d1) + (d2 / 2.0) * Math.log(d2)
@@ -153,6 +154,7 @@ public class StatDistCalc {
     }
 
     private static double fCdf(double x, double d1, double d2) {
+        if (Double.isNaN(d1) || Double.isNaN(d2) || Double.isNaN(x)) return Double.NaN;
         if (d1 < 1 || d2 < 1) return Double.NaN;
         if (x <= 0) return 0.0;
         double z = d1 * x / (d1 * x + d2);
@@ -202,6 +204,7 @@ public class StatDistCalc {
 
     // Lanczos approximation for log(Gamma)
     private static double logGamma(double z) {
+        if (Double.isNaN(z)) return Double.NaN;
         if (z <= 0.0 && z == Math.floor(z)) {
             return Double.POSITIVE_INFINITY;
         }

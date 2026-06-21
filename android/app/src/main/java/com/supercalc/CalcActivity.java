@@ -77,12 +77,6 @@ public class CalcActivity extends AppCompatActivity {
             String savedGuess = savedInstanceState.getString("guess_input", "");
             String savedResult = savedInstanceState.getString("result_text", "");
             // Defer setting until EditText fields are initialized below
-            savedInstanceState.putString("_restore_expr", savedExpr);
-            savedInstanceState.putString("_restore_x", savedX);
-            savedInstanceState.putString("_restore_a", savedA);
-            savedInstanceState.putString("_restore_b", savedB);
-            savedInstanceState.putString("_restore_guess", savedGuess);
-            savedInstanceState.putString("_restore_result", savedResult);
         }
 
         exprInput  = findViewById(R.id.expr_input);
@@ -326,16 +320,20 @@ public class CalcActivity extends AppCompatActivity {
         TextView bwResDec = findViewById(R.id.bw_res_dec);
 
         String[] bwOps = {"AND", "OR", "XOR", "NOT", "<<", ">>"};
-        bwOpDropdown.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, bwOps));
-        bwOpDropdown.setText("AND", false);
-        bwOpDropdown.setOnItemClickListener((parent, view, position, id) -> {
-            String op = bwOps[position];
-            bwBInput.setEnabled(!op.equals("NOT"));
-        });
+        if (bwOpDropdown != null) {
+            bwOpDropdown.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, bwOps));
+            bwOpDropdown.setText("AND", false);
+            bwOpDropdown.setOnItemClickListener((parent, view, position, id) -> {
+                String op = bwOps[position];
+                bwBInput.setEnabled(!op.equals("NOT"));
+            });
+        }
 
         String[] bwWidths = {"8", "16", "32"};
-        bwWidthDropdown.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, bwWidths));
-        bwWidthDropdown.setText("16", false);
+        if (bwWidthDropdown != null) {
+            bwWidthDropdown.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, bwWidths));
+            bwWidthDropdown.setText("16", false);
+        }
 
         if (btnBwCalc != null) btnBwCalc.setOnClickListener(v -> onBitwiseCalc(bwAInput, bwBInput, bwOpDropdown, bwWidthDropdown, bwResBin, bwResHex, bwResOct, bwResDec));
         if (btnBwClear != null) btnBwClear.setOnClickListener(v -> {
@@ -392,10 +390,10 @@ public class CalcActivity extends AppCompatActivity {
 
         if (btnPlotImplicit != null) btnPlotImplicit.setOnClickListener(v -> onPlotImplicit());
         if (chipImplicitCircle != null) chipImplicitCircle.setOnClickListener(v -> {
-            implicitExprInput.setText("x^2+y^2-1");
+            if (implicitExprInput != null) implicitExprInput.setText("x^2+y^2-1");
         });
         if (chipImplicitHyperbola != null) chipImplicitHyperbola.setOnClickListener(v -> {
-            implicitExprInput.setText("x^2-y^2-1");
+            if (implicitExprInput != null) implicitExprInput.setText("x^2-y^2-1");
         });
 
         // Preset chips — set expression text and auto-evaluate
