@@ -295,7 +295,8 @@ class SuperCalcApp:
             if window is not None and window.winfo_exists():
                 if fig is not None:
                     try:
-                        plt.close(fig)
+                        import matplotlib._pylab_helpers as _mpl_helpers
+                        _mpl_helpers.Gcf.destroy_fig(fig)
                     except Exception:
                         pass
                 window.destroy()
@@ -2455,8 +2456,11 @@ class SuperCalcApp:
 
     def _on_2d_window_close(self):
         if self.fig_2d is not None:
-            import matplotlib.pyplot as plt
-            plt.close(self.fig_2d)
+            try:
+                import matplotlib._pylab_helpers as _mpl_helpers
+                _mpl_helpers.Gcf.destroy_fig(self.fig_2d)
+            except Exception:
+                pass
         if self.window_2d is not None:
             self.window_2d.destroy()
         self.window_2d = None
@@ -2487,8 +2491,11 @@ class SuperCalcApp:
 
     def _on_3d_window_close(self):
         if self.fig_3d is not None:
-            import matplotlib.pyplot as plt
-            plt.close(self.fig_3d)
+            try:
+                import matplotlib._pylab_helpers as _mpl_helpers
+                _mpl_helpers.Gcf.destroy_fig(self.fig_3d)
+            except Exception:
+                pass
         if self.window_3d is not None:
             self.window_3d.destroy()
         self.window_3d = None
@@ -2527,8 +2534,11 @@ class SuperCalcApp:
 
     def _on_fft_window_close(self):
         if self.fig_fft is not None:
-            import matplotlib.pyplot as plt
-            plt.close(self.fig_fft)
+            try:
+                import matplotlib._pylab_helpers as _mpl_helpers
+                _mpl_helpers.Gcf.destroy_fig(self.fig_fft)
+            except Exception:
+                pass
         if self.window_fft is not None:
             self.window_fft.destroy()
         self.window_fft = None
@@ -3294,7 +3304,7 @@ class SuperCalcApp:
             if y is not None:
                 self.auto_mark_point = x
                 self._plot_all()
-                self.status_var.set(t("status_marked_at", x, f"{x:.4f}", f"{y:.4f}"))
+                self.status_var.set(t("status_marked_at", f"{x:.4f}", f"{x:.4f}", f"{y:.4f}"))
             else:
                 messagebox.showerror(t("err_error"), t("msg_could_not_eval"))
         except ValueError:
