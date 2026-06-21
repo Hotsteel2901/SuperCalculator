@@ -23,7 +23,7 @@ public class Plot3DActivity extends AppCompatActivity {
         setContentView(R.layout.activity_plot_3d);
 
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
-        toolbar.setNavigationOnClickListener(v -> finish());
+        if (toolbar != null) toolbar.setNavigationOnClickListener(v -> finish());
 
         surface3DView = findViewById(R.id.surface_3d_view);
         exprInput = findViewById(R.id.expr_3d_input);
@@ -39,10 +39,12 @@ public class Plot3DActivity extends AppCompatActivity {
         MaterialButton btnFullScreen = findViewById(R.id.btn_full_screen_3d);
         MaterialButton btnBack = findViewById(R.id.btn_back_3d);
 
-        btnPlot.setOnClickListener(v -> onPlot3D());
-        btnReset.setOnClickListener(v -> surface3DView.resetRotation());
-        btnFullScreen.setOnClickListener(v -> openFullScreen3D());
-        btnBack.setOnClickListener(v -> finish());
+        if (btnPlot != null) btnPlot.setOnClickListener(v -> onPlot3D());
+        if (btnReset != null) btnReset.setOnClickListener(v -> {
+            if (surface3DView != null) surface3DView.resetRotation();
+        });
+        if (btnFullScreen != null) btnFullScreen.setOnClickListener(v -> openFullScreen3D());
+        if (btnBack != null) btnBack.setOnClickListener(v -> finish());
 
         // Default ranges
         xMinInput.setText("-10");

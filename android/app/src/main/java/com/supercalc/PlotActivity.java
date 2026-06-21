@@ -259,6 +259,14 @@ public class PlotActivity extends AppCompatActivity {
                 plotRegressionData(regXs, regYs);
             }
         }
+        
+        // Handle initial expression from CalcActivity
+        if (intent != null && intent.hasExtra("initial_expr")) {
+            String initialExpr = intent.getStringExtra("initial_expr");
+            if (initialExpr != null && exprInput != null) {
+                exprInput.setText(initialExpr);
+            }
+        }
     }
     
     private void plotParametricCurve(String xExpr, String yExpr, double tMin, double tMax) {
