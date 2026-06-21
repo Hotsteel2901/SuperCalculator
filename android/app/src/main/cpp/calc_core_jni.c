@@ -1088,6 +1088,18 @@ static jobject ode_solve_helper(JNIEnv* env, jclass clazz, jstring expr,
             jstring keyXs = (*env)->NewStringUTF(env, "xs");
             jstring keyYs = (*env)->NewStringUTF(env, "ys");
             jstring keyCount = (*env)->NewStringUTF(env, "count");
+            if (!keyXs || !keyYs || !keyCount) {
+                if (keyXs) (*env)->DeleteLocalRef(env, keyXs);
+                if (keyYs) (*env)->DeleteLocalRef(env, keyYs);
+                if (keyCount) (*env)->DeleteLocalRef(env, keyCount);
+                (*env)->DeleteLocalRef(env, result);
+                (*env)->DeleteLocalRef(env, xs_array);
+                (*env)->DeleteLocalRef(env, ys_array);
+                (*env)->DeleteLocalRef(env, hashMapClass);
+                free(out_x); free(out_y);
+                (*env)->ReleaseStringUTFChars(env, expr, str);
+                return NULL;
+            }
             
             jclass integerClass = (*env)->FindClass(env, "java/lang/Integer");
             if (!integerClass || (*env)->ExceptionCheck(env)) {
@@ -1103,7 +1115,7 @@ static jobject ode_solve_helper(JNIEnv* env, jclass clazz, jstring expr,
                 return NULL;
             }
             jmethodID integerInit = (*env)->GetMethodID(env, integerClass, "<init>", "(I)V");
-            if ((*env)->ExceptionCheck(env)) {
+            if (!integerInit || (*env)->ExceptionCheck(env)) {
                 (*env)->DeleteLocalRef(env, integerClass);
                 (*env)->DeleteLocalRef(env, keyXs);
                 (*env)->DeleteLocalRef(env, keyYs);
@@ -1281,6 +1293,18 @@ Java_com_supercalc_CalcEngine_odeSolveRkf45(JNIEnv* env, jclass clazz,
             jstring keyXs = (*env)->NewStringUTF(env, "xs");
             jstring keyYs = (*env)->NewStringUTF(env, "ys");
             jstring keyCount = (*env)->NewStringUTF(env, "count");
+            if (!keyXs || !keyYs || !keyCount) {
+                if (keyXs) (*env)->DeleteLocalRef(env, keyXs);
+                if (keyYs) (*env)->DeleteLocalRef(env, keyYs);
+                if (keyCount) (*env)->DeleteLocalRef(env, keyCount);
+                (*env)->DeleteLocalRef(env, result);
+                (*env)->DeleteLocalRef(env, xs_array);
+                (*env)->DeleteLocalRef(env, ys_array);
+                (*env)->DeleteLocalRef(env, hashMapClass);
+                free(out_x); free(out_y);
+                (*env)->ReleaseStringUTFChars(env, expr, str);
+                return NULL;
+            }
 
             jclass integerClass = (*env)->FindClass(env, "java/lang/Integer");
             if (!integerClass || (*env)->ExceptionCheck(env)) {
@@ -1296,7 +1320,7 @@ Java_com_supercalc_CalcEngine_odeSolveRkf45(JNIEnv* env, jclass clazz,
                 return NULL;
             }
             jmethodID integerInit = (*env)->GetMethodID(env, integerClass, "<init>", "(I)V");
-            if ((*env)->ExceptionCheck(env)) {
+            if (!integerInit || (*env)->ExceptionCheck(env)) {
                 (*env)->DeleteLocalRef(env, integerClass);
                 (*env)->DeleteLocalRef(env, keyXs);
                 (*env)->DeleteLocalRef(env, keyYs);
@@ -1484,6 +1508,12 @@ Java_com_supercalc_CalcEngine_historyGet(JNIEnv* env, jclass clazz,
 
     jstring keyExpr = (*env)->NewStringUTF(env, "expr");
     jstring valExpr = (*env)->NewStringUTF(env, exprBuf);
+    if (!keyExpr || !valExpr) {
+        if (keyExpr) (*env)->DeleteLocalRef(env, keyExpr);
+        if (valExpr) (*env)->DeleteLocalRef(env, valExpr);
+        (*env)->DeleteLocalRef(env, hashMapClass);
+        return JNI_FALSE;
+    }
     (*env)->CallObjectMethod(env, resultObj, putMethod, keyExpr, valExpr);
     if ((*env)->ExceptionCheck(env)) {
         (*env)->DeleteLocalRef(env, keyExpr);
@@ -1512,6 +1542,12 @@ Java_com_supercalc_CalcEngine_historyGet(JNIEnv* env, jclass clazz,
         return JNI_FALSE;
     }
     jstring keyResult = (*env)->NewStringUTF(env, "result");
+    if (!keyResult) {
+        (*env)->DeleteLocalRef(env, resultDouble);
+        (*env)->DeleteLocalRef(env, doubleClass);
+        (*env)->DeleteLocalRef(env, hashMapClass);
+        return JNI_FALSE;
+    }
     (*env)->CallObjectMethod(env, resultObj, putMethod, keyResult, resultDouble);
     if ((*env)->ExceptionCheck(env)) {
         (*env)->DeleteLocalRef(env, keyResult);
@@ -1774,6 +1810,7 @@ Java_com_supercalc_CalcEngine_sparseSpmv(JNIEnv* env, jclass clazz,
 
     double* y_out = (double*)malloc(m->n_rows * sizeof(double));
     if (!y_out) {
+        (*env)->ReleaseDoubleArrayElements(env, x, x_data, JNI_ABORT);
         sparse_matrix_free(m);
         return NULL;
     }
@@ -1828,6 +1865,7 @@ Java_com_supercalc_CalcEngine_sparseSolveCg(JNIEnv* env, jclass clazz,
 
     double* x_out = (double*)malloc(n * sizeof(double));
     if (!x_out) {
+        (*env)->ReleaseDoubleArrayElements(env, b, b_data, JNI_ABORT);
         sparse_matrix_free(m);
         return NULL;
     }
