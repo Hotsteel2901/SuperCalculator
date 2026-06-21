@@ -441,7 +441,10 @@ static int eval_rpn(RPN* rpn, int nrpn, double x, double y, double* result) {
                     case '/': stack[sp++] = fabs(b) > 1e-15 ? a/b : (set_error("Division by zero"),NAN); break;
                     case '%': stack[sp++] = fabs(b) > 1e-15 ? fmod(a,b) : (set_error("Modulo by zero"),NAN); break;
                     case '^':
-                        if (a < 0.0 && floor(b) != b) {
+                        if (a == 0.0 && b < 0.0) {
+                            set_error("Division by zero (0^negative)");
+                            stack[sp++] = NAN;
+                        } else if (a < 0.0 && floor(b) != b) {
                             set_error("Negative base with non-integer exponent");
                             stack[sp++] = NAN;
                         } else {
@@ -645,6 +648,7 @@ EXPORT double solve_bisection(const char* expr, double a, double b,
                                double tol, int max_iter) {
     if (!expr) { set_error("NULL expression"); return NAN; }
     if (a >= b) { set_error("Invalid interval: a must be < b"); return NAN; }
+    if (max_iter <= 0) max_iter = 100;
     clear_error();
     double fa, fb, fc, c;
     if (parse_and_eval(expr, a, 0.0, &fa) != 0) return NAN;
@@ -907,6 +911,7 @@ EXPORT int taylor_coefficients(const char* expr, double a, int order, double* ou
 EXPORT double find_maximum(const char* expr, double a, double b, double tol, int max_iter) {
     if (!expr) { set_error("NULL expression"); return NAN; }
     if (a >= b) { set_error("Invalid interval: a must be < b"); return NAN; }
+    if (max_iter <= 0) max_iter = 100;
     clear_error();
     const double resphi = GOLDEN_RATIO_RES;
     double c = a + resphi * (b - a);
@@ -940,6 +945,7 @@ EXPORT double find_maximum(const char* expr, double a, double b, double tol, int
 EXPORT double find_minimum(const char* expr, double a, double b, double tol, int max_iter) {
     if (!expr) { set_error("NULL expression"); return NAN; }
     if (a >= b) { set_error("Invalid interval: a must be < b"); return NAN; }
+    if (max_iter <= 0) max_iter = 100;
     clear_error();
     const double resphi = GOLDEN_RATIO_RES;
     double c = a + resphi * (b - a);
@@ -1173,6 +1179,7 @@ EXPORT void complex_mul_values(double re1, double im1, double re2, double im2,
 EXPORT void complex_div_values(double re1, double im1, double re2, double im2,
                                double* out_re, double* out_im) {
     if (!out_re || !out_im) return;
+    clear_error();
     Complex a = complex_make(re1, im1);
     Complex b = complex_make(re2, im2);
     Complex result = complex_div(a, b);
@@ -1183,6 +1190,7 @@ EXPORT void complex_div_values(double re1, double im1, double re2, double im2,
 EXPORT void complex_pow_values(double re1, double im1, double re2, double im2,
                                double* out_re, double* out_im) {
     if (!out_re || !out_im) return;
+    clear_error();
     Complex base = complex_make(re1, im1);
     Complex exp = complex_make(re2, im2);
     Complex result = complex_pow(base, exp);
@@ -1208,6 +1216,7 @@ EXPORT void complex_cos_value(double re, double im, double* out_re, double* out_
 
 EXPORT void complex_tan_value(double re, double im, double* out_re, double* out_im) {
     if (!out_re || !out_im) return;
+    clear_error();
     Complex z = complex_make(re, im);
     Complex result = complex_tan(z);
     *out_re = result.re;
@@ -1224,6 +1233,7 @@ EXPORT void complex_exp_value(double re, double im, double* out_re, double* out_
 
 EXPORT void complex_ln_value(double re, double im, double* out_re, double* out_im) {
     if (!out_re || !out_im) return;
+    clear_error();
     Complex z = complex_make(re, im);
     Complex result = complex_ln(z);
     *out_re = result.re;
@@ -1470,7 +1480,10 @@ EXPORT int custom_func_list(char* output, int max_out) {
             int written = snprintf(output + pos, max_out - pos, "%s(x)=%s%s",
                 g_custom_funcs[i].name, g_custom_funcs[i].body,
                 (i < g_custom_func_count - 1) ? ";" : "");
-            if (written > 0) pos += written;
+            if (written > 0) {
+                if (pos + written >= max_out) { pos = max_out - 1; break; }
+                pos += written;
+            }
         }
     }
     output[pos] = '\0';
@@ -2080,7 +2093,7 @@ EXPORT double inverse_laplace(const char* expr, double t_val) {
     /* Pattern: a/(s^2+a^2)  →  sin(at) */
     {
         double a_val = 0.0;
-        if (sscanf(buf, "%lf/(x^2+%lf^2)", &a_val, &a_val) == 1) {
+        if (sscanf(buf, "%lf/(x^2+%lf^2)", &a_val, &a_val) == 2) {
             return sin(a_val * t);
         }
     }
@@ -2188,7 +2201,10 @@ EXPORT int history_get_all(char* output, int max_out) {
             written = snprintf(output + pos, max_out - pos, "%s = %.10g%s",
                 e->expr, e->result, (i < g_history_count - 1) ? ";" : "");
         }
-        if (written > 0) pos += written;
+        if (written > 0) {
+            if (pos + written >= max_out) { pos = max_out - 1; break; }
+            pos += written;
+        }
     }
     output[pos] = '\0';
     return pos;
@@ -2326,6 +2342,11 @@ EXPORT double interp_natural_spline(const double* xs, const double* ys, int n, d
     l[0] = 1.0; mu[0] = 0.0; z[0] = 0.0;
     for (int i = 1; i < m; i++) {
         l[i] = 2.0 * (xs[i + 1] - xs[i - 1]) - h[i - 1] * mu[i - 1];
+        if (fabs(l[i]) < 1e-30) {
+            free(h); free(alpha); free(l); free(mu); free(z); free(c); free(b); free(d);
+            set_error("interp_natural_spline: singular tridiagonal system");
+            return NAN;
+        }
         mu[i] = h[i] / l[i];
         z[i] = (alpha[i] - h[i - 1] * z[i - 1]) / l[i];
     }
