@@ -1757,7 +1757,7 @@ Java_com_supercalc_CalcEngine_sparseFromTriplets(JNIEnv* env, jclass clazz,
     if (!m) return NULL;
 
     /* Return dense matrix as flat double array */
-    int total = m->n_rows * m->n_cols;
+    int total = nRows * nCols;
     double* dense = (double*)malloc(total * sizeof(double));
     if (!dense) {
         sparse_matrix_free(m);
@@ -1808,7 +1808,7 @@ Java_com_supercalc_CalcEngine_sparseSpmv(JNIEnv* env, jclass clazz,
         return NULL;
     }
 
-    double* y_out = (double*)malloc(m->n_rows * sizeof(double));
+    double* y_out = (double*)malloc(nRows * sizeof(double));
     if (!y_out) {
         (*env)->ReleaseDoubleArrayElements(env, x, x_data, JNI_ABORT);
         sparse_matrix_free(m);
@@ -1818,9 +1818,9 @@ Java_com_supercalc_CalcEngine_sparseSpmv(JNIEnv* env, jclass clazz,
     sparse_spmv(m, x_data, y_out, (int)n);
     (*env)->ReleaseDoubleArrayElements(env, x, x_data, JNI_ABORT);
 
-    jdoubleArray result = (*env)->NewDoubleArray(env, m->n_rows);
+    jdoubleArray result = (*env)->NewDoubleArray(env, nRows);
     if (result) {
-        (*env)->SetDoubleArrayRegion(env, result, 0, m->n_rows, y_out);
+        (*env)->SetDoubleArrayRegion(env, result, 0, nRows, y_out);
     }
 
     sparse_matrix_free(m);
