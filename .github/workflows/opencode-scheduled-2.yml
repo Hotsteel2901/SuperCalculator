@@ -22,9 +22,9 @@ jobs:
       - name: Run OpenCode
         uses: anomalyco/opencode/github@latest
         env:
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          OPENCODE_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         with:
-          model: opencode/mimo-v2.5-free
+          model: deepseek/deepseek-v4-pro
           prompt: |
             你是 SuperCalculator 项目的 QA 工程师。请按以下清单逐项检查并修复 bug。
 
@@ -113,4 +113,5 @@ jobs:
 
             ## 提交
             中文 commit message，格式：`fix: <修复描述>`
-            不同领域的 bug 分开提交。
+            不同领域的 bug 都要提交。
+            记得创建PR
