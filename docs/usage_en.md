@@ -1065,6 +1065,8 @@ Result: 2³ × 3² × 5
 - **CSV export**: Save as .csv file
 - **Copy to clipboard**: Paste directly into Excel or other software
 
+**Web landing page:** The [project landing page](../index.html) also supports CSV export — export data points and trendline predictions from the Data Import & Scatter Plot section, and export interpolated curve data from the Interpolation section.
+
 ---
 
 ## 24. Quick Input Panel
