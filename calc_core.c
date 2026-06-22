@@ -854,6 +854,10 @@ static double _central_diff_nth(const char* expr, double x, int n, double h) {
 
     free(fvals);
     double h2n = pow(2.0 * h, n);
+    if (fabs(h2n) < 1e-15) {
+        set_error("Step size too small, denominator underflow");
+        return NAN;
+    }
     return sum / h2n;
 }
 
@@ -2009,6 +2013,7 @@ EXPORT int ode_solve_rkf45(const char* expr, double x0, double y0, double x_end,
 
 EXPORT double laplace_transform(const char* expr, double s) {
     if (!expr) { set_error("NULL expression"); return NAN; }
+    if (strlen(expr) >= 800) { set_error("Expression too long (max 799)"); return NAN; }
     clear_error();
     if (s <= 0.0) {
         /* For s <= 0 the integral typically diverges for stable functions;
@@ -2237,8 +2242,8 @@ EXPORT double interp_akima(const double* xs, const double* ys, int n, double x) 
 
     for (int i = 0; i < m; i++) {
         double dx = xs[i + 1] - xs[i];
-        if (dx == 0.0) {
-            set_error("interp_akima: duplicate x values");
+        if (fabs(dx) < 1e-15) {
+            set_error("interp_akima: duplicate or too close x values");
             free(t);
             return NAN;
         }
@@ -2270,7 +2275,7 @@ EXPORT double interp_akima(const double* xs, const double* ys, int n, double x) 
     } else {
         double w1l = fabs(t[seg + 1] - t[seg]);
         double w2l = (seg >= 2) ? fabs(t[seg - 1] - t[seg - 2]) : 0.0;
-        m_left = (w1l + w2l == 0.0) ? t[seg] : (w1l * t[seg] + w2l * t[seg + 1]) / (w1l + w2l);
+        m_left = (w1l + w2l < 1e-15) ? t[seg] : (w1l * t[seg] + w2l * t[seg + 1]) / (w1l + w2l);
     }
 
     /* Right slope at seg+1 */
@@ -2279,7 +2284,7 @@ EXPORT double interp_akima(const double* xs, const double* ys, int n, double x) 
     } else {
         double w1r = fabs(t[seg + 2] - t[seg + 1]);
         double w2r = (seg >= 1) ? fabs(t[seg] - t[seg - 1]) : 0.0;
-        m_right = (w1r + w2r == 0.0) ? t[seg + 1] : (w1r * t[seg + 1] + w2r * t[seg + 2]) / (w1r + w2r);
+        m_right = (w1r + w2r < 1e-15) ? t[seg + 1] : (w1r * t[seg + 1] + w2r * t[seg + 2]) / (w1r + w2r);
     }
 
     double dx = xs[seg + 1] - xs[seg];
@@ -2328,9 +2333,9 @@ EXPORT double interp_natural_spline(const double* xs, const double* ys, int n, d
 
     for (int i = 0; i < m; i++) {
         h[i] = xs[i + 1] - xs[i];
-        if (h[i] == 0.0) {
+        if (fabs(h[i]) < 1e-15) {
             free(h); free(alpha); free(l); free(mu); free(z); free(c); free(b); free(d);
-            set_error("interp_natural_spline: duplicate x values");
+            set_error("interp_natural_spline: duplicate or too close x values");
             return NAN;
         }
     }

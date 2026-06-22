@@ -96,6 +96,8 @@ def _igamma(a: float, x: float) -> float:
         return 0.0
     if x == 0.0:
         return 0.0
+    if np.isinf(x) or x >= 1e10:
+        return 1.0
     if x < a + 1:
         # Series representation
         ap = a
@@ -376,6 +378,8 @@ class FDist:
             xi_val = float(x_flat[i])
             if xi_val <= 0:
                 result.flat[i] = 0.0
+            elif np.isinf(xi_val) or xi_val >= 1e10:
+                result.flat[i] = 1.0
             else:
                 z = self.d1 * xi_val / (self.d1 * xi_val + self.d2)
                 result.flat[i] = _beta_inc_reg(self.d1 / 2, self.d2 / 2, z)

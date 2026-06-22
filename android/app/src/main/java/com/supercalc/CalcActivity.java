@@ -68,17 +68,6 @@ public class CalcActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_calc);
 
-        // Restore state from savedInstanceState if available
-        if (savedInstanceState != null) {
-            String savedExpr = savedInstanceState.getString("expr_input", "");
-            String savedX = savedInstanceState.getString("x_input", "");
-            String savedA = savedInstanceState.getString("a_input", "");
-            String savedB = savedInstanceState.getString("b_input", "");
-            String savedGuess = savedInstanceState.getString("guess_input", "");
-            String savedResult = savedInstanceState.getString("result_text", "");
-            // Defer setting until EditText fields are initialized below
-        }
-
         exprInput  = findViewById(R.id.expr_input);
         xInput     = findViewById(R.id.x_input);
         aInput     = findViewById(R.id.a_input);
@@ -102,6 +91,22 @@ public class CalcActivity extends AppCompatActivity {
         scrollView = findViewById(R.id.main_scroll);
         lineChart  = findViewById(R.id.line_chart);
         graphCard  = findViewById(R.id.graph_card);
+
+        // Restore state from savedInstanceState if available
+        if (savedInstanceState != null) {
+            String savedExpr = savedInstanceState.getString("expr_input", "");
+            String savedX = savedInstanceState.getString("x_input", "");
+            String savedA = savedInstanceState.getString("a_input", "");
+            String savedB = savedInstanceState.getString("b_input", "");
+            String savedGuess = savedInstanceState.getString("guess_input", "");
+            String savedResult = savedInstanceState.getString("result_text", "");
+            if (exprInput != null) exprInput.setText(savedExpr);
+            if (xInput != null) xInput.setText(savedX);
+            if (aInput != null) aInput.setText(savedA);
+            if (bInput != null) bInput.setText(savedB);
+            if (guessInput != null) guessInput.setText(savedGuess);
+            if (resultView != null) resultView.setText(savedResult);
+        }
 
         // Operation buttons — MaterialButton extends Button, so findViewById works
         MaterialButton btnEval   = findViewById(R.id.btn_evaluate);
@@ -4968,7 +4973,7 @@ public class CalcActivity extends AppCompatActivity {
         btnSolveCg.setOnClickListener(v -> onSparseSolveCg());
     }
 
-    private int[] parseTriplets(String text, int[] outRows, int[] outCols, double[] outVals, int maxNnz) {
+    private int parseTriplets(String text, int[] outRows, int[] outCols, double[] outVals, int maxNnz) {
         int count = 0;
         String[] entries = text.split(";");
         for (String entry : entries) {
