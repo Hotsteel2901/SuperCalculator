@@ -1240,6 +1240,30 @@ class SuperCalcApp:
         ttk.Button(sfr3, text=t("btn_sparse_solve_cg"),
                    command=self._on_sparse_solve_cg).pack(side=tk.LEFT, padx=2)
 
+        # --- Convolution Calculator ---
+        frm_conv = ttk.LabelFrame(scroll_frame, text=t("sec_convolution"),
+                                   style="Dark.TLabelframe")
+        frm_conv.pack(fill=tk.X, padx=8, pady=4)
+
+        cfr1 = ttk.Frame(frm_conv, style="Dark.TFrame")
+        cfr1.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(cfr1, text=t("leg_conv_seq_a"), style="Dark.TLabel").pack(anchor=tk.W)
+        self._var_conv_seq_a = tk.StringVar(value="1, 2, 3")
+        ttk.Entry(cfr1, textvariable=self._var_conv_seq_a, width=36,
+                  font=("Consolas", 10)).pack(fill=tk.X, padx=2, pady=2)
+
+        cfr2 = ttk.Frame(frm_conv, style="Dark.TFrame")
+        cfr2.pack(fill=tk.X, padx=6, pady=2)
+        ttk.Label(cfr2, text=t("leg_conv_seq_b"), style="Dark.TLabel").pack(anchor=tk.W)
+        self._var_conv_seq_b = tk.StringVar(value="4, 5, 6")
+        ttk.Entry(cfr2, textvariable=self._var_conv_seq_b, width=36,
+                  font=("Consolas", 10)).pack(fill=tk.X, padx=2, pady=2)
+
+        cfr3 = ttk.Frame(frm_conv, style="Dark.TFrame")
+        cfr3.pack(fill=tk.X, padx=6, pady=(0, 4))
+        ttk.Button(cfr3, text=t("btn_conv_compute"),
+                   command=self._on_convolve).pack(side=tk.LEFT, padx=2)
+
         # --- Calculation History ---
         frm_history = ttk.LabelFrame(scroll_frame, text=t("sec_history"),
                                      style="Dark.TLabelframe")
@@ -7308,6 +7332,34 @@ class SuperCalcApp:
                                   len(xs), method_names.get(method, method)))
         except Exception as ex:
             messagebox.showerror(t("err_interp"), str(ex))
+
+    # ----------------------------------------------------------------
+    #  Convolution Calculator
+    # ----------------------------------------------------------------
+    def _on_convolve(self):
+        text_a = self._var_conv_seq_a.get().strip()
+        text_b = self._var_conv_seq_b.get().strip()
+        if not text_a or not text_b:
+            messagebox.showerror(t("err_convolution"), t("msg_conv_empty_input"))
+            return
+        try:
+            a = [float(x.strip()) for x in text_a.split(",") if x.strip()]
+            b = [float(x.strip()) for x in text_b.split(",") if x.strip()]
+        except ValueError:
+            messagebox.showerror(t("err_convolution"), t("msg_conv_invalid_input"))
+            return
+        try:
+            result = CalcEngine.conv_1d(a, b)
+            if result is None:
+                err = CalcEngine.get_last_error() if hasattr(CalcEngine, 'get_last_error') else "Unknown error"
+                messagebox.showerror(t("err_convolution"), str(err))
+                return
+            msg = "Conv(%s, %s) = [%s]" % (
+                text_a, text_b, ", ".join("%.6g" % v for v in result))
+            self.status_var.set(msg)
+            self.record_history("Conv(%s, %s)" % (text_a, text_b), result[0])
+        except Exception as e:
+            messagebox.showerror(t("err_convolution"), str(e))
 
 
 # ---------------------------------------------------------------------------

@@ -374,6 +374,11 @@ _lib.sparse_matrix_nnz.restype = ctypes.c_int
 _lib.sparse_matrix_free.argtypes = [ctypes.c_void_p]
 _lib.sparse_matrix_free.restype = None
 
+_lib.conv_1d.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.c_int,
+                          ctypes.POINTER(ctypes.c_double), ctypes.c_int,
+                          ctypes.POINTER(ctypes.c_double), ctypes.c_int]
+_lib.conv_1d.restype = ctypes.c_int
+
 
 def _is_invalid(x: float) -> bool:
     try:
@@ -1686,3 +1691,25 @@ class CalcEngine:
         if rc < 0:
             return None
         return list(arr_x)
+
+    # Convolution
+    @staticmethod
+    def conv_1d(a: List[float], b: List[float]) -> Optional[List[float]]:
+        """Compute the discrete 1D convolution of two sequences.
+
+        Returns a list of length len(a) + len(b) - 1, or None on error.
+        """
+        if not a or not b:
+            return None
+        na = len(a)
+        nb = len(b)
+        if na == 0 or nb == 0:
+            return None
+        arr_a = (ctypes.c_double * na)(*a)
+        arr_b = (ctypes.c_double * nb)(*b)
+        nc = na + nb - 1
+        arr_out = (ctypes.c_double * nc)()
+        rc = _lib.conv_1d(arr_a, na, arr_b, nb, arr_out, nc)
+        if rc < 0:
+            return None
+        return list(arr_out)

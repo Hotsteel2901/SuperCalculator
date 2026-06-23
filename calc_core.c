@@ -2777,3 +2777,32 @@ EXPORT int sparse_solve_cg(const SparseMatrix* m, const double* b, double* x,
 EXPORT void sparse_matrix_free(SparseMatrix* m) {
     sparse_matrix_free_internal(m);
 }
+
+/* --------------------------------------------------------------------------
+ *  Discrete 1D Convolution
+ *  c[k] = sum_{i=0}^{na-1} a[i] * b[k-i]  for k = 0..na+nb-2
+ *  Returns the number of output elements (na+nb-1), or -1 on error.
+ * -------------------------------------------------------------------------- */
+EXPORT int conv_1d(const double* a, int na, const double* b, int nb,
+                    double* out, int max_out) {
+    if (!a || !b || !out) { set_error("NULL pointer argument"); return -1; }
+    if (na < 1 || nb < 1) { set_error("Sequence length must be >= 1"); return -1; }
+    if (na > 1000000 || nb > 1000000) {
+        set_error("Sequence length too large (max 1000000)"); return -1;
+    }
+    int nc = na + nb - 1;
+    if (max_out < nc) { set_error("Output buffer too small"); return -1; }
+    clear_error();
+
+    for (int k = 0; k < nc; k++) {
+        double sum = 0.0;
+        for (int i = 0; i < na; i++) {
+            int j = k - i;
+            if (j >= 0 && j < nb) {
+                sum += a[i] * b[j];
+            }
+        }
+        out[k] = sum;
+    }
+    return nc;
+}

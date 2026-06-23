@@ -50,6 +50,7 @@ public class CalcActivity extends AppCompatActivity {
     private EditText matrixAInput, matrixBInput;
     private EditText laplaceExprInput, laplaceParamInput;
     private EditText sparseMatrixInput, sparseRhsInput;
+    private EditText convSeqAInput, convSeqBInput;
     private TextView resultView;
     private NestedScrollView scrollView;
     private LineChart lineChart;
@@ -455,6 +456,9 @@ public class CalcActivity extends AppCompatActivity {
 
         // Sparse Matrix Solver
         setupSparseMatrix();
+
+        // Convolution Calculator
+        setupConvolution();
 
         // Calculation History
         setupHistory();
@@ -5288,5 +5292,65 @@ public class CalcActivity extends AppCompatActivity {
         }
         shareText(csv.toString(), "SuperCalc Regression");
         resultView.append(getString(R.string.regression_exported_csv) + "\n");
+    }
+
+    // ------------------------------------------------------------------
+    //  Convolution Calculator
+    // ------------------------------------------------------------------
+
+    private void setupConvolution() {
+        convSeqAInput = findViewById(R.id.conv_seq_a_input);
+        convSeqBInput = findViewById(R.id.conv_seq_b_input);
+
+        MaterialButton btnConvolve = findViewById(R.id.btn_convolve);
+        if (btnConvolve != null) btnConvolve.setOnClickListener(v -> onConvolve());
+    }
+
+    private void onConvolve() {
+        String textA = convSeqAInput.getText().toString().trim();
+        String textB = convSeqBInput.getText().toString().trim();
+        if (textA.isEmpty() || textB.isEmpty()) {
+            toast(getString(R.string.conv_empty_input));
+            return;
+        }
+        try {
+            double[] a = parseDoubleArray(textA);
+            double[] b = parseDoubleArray(textB);
+            if (a == null || b == null || a.length == 0 || b.length == 0) {
+                toast(getString(R.string.conv_invalid_input));
+                return;
+            }
+            double[] result = CalcEngine.conv1d(a, b);
+            if (result == null) {
+                String err = CalcEngine.getLastError();
+                resultView.append("Convolution Error: " + (err != null ? err : "Unknown error") + "\n");
+            } else {
+                StringBuilder sb = new StringBuilder();
+                sb.append("Conv(").append(textA).append(", ").append(textB).append(") = [");
+                for (int i = 0; i < result.length; i++) {
+                    if (i > 0) sb.append(", ");
+                    sb.append(fmt(result[i]));
+                }
+                sb.append("]\n");
+                resultView.append(sb.toString());
+                recordHistory("Conv(" + textA + ", " + textB + ")", result[0]);
+            }
+        } catch (Exception e) {
+            resultView.append("Convolution Error: " + e.getMessage() + "\n");
+        }
+        scrollToResult();
+    }
+
+    private double[] parseDoubleArray(String text) {
+        String[] parts = text.split(",");
+        double[] result = new double[parts.length];
+        for (int i = 0; i < parts.length; i++) {
+            try {
+                result[i] = Double.parseDouble(parts[i].trim());
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return result;
     }
 }

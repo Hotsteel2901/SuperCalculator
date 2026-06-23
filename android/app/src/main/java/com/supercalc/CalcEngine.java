@@ -224,6 +224,10 @@ public class CalcEngine {
     /** Solve A*x = b using Conjugate Gradient method.
      *  A is specified by COO triplets. Returns double[n] solution vector or null on error. */
     public static native double[] sparseSolveCg(int nRows, int nCols,
-                                                 int[] rows, int[] cols, double[] vals,
-                                                 double[] b, int maxIter, double tol);
+                                                  int[] rows, int[] cols, double[] vals,
+                                                  double[] b, int maxIter, double tol);
+
+    /** Compute discrete 1D convolution of two sequences a and b.
+     *  Returns double[na+nb-1] result array, or null on error. */
+    public static native double[] conv1d(double[] a, double[] b);
 }

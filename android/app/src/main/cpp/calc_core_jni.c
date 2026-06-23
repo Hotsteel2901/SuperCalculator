@@ -1885,3 +1885,42 @@ Java_com_supercalc_CalcEngine_sparseSolveCg(JNIEnv* env, jclass clazz,
     free(x_out);
     return result;
 }
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_supercalc_CalcEngine_conv1d(JNIEnv* env, jclass clazz,
+                                      jdoubleArray a, jdoubleArray b) {
+    jint na = (*env)->GetArrayLength(env, a);
+    jint nb = (*env)->GetArrayLength(env, b);
+    if (na < 1 || nb < 1) return NULL;
+
+    jdouble* a_data = (*env)->GetDoubleArrayElements(env, a, NULL);
+    jdouble* b_data = (*env)->GetDoubleArrayElements(env, b, NULL);
+    if (!a_data || !b_data) {
+        if (a_data) (*env)->ReleaseDoubleArrayElements(env, a, a_data, JNI_ABORT);
+        if (b_data) (*env)->ReleaseDoubleArrayElements(env, b, b_data, JNI_ABORT);
+        return NULL;
+    }
+
+    int nc = (int)na + (int)nb - 1;
+    double* out = (double*)malloc(nc * sizeof(double));
+    if (!out) {
+        (*env)->ReleaseDoubleArrayElements(env, a, a_data, JNI_ABORT);
+        (*env)->ReleaseDoubleArrayElements(env, b, b_data, JNI_ABORT);
+        return NULL;
+    }
+
+    int result_count = conv_1d(a_data, (int)na, b_data, (int)nb, out, nc);
+
+    (*env)->ReleaseDoubleArrayElements(env, a, a_data, JNI_ABORT);
+    (*env)->ReleaseDoubleArrayElements(env, b, b_data, JNI_ABORT);
+
+    jdoubleArray result = NULL;
+    if (result_count >= 0) {
+        result = (*env)->NewDoubleArray(env, result_count);
+        if (result) {
+            (*env)->SetDoubleArrayRegion(env, result, 0, result_count, out);
+        }
+    }
+    free(out);
+    return result;
+}
