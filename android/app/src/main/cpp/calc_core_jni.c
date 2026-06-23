@@ -84,6 +84,10 @@ double interp_akima(const double* xs, const double* ys, int n, double x);
 /* Natural Spline Interpolation */
 double interp_natural_spline(const double* xs, const double* ys, int n, double x);
 
+/* 1D Convolution */
+int conv_1d(const double* a, int na, const double* b, int nb,
+            double* out, int max_out);
+
 /* Calculation History */
 void history_add(const char* expr, double result);
 int history_count(void);
