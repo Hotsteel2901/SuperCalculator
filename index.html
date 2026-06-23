@@ -3593,6 +3593,35 @@
             </div>
         </section>
 
+        <section class="section" id="convolution">
+            <div class="section-header">
+                <div class="section-label">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="7" height="7" rx="1"/>
+                        <rect x="15" y="7" width="7" height="7" rx="1"/>
+                        <line x1="9" y1="6.5" x2="15" y2="10.5"/>
+                        <circle cx="9" cy="6.5" r="1.5" fill="currentColor"/>
+                        <circle cx="15" cy="10.5" r="1.5" fill="currentColor"/>
+                    </svg>
+                    Convolution Calculator
+                </div>
+                <h2 class="section-title">卷积计算器</h2>
+                <p class="section-subtitle">输入两个数字序列，计算离散一维卷积 (c[n] = Σ a[k]·b[n-k])</p>
+            </div>
+            <div class="card glass reveal" style="max-width: 650px; margin: 0 auto;">
+                <div style="display:flex;flex-direction:column;gap:16px;">
+                    <label style="font-size:13px;color:var(--text-subtle);">Sequence A (comma-separated / 序列 A，逗号分隔)</label>
+                    <input type="text" id="convSeqA" value="1, 2, 3"
+                        style="padding:12px 16px;border:1px solid var(--border);border-radius:12px;background:var(--glass-bg);color:var(--text-main);font-size:15px;font-family:monospace;">
+                    <label style="font-size:13px;color:var(--text-subtle);">Sequence B (comma-separated / 序列 B，逗号分隔)</label>
+                    <input type="text" id="convSeqB" value="4, 5, 6"
+                        style="padding:12px 16px;border:1px solid var(--border);border-radius:12px;background:var(--glass-bg);color:var(--text-main);font-size:15px;font-family:monospace;">
+                    <button class="base-btn" onclick="computeConvolution()" style="background:var(--accent);color:#fff;border:none;">Compute Convolution / 计算卷积</button>
+                    <div id="convResult" style="font-size:14px;color:var(--text-main);font-family:monospace;min-height:20px;white-space:pre-wrap;padding:12px;background:var(--glass-bg);border-radius:12px;"></div>
+                </div>
+            </div>
+        </section>
+
         <section class="section" id="data-import">
             <div class="section-header">
                 <div class="section-label">
@@ -5730,6 +5759,56 @@
                 resEl.textContent = 'x = [' + x.map(function(v) { return v.toFixed(6); }).join(', ') + ']\n' + (isZh ? '未在最大迭代次数内收敛' : 'Did not converge within max iterations');
             }
             window.sparseSolveCG = sparseSolveCG;
+
+            // --- Convolution Calculator ---
+            function computeConvolution() {
+                var resEl = document.getElementById('convResult');
+                var seqAEl = document.getElementById('convSeqA');
+                var seqBEl = document.getElementById('convSeqB');
+                if (!resEl || !seqAEl || !seqBEl) return;
+                var textA = seqAEl.value.trim();
+                var textB = seqBEl.value.trim();
+                if (!textA || !textB) {
+                    resEl.textContent = isZh ? '请输入序列 A 和 B。' : 'Please enter both sequences A and B.';
+                    return;
+                }
+                var a = [];
+                var b = [];
+                try {
+                    var partsA = textA.split(',');
+                    for (var i = 0; i < partsA.length; i++) {
+                        var v = parseFloat(partsA[i].trim());
+                        if (isNaN(v)) throw new Error();
+                        a.push(v);
+                    }
+                    var partsB = textB.split(',');
+                    for (var i = 0; i < partsB.length; i++) {
+                        var v = parseFloat(partsB[i].trim());
+                        if (isNaN(v)) throw new Error();
+                        b.push(v);
+                    }
+                } catch (e) {
+                    resEl.textContent = isZh ? '无效的数字格式。请使用逗号分隔的数字。' : 'Invalid number format. Use comma-separated numbers.';
+                    return;
+                }
+                if (a.length === 0 || b.length === 0) {
+                    resEl.textContent = isZh ? '序列不能为空。' : 'Sequences must not be empty.';
+                    return;
+                }
+                var na = a.length, nb = b.length;
+                var nc = na + nb - 1;
+                var result = [];
+                for (var k = 0; k < nc; k++) {
+                    var sum = 0;
+                    for (var i = 0; i < na; i++) {
+                        var j = k - i;
+                        if (j >= 0 && j < nb) sum += a[i] * b[j];
+                    }
+                    result.push(sum);
+                }
+                resEl.textContent = 'Conv([' + a.join(', ') + '], [' + b.join(', ') + ']) = [' + result.map(function(v) { return v.toFixed(6).replace(/\.?0+$/, ''); }).join(', ') + ']';
+            }
+            window.computeConvolution = computeConvolution;
 
         })();
     </script>

@@ -731,4 +731,13 @@
     <!-- 历史记录CSV导出 -->
     <string name="history_export_csv">导出CSV</string>
     <string name="history_exported_csv">历史记录已导出为CSV（%d 条记录）。</string>
+
+    <!-- 卷积计算器 -->
+    <string name="conv_title">卷积计算器</string>
+    <string name="conv_hint">输入两个逗号分隔的数字序列，计算离散一维卷积。</string>
+    <string name="conv_hint_seq_a">序列 A（逗号分隔）</string>
+    <string name="conv_hint_seq_b">序列 B（逗号分隔）</string>
+    <string name="conv_compute">计算卷积</string>
+    <string name="conv_empty_input">请输入序列 A 和 B。</string>
+    <string name="conv_invalid_input">无效的数字格式。请使用逗号分隔的数字。</string>
 </resources>

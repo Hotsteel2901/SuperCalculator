@@ -1154,7 +1154,49 @@ SUPERCALC_LANG=en python super_calc_bridged.py
 
 ---
 
-## 24. FAQ
+## 24. Convolution Calculator
+
+### 24.1 Desktop (Python)
+
+**Steps:**
+
+1. Scroll down in the right panel and find the **"Convolution Calculator"** section
+2. In the **"Sequence A"** field, enter a comma-separated list of numbers, e.g., `1, 2, 3`
+3. In the **"Sequence B"** field, enter another comma-separated list, e.g., `4, 5, 6`
+4. Click the **"Compute Convolution"** button
+5. The result will appear in the status bar at the bottom, formatted as `Conv(seqA, seqB) = [c0, c1, c2, ...]`
+
+**Example:**
+
+```
+Sequence A: 1, 2, 3
+Sequence B: 4, 5, 6
+Result: Conv(1, 2, 3, 4, 5, 6) = [4, 13, 28, 27, 18]
+```
+
+> 💡 **Tip:** Convolution is useful for digital signal processing, polynomial multiplication, and moving average filters. The mathematical definition is c[n] = Σ a[k]·b[n-k] where the sum is over all valid k.
+
+### 24.2 Android
+
+**Steps:**
+
+1. Scroll down in the main screen to find the **"Convolution Calculator"** card
+2. Enter **Sequence A** (comma-separated numbers) and **Sequence B**
+3. Tap **"Compute Convolution"**
+4. The result is displayed in the result area below as `Conv(A, B) = [c0, c1, ...]`
+
+### 24.3 Web Landing Page
+
+**Steps:**
+
+1. Visit the [project landing page](../index.html) and scroll to the **"Convolution Calculator"** section
+2. Enter sequences A and B in the input fields
+3. Click **"Compute Convolution"**
+4. The result appears immediately below
+
+---
+
+## 25. FAQ
 
 ### Q1: Program says calc_core.dll / .so not found
 

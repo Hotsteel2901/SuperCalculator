@@ -731,4 +731,13 @@
     <!-- History CSV Export -->
     <string name="history_export_csv">Export CSV</string>
     <string name="history_exported_csv">History exported as CSV (%d entries).</string>
+
+    <!-- Convolution Calculator -->
+    <string name="conv_title">Convolution Calculator</string>
+    <string name="conv_hint">Enter two sequences as comma-separated numbers. The result is the discrete 1D convolution.</string>
+    <string name="conv_hint_seq_a">Sequence A (comma-separated)</string>
+    <string name="conv_hint_seq_b">Sequence B (comma-separated)</string>
+    <string name="conv_compute">Compute Convolution</string>
+    <string name="conv_empty_input">Please enter both sequences A and B.</string>
+    <string name="conv_invalid_input">Invalid number format. Use comma-separated numbers.</string>
 </resources>

@@ -3805,6 +3805,36 @@ STRINGS = {
         "en": "Vector length ({0}) does not match matrix dimension ({1}).",
         "zh": "向量长度 ({0}) 与矩阵维度 ({1}) 不匹配。",
     },
+
+    # --- Convolution Calculator ---
+    "sec_convolution": {
+        "en": "Convolution Calculator",
+        "zh": "卷积计算器",
+    },
+    "leg_conv_seq_a": {
+        "en": "Sequence A (comma-separated):",
+        "zh": "序列 A（逗号分隔）：",
+    },
+    "leg_conv_seq_b": {
+        "en": "Sequence B (comma-separated):",
+        "zh": "序列 B（逗号分隔）：",
+    },
+    "btn_conv_compute": {
+        "en": "Compute Convolution",
+        "zh": "计算卷积",
+    },
+    "err_convolution": {
+        "en": "Convolution Error",
+        "zh": "卷积错误",
+    },
+    "msg_conv_empty_input": {
+        "en": "Please enter both sequences A and B.",
+        "zh": "请输入序列 A 和 B。",
+    },
+    "msg_conv_invalid_input": {
+        "en": "Invalid number format in sequence. Use comma-separated numbers.",
+        "zh": "序列中包含无效数字格式。请使用逗号分隔的数字。",
+    },
 }
 
 
