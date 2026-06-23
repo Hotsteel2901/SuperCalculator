@@ -22,11 +22,9 @@ jobs:
       - name: Run OpenCode
         uses: anomalyco/opencode/github@latest
         env:
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         with:
-          model: google/gemini-3.5-flash
+          model: deepseek/deepseek-v4-pro
           prompt: |
             你是 SuperCalculator 项目的资深维护者。请按以下精确流程添加一项新功能。
 
@@ -43,16 +41,8 @@ jobs:
 
             ## 流程
 
-            ### 第 1 步：选择功能
-            从以下选一个未实现的功能：
-            - 拉普拉斯变换 / 逆变换
-            - 向量场绘图（ODE 方向场的泛化版）
-            - 等高线图（f(x,y)=c 的水平集）
-            - 稀疏矩阵求解器
-            - 计算历史记录（最近 10 条表达式，用 SharedPreferences 持久化）
-            - CSV 数据导出（将表格/统计/回归结果导出）
-            - 更多插值方法（自然样条、Akima）
-            - 自定义函数定义（用户输入 `f(x)=...` 后在表达式中引用 `f(2)`）
+            ### 第 1 步：想象
+            探索整个项目所有功能，并想象一个未实现的功能
 
             ### 第 2 步：实现（严格按层次顺序）
             1. **C 核心** `calc_core.c`：添加计算函数，遵循现有命名风格（snake_case），使用 `_Thread_local` 错误缓冲区
