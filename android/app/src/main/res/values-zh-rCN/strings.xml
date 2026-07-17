@@ -256,6 +256,8 @@
     <string name="toast_parametric_plotted">参数曲线已绘制</string>
     <string name="toast_polar_plotted">极坐标曲线已绘制</string>
     <string name="toast_implicit_plotted">隐函数曲线已绘制</string>
+    <string name="toast_implicit_computing">正在计算隐函数曲线…</string>
+    <string name="toast_implicit_in_progress">隐函数曲线计算进行中</string>
     <string name="toast_no_ode_points">没有有效ODE点可绘制</string>
     <string name="toast_direction_field_plotted">方向场已绘制</string>
     <string name="toast_invalid_ic">初始条件无效：{0}</string>

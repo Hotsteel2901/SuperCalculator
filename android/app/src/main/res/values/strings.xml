@@ -256,6 +256,8 @@
     <string name="toast_parametric_plotted">Parametric curve plotted</string>
     <string name="toast_polar_plotted">Polar curve plotted</string>
     <string name="toast_implicit_plotted">Implicit curve plotted</string>
+    <string name="toast_implicit_computing">Computing implicit curve…</string>
+    <string name="toast_implicit_in_progress">Implicit curve computation already in progress</string>
     <string name="toast_no_ode_points">No valid ODE points to plot</string>
     <string name="toast_direction_field_plotted">Direction field plotted</string>
     <string name="toast_invalid_ic">Invalid initial condition: {0}</string>

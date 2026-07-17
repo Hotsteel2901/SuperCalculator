@@ -432,12 +432,55 @@ public class PlotActivity extends AppCompatActivity {
         toast(getString(R.string.toast_polar_plotted));
     }
     
+    private volatile boolean isPlottingImplicit = false;
+
     private void plotImplicitCurve(String impExpr, int resolution, double xMin, double xMax, double yMin, double yMax) {
+        if (isPlottingImplicit) {
+            toast(getString(R.string.toast_implicit_in_progress));
+            return;
+        }
+        isPlottingImplicit = true;
+        toast(getString(R.string.toast_implicit_computing));
+
+        new Thread(() -> {
+            ArrayList<Entry> entries = computeImplicitCurve(impExpr, resolution, xMin, xMax, yMin, yMax);
+            runOnUiThread(() -> {
+                isPlottingImplicit = false;
+                if (isFinishing() || isDestroyed()) return;
+                if (entries == null || entries.isEmpty()) {
+                    toast(getString(R.string.toast_no_valid_points));
+                    return;
+                }
+
+                allEntries.add(entries);
+                String label = "Imp: " + impExpr + " = 0";
+                allExpressions.add(label);
+                curveColors.add(getNextColor());
+                curveTypes.add("implicit");
+
+                List<ILineDataSet> dataSets = new ArrayList<>();
+                LineDataSet dataSet = new LineDataSet(entries, label);
+                dataSet.setColor(curveColors.get(curveColors.size() - 1));
+                dataSet.setLineWidth(2f);
+                dataSet.setDrawCircles(false);
+                dataSet.setDrawValues(false);
+                dataSets.add(dataSet);
+
+                LineData lineData = new LineData(dataSets);
+                lineChart.setData(lineData);
+                lineChart.invalidate();
+                toast(getString(R.string.toast_implicit_plotted) + ": " + impExpr + " = 0");
+            });
+        }).start();
+    }
+
+    private ArrayList<Entry> computeImplicitCurve(String impExpr, int resolution, double xMin, double xMax, double yMin, double yMax) {
         ArrayList<Entry> entries = new ArrayList<>();
-        
+
         double dx = (xMax - xMin) / resolution;
         double dy = (yMax - yMin) / resolution;
-        
+        if (dx == 0 || dy == 0) return entries;
+
         double[][] grid = new double[resolution + 1][resolution + 1];
         for (int i = 0; i <= resolution; i++) {
             double y = yMin + i * dy;
@@ -447,72 +490,55 @@ public class PlotActivity extends AppCompatActivity {
                 grid[i][j] = (!Double.isNaN(val) && !Double.isInfinite(val)) ? val : Double.NaN;
             }
         }
-        
+
         for (int i = 0; i < resolution; i++) {
             for (int j = 0; j < resolution; j++) {
                 double v00 = grid[i][j];
                 double v10 = grid[i][j + 1];
                 double v01 = grid[i + 1][j];
                 double v11 = grid[i + 1][j + 1];
-                
+
                 if (Double.isNaN(v00) || Double.isNaN(v10) || Double.isNaN(v01) || Double.isNaN(v11)) {
                     continue;
                 }
-                
+
                 int idx = 0;
                 if (v00 < 0) idx |= 1;
                 if (v10 < 0) idx |= 2;
                 if (v11 < 0) idx |= 4;
                 if (v01 < 0) idx |= 8;
-                
+
                 if (idx == 0 || idx == 15) continue;
-                
+
                 double x0 = xMin + j * dx;
                 double y0 = yMin + i * dy;
-                double ix, iy;
-                
+
                 List<double[]> segs = new ArrayList<>();
                 switch (idx) {
                     case 1: case 14:
-                        iy = y0 + dy * (-v00 / (v01 - v00));
-                        ix = x0 + dx * (-v00 / (v10 - v00));
-                        segs.add(new double[]{x0, iy, ix, y0});
+                        addSegment(segs, x0, interpY(y0, dy, v00, v01), interpX(x0, dx, v00, v10), y0);
                         break;
                     case 2: case 13:
-                        ix = x0 + dx * (-v00 / (v10 - v00));
-                        iy = y0 + dy * (-v10 / (v11 - v10));
-                        segs.add(new double[]{ix, y0, x0 + dx, iy});
+                        addSegment(segs, interpX(x0, dx, v00, v10), y0, x0 + dx, interpY(y0, dy, v10, v11));
                         break;
                     case 3: case 12:
-                        iy = y0 + dy * (-v00 / (v01 - v00));
-                        double iy2 = y0 + dy * (-v10 / (v11 - v10));
-                        segs.add(new double[]{x0, iy, x0 + dx, iy2});
+                        addSegment(segs, x0, interpY(y0, dy, v00, v01), x0 + dx, interpY(y0, dy, v10, v11));
                         break;
                     case 4: case 11:
-                        iy = y0 + dy * (-v10 / (v11 - v10));
-                        double ix2 = x0 + dx * (-v01 / (v11 - v01));
-                        segs.add(new double[]{x0 + dx, iy, ix2, y0 + dy});
+                        addSegment(segs, x0 + dx, interpY(y0, dy, v10, v11), interpX(x0, dx, v01, v11), y0 + dy);
                         break;
                     case 5: case 10:
-                        iy = y0 + dy * (-v00 / (v01 - v00));
-                        ix = x0 + dx * (-v00 / (v10 - v00));
-                        double iy2b = y0 + dy * (-v10 / (v11 - v10));
-                        double ix2b = x0 + dx * (-v01 / (v11 - v01));
-                        segs.add(new double[]{x0, iy, x0 + dx, iy2b});
-                        segs.add(new double[]{ix, y0, ix2b, y0 + dy});
+                        addSegment(segs, x0, interpY(y0, dy, v00, v01), x0 + dx, interpY(y0, dy, v10, v11));
+                        addSegment(segs, interpX(x0, dx, v00, v10), y0, interpX(x0, dx, v01, v11), y0 + dy);
                         break;
                     case 6: case 9:
-                        ix = x0 + dx * (-v00 / (v10 - v00));
-                        iy = y0 + dy * (-v01 / (v11 - v01));
-                        segs.add(new double[]{ix, y0, x0 + dx * (-v01 / (v11 - v01)), y0 + dy});
+                        addSegment(segs, interpX(x0, dx, v00, v10), y0, interpX(x0, dx, v01, v11), y0 + dy);
                         break;
                     case 7: case 8:
-                        iy = y0 + dy * (-v00 / (v01 - v00));
-                        ix = x0 + dx * (-v01 / (v11 - v01));
-                        segs.add(new double[]{x0, iy, ix, y0 + dy});
+                        addSegment(segs, x0, interpY(y0, dy, v00, v01), interpX(x0, dx, v01, v11), y0 + dy);
                         break;
                 }
-                
+
                 for (double[] seg : segs) {
                     entries.add(new Entry((float) seg[0], (float) seg[1]));
                     entries.add(new Entry((float) seg[2], (float) seg[3]));
@@ -520,27 +546,23 @@ public class PlotActivity extends AppCompatActivity {
                 }
             }
         }
-        
-        allEntries.add(entries);
-        String label = "Imp: " + impExpr + " = 0";
-        allExpressions.add(label);
-        curveColors.add(getNextColor());
-        curveTypes.add("implicit");
-        
-        List<ILineDataSet> dataSets = new ArrayList<>();
-        LineDataSet dataSet = new LineDataSet(entries, label);
-        dataSet.setColor(curveColors.get(curveColors.size() - 1));
-        dataSet.setLineWidth(2f);
-        dataSet.setDrawCircles(false);
-        dataSet.setDrawValues(false);
-        dataSets.add(dataSet);
-        
-        if (!dataSets.isEmpty()) {
-            LineData lineData = new LineData(dataSets);
-            lineChart.setData(lineData);
-            lineChart.invalidate();
-        }
-        toast(getString(R.string.toast_implicit_plotted) + ": " + impExpr + " = 0");
+        return entries;
+    }
+
+    private double interpX(double x0, double dx, double v0, double v1) {
+        double denom = v1 - v0;
+        if (Math.abs(denom) < 1e-14) return x0 + dx * 0.5;
+        return x0 + dx * (-v0 / denom);
+    }
+
+    private double interpY(double y0, double dy, double v0, double v1) {
+        double denom = v1 - v0;
+        if (Math.abs(denom) < 1e-14) return y0 + dy * 0.5;
+        return y0 + dy * (-v0 / denom);
+    }
+
+    private void addSegment(List<double[]> segs, double x1, double y1, double x2, double y2) {
+        segs.add(new double[]{x1, y1, x2, y2});
     }
     
     private void plotOdeSolution(double[] xs, double[] ys, String expr) {
