@@ -5,6 +5,12 @@
     <string name="app_subtitle">Super Calculator</string>
     <string name="app_version">SuperCalc v1.0.1</string>
 
+    <!-- Bottom navigation -->
+    <string name="tab_calculate">Calculate</string>
+    <string name="tab_plot">Plot</string>
+    <string name="tab_stats">Stats</string>
+    <string name="tab_tools">Tools</string>
+
     <!-- Main calculator layout -->
     <string name="expr_label">Expression f(x)</string>
     <string name="expr_hint">e.g. x^2 + sin(x)</string>

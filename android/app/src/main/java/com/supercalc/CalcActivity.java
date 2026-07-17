@@ -8,9 +8,11 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.view.View;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.widget.NestedScrollView;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.card.MaterialCardView;
@@ -478,6 +480,42 @@ public class CalcActivity extends AppCompatActivity {
             if (!savedGuess.isEmpty() && guessInput != null) guessInput.setText(savedGuess);
             if (!savedResult.isEmpty() && resultView != null) resultView.setText(savedResult);
         }
+
+        // Bottom navigation: switch between functional modules
+        View sectionCalculate = findViewById(R.id.section_calculate);
+        View sectionPlot = findViewById(R.id.section_plot);
+        View sectionStats = findViewById(R.id.section_stats);
+        View sectionTools = findViewById(R.id.section_tools);
+        BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+        if (bottomNav != null) {
+            bottomNav.setOnItemSelectedListener(item -> {
+                int id = item.getItemId();
+                if (id == R.id.nav_calculate) {
+                    switchSection(sectionCalculate, sectionPlot, sectionStats, sectionTools);
+                    return true;
+                } else if (id == R.id.nav_plot) {
+                    switchSection(sectionPlot, sectionCalculate, sectionStats, sectionTools);
+                    return true;
+                } else if (id == R.id.nav_stats) {
+                    switchSection(sectionStats, sectionCalculate, sectionPlot, sectionTools);
+                    return true;
+                } else if (id == R.id.nav_tools) {
+                    switchSection(sectionTools, sectionCalculate, sectionPlot, sectionStats);
+                    return true;
+                }
+                return false;
+            });
+            // Default to calculate tab
+            switchSection(sectionCalculate, sectionPlot, sectionStats, sectionTools);
+        }
+    }
+
+    private void switchSection(View show, View... hide) {
+        if (show != null) show.setVisibility(View.VISIBLE);
+        for (View v : hide) {
+            if (v != null) v.setVisibility(View.GONE);
+        }
+        if (scrollView != null) scrollView.scrollTo(0, 0);
     }
 
     @Override

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_calculate"
+        android:icon="@drawable/ic_calculate"
+        android:title="@string/tab_calculate" />
+    <item
+        android:id="@+id/nav_plot"
+        android:icon="@drawable/ic_plot"
+        android:title="@string/tab_plot" />
+    <item
+        android:id="@+id/nav_stats"
+        android:icon="@drawable/ic_stats"
+        android:title="@string/tab_stats" />
+    <item
+        android:id="@+id/nav_tools"
+        android:icon="@drawable/ic_tools"
+        android:title="@string/tab_tools" />
+</menu>

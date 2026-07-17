@@ -5,6 +5,12 @@
     <string name="app_subtitle">超级计算器</string>
     <string name="app_version">SuperCalc v1.0.1</string>
 
+    <!-- Bottom navigation -->
+    <string name="tab_calculate">计算</string>
+    <string name="tab_plot">绘图</string>
+    <string name="tab_stats">统计</string>
+    <string name="tab_tools">工具</string>
+
     <!-- Main calculator layout -->
     <string name="expr_label">表达式 f(x)</string>
     <string name="expr_hint">例如 x^2 + sin(x)</string>
