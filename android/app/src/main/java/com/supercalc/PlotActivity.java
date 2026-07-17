@@ -85,8 +85,9 @@ public class PlotActivity extends AppCompatActivity {
         MaterialButton btnAddCurve = findViewById(R.id.btn_add_curve);
         MaterialButton btnPlot = findViewById(R.id.btn_plot_all);
         MaterialButton btnRemoveCurve = findViewById(R.id.btn_remove_curve);
+        MaterialButton btnFindIntersections = findViewById(R.id.btn_find_intersections);
         MaterialButton btnBack = findViewById(R.id.btn_back);
-        
+
         allEntries = new ArrayList<>();
         allExpressions = new ArrayList<>();
         curveColors = new ArrayList<>();
@@ -168,6 +169,7 @@ public class PlotActivity extends AppCompatActivity {
         btnAddCurve.setOnClickListener(v -> onAddCurve());
         btnPlot.setOnClickListener(v -> onPlotAll());
         btnRemoveCurve.setOnClickListener(v -> onRemoveCurve());
+        if (btnFindIntersections != null) btnFindIntersections.setOnClickListener(v -> onFindIntersections());
         btnBack.setOnClickListener(v -> finish());
         btnZoom.setOnClickListener(v -> openFullScreen());
         
@@ -1279,7 +1281,89 @@ public class PlotActivity extends AppCompatActivity {
         lineChart.invalidate();
         toast(getString(R.string.toast_plotted_curves, dataSets.size()));
     }
-    
+
+    private void onFindIntersections() {
+        List<Integer> regularIndices = new ArrayList<>();
+        for (int i = 0; i < curveTypes.size(); i++) {
+            if ("regular".equals(curveTypes.get(i))) {
+                regularIndices.add(i);
+            }
+        }
+        if (regularIndices.size() < 2) {
+            toast(getString(R.string.toast_need_two_curves));
+            return;
+        }
+
+        double xMin, xMax;
+        try {
+            xMin = Double.parseDouble(xMinInput.getText().toString().trim());
+            xMax = Double.parseDouble(xMaxInput.getText().toString().trim());
+        } catch (NumberFormatException e) {
+            toast(getString(R.string.toast_invalid_range));
+            return;
+        }
+        if (xMin >= xMax) {
+            toast(getString(R.string.toast_xmin_xmax));
+            return;
+        }
+
+        toast(getString(R.string.toast_finding_intersections));
+        new Thread(() -> {
+            List<Entry> intersections = new ArrayList<>();
+            int samples = 200;
+            double[] xs = new double[samples];
+            for (int i = 0; i < samples; i++) {
+                xs[i] = xMin + (xMax - xMin) * i / (samples - 1);
+            }
+
+            for (int a = 0; a < regularIndices.size(); a++) {
+                for (int b = a + 1; b < regularIndices.size(); b++) {
+                    int idxA = regularIndices.get(a);
+                    int idxB = regularIndices.get(b);
+                    String exprA = allExpressions.get(idxA);
+                    String exprB = allExpressions.get(idxB);
+                    String diffExpr = "(" + exprA + ")-(" + exprB + ")";
+
+                    double[] diffs = CalcEngine.evaluateArray(diffExpr, xs);
+                    if (diffs == null) continue;
+
+                    for (int i = 0; i < samples - 1; i++) {
+                        double d0 = diffs[i];
+                        double d1 = diffs[i + 1];
+                        if (Double.isNaN(d0) || Double.isNaN(d1)) continue;
+                        if (Math.abs(d0) < 1e-12) {
+                            double y = CalcEngine.evaluate(exprA, xs[i]);
+                            if (!Double.isNaN(y) && !Double.isInfinite(y)) {
+                                intersections.add(new Entry((float) xs[i], (float) y));
+                            }
+                        } else if (d0 * d1 < 0) {
+                            double root = CalcEngine.solveBisection(diffExpr, xs[i], xs[i + 1]);
+                            if (!Double.isNaN(root) && root >= xMin && root <= xMax) {
+                                double y = CalcEngine.evaluate(exprA, root);
+                                if (!Double.isNaN(y) && !Double.isInfinite(y)) {
+                                    intersections.add(new Entry((float) root, (float) y));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                if (intersections.isEmpty()) {
+                    toast(getString(R.string.toast_no_intersections));
+                    return;
+                }
+                for (Entry e : intersections) {
+                    markedPoints.add(e);
+                }
+                refreshMarkedPoints();
+                toast(getString(R.string.toast_intersections_found, intersections.size()));
+            });
+        }).start();
+    }
+
     private void openFullScreen() {
         if (allEntries.isEmpty()) {
             toast(getString(R.string.toast_plot_first));

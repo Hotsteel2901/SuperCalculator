@@ -7,6 +7,7 @@ import android.text.method.ScrollingMovementMethod;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.view.View;
 import android.widget.Toast;
@@ -31,6 +32,11 @@ import java.time.temporal.ChronoUnit;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.TreeSet;
 
 public class CalcActivity extends AppCompatActivity {
 
@@ -66,6 +72,16 @@ public class CalcActivity extends AppCompatActivity {
     private static final String PREFS_NAME = "SuperCalcPrefs";
     private static final String KEY_HISTORY = "calc_history";
 
+    // Dynamic parameters support
+    private LinearLayout dynamicParamsContainer;
+    private LinearLayout dynamicParamsInputs;
+    private final HashMap<String, EditText> dynamicParamInputs = new HashMap<>();
+    private static final Pattern PARAM_PATTERN = Pattern.compile("\\b([a-zA-Z]+)\\b");
+    private static final HashSet<String> KNOWN_FUNCTIONS = new HashSet<>(Arrays.asList(
+            "sin", "cos", "tan", "log", "ln", "exp", "sqrt", "abs", "floor", "ceil", "mod"));
+    private static final HashSet<String> KNOWN_CONSTANTS = new HashSet<>(Arrays.asList("pi", "e"));
+    private static final HashSet<String> INDEPENDENT_VARS = new HashSet<>(Arrays.asList("x", "y", "t"));
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,6 +92,18 @@ public class CalcActivity extends AppCompatActivity {
         aInput     = findViewById(R.id.a_input);
         bInput     = findViewById(R.id.b_input);
         guessInput = findViewById(R.id.guess_input);
+        dynamicParamsContainer = findViewById(R.id.dynamic_params_container);
+        dynamicParamsInputs = findViewById(R.id.dynamic_params_inputs);
+
+        if (exprInput != null) {
+            exprInput.addTextChangedListener(new android.text.TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+                @Override public void afterTextChanged(android.text.Editable s) {
+                    updateDynamicParamInputs();
+                }
+            });
+        }
         xParamInput = findViewById(R.id.x_param_input);
         yParamInput = findViewById(R.id.y_param_input);
         tMinInput  = findViewById(R.id.t_min_input);
@@ -530,10 +558,116 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private String getExpr()  { return exprInput != null ? exprInput.getText().toString().trim() : ""; }
+    private String getPreparedExpr() { return substituteParams(getExpr()); }
     private double getX()     { return parse(xInput); }
     private double getA()     { return parse(aInput); }
     private double getB()     { return parse(bInput); }
     private double getGuess() { return parse(guessInput); }
+
+    private TreeSet<String> detectParameters(String expr) {
+        TreeSet<String> params = new TreeSet<>();
+        String exprLower = expr.toLowerCase();
+        Matcher m = PARAM_PATTERN.matcher(exprLower);
+        while (m.find()) {
+            String word = m.group(1);
+            if (KNOWN_FUNCTIONS.contains(word) || KNOWN_CONSTANTS.contains(word) || INDEPENDENT_VARS.contains(word)) {
+                continue;
+            }
+            if (word.length() == 1) {
+                params.add(word);
+            } else {
+                params.add(word);
+            }
+        }
+        return params;
+    }
+
+    private void updateDynamicParamInputs() {
+        if (dynamicParamsInputs == null || dynamicParamsContainer == null) return;
+        String expr = getExpr();
+        TreeSet<String> params = detectParameters(expr);
+
+        HashMap<String, String> savedValues = new HashMap<>();
+        for (String param : dynamicParamInputs.keySet()) {
+            EditText et = dynamicParamInputs.get(param);
+            if (et != null) savedValues.put(param, et.getText().toString());
+        }
+        dynamicParamInputs.clear();
+        dynamicParamsInputs.removeAllViews();
+
+        if (params.isEmpty()) {
+            dynamicParamsContainer.setVisibility(View.GONE);
+            return;
+        }
+
+        dynamicParamsContainer.setVisibility(View.VISIBLE);
+        for (String param : params) {
+            android.widget.LinearLayout row = new android.widget.LinearLayout(this);
+            row.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT));
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setPadding(0, 4, 0, 4);
+
+            TextView label = new TextView(this);
+            label.setText(param + " =");
+            label.setTextColor(getResources().getColor(R.color.m3_on_surface, getTheme()));
+            label.setTextSize(14f);
+            label.setFontFamily(getResources().getFont(R.font.jetbrains_mono));
+            label.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT));
+            label.setPadding(0, 0, 12, 0);
+            row.addView(label);
+
+            EditText input = new EditText(this);
+            input.setText(savedValues.getOrDefault(param, "1"));
+            input.setTextColor(getResources().getColor(R.color.m3_on_surface, getTheme()));
+            input.setHintTextColor(getResources().getColor(R.color.m3_outline, getTheme()));
+            input.setTextSize(14f);
+            input.setFontFamily(getResources().getFont(R.font.jetbrains_mono));
+            input.setSingleLine(true);
+            input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER |
+                    android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL |
+                    android.text.InputType.TYPE_NUMBER_FLAG_SIGNED);
+            input.setHint(param);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+            input.setLayoutParams(lp);
+            row.addView(input);
+            dynamicParamsInputs.addView(row);
+            dynamicParamInputs.put(param, input);
+        }
+    }
+
+    private HashMap<String, Double> getDynamicParamValues() {
+        HashMap<String, Double> values = new HashMap<>();
+        for (String param : dynamicParamInputs.keySet()) {
+            EditText et = dynamicParamInputs.get(param);
+            if (et == null) continue;
+            try {
+                values.put(param, Double.parseDouble(et.getText().toString().trim()));
+            } catch (NumberFormatException e) {
+                values.put(param, 1.0);
+            }
+        }
+        return values;
+    }
+
+    private String substituteParams(String expr) {
+        HashMap<String, Double> values = getDynamicParamValues();
+        String result = expr;
+        for (String param : values.keySet()) {
+            String lowerParam = param.toLowerCase();
+            if (KNOWN_FUNCTIONS.contains(lowerParam) || KNOWN_CONSTANTS.contains(lowerParam) ||
+                    INDEPENDENT_VARS.contains(lowerParam)) {
+                continue;
+            }
+            String valStr = values.get(param).toString();
+            result = result.replaceAll("(?i)\\b" + Pattern.quote(param) + "\\b", valStr);
+        }
+        return result;
+    }
 
     private double parse(EditText e) {
         if (e == null) return 0.0;
@@ -569,35 +703,40 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private void onEvaluate() {
-        String e = getExpr(); if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String raw = getExpr(); if (raw.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String e = getPreparedExpr();
         double result = CalcEngine.evaluate(e, getX());
         appendResult(String.format(getString(R.string.result_fx), getX()), result);
-        recordHistory(e + " @ x=" + fmt(getX()), result);
+        recordHistory(raw + " @ x=" + fmt(getX()), result);
     }
 
     private void onDerivative() {
-        String e = getExpr(); if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String raw = getExpr(); if (raw.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String e = getPreparedExpr();
         double result = CalcEngine.derivative(e, getX(), 1e-6);
         appendResult(String.format(getString(R.string.result_f_prime_x), getX()), result);
-        recordHistory("d/dx(" + e + ") @ x=" + fmt(getX()), result);
+        recordHistory("d/dx(" + raw + ") @ x=" + fmt(getX()), result);
     }
 
     private void onDerivative2() {
-        String e = getExpr(); if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String raw = getExpr(); if (raw.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String e = getPreparedExpr();
         double result = CalcEngine.derivative2(e, getX(), 1e-6);
         appendResult(String.format(getString(R.string.result_f_double_prime_x), getX()), result);
-        recordHistory("d²/dx²(" + e + ") @ x=" + fmt(getX()), result);
+        recordHistory("d²/dx²(" + raw + ") @ x=" + fmt(getX()), result);
     }
 
     private void onIntegrate() {
-        String e = getExpr(); if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String raw = getExpr(); if (raw.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String e = getPreparedExpr();
         double result = CalcEngine.integrate(e, getA(), getB());
         appendResult(String.format(getString(R.string.result_integral), getA(), getB()), result);
-        recordHistory("∫(" + e + ") [" + fmt(getA()) + "," + fmt(getB()) + "]", result);
+        recordHistory("∫(" + raw + ") [" + fmt(getA()) + "," + fmt(getB()) + "]", result);
     }
 
     private void onSolve() {
-        String e = getExpr(); if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String raw = getExpr(); if (raw.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String e = getPreparedExpr();
         double root = CalcEngine.solve(e, getGuess(), getA(), getB());
         if (Double.isNaN(root)) {
             appendResult(getString(R.string.label_root), Double.NaN);
@@ -606,11 +745,12 @@ public class CalcActivity extends AppCompatActivity {
             resultView.append(String.format(getString(R.string.result_root_fval), CalcEngine.evaluate(e, root)) + "\n");
             scrollToResult();
         }
-        recordHistory("solve(" + e + ")=0", root);
+        recordHistory("solve(" + raw + ")=0", root);
     }
 
     private void onFindExtremum(boolean minimum) {
-        String e = getExpr(); if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String raw = getExpr(); if (raw.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String e = getPreparedExpr();
         double a = getA();
         double b = getB();
         double result;
@@ -624,14 +764,14 @@ public class CalcActivity extends AppCompatActivity {
         } else {
             resultView.append(String.format(getString(minimum ? R.string.result_min : R.string.result_max), result, CalcEngine.evaluate(e, result)) + "\n");
         }
-        recordHistory((minimum ? "min" : "max") + "(" + e + ") [" + fmt(a) + "," + fmt(b) + "]", result);
+        recordHistory((minimum ? "min" : "max") + "(" + raw + ") [" + fmt(a) + "," + fmt(b) + "]", result);
     }
 
     private void openPlot() {
         Intent intent = new Intent(this, PlotActivity.class);
-        String expr = getExpr();
-        if (!expr.isEmpty()) {
-            intent.putExtra("initial_expr", expr);
+        String raw = getExpr();
+        if (!raw.isEmpty()) {
+            intent.putExtra("initial_expr", getPreparedExpr());
             intent.putExtra("x_min", getA());
             intent.putExtra("x_max", getB());
         }
@@ -639,8 +779,9 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private void onScanRoots() {
-        String e = getExpr();
-        if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String raw = getExpr();
+        if (raw.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String e = getPreparedExpr();
         double a = getA();
         double b = getB();
         if (a >= b) { toast(getString(R.string.toast_a_less_b)); return; }
@@ -703,16 +844,17 @@ public class CalcActivity extends AppCompatActivity {
 
     private void openPlot3D() {
         Intent intent = new Intent(this, Plot3DActivity.class);
-        String expr = getExpr();
-        if (!expr.isEmpty()) {
-            intent.putExtra("initial_expr", expr);
+        String raw = getExpr();
+        if (!raw.isEmpty()) {
+            intent.putExtra("initial_expr", getPreparedExpr());
         }
         startActivity(intent);
     }
 
     private void onTangentNormal(boolean tangent) {
-        String e = getExpr();
-        if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String raw = getExpr();
+        if (raw.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String e = getPreparedExpr();
         double x0 = getX();
         double y0 = CalcEngine.evaluate(e, x0);
         double slope = CalcEngine.derivative(e, x0, 1e-6);
@@ -733,8 +875,9 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private void onArcLength() {
-        String e = getExpr();
-        if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String raw = getExpr();
+        if (raw.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String e = getPreparedExpr();
         double a = getA();
         double b = getB();
         if (a >= b) { toast(getString(R.string.toast_a_less_b)); return; }
@@ -765,10 +908,12 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private void onAreaBetweenCurves() {
-        String eF = getExpr();
-        String eG = areaGInput.getText().toString().trim();
-        if (eF.isEmpty()) { toast(getString(R.string.toast_enter_fx)); return; }
-        if (eG.isEmpty()) { toast(getString(R.string.toast_enter_gx)); return; }
+        String rawF = getExpr();
+        String rawG = areaGInput.getText().toString().trim();
+        if (rawF.isEmpty()) { toast(getString(R.string.toast_enter_fx)); return; }
+        if (rawG.isEmpty()) { toast(getString(R.string.toast_enter_gx)); return; }
+        String eF = getPreparedExpr();
+        String eG = substituteParams(rawG);
         double a = getA();
         double b = getB();
         if (a >= b) { toast(getString(R.string.toast_a_less_b)); return; }
@@ -783,8 +928,9 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private void onVolumeCompute() {
-        String eF = getExpr();
-        if (eF.isEmpty()) { toast(getString(R.string.toast_enter_fx)); return; }
+        String rawF = getExpr();
+        if (rawF.isEmpty()) { toast(getString(R.string.toast_enter_fx)); return; }
+        String eF = getPreparedExpr();
         double a = getA();
         double b = getB();
         if (a >= b) { toast(getString(R.string.toast_a_less_b)); return; }
@@ -793,8 +939,9 @@ public class CalcActivity extends AppCompatActivity {
         if ("disk".equals(volMode)) {
             result = CalcEngine.volumeDisk(eF, a, b);
         } else if ("washer".equals(volMode)) {
-            String eG = volGInput.getText().toString().trim();
-            if (eG.isEmpty()) { toast(getString(R.string.toast_enter_gx)); return; }
+            String rawG = volGInput.getText().toString().trim();
+            if (rawG.isEmpty()) { toast(getString(R.string.toast_enter_gx)); return; }
+            String eG = substituteParams(rawG);
             result = CalcEngine.volumeWasher(eF, eG, a, b);
         } else {
             result = CalcEngine.volumeShell(eF, a, b);
@@ -886,8 +1033,9 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private void onFFT() {
-        String e = getExpr();
-        if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String raw = getExpr();
+        if (raw.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String e = getPreparedExpr();
         double a = getA();
         double b = getB();
         if (a >= b) { toast(getString(R.string.toast_a_less_b)); return; }
@@ -966,8 +1114,9 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private void onLimit() {
-        String e = getExpr();
-        if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String raw = getExpr();
+        if (raw.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String e = getPreparedExpr();
         double a = getX();
 
         double left  = CalcEngine.limitLeft(e, a);
@@ -1003,8 +1152,9 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private void onLimitSide(boolean left) {
-        String e = getExpr();
-        if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String raw = getExpr();
+        if (raw.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String e = getPreparedExpr();
         double a = getX();
         double result;
         String label;
@@ -1034,8 +1184,9 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private void onTaylor() {
-        String e = getExpr();
-        if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String raw = getExpr();
+        if (raw.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String e = getPreparedExpr();
         double a = getX();
         int order = getTaylorOrder();
 
@@ -2148,8 +2299,9 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private void onTaylorPlot() {
-        String e = getExpr();
-        if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String raw = getExpr();
+        if (raw.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String e = getPreparedExpr();
         double a = getX();
         int order = getTaylorOrder();
 
@@ -3021,8 +3173,8 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private void onPlotParametric() {
-        String xExpr = xParamInput.getText().toString().trim();
-        String yExpr = yParamInput.getText().toString().trim();
+        String xExpr = substituteParams(xParamInput.getText().toString().trim());
+        String yExpr = substituteParams(yParamInput.getText().toString().trim());
         if (xExpr.isEmpty() || yExpr.isEmpty()) {
             toast(getString(R.string.toast_enter_xt_yt));
             return;
@@ -3068,7 +3220,7 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private void onPlotPolar() {
-        String rExpr = rPolarInput.getText().toString().trim();
+        String rExpr = substituteParams(rPolarInput.getText().toString().trim());
         if (rExpr.isEmpty()) {
             toast(getString(R.string.toast_enter_rtheta));
             return;
@@ -3126,7 +3278,7 @@ public class CalcActivity extends AppCompatActivity {
     private void onPlotImplicit() {
         EditText implicitExprInput = findViewById(R.id.implicit_expr_input);
         EditText implicitResInput = findViewById(R.id.implicit_resolution_input);
-        String impExpr = implicitExprInput.getText().toString().trim();
+        String impExpr = substituteParams(implicitExprInput.getText().toString().trim());
         if (impExpr.isEmpty()) {
             toast(getString(R.string.toast_enter_implicit));
             return;
@@ -3152,8 +3304,9 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private void onGenerateTable() {
-        String e = getExpr();
-        if (e.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String raw = getExpr();
+        if (raw.isEmpty()) { toast(getString(R.string.toast_enter_expr)); return; }
+        String e = getPreparedExpr();
         double a = getA();
         double b = getB();
         if (a >= b) { toast(getString(R.string.toast_table_range)); return; }

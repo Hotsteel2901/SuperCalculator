@@ -252,6 +252,8 @@
     <string name="toast_unknown_category">未知类别：%1$s</string>
     <string name="toast_invalid_unit">此类别的单位无效</string>
     <string name="toast_error_prefix">错误：{0}</string>
+    <string name="dynamic_params_label">动态参数</string>
+    <string name="dynamic_params_empty">未检测到额外参数</string>
     <string name="toast_no_valid_points">没有有效点可绘制</string>
     <string name="toast_parametric_plotted">参数曲线已绘制</string>
     <string name="toast_polar_plotted">极坐标曲线已绘制</string>
@@ -280,6 +282,10 @@
     <string name="toast_no_data_display">没有有效数据可显示</string>
     <string name="toast_plotted_curves">已绘制{0}条曲线</string>
     <string name="toast_plot_first">请先绘制曲线</string>
+    <string name="toast_need_two_curves">请至少添加两条普通曲线以查找交点</string>
+    <string name="toast_finding_intersections">正在查找交点…</string>
+    <string name="toast_no_intersections">当前范围内未找到交点</string>
+    <string name="toast_intersections_found">找到{0}个交点</string>
     <string name="toast_downsampled">已为全屏视图降采样</string>
     <string name="toast_no_plot_data">未收到绘图数据</string>
     <string name="toast_error_eval">表达式求值错误</string>

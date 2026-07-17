@@ -252,6 +252,8 @@
     <string name="toast_unknown_category">Unknown category: %1$s</string>
     <string name="toast_invalid_unit">Invalid unit for this category</string>
     <string name="toast_error_prefix">Error: {0}</string>
+    <string name="dynamic_params_label">Dynamic Parameters</string>
+    <string name="dynamic_params_empty">No extra parameters detected</string>
     <string name="toast_no_valid_points">No valid points to plot</string>
     <string name="toast_parametric_plotted">Parametric curve plotted</string>
     <string name="toast_polar_plotted">Polar curve plotted</string>
@@ -280,6 +282,10 @@
     <string name="toast_no_data_display">No valid data to display</string>
     <string name="toast_plotted_curves">Plotted {0} curve(s)</string>
     <string name="toast_plot_first">Plot some curves first</string>
+    <string name="toast_need_two_curves">Add at least two regular curves to find intersections</string>
+    <string name="toast_finding_intersections">Finding intersections…</string>
+    <string name="toast_no_intersections">No intersections found in current range</string>
+    <string name="toast_intersections_found">Found {0} intersection(s)</string>
     <string name="toast_downsampled">Downsampled for full screen view</string>
     <string name="toast_no_plot_data">No plot data received</string>
     <string name="toast_error_eval">Error evaluating expression</string>
