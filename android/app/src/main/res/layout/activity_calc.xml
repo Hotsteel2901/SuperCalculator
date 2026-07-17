@@ -22,6 +22,11 @@
             <Space android:layout_width="0dp" android:layout_height="24dp" />
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/app_name" android:textSize="32sp" android:textColor="@color/m3_on_surface" android:fontFamily="@font/outfit_regular" android:letterSpacing="-0.02" />
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/app_subtitle" android:textSize="13sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.08" android:layout_marginBottom="24dp" />
+            <LinearLayout
+                android:id="@+id/section_calculate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.SuperCalc.Card"
                 android:layout_width="match_parent"
@@ -52,11 +57,6 @@
                     <TextView android:id="@+id/result_view" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="120dp" android:background="@color/result_bg" android:padding="14dp" android:textSize="13sp" android:textColor="@color/result_text" android:fontFamily="@font/jetbrains_mono" android:lineSpacingExtra="4dp" android:scrollbars="vertical" android:text="@string/ready_msg" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-            <LinearLayout
-                android:id="@+id/section_calculate"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.SuperCalc.Card"
                 android:layout_width="match_parent"
@@ -107,54 +107,6 @@
                         <com.google.android.material.button.MaterialButton android:id="@+id/btn_custom_func_clear" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="@string/custom_func_clear_all" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp" app:strokeColor="@color/spectral_derivative" app:strokeWidth="1dp" />
                     </LinearLayout>
                     <TextView android:id="@+id/custom_func_list_view" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="32dp" android:background="@color/result_bg" android:padding="10dp" android:textSize="12sp" android:textColor="@color/result_text" android:fontFamily="@font/jetbrains_mono" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-            <com.google.android.material.card.MaterialCardView
-                style="@style/Widget.SuperCalc.Card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-                    <TextView android:text="@string/sparse_matrix_title" android:textSize="12sp" android:textColor="@color/spectral_evaluate" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-                    <TextView android:text="@string/sparse_matrix_hint" android:textSize="11sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/jetbrains_mono" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/sparse_matrix_hint_triplets" style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" app:hintTextColor="@color/m3_outline" android:layout_marginBottom="8dp">
-                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/sparse_matrix_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="0,0,4;0,1,1;1,0,1;1,1,3;1,2,2;2,1,2;2,2,5" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:singleLine="true" android:inputType="text" />
-                    </com.google.android.material.textfield.TextInputLayout>
-                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/sparse_matrix_hint_rhs" style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" app:hintTextColor="@color/m3_outline" android:layout_marginBottom="8dp">
-                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/sparse_rhs_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="1,2,3" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:singleLine="true" android:inputType="text" />
-                    </com.google.android.material.textfield.TextInputLayout>
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
-                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_sparse_to_dense" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="@string/sparse_matrix_to_dense" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp" app:strokeColor="@color/spectral_evaluate" app:strokeWidth="1dp" />
-                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_sparse_spmv" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="@string/sparse_matrix_spmv" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp" app:strokeColor="@color/spectral_derivative" app:strokeWidth="1dp" />
-                    </LinearLayout>
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
-                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_sparse_solve_cg" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="@string/sparse_matrix_solve_cg" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" app:strokeColor="@color/spectral_integrate" app:strokeWidth="1dp" />
-                    </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-            <com.google.android.material.card.MaterialCardView
-                style="@style/Widget.SuperCalc.Card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-                    <TextView android:text="@string/conv_title" android:textSize="12sp" android:textColor="@color/spectral_evaluate" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-                    <TextView android:text="@string/conv_hint" android:textSize="11sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/jetbrains_mono" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/conv_hint_seq_a" style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" app:hintTextColor="@color/m3_outline" android:layout_marginBottom="8dp">
-                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/conv_seq_a_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="1, 2, 3" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:singleLine="true" android:inputType="text" />
-                    </com.google.android.material.textfield.TextInputLayout>
-                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/conv_hint_seq_b" style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" app:hintTextColor="@color/m3_outline" android:layout_marginBottom="8dp">
-                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/conv_seq_b_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="4, 5, 6" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:singleLine="true" android:inputType="text" />
-                    </com.google.android.material.textfield.TextInputLayout>
-                    <com.google.android.material.button.MaterialButton android:id="@+id/btn_convolve" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="match_parent" android:layout_height="48dp" android:text="@string/conv_compute" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" app:strokeColor="@color/spectral_evaluate" app:strokeWidth="1dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
             <com.google.android.material.card.MaterialCardView
@@ -262,12 +214,12 @@
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
             <LinearLayout
                 android:id="@+id/section_plot"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
-            </LinearLayout>
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.SuperCalc.Card"
                 android:layout_width="match_parent"
@@ -384,7 +336,6 @@
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-            <!-- Vector Field Card -->
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.SuperCalc.Card"
                 android:layout_width="match_parent"
@@ -620,12 +571,12 @@
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
             <LinearLayout
                 android:id="@+id/section_stats"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
-            </LinearLayout>
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.SuperCalc.Card"
                 android:layout_width="match_parent"
@@ -723,12 +674,139 @@
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.SuperCalc.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <TextView android:text="@string/data_import_title" android:textSize="12sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_data_import" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="@string/data_import_csv" android:textSize="11sp" app:cornerRadius="10dp" android:layout_marginEnd="4dp" app:strokeColor="@color/spectral_evaluate" app:strokeWidth="1dp" />
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_data_plot" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="@string/data_plot" android:textSize="11sp" app:cornerRadius="10dp" android:layout_marginEnd="4dp" app:strokeColor="@color/spectral_integrate" app:strokeWidth="1dp" />
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_data_clear" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="@string/data_clear" android:textSize="11sp" app:cornerRadius="10dp" app:strokeColor="@color/spectral_solve" app:strokeWidth="1dp" />
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp">
+                        <TextView android:text="@string/data_x_col_label" android:textSize="11sp" android:textColor="@color/m3_on_surface" android:fontFamily="@font/outfit_regular" android:layout_gravity="center_vertical" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                        <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" android:layout_width="48dp" android:layout_height="wrap_content" android:layout_marginStart="4dp" android:layout_marginEnd="8dp">
+                            <com.google.android.material.textfield.TextInputEditText android:id="@+id/data_x_col" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="0" android:fontFamily="@font/jetbrains_mono" android:textSize="12sp" android:inputType="number" android:minHeight="36dp" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                        <TextView android:text="@string/data_y_col_label" android:textSize="11sp" android:textColor="@color/m3_on_surface" android:fontFamily="@font/outfit_regular" android:layout_gravity="center_vertical" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                        <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" android:layout_width="48dp" android:layout_height="wrap_content" android:layout_marginStart="4dp" android:layout_marginEnd="8dp">
+                            <com.google.android.material.textfield.TextInputEditText android:id="@+id/data_y_col" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="1" android:fontFamily="@font/jetbrains_mono" android:textSize="12sp" android:inputType="number" android:minHeight="36dp" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                        <TextView android:text="@string/data_trend_label" android:textSize="11sp" android:textColor="@color/m3_on_surface" android:fontFamily="@font/outfit_regular" android:layout_gravity="center_vertical" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                        <AutoCompleteTextView android:id="@+id/data_trend_spinner" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/data_trend_none" android:textSize="11sp" android:fontFamily="@font/jetbrains_mono" android:inputType="none" android:layout_marginStart="4dp" />
+                    </LinearLayout>
+                    <TextView android:id="@+id/data_status_view" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:fontFamily="@font/jetbrains_mono" android:textSize="11sp" android:textColor="@color/m3_on_surface_variant" android:layout_marginTop="8dp" android:textIsSelectable="true" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.SuperCalc.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <TextView android:text="@string/interp_title" android:textSize="12sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="4dp">
+                        <TextView android:text="@string/interp_method_label" android:textSize="11sp" android:textColor="@color/m3_on_surface" android:fontFamily="@font/outfit_regular" android:layout_gravity="center_vertical" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                        <AutoCompleteTextView android:id="@+id/interp_method_spinner" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/interp_linear" android:textSize="11sp" android:fontFamily="@font/jetbrains_mono" android:inputType="none" android:layout_marginStart="8dp" />
+                    </LinearLayout>
+                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/interp_data_hint">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/interp_data_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="0,0; 1,1; 2,4; 3,9; 4,16" android:fontFamily="@font/jetbrains_mono" android:textSize="13sp" android:inputType="text" android:singleLine="true" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp">
+                        <TextView android:text="@string/interp_eval_x" android:textSize="11sp" android:textColor="@color/m3_on_surface" android:fontFamily="@font/outfit_regular" android:layout_gravity="center_vertical" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                        <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" android:layout_width="80dp" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_marginEnd="8dp">
+                            <com.google.android.material.textfield.TextInputEditText android:id="@+id/interp_eval_x_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="2.5" android:fontFamily="@font/jetbrains_mono" android:textSize="12sp" android:inputType="numberDecimal" android:singleLine="true" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_interp_compute" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="@string/interp_compute" android:textSize="11sp" app:cornerRadius="10dp" android:layout_marginEnd="4dp" app:strokeColor="@color/spectral_evaluate" app:strokeWidth="1dp" />
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_interp_plot" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="@string/interp_plot" android:textSize="11sp" app:cornerRadius="10dp" app:strokeColor="@color/spectral_integrate" app:strokeWidth="1dp" />
+                    </LinearLayout>
+                    <TextView android:id="@+id/interp_result_view" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:background="@color/result_bg" android:padding="8dp" android:layout_marginTop="8dp" android:textIsSelectable="true" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.SuperCalc.Card"
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                android:layout_marginBottom="12dp"
+                android:visibility="gone"
+                android:id="@+id/graph_card">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <TextView android:text="@string/function_graph" android:textSize="12sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <com.github.mikephil.charting.charts.LineChart
+                        android:id="@+id/line_chart"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
             <LinearLayout
                 android:id="@+id/section_tools"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
-            </LinearLayout>
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.SuperCalc.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <TextView android:text="@string/sparse_matrix_title" android:textSize="12sp" android:textColor="@color/spectral_evaluate" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <TextView android:text="@string/sparse_matrix_hint" android:textSize="11sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/jetbrains_mono" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/sparse_matrix_hint_triplets" style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" app:hintTextColor="@color/m3_outline" android:layout_marginBottom="8dp">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/sparse_matrix_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="0,0,4;0,1,1;1,0,1;1,1,3;1,2,2;2,1,2;2,2,5" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:singleLine="true" android:inputType="text" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/sparse_matrix_hint_rhs" style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" app:hintTextColor="@color/m3_outline" android:layout_marginBottom="8dp">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/sparse_rhs_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="1,2,3" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:singleLine="true" android:inputType="text" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_sparse_to_dense" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="@string/sparse_matrix_to_dense" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp" app:strokeColor="@color/spectral_evaluate" app:strokeWidth="1dp" />
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_sparse_spmv" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="@string/sparse_matrix_spmv" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp" app:strokeColor="@color/spectral_derivative" app:strokeWidth="1dp" />
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_sparse_solve_cg" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="@string/sparse_matrix_solve_cg" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" app:strokeColor="@color/spectral_integrate" app:strokeWidth="1dp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.SuperCalc.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <TextView android:text="@string/conv_title" android:textSize="12sp" android:textColor="@color/spectral_evaluate" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <TextView android:text="@string/conv_hint" android:textSize="11sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/jetbrains_mono" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/conv_hint_seq_a" style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" app:hintTextColor="@color/m3_outline" android:layout_marginBottom="8dp">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/conv_seq_a_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="1, 2, 3" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:singleLine="true" android:inputType="text" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/conv_hint_seq_b" style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" app:hintTextColor="@color/m3_outline" android:layout_marginBottom="8dp">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/conv_seq_b_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="4, 5, 6" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:singleLine="true" android:inputType="text" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.button.MaterialButton android:id="@+id/btn_convolve" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="match_parent" android:layout_height="48dp" android:text="@string/conv_compute" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" app:strokeColor="@color/spectral_evaluate" app:strokeWidth="1dp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.SuperCalc.Card"
                 android:layout_width="match_parent"
@@ -1022,7 +1100,6 @@
                     <TextView android:id="@+id/prob_result_view" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:background="@color/result_bg" android:padding="8dp" android:layout_marginTop="8dp" android:textIsSelectable="true" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-            <!-- Finance Calculator Card -->
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.SuperCalc.Card"
                 android:layout_width="match_parent"
@@ -1082,66 +1159,6 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="16dp">
-                    <TextView android:text="@string/data_import_title" android:textSize="12sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_data_import" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="@string/data_import_csv" android:textSize="11sp" app:cornerRadius="10dp" android:layout_marginEnd="4dp" app:strokeColor="@color/spectral_evaluate" app:strokeWidth="1dp" />
-                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_data_plot" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="@string/data_plot" android:textSize="11sp" app:cornerRadius="10dp" android:layout_marginEnd="4dp" app:strokeColor="@color/spectral_integrate" app:strokeWidth="1dp" />
-                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_data_clear" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="@string/data_clear" android:textSize="11sp" app:cornerRadius="10dp" app:strokeColor="@color/spectral_solve" app:strokeWidth="1dp" />
-                    </LinearLayout>
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp">
-                        <TextView android:text="@string/data_x_col_label" android:textSize="11sp" android:textColor="@color/m3_on_surface" android:fontFamily="@font/outfit_regular" android:layout_gravity="center_vertical" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-                        <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" android:layout_width="48dp" android:layout_height="wrap_content" android:layout_marginStart="4dp" android:layout_marginEnd="8dp">
-                            <com.google.android.material.textfield.TextInputEditText android:id="@+id/data_x_col" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="0" android:fontFamily="@font/jetbrains_mono" android:textSize="12sp" android:inputType="number" android:minHeight="36dp" />
-                        </com.google.android.material.textfield.TextInputLayout>
-                        <TextView android:text="@string/data_y_col_label" android:textSize="11sp" android:textColor="@color/m3_on_surface" android:fontFamily="@font/outfit_regular" android:layout_gravity="center_vertical" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-                        <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" android:layout_width="48dp" android:layout_height="wrap_content" android:layout_marginStart="4dp" android:layout_marginEnd="8dp">
-                            <com.google.android.material.textfield.TextInputEditText android:id="@+id/data_y_col" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="1" android:fontFamily="@font/jetbrains_mono" android:textSize="12sp" android:inputType="number" android:minHeight="36dp" />
-                        </com.google.android.material.textfield.TextInputLayout>
-                        <TextView android:text="@string/data_trend_label" android:textSize="11sp" android:textColor="@color/m3_on_surface" android:fontFamily="@font/outfit_regular" android:layout_gravity="center_vertical" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-                        <AutoCompleteTextView android:id="@+id/data_trend_spinner" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/data_trend_none" android:textSize="11sp" android:fontFamily="@font/jetbrains_mono" android:inputType="none" android:layout_marginStart="4dp" />
-                    </LinearLayout>
-                    <TextView android:id="@+id/data_status_view" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:fontFamily="@font/jetbrains_mono" android:textSize="11sp" android:textColor="@color/m3_on_surface_variant" android:layout_marginTop="8dp" android:textIsSelectable="true" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-            <com.google.android.material.card.MaterialCardView
-                style="@style/Widget.SuperCalc.Card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-                    <TextView android:text="@string/interp_title" android:textSize="12sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="4dp">
-                        <TextView android:text="@string/interp_method_label" android:textSize="11sp" android:textColor="@color/m3_on_surface" android:fontFamily="@font/outfit_regular" android:layout_gravity="center_vertical" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-                        <AutoCompleteTextView android:id="@+id/interp_method_spinner" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/interp_linear" android:textSize="11sp" android:fontFamily="@font/jetbrains_mono" android:inputType="none" android:layout_marginStart="8dp" />
-                    </LinearLayout>
-                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/interp_data_hint">
-                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/interp_data_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="0,0; 1,1; 2,4; 3,9; 4,16" android:fontFamily="@font/jetbrains_mono" android:textSize="13sp" android:inputType="text" android:singleLine="true" />
-                    </com.google.android.material.textfield.TextInputLayout>
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp">
-                        <TextView android:text="@string/interp_eval_x" android:textSize="11sp" android:textColor="@color/m3_on_surface" android:fontFamily="@font/outfit_regular" android:layout_gravity="center_vertical" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-                        <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" android:layout_width="80dp" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_marginEnd="8dp">
-                            <com.google.android.material.textfield.TextInputEditText android:id="@+id/interp_eval_x_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="2.5" android:fontFamily="@font/jetbrains_mono" android:textSize="12sp" android:inputType="numberDecimal" android:singleLine="true" />
-                        </com.google.android.material.textfield.TextInputLayout>
-                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_interp_compute" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="@string/interp_compute" android:textSize="11sp" app:cornerRadius="10dp" android:layout_marginEnd="4dp" app:strokeColor="@color/spectral_evaluate" app:strokeWidth="1dp" />
-                        <com.google.android.material.button.MaterialButton android:id="@+id/btn_interp_plot" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="40dp" android:text="@string/interp_plot" android:textSize="11sp" app:cornerRadius="10dp" app:strokeColor="@color/spectral_integrate" app:strokeWidth="1dp" />
-                    </LinearLayout>
-                    <TextView android:id="@+id/interp_result_view" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:background="@color/result_bg" android:padding="8dp" android:layout_marginTop="8dp" android:textIsSelectable="true" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-            <com.google.android.material.card.MaterialCardView
-                style="@style/Widget.SuperCalc.Card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
                     <TextView android:text="@string/laplace_title" android:textSize="12sp" android:textColor="@color/spectral_integrate" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
                         <com.google.android.material.textfield.TextInputLayout android:layout_width="0dp" android:layout_weight="2" android:layout_height="wrap_content" android:hint="@string/laplace_hint_expr" style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" app:hintTextColor="@color/m3_outline" android:layout_marginEnd="4dp">
@@ -1155,25 +1172,6 @@
                         <com.google.android.material.button.MaterialButton android:id="@+id/btn_laplace_forward" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="@string/laplace_forward" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" android:layout_marginEnd="6dp" app:strokeColor="@color/spectral_integrate" app:strokeWidth="1dp" />
                         <com.google.android.material.button.MaterialButton android:id="@+id/btn_laplace_inverse" style="@style/Widget.Material3.Button.TonalButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:text="@string/laplace_inverse" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" app:cornerRadius="14dp" app:strokeColor="@color/spectral_evaluate" app:strokeWidth="1dp" />
                     </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-            <com.google.android.material.card.MaterialCardView
-                style="@style/Widget.SuperCalc.Card"
-                android:layout_width="match_parent"
-                android:layout_height="300dp"
-                android:layout_marginBottom="12dp"
-                android:visibility="gone"
-                android:id="@+id/graph_card">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-                    <TextView android:text="@string/function_graph" android:textSize="12sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-                    <com.github.mikephil.charting.charts.LineChart
-                        android:id="@+id/line_chart"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
