@@ -613,7 +613,7 @@ public class CalcActivity extends AppCompatActivity {
             label.setText(param + " =");
             label.setTextColor(getResources().getColor(R.color.m3_on_surface, getTheme()));
             label.setTextSize(14f);
-            label.setFontFamily(getResources().getFont(R.font.jetbrains_mono));
+            label.setTypeface(getResources().getFont(R.font.jetbrains_mono));
             label.setLayoutParams(new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -625,7 +625,7 @@ public class CalcActivity extends AppCompatActivity {
             input.setTextColor(getResources().getColor(R.color.m3_on_surface, getTheme()));
             input.setHintTextColor(getResources().getColor(R.color.m3_outline, getTheme()));
             input.setTextSize(14f);
-            input.setFontFamily(getResources().getFont(R.font.jetbrains_mono));
+            input.setTypeface(getResources().getFont(R.font.jetbrains_mono));
             input.setSingleLine(true);
             input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER |
                     android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL |
