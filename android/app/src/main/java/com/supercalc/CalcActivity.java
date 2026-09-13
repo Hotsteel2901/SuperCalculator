@@ -1,10 +1,19 @@
 package com.supercalc;
 
+import android.animation.ArgbEvaluator;
+import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.OvershootInterpolator;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
@@ -15,7 +24,6 @@ import androidx.core.widget.NestedScrollView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.card.MaterialCardView;
-import com.example.liquidglass.LiquidGlassTabBar;
 import com.example.liquidglass.LiquidGlassView;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
@@ -32,8 +40,7 @@ import java.time.temporal.ChronoUnit;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import kotlin.Unit;
-import kotlin.jvm.functions.Function1;
+import android.widget.LinearLayout;
 
 public class CalcActivity extends AppCompatActivity {
 
@@ -72,8 +79,14 @@ public class CalcActivity extends AppCompatActivity {
 
     /** One page per tool category, switched by the glass tab bar. */
     private View[] categoryPages;
-    private LiquidGlassTabBar categoryTabs;
+    private LiquidGlassView categoryTabs;
+    private LinearLayout categoryRow;
+    private View categoryIndicator;
+    private final List<TextView> categoryLabels = new ArrayList<>();
+    private final ArgbEvaluator argbEvaluator = new ArgbEvaluator();
     private int categoryIndex = 0;
+    private static final int TAB_COLOR_ACTIVE = 0xFFFFFFFF;
+    private static final int TAB_COLOR_INACTIVE = 0xB8FFFFFF;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,15 +120,12 @@ public class CalcActivity extends AppCompatActivity {
         // Scroll-to-top affordance for the long category pages.
         View fabTop = findViewById(R.id.fab_scroll_top);
         if (fabTop != null && scrollView != null) {
-            fabTop.setOnClickListener(v -> scrollView.smoothScrollTo(0, 0));
+            fabTop.setOnClickListener(v -> animateScrollToTop());
             // NestedScrollView declares its own OnScrollChangeListener, which
             // makes a bare lambda ambiguous; pin it to the View interface.
             scrollView.setOnScrollChangeListener(
                     (View.OnScrollChangeListener) (v, scrollX, scrollY, oldX, oldY) -> {
-                        boolean show = scrollY > 700;
-                        if (show != (fabTop.getVisibility() == View.VISIBLE)) {
-                            fabTop.setVisibility(show ? View.VISIBLE : View.GONE);
-                        }
+                        setFabShown(fabTop, scrollY > 700);
                     });
         }
 
@@ -499,6 +509,8 @@ public class CalcActivity extends AppCompatActivity {
      */
     private void setupToolCategories() {
         categoryTabs = findViewById(R.id.category_tabs);
+        categoryRow = findViewById(R.id.category_row);
+        categoryIndicator = findViewById(R.id.category_indicator);
         categoryPages = new View[]{
                 findViewById(R.id.page_basic),
                 findViewById(R.id.page_plot),
@@ -511,31 +523,179 @@ public class CalcActivity extends AppCompatActivity {
         // Glass only updates when told to; scrolling must re-capture the backdrop.
         LiquidGlassView headerGlass = findViewById(R.id.header_glass);
         if (headerGlass != null) headerGlass.setEnableDynamicBackground(true);
-        if (categoryTabs == null) return;
-        categoryTabs.setEnableDynamicBackground(true);
+        if (categoryTabs != null) categoryTabs.setEnableDynamicBackground(true);
+        buildCategoryTabs();
+    }
 
-        categoryTabs.setOnTabSelected(new Function1<Integer, Unit>() {
-            @Override
-            public Unit invoke(Integer index) {
-                showToolCategory(index == null ? 0 : index, true);
-                return Unit.INSTANCE;
+    /**
+     * Builds one equal-width cell per category. The library's own tab bar draws
+     * a refractive lens over the selected label, which both skews the glyphs and
+     * leaves them off-centre; laying the row out here keeps every label centred
+     * and crisp, with the indicator sliding underneath it.
+     */
+    private void buildCategoryTabs() {
+        if (categoryRow == null) return;
+        CharSequence[] titles = getResources().getTextArray(R.array.category_tabs);
+        categoryRow.removeAllViews();
+        categoryLabels.clear();
+        for (int i = 0; i < titles.length; i++) {
+            final int index = i;
+            TextView label = new TextView(this);
+            label.setText(titles[i]);
+            label.setTextSize(13f);
+            label.setGravity(Gravity.CENTER);
+            label.setSingleLine(true);
+            label.setEllipsize(TextUtils.TruncateAt.END);
+            label.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+            label.setTextColor(TAB_COLOR_INACTIVE);
+            label.setLayoutParams(new LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+            label.setOnClickListener(v -> showToolCategory(index, true));
+            categoryRow.addView(label);
+            categoryLabels.add(label);
+        }
+        categoryRow.post(this::syncCategoryIndicator);
+    }
+
+    private int categoryCellWidth() {
+        if (categoryRow == null || categoryLabels.isEmpty()) return 0;
+        return categoryRow.getWidth() / categoryLabels.size();
+    }
+
+    private int categoryIndicatorWidth(int cell) {
+        return Math.max(dp(28), cell - dp(12));
+    }
+
+    /** Place the indicator without animation (first layout / state restore). */
+    private void syncCategoryIndicator() {
+        int cell = categoryCellWidth();
+        if (cell <= 0 || categoryIndicator == null) return;
+        int width = categoryIndicatorWidth(cell);
+        ViewGroup.LayoutParams lp = categoryIndicator.getLayoutParams();
+        if (lp.width != width) {
+            lp.width = width;
+            categoryIndicator.setLayoutParams(lp);
+        }
+        categoryIndicator.animate().cancel();
+        categoryIndicator.setTranslationX(categoryIndex * cell + (cell - width) / 2f);
+    }
+
+    /** Slide the indicator with a decelerating curve. */
+    private void animateCategoryIndicator() {
+        int cell = categoryCellWidth();
+        if (cell <= 0 || categoryIndicator == null) return;
+        int width = categoryIndicatorWidth(cell);
+        ViewGroup.LayoutParams lp = categoryIndicator.getLayoutParams();
+        if (lp.width != width) {
+            lp.width = width;
+            categoryIndicator.setLayoutParams(lp);
+        }
+        categoryIndicator.animate().cancel();
+        categoryIndicator.animate()
+                .translationX(categoryIndex * cell + (cell - width) / 2f)
+                .setDuration(320)
+                .setInterpolator(new DecelerateInterpolator(1.7f))
+                .start();
+    }
+
+    private void animateCategoryLabels() {
+        for (int i = 0; i < categoryLabels.size(); i++) {
+            TextView label = categoryLabels.get(i);
+            final int to = (i == categoryIndex) ? TAB_COLOR_ACTIVE : TAB_COLOR_INACTIVE;
+            final int from = label.getCurrentTextColor();
+            if (from == to) {
+                label.setTextColor(to);
+                continue;
             }
-        });
+            ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
+            animator.setDuration(240);
+            animator.setInterpolator(new DecelerateInterpolator());
+            animator.addUpdateListener(a -> label.setTextColor(
+                    (int) argbEvaluator.evaluate((float) a.getAnimatedValue(), from, to)));
+            animator.start();
+        }
     }
 
     private void showToolCategory(int index, boolean scrollToTop) {
         if (categoryPages == null || index < 0 || index >= categoryPages.length) return;
         categoryIndex = index;
-        if (categoryTabs != null && categoryTabs.getSelectedIndex() != index) {
-            categoryTabs.setSelectedIndex(index);
-        }
         for (int i = 0; i < categoryPages.length; i++) {
             View page = categoryPages[i];
             if (page != null) {
                 page.setVisibility(i == index ? View.VISIBLE : View.GONE);
             }
         }
-        if (scrollToTop && scrollView != null) scrollView.smoothScrollTo(0, 0);
+        // Jump instead of animating the scroll: animating while swapping pages
+        // made the old content slide out underneath the new one.
+        if (scrollToTop && scrollView != null) scrollView.scrollTo(0, 0);
+        if (scrollToTop && categoryPages[index] != null) animatePageIn(categoryPages[index]);
+        animateCategoryLabels();
+        if (scrollToTop) {
+            animateCategoryIndicator();
+        } else {
+            categoryRow.post(this::syncCategoryIndicator);
+        }
+    }
+
+    /** Staggered, decelerating entrance for the cards of the page coming in. */
+    private void animatePageIn(View page) {
+        if (!(page instanceof ViewGroup)) return;
+        ViewGroup group = (ViewGroup) page;
+        int count = group.getChildCount();
+        for (int i = 0; i < count; i++) {
+            View card = group.getChildAt(i);
+            card.animate().cancel();
+            card.setAlpha(0f);
+            card.setTranslationY(dp(18));
+            card.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setStartDelay(Math.min(i, 8) * 28L)
+                    .setDuration(320)
+                    .setInterpolator(new DecelerateInterpolator(1.7f))
+                    .start();
+        }
+    }
+
+    /** Non-linear scroll: fast start, long deceleration. */
+    private void animateScrollToTop() {
+        if (scrollView == null) return;
+        int start = scrollView.getScrollY();
+        if (start <= 0) return;
+        ValueAnimator animator = ValueAnimator.ofInt(start, 0);
+        animator.setDuration(Math.min(560, 240 + start / 4));
+        animator.setInterpolator(new DecelerateInterpolator(1.9f));
+        animator.addUpdateListener(a -> scrollView.scrollTo(0, (int) a.getAnimatedValue()));
+        animator.start();
+    }
+
+    /** Pop the scroll-to-top button in, ease it out. */
+    private void setFabShown(View fab, boolean show) {
+        boolean visible = fab.getVisibility() == View.VISIBLE;
+        if (show && !visible) {
+            fab.animate().cancel();
+            fab.setVisibility(View.VISIBLE);
+            fab.setAlpha(0f);
+            fab.setScaleX(0.72f);
+            fab.setScaleY(0.72f);
+            fab.animate()
+                    .alpha(1f).scaleX(1f).scaleY(1f)
+                    .setDuration(260)
+                    .setInterpolator(new OvershootInterpolator(0.9f))
+                    .start();
+        } else if (!show && visible) {
+            fab.animate().cancel();
+            fab.animate()
+                    .alpha(0f).scaleX(0.72f).scaleY(0.72f)
+                    .setDuration(170)
+                    .setInterpolator(new AccelerateInterpolator())
+                    .withEndAction(() -> fab.setVisibility(View.GONE))
+                    .start();
+        }
+    }
+
+    private int dp(float value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
     @Override
@@ -4073,22 +4233,71 @@ public class CalcActivity extends AppCompatActivity {
             for (int i = 0; i < parts.length; i++) {
                 cf[i] = Double.parseDouble(parts[i].trim());
             }
-            // Newton-Raphson
-            double r = 0.1;
-            for (int iter = 0; iter < 200; iter++) {
-                double pv = 0, dpv = 0;
-                for (int t = 0; t < cf.length; t++) {
-                    pv += cf[t] / Math.pow(1 + r, t);
-                    if (t > 0) dpv += -t * cf[t] / Math.pow(1 + r, t + 1);
-                }
-                if (Math.abs(dpv) < 1e-18) break;
-                double rNew = r - pv / dpv;
-                if (Math.abs(rNew - r) < 1e-10) { r = rNew; break; }
-                r = rNew;
+            double scale = 0;
+            for (double c : cf) scale += Math.abs(c);
+            double rate = findIrr(cf, 1e-8 * Math.max(1.0, scale));
+            if (Double.isNaN(rate)) {
+                // Previously the diverged Newton value was printed as the answer
+                // (e.g. "IRR: 2.6e12%" for cash flows with no sign change).
+                finResultView.setText(getString(R.string.fin_result_irr_failed));
+                return;
             }
-            double irr = r * 100;
-            finResultView.setText(String.format(getString(R.string.fin_result_irr), irr));
+            finResultView.setText(String.format(getString(R.string.fin_result_irr), rate * 100));
         } catch (Exception ex) { toast(getString(R.string.fin_invalid_input)); }
+    }
+
+    /** Net present value of a cash-flow series at the given periodic rate. */
+    private static double npvAt(double[] cf, double r) {
+        double pv = 0;
+        for (int t = 0; t < cf.length; t++) pv += cf[t] / Math.pow(1 + r, t);
+        return pv;
+    }
+
+    /**
+     * IRR via a clamped Newton-Raphson iteration, verified by the residual NPV
+     * and backed by a bracketing bisection. Returns NaN when the series has no
+     * root inside (-99%, 1000%) instead of reporting a diverged value.
+     */
+    private static double findIrr(double[] cf, double tol) {
+        double r = 0.1;
+        for (int iter = 0; iter < 200; iter++) {
+            double pv = 0, dpv = 0;
+            for (int t = 0; t < cf.length; t++) {
+                pv += cf[t] / Math.pow(1 + r, t);
+                if (t > 0) dpv += -t * cf[t] / Math.pow(1 + r, t + 1);
+            }
+            if (Math.abs(pv) <= tol) return r;
+            if (Math.abs(dpv) < 1e-18) break;
+            double next = r - pv / dpv;
+            if (Double.isNaN(next) || Double.isInfinite(next)) break;
+            if (next <= -0.99) next = -0.99;
+            else if (next >= 10.0) next = 10.0;
+            boolean stuck = Math.abs(next - r) < 1e-14;
+            r = next;
+            if (stuck) break;
+        }
+        if (Math.abs(npvAt(cf, r)) <= tol) return r;
+
+        // Fallback: scan for a sign change, then bisect that bracket.
+        double lo = -0.99, hi = 10.0, step = 0.01;
+        double prevR = lo, prev = npvAt(cf, lo);
+        for (double x = lo + step; x <= hi; x += step) {
+            double cur = npvAt(cf, x);
+            if (prev == 0) return prevR;
+            if (prev * cur < 0) {
+                double a = prevR, b = x;
+                for (int i = 0; i < 200; i++) {
+                    double mid = (a + b) / 2;
+                    double v = npvAt(cf, mid);
+                    if (Math.abs(v) <= tol || (b - a) < 1e-12) return mid;
+                    if (npvAt(cf, a) * v <= 0) b = mid; else a = mid;
+                }
+                return (a + b) / 2;
+            }
+            prevR = x;
+            prev = cur;
+        }
+        return Double.NaN;
     }
 
     private void onFinDepr() {

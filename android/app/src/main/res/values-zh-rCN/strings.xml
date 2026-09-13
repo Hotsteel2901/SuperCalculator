@@ -521,6 +521,7 @@
     <string name="fin_result_pv">现值: %.6g</string>
     <string name="fin_result_npv">净现值: %.6g</string>
     <string name="fin_result_irr">内部收益率: %.6g%%</string>
+    <string name="fin_result_irr_failed">内部收益率：该现金流在 (-99%, 1000%) 区间内无解</string>
     <string name="fin_result_depr" formatted="false">年折旧: %.2f\n月折旧: %.2f</string>
     <string name="fin_result_bond">债券价格: %.6g</string>
     <string name="fin_result_retire" formatted="false">终值: %.2f\n总投入: %.2f\n总收益: %.2f</string>

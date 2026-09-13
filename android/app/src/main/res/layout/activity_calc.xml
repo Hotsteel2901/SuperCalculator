@@ -1255,8 +1255,10 @@
         </LinearLayout>
     </com.example.liquidglass.LiquidGlassView>
 
-    <!-- iOS-26 style glass tab bar: one tab per tool category -->
-    <com.example.liquidglass.LiquidGlassTabBar
+    <!-- Floating glass tab bar. The pill itself is real liquid glass; the
+         selected-tab indicator is a translucent slider *behind* the labels so
+         the text always stays crisp and centred. -->
+    <com.example.liquidglass.LiquidGlassView
         android:id="@+id/category_tabs"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -1271,8 +1273,27 @@
         app:dispersionStrength="0.14"
         app:edgeSoftness="6dp"
         app:sensorHighlight="true"
-        app:adaptiveTint="true"
-        app:glassTabEntries="@array/category_tabs" />
+        app:adaptiveTint="true">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="54dp">
+
+            <View
+                android:id="@+id/category_indicator"
+                android:layout_width="24dp"
+                android:layout_height="match_parent"
+                android:layout_marginTop="7dp"
+                android:layout_marginBottom="7dp"
+                android:background="@drawable/bg_tab_indicator" />
+
+            <LinearLayout
+                android:id="@+id/category_row"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal" />
+        </FrameLayout>
+    </com.example.liquidglass.LiquidGlassView>
 
     <com.example.liquidglass.LiquidGlassFab
         android:id="@+id/fab_scroll_top"

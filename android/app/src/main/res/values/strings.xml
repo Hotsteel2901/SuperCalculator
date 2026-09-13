@@ -521,6 +521,7 @@
     <string name="fin_result_pv">Present Value: %.6g</string>
     <string name="fin_result_npv">NPV: %.6g</string>
     <string name="fin_result_irr">IRR: %.6g%%</string>
+    <string name="fin_result_irr_failed">IRR: no solution in (-99%, 1000%) for these cash flows</string>
     <string name="fin_result_depr" formatted="false">Annual: %.2f\nMonthly: %.2f</string>
     <string name="fin_result_bond">Bond Price: %.6g</string>
     <string name="fin_result_retire" formatted="false">FV: %.2f\nContributions: %.2f\nInterest: %.2f</string>

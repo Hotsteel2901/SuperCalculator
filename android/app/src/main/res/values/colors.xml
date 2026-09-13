@@ -28,13 +28,18 @@
     <color name="m3_outline">#FF6B7699</color>
     <color name="m3_outline_variant">#FF2B3350</color>
 
-    <!-- Result surface -->
-    <color name="result_bg">#FF070A16</color>
+    <!-- Result surface — translucent so it reads as part of the glass card -->
+    <color name="result_bg">#A6070A16</color>
     <color name="result_text">#FFDCE3FF</color>
 
     <!-- Chip / pill colors -->
     <color name="chip_bg">#261C2340</color>
     <color name="chip_text">#FFC7CFEE</color>
+
+    <!-- Frosted card surface: translucent enough to pick up the aurora behind
+         it, opaque enough to keep every text colour readable. -->
+    <color name="glass_fill">#B3121629</color>
+    <color name="glass_stroke">#33FFFFFF</color>
 
     <!-- Chart curve colors (matching the Python + web palettes) -->
     <color name="chart_color_1">#FF6366F1</color>
