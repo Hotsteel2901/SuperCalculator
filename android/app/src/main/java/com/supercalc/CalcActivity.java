@@ -1,12 +1,10 @@
 package com.supercalc;
 
-import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
 import android.view.Gravity;
 import android.view.View;
@@ -40,7 +38,6 @@ import java.time.temporal.ChronoUnit;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import android.widget.LinearLayout;
 
 public class CalcActivity extends AppCompatActivity {
 
@@ -79,14 +76,8 @@ public class CalcActivity extends AppCompatActivity {
 
     /** One page per tool category, switched by the glass tab bar. */
     private View[] categoryPages;
-    private LiquidGlassView categoryTabs;
-    private LinearLayout categoryRow;
-    private View categoryIndicator;
-    private final List<TextView> categoryLabels = new ArrayList<>();
-    private final ArgbEvaluator argbEvaluator = new ArgbEvaluator();
+    private DraggableTabBar categoryTabs;
     private int categoryIndex = 0;
-    private static final int TAB_COLOR_ACTIVE = 0xFFFFFFFF;
-    private static final int TAB_COLOR_INACTIVE = 0xB8FFFFFF;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -508,9 +499,6 @@ public class CalcActivity extends AppCompatActivity {
      * endless scroll. The glass tab bar switches pages.
      */
     private void setupToolCategories() {
-        categoryTabs = findViewById(R.id.category_tabs);
-        categoryRow = findViewById(R.id.category_row);
-        categoryIndicator = findViewById(R.id.category_indicator);
         categoryPages = new View[]{
                 findViewById(R.id.page_basic),
                 findViewById(R.id.page_plot),
@@ -523,102 +511,22 @@ public class CalcActivity extends AppCompatActivity {
         // Glass only updates when told to; scrolling must re-capture the backdrop.
         LiquidGlassView headerGlass = findViewById(R.id.header_glass);
         if (headerGlass != null) headerGlass.setEnableDynamicBackground(true);
-        if (categoryTabs != null) categoryTabs.setEnableDynamicBackground(true);
-        buildCategoryTabs();
-    }
+        LiquidGlassView barGlass = findViewById(R.id.category_tabs);
+        if (barGlass != null) barGlass.setEnableDynamicBackground(true);
 
-    /**
-     * Builds one equal-width cell per category. The library's own tab bar draws
-     * a refractive lens over the selected label, which both skews the glyphs and
-     * leaves them off-centre; laying the row out here keeps every label centred
-     * and crisp, with the indicator sliding underneath it.
-     */
-    private void buildCategoryTabs() {
-        if (categoryRow == null) return;
-        CharSequence[] titles = getResources().getTextArray(R.array.category_tabs);
-        categoryRow.removeAllViews();
-        categoryLabels.clear();
-        for (int i = 0; i < titles.length; i++) {
-            final int index = i;
-            TextView label = new TextView(this);
-            label.setText(titles[i]);
-            label.setTextSize(13f);
-            label.setGravity(Gravity.CENTER);
-            label.setSingleLine(true);
-            label.setEllipsize(TextUtils.TruncateAt.END);
-            label.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-            label.setTextColor(TAB_COLOR_INACTIVE);
-            label.setLayoutParams(new LinearLayout.LayoutParams(
-                    0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
-            label.setOnClickListener(v -> showToolCategory(index, true));
-            categoryRow.addView(label);
-            categoryLabels.add(label);
-        }
-        categoryRow.post(this::syncCategoryIndicator);
-    }
-
-    private int categoryCellWidth() {
-        if (categoryRow == null || categoryLabels.isEmpty()) return 0;
-        return categoryRow.getWidth() / categoryLabels.size();
-    }
-
-    private int categoryIndicatorWidth(int cell) {
-        return Math.max(dp(28), cell - dp(12));
-    }
-
-    /** Place the indicator without animation (first layout / state restore). */
-    private void syncCategoryIndicator() {
-        int cell = categoryCellWidth();
-        if (cell <= 0 || categoryIndicator == null) return;
-        int width = categoryIndicatorWidth(cell);
-        ViewGroup.LayoutParams lp = categoryIndicator.getLayoutParams();
-        if (lp.width != width) {
-            lp.width = width;
-            categoryIndicator.setLayoutParams(lp);
-        }
-        categoryIndicator.animate().cancel();
-        categoryIndicator.setTranslationX(categoryIndex * cell + (cell - width) / 2f);
-    }
-
-    /** Slide the indicator with a decelerating curve. */
-    private void animateCategoryIndicator() {
-        int cell = categoryCellWidth();
-        if (cell <= 0 || categoryIndicator == null) return;
-        int width = categoryIndicatorWidth(cell);
-        ViewGroup.LayoutParams lp = categoryIndicator.getLayoutParams();
-        if (lp.width != width) {
-            lp.width = width;
-            categoryIndicator.setLayoutParams(lp);
-        }
-        categoryIndicator.animate().cancel();
-        categoryIndicator.animate()
-                .translationX(categoryIndex * cell + (cell - width) / 2f)
-                .setDuration(320)
-                .setInterpolator(new DecelerateInterpolator(1.7f))
-                .start();
-    }
-
-    private void animateCategoryLabels() {
-        for (int i = 0; i < categoryLabels.size(); i++) {
-            TextView label = categoryLabels.get(i);
-            final int to = (i == categoryIndex) ? TAB_COLOR_ACTIVE : TAB_COLOR_INACTIVE;
-            final int from = label.getCurrentTextColor();
-            if (from == to) {
-                label.setTextColor(to);
-                continue;
-            }
-            ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
-            animator.setDuration(240);
-            animator.setInterpolator(new DecelerateInterpolator());
-            animator.addUpdateListener(a -> label.setTextColor(
-                    (int) argbEvaluator.evaluate((float) a.getAnimatedValue(), from, to)));
-            animator.start();
+        categoryTabs = findViewById(R.id.category_tabbar);
+        if (categoryTabs != null) {
+            categoryTabs.setTabs(getResources().getTextArray(R.array.category_tabs));
+            categoryTabs.setOnTabSelectedListener(index -> showToolCategory(index, true));
         }
     }
 
     private void showToolCategory(int index, boolean scrollToTop) {
         if (categoryPages == null || index < 0 || index >= categoryPages.length) return;
         categoryIndex = index;
+        if (categoryTabs != null && categoryTabs.getSelectedIndex() != index) {
+            categoryTabs.setSelectedIndex(index, scrollToTop);
+        }
         for (int i = 0; i < categoryPages.length; i++) {
             View page = categoryPages[i];
             if (page != null) {
@@ -629,12 +537,6 @@ public class CalcActivity extends AppCompatActivity {
         // made the old content slide out underneath the new one.
         if (scrollToTop && scrollView != null) scrollView.scrollTo(0, 0);
         if (scrollToTop && categoryPages[index] != null) animatePageIn(categoryPages[index]);
-        animateCategoryLabels();
-        if (scrollToTop) {
-            animateCategoryIndicator();
-        } else {
-            categoryRow.post(this::syncCategoryIndicator);
-        }
     }
 
     /** Staggered, decelerating entrance for the cards of the page coming in. */

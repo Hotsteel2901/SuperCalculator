@@ -1275,7 +1275,8 @@
         app:sensorHighlight="true"
         app:adaptiveTint="true">
 
-        <FrameLayout
+        <com.supercalc.DraggableTabBar
+            android:id="@+id/category_tabbar"
             android:layout_width="match_parent"
             android:layout_height="54dp">
 
@@ -1292,7 +1293,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="horizontal" />
-        </FrameLayout>
+        </com.supercalc.DraggableTabBar>
     </com.example.liquidglass.LiquidGlassView>
 
     <com.example.liquidglass.LiquidGlassFab
