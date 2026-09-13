@@ -322,7 +322,7 @@
                 </LinearLayout>
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
                 <com.google.android.material.textfield.TextInputLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="@string/hint_implicit_resolution" style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense" app:hintTextColor="@color/m3_outline" android:layout_marginEnd="4dp">
-                <com.google.android.material.textfield.TextInputEditText android:id="@+id/implicit_resolution_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="200" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:singleLine="true" android:inputType="number" />
+                <com.google.android.material.textfield.TextInputEditText android:id="@+id/implicit_resolution_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="120" android:fontFamily="@font/jetbrains_mono" android:textSize="14sp" android:textColor="@color/m3_on_surface" android:singleLine="true" android:inputType="number" />
                 </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">

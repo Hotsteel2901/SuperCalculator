@@ -750,6 +750,8 @@
     <string name="toast_need_two_curves">Add at least two curves to find intersections</string>
     <string name="toast_no_intersections">No intersection found in this range</string>
     <string name="toast_found_intersections">Found %1$s intersection(s)</string>
+    <string name="implicit_computing">Computing implicit curve…</string>
+    <string name="implicit_truncated">Curve is very dense — showing a partial result</string>
 
     <!-- Top-level tool categories (liquid glass tab bar) -->
     <string-array name="category_tabs">

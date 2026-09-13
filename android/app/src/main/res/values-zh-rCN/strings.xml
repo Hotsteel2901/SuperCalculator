@@ -750,6 +750,8 @@
     <string name="toast_need_two_curves">请至少添加两条曲线再求交点</string>
     <string name="toast_no_intersections">该区间内未找到交点</string>
     <string name="toast_found_intersections">找到 %1$s 个交点</string>
+    <string name="implicit_computing">正在计算隐函数曲线…</string>
+    <string name="implicit_truncated">曲线过于密集，仅显示部分结果</string>
 
     <!-- 顶层工具分类（液态玻璃标签栏） -->
     <string-array name="category_tabs">

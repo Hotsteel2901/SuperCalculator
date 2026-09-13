@@ -494,6 +494,7 @@ public class PlotActivity extends AppCompatActivity {
                                    final double xMin, final double xMax,
                                    final double yMin, final double yMax) {
         final int res = Math.max(20, Math.min(resolution, 200));
+        toast(getString(R.string.implicit_computing));
         new Thread(() -> {
             final ArrayList<Entry> entries =
                     buildImplicitEntries(impExpr, res, xMin, xMax, yMin, yMax);
@@ -501,11 +502,18 @@ public class PlotActivity extends AppCompatActivity {
         }, "implicit-plot").start();
     }
 
+    /** Dense level sets can explode into hundreds of thousands of segments. */
+    private static final int MAX_IMPLICIT_ENTRIES = 12000;
+    private static final long IMPLICIT_TIME_BUDGET_MS = 3000;
+    private boolean implicitTruncated = false;
+
     /** Pure computation: batched grid sampling + marching squares. */
     private ArrayList<Entry> buildImplicitEntries(String expr, int resolution,
                                                   double xMin, double xMax,
                                                   double yMin, double yMax) {
         ArrayList<Entry> entries = new ArrayList<>();
+        implicitTruncated = false;
+        final long deadline = System.currentTimeMillis() + IMPLICIT_TIME_BUDGET_MS;
         int side = resolution + 1;
         double dx = (xMax - xMin) / resolution;
         double dy = (yMax - yMin) / resolution;
@@ -532,8 +540,18 @@ public class PlotActivity extends AppCompatActivity {
             }
         }
 
+        outer:
         for (int i = 0; i < resolution; i++) {
+            if (System.currentTimeMillis() > deadline
+                    || entries.size() >= MAX_IMPLICIT_ENTRIES) {
+                implicitTruncated = true;
+                break;
+            }
             for (int j = 0; j < resolution; j++) {
+                if (entries.size() >= MAX_IMPLICIT_ENTRIES) {
+                    implicitTruncated = true;
+                    break outer;
+                }
                 double v00 = grid[i][j];
                 double v10 = grid[i][j + 1];
                 double v01 = grid[i + 1][j];
@@ -630,7 +648,11 @@ public class PlotActivity extends AppCompatActivity {
             lineChart.setData(lineData);
             lineChart.invalidate();
         }
+        refreshCurveList();
         toast(getString(R.string.toast_implicit_plotted) + ": " + impExpr + " = 0");
+        if (implicitTruncated) {
+            toast(getString(R.string.implicit_truncated));
+        }
     }
     
     private void plotOdeSolution(double[] xs, double[] ys, String expr) {
