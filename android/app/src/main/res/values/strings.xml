@@ -740,4 +740,5 @@
     <string name="conv_compute">Compute Convolution</string>
     <string name="conv_empty_input">Please enter both sequences A and B.</string>
     <string name="conv_invalid_input">Invalid number format. Use comma-separated numbers.</string>
+    <string name="back_to_top">Back to top</string>
 </resources>

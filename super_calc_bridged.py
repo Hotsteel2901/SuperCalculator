@@ -129,10 +129,37 @@ ODE_PRESETS = {
     "Predator-prey (-x*y+0.5*x)":      ("-x*y+0.5*x", "0", "4", "20", "1000"),
 }
 
+# ---------------------------------------------------------------------------
+#  Theme — "Aurora Lab"
+#  One palette drives the Tk widgets and every Matplotlib canvas so the
+#  desktop app matches the web landing page and the Android theme.
+# ---------------------------------------------------------------------------
+THEME = {
+    "bg":          "#0b0e1c",   # window / figure background
+    "axes_bg":     "#070a16",   # plot area
+    "surface":     "#161b31",   # cards, entries, tree rows
+    "surface_alt": "#1c2340",   # hover / raised surfaces
+    "border":      "#2b3350",
+    "border_soft": "#3b4570",
+    "text":        "#e6eaff",
+    "muted":       "#a7b0d6",
+    "subtle":      "#7b86ad",
+    "indigo":      "#6366f1",
+    "cyan":        "#22d3ee",
+    "green":       "#34d399",
+    "blue":        "#60a5fa",
+    "pink":        "#f472b6",
+    "purple":      "#a78bfa",
+    "orange":      "#fb923c",
+    "yellow":      "#fbbf24",
+    "red":         "#f87171",
+}
+
+# Curve colours used when several curves share one plot.
 DEFAULT_COLORS = [
-    "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728",
-    "#9467bd", "#8c564b", "#e377c2", "#7f7f7f",
-    "#bcbd22", "#17becf",
+    THEME["indigo"], THEME["cyan"], THEME["green"], THEME["pink"],
+    THEME["purple"], THEME["yellow"], THEME["orange"], THEME["blue"],
+    "#2dd4bf", THEME["red"],
 ]
 
 CMAP_3D_OPTIONS = [
@@ -144,6 +171,136 @@ PARAM_PATTERN = re.compile(r'\b([a-zA-Z]+)\b')
 KNOWN_FUNCTIONS = {'sin', 'cos', 'tan', 'log', 'ln', 'exp', 'sqrt', 'abs', 'floor', 'ceil', 'mod'}
 KNOWN_CONSTANTS = {'pi', 'e'}
 INDEPENDENT_VARS = {'x', 'y', 't'}  # variables used by the engine, not parameters
+
+
+def apply_ttk_theme(root: tk.Misc) -> ttk.Style:
+    """Configure a consistent dark theme for every ttk widget.
+
+    A fixed base theme (``clam``) is selected because the native Windows
+    "vista" theme silently ignores most colour options, which previously left
+    the desktop UI looking half-styled on Windows.
+    """
+    style = ttk.Style(root)
+    try:
+        style.theme_use("clam")
+    except tk.TclError:
+        pass
+
+    try:
+        import tkinter.font as tkfont
+        family = tkfont.nametofont("TkDefaultFont").actual("family")
+    except Exception:
+        family = "TkDefaultFont"
+
+    bg = THEME["bg"]
+    surface = THEME["surface"]
+    surface_alt = THEME["surface_alt"]
+    border = THEME["border"]
+    text = THEME["text"]
+    muted = THEME["muted"]
+    subtle = THEME["subtle"]
+    indigo = THEME["indigo"]
+
+    style.configure(".", background=bg, foreground=text, fieldbackground=surface,
+                    bordercolor=border, focuscolor=indigo, font=(family, 10))
+
+    # Frames & labels
+    style.configure("TFrame", background=bg)
+    style.configure("Dark.TFrame", background=bg)
+    style.configure("TLabel", background=bg, foreground=text)
+    style.configure("Dark.TLabel", background=bg, foreground=text)
+    style.configure("Muted.TLabel", background=bg, foreground=muted)
+    style.configure("Accent.TLabel", background=bg, foreground=THEME["cyan"],
+                    font=(family, 10, "bold"))
+    style.configure("Title.TLabel", background=bg, foreground=text,
+                    font=(family, 17, "bold"))
+    style.configure("Status.TLabel", background=surface, foreground=muted,
+                    padding=(10, 5), font=(family, 9))
+
+    # Group boxes
+    for name in ("TLabelframe", "Dark.TLabelframe"):
+        style.configure(name, background=bg, bordercolor=border,
+                        relief="solid", borderwidth=1)
+    for name in ("TLabelframe.Label", "Dark.TLabelframe.Label"):
+        style.configure(name, background=bg, foreground=THEME["cyan"],
+                        font=(family, 10, "bold"))
+
+    # Buttons
+    style.configure("TButton", background=surface, foreground=text,
+                    bordercolor=border, relief="flat", padding=(9, 5),
+                    font=(family, 10))
+    style.map("TButton",
+              background=[("pressed", indigo), ("active", surface_alt),
+                          ("disabled", bg)],
+              foreground=[("disabled", subtle)],
+              bordercolor=[("focus", indigo)])
+    style.configure("Accent.TButton", background=indigo, foreground="#ffffff",
+                    bordercolor=indigo, relief="flat", padding=(9, 5),
+                    font=(family, 10, "bold"))
+    style.map("Accent.TButton",
+              background=[("pressed", "#4f46e5"), ("active", "#7c7ff5")])
+
+    # Text inputs
+    style.configure("TEntry", fieldbackground=surface, foreground=text,
+                    bordercolor=border, insertcolor=text, padding=4)
+    style.map("TEntry",
+              bordercolor=[("focus", indigo)],
+              fieldbackground=[("disabled", bg)])
+
+    style.configure("TCombobox", fieldbackground=surface, background=surface,
+                    foreground=text, arrowcolor=muted, bordercolor=border,
+                    padding=3)
+    style.map("TCombobox",
+              fieldbackground=[("readonly", surface)],
+              foreground=[("readonly", text)],
+              bordercolor=[("focus", indigo)])
+    root.option_add("*TCombobox*Listbox.background", surface)
+    root.option_add("*TCombobox*Listbox.foreground", text)
+    root.option_add("*TCombobox*Listbox.selectBackground", indigo)
+    root.option_add("*TCombobox*Listbox.selectForeground", "#ffffff")
+
+    # Toggles
+    style.configure("TCheckbutton", background=bg, foreground=text,
+                    indicatorcolor=surface, focuscolor=indigo)
+    style.map("TCheckbutton",
+              background=[("active", bg)],
+              indicatorcolor=[("selected", indigo)],
+              foreground=[("disabled", subtle)])
+    style.configure("TRadiobutton", background=bg, foreground=text,
+                    indicatorcolor=surface)
+    style.map("TRadiobutton",
+              background=[("active", bg)],
+              indicatorcolor=[("selected", indigo)])
+
+    # Tabs, tables, scrollbars
+    style.configure("TNotebook", background=bg, bordercolor=border,
+                    tabmargins=(6, 6, 6, 0))
+    style.configure("TNotebook.Tab", background=surface, foreground=muted,
+                    padding=(14, 7))
+    style.map("TNotebook.Tab",
+              background=[("selected", surface_alt)],
+              foreground=[("selected", text)])
+
+    style.configure("Treeview", background=surface, fieldbackground=surface,
+                    foreground=text, bordercolor=border, rowheight=24)
+    style.map("Treeview",
+              background=[("selected", indigo)],
+              foreground=[("selected", "#ffffff")])
+    style.configure("Treeview.Heading", background=surface_alt,
+                    foreground=THEME["cyan"], relief="flat",
+                    font=(family, 10, "bold"))
+    style.map("Treeview.Heading", background=[("active", border)])
+
+    for name in ("TScrollbar", "Vertical.TScrollbar", "Horizontal.TScrollbar"):
+        style.configure(name, background=surface, troughcolor=bg,
+                        bordercolor=bg, arrowcolor=muted)
+    style.map("TScrollbar", background=[("active", THEME["border_soft"])])
+
+    style.configure("TSeparator", background=border)
+    style.configure("TScale", background=bg, troughcolor=surface)
+    style.configure("TProgressbar", background=indigo, troughcolor=surface)
+    return style
+
 
 def _detect_parameters_static(expr: str) -> list[str]:
     params: set[str] = set()
@@ -225,7 +382,10 @@ class SuperCalcApp:
         self.root.title(t("win_title"))
         self.root.geometry("520x900")
         self.root.minsize(450, 700)
-        self.root.configure(bg="#1e1e2e")
+        self.root.configure(bg=THEME["bg"])
+
+        # Install the shared palette before any widget is created.
+        apply_ttk_theme(self.root)
 
         self.curves: List[CurveModel] = []
         self.color_index = 0
@@ -312,7 +472,7 @@ class SuperCalcApp:
         self._build_control_panel(self.root)
 
     def _build_control_panel(self, parent: tk.Misc) -> None:
-        canvas = tk.Canvas(parent, bg="#1e1e2e", highlightthickness=0)
+        canvas = tk.Canvas(parent, bg=THEME["bg"], highlightthickness=0)
         scrollbar = ttk.Scrollbar(parent, orient=tk.VERTICAL, command=canvas.yview)
         scroll_frame = ttk.Frame(canvas, style="Dark.TFrame")
 
@@ -344,6 +504,14 @@ class SuperCalcApp:
         canvas.bind("<MouseWheel>", _on_mousewheel)
         canvas.bind("<Button-4>", _on_mousewheel_linux)
         canvas.bind("<Button-5>", _on_mousewheel_linux)
+
+        # --- App header ---
+        header = ttk.Frame(scroll_frame, style="Dark.TFrame")
+        header.pack(fill=tk.X, padx=8, pady=(4, 12))
+        ttk.Label(header, text=t("win_title"),
+                  style="Title.TLabel").pack(anchor=tk.W)
+        ttk.Label(header, text=t("app_tagline"),
+                  style="Muted.TLabel").pack(anchor=tk.W, pady=(2, 0))
 
         # --- Expression Input ---
         frm_expr = ttk.LabelFrame(scroll_frame, text=t("sec_function_input"),
@@ -549,8 +717,8 @@ class SuperCalcApp:
                                     style="Dark.TLabelframe")
         frm_curves.pack(fill=tk.X, padx=8, pady=4)
         self.listbox_curves = tk.Listbox(
-            frm_curves, bg="#313244", fg="#cdd6f4",
-            selectbackground="#89b4fa", selectforeground="#1e1e2e",
+            frm_curves, bg=THEME["surface"], fg=THEME["text"],
+            selectbackground=THEME["blue"], selectforeground=THEME["bg"],
             font=("Consolas", 10), height=6, exportselection=False)
         self.listbox_curves.pack(fill=tk.X, padx=6, pady=4)
         ttk.Button(frm_curves, text=t("btn_remove"),
@@ -2440,19 +2608,12 @@ class SuperCalcApp:
         # --- Status ---
         self.status_var = tk.StringVar(value=t("status_ready"))
         status_bar = ttk.Label(scroll_frame, textvariable=self.status_var,
-                               style="Dark.TLabel", relief=tk.SUNKEN,
-                               anchor=tk.W, padding=(8, 2))
+                               style="Status.TLabel",
+                               anchor=tk.W)
         status_bar.pack(fill=tk.X, padx=8, pady=8)
 
         # --- Styles ---
-        style = ttk.Style()
-        style.configure("Dark.TFrame", background="#1e1e2e")
-        style.configure("Dark.TLabelframe", background="#1e1e2e",
-                        foreground="#cdd6f4", bordercolor="#45475a")
-        style.configure("Dark.TLabelframe.Label", background="#1e1e2e",
-                        foreground="#cdd6f4")
-        style.configure("Dark.TLabel", background="#1e1e2e",
-                        foreground="#cdd6f4")
+        apply_ttk_theme(self.root)
 
     # ------------------------------------------------------------------
     #  2D / 3D Window Management
@@ -2464,10 +2625,10 @@ class SuperCalcApp:
         self.window_2d.title(t("win_2d"))
         self.window_2d.geometry("900x700")
         self.window_2d.minsize(600, 400)
-        self.window_2d.configure(bg="#1e1e2e")
+        self.window_2d.configure(bg=THEME["bg"])
         self.window_2d.protocol("WM_DELETE_WINDOW", self._on_2d_window_close)
 
-        self.fig_2d = Figure(figsize=(9, 7), dpi=100, facecolor="#1e1e2e")
+        self.fig_2d = Figure(figsize=(9, 7), dpi=100, facecolor=THEME["bg"])
         self.ax_2d = self.fig_2d.add_subplot(111)
         self._setup_axes(self.ax_2d, is_3d=False)
 
@@ -2475,6 +2636,7 @@ class SuperCalcApp:
         self.canvas_2d.draw()
         self.toolbar_2d = NavigationToolbar2Tk(self.canvas_2d, self.window_2d)
         self.toolbar_2d.update()
+        self._style_toolbar(self.toolbar_2d)
         self.canvas_2d.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
         self.canvas_2d.mpl_connect('button_press_event', self._on_canvas_click)
 
@@ -2500,10 +2662,10 @@ class SuperCalcApp:
         self.window_3d.title(t("win_3d"))
         self.window_3d.geometry("900x700")
         self.window_3d.minsize(600, 400)
-        self.window_3d.configure(bg="#1e1e2e")
+        self.window_3d.configure(bg=THEME["bg"])
         self.window_3d.protocol("WM_DELETE_WINDOW", self._on_3d_window_close)
 
-        self.fig_3d = Figure(figsize=(9, 7), dpi=100, facecolor="#1e1e2e")
+        self.fig_3d = Figure(figsize=(9, 7), dpi=100, facecolor=THEME["bg"])
         self.ax_3d = self.fig_3d.add_subplot(111, projection='3d')
         self._setup_axes(self.ax_3d, is_3d=True)
 
@@ -2511,6 +2673,7 @@ class SuperCalcApp:
         self.canvas_3d.draw()
         self.toolbar_3d = NavigationToolbar2Tk(self.canvas_3d, self.window_3d)
         self.toolbar_3d.update()
+        self._style_toolbar(self.toolbar_3d)
         self.canvas_3d.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
 
     def _on_3d_window_close(self):
@@ -2535,16 +2698,16 @@ class SuperCalcApp:
         self.window_fft.title(t("win_fft"))
         self.window_fft.geometry("900x750")
         self.window_fft.minsize(600, 500)
-        self.window_fft.configure(bg="#1e1e2e")
+        self.window_fft.configure(bg=THEME["bg"])
         self.window_fft.protocol("WM_DELETE_WINDOW", self._on_fft_window_close)
 
-        self.fig_fft = Figure(figsize=(9, 7.5), dpi=100, facecolor="#1e1e2e")
+        self.fig_fft = Figure(figsize=(9, 7.5), dpi=100, facecolor=THEME["bg"])
         self.ax_fft_amp = self.fig_fft.add_subplot(211)
         self.ax_fft_phase = self.fig_fft.add_subplot(212)
         self._setup_axes(self.ax_fft_amp, is_3d=False)
         self._setup_axes(self.ax_fft_phase, is_3d=False)
-        self.ax_fft_amp.set_title(t("fft_amp_title"), color="#cdd6f4", fontsize=11)
-        self.ax_fft_phase.set_title(t("fft_phase_title"), color="#cdd6f4", fontsize=11)
+        self.ax_fft_amp.set_title(t("fft_amp_title"), color=THEME["text"], fontsize=11)
+        self.ax_fft_phase.set_title(t("fft_phase_title"), color=THEME["text"], fontsize=11)
         self.ax_fft_amp.set_xlabel(t("fft_freq"))
         self.ax_fft_amp.set_ylabel(t("fft_amp"))
         self.ax_fft_phase.set_xlabel(t("fft_freq"))
@@ -2554,6 +2717,7 @@ class SuperCalcApp:
         self.canvas_fft.draw()
         self.toolbar_fft = NavigationToolbar2Tk(self.canvas_fft, self.window_fft)
         self.toolbar_fft.update()
+        self._style_toolbar(self.toolbar_fft)
         self.canvas_fft.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
 
     def _on_fft_window_close(self):
@@ -2585,7 +2749,7 @@ class SuperCalcApp:
         panel = tk.Toplevel(self.root)
         panel.title(t("win_input_panel"))
         panel.geometry("500x400")
-        panel.configure(bg="#1e1e2e")
+        panel.configure(bg=THEME["bg"])
         panel.transient(self.root)
         panel.grab_set()
         
@@ -3148,7 +3312,7 @@ class SuperCalcApp:
             self.ax_2d.plot(point[0], point[1], 'ro', markersize=8)
             self.ax_2d.annotate(f"({point[0]:.3f}, {point[1]:.3f})",
                            xy=(point[0], point[1]), xytext=(10, 10),
-                           textcoords='offset points', color='#f38ba8')
+                           textcoords='offset points', color=THEME["pink"])
 
         if self.auto_mark_point is not None:
             x = self.auto_mark_point
@@ -3160,17 +3324,17 @@ class SuperCalcApp:
                     self.ax_2d.plot(x, y, 'go', markersize=10)
                     self.ax_2d.annotate(f"({x:.3f}, {y:.3f})",
                                    xy=(x, y), xytext=(10, -15),
-                                   textcoords='offset points', color='#a6e3a1')
+                                   textcoords='offset points', color=THEME["green"])
 
         for rx in getattr(self, 'root_markers', []):
             self.ax_2d.plot(rx, 0, 'rD', markersize=10)
             self.ax_2d.annotate(f"x={rx:.4g}", xy=(rx, 0), xytext=(5, 15),
-                           textcoords='offset points', color='#f38ba8', fontsize=8)
+                           textcoords='offset points', color=THEME["pink"], fontsize=8)
 
         for ix, iy in getattr(self, 'intersection_marks', []):
             self.ax_2d.plot(ix, iy, 'mP', markersize=10)
             self.ax_2d.annotate(f"({ix:.3g}, {iy:.3g})", xy=(ix, iy), xytext=(8, -12),
-                           textcoords='offset points', color='#cba6f7', fontsize=8)
+                           textcoords='offset points', color=THEME["purple"], fontsize=8)
 
         # Draw tangent lines
         for td in getattr(self, 'tangent_data', []):
@@ -3205,8 +3369,8 @@ class SuperCalcApp:
 
         visible_2d = [c for c in self.curves if c.visible and not c.is_3d]
         if visible_2d or self.tangent_data or self.normal_data:
-            self.ax_2d.legend(loc="upper right", facecolor="#313244",
-                           edgecolor="#585b70", labelcolor="#cdd6f4",
+            self.ax_2d.legend(loc="upper right", facecolor=THEME["surface"],
+                           edgecolor=THEME["border_soft"], labelcolor=THEME["text"],
                            fontsize=9)
 
         self.canvas_2d.draw()
@@ -3260,19 +3424,61 @@ class SuperCalcApp:
         except (ValueError, AttributeError):
             pass
         if hasattr(ax, 'grid'):
-            ax.grid(self.grid_on, color="#45475a", alpha=0.5, linestyle="--")
+            ax.grid(self.grid_on, color=THEME["border"], alpha=0.55,
+                    linestyle="--", linewidth=0.7)
         if not is_3d and hasattr(ax, 'axhline'):
-            ax.axhline(y=0, color="#585b70", linewidth=0.8)
-            ax.axvline(x=0, color="#585b70", linewidth=0.8)
+            ax.axhline(y=0, color=THEME["border_soft"], linewidth=0.9,
+                       alpha=0.9, zorder=1)
+            ax.axvline(x=0, color=THEME["border_soft"], linewidth=0.9,
+                       alpha=0.9, zorder=1)
         if is_3d:
-            ax.set_xlabel("X")
-            ax.set_ylabel("Y")
-            ax.set_zlabel("Z")
+            ax.set_xlabel("X", color=THEME["muted"])
+            ax.set_ylabel("Y", color=THEME["muted"])
+            ax.set_zlabel("Z", color=THEME["muted"])
+            try:
+                for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
+                    axis.set_pane_color((0.027, 0.039, 0.086, 1.0))
+                    axis.line.set_color(THEME["border"])
+                    axis.label.set_color(THEME["muted"])
+            except (AttributeError, ValueError):
+                pass
+            ax.tick_params(colors=THEME["muted"], labelsize=9)
         else:
-            ax.set_xlabel("x")
-            ax.set_ylabel("f(x)")
-        ax.tick_params(colors="#cdd6f4")
-        ax.set_facecolor("#181825")
+            ax.set_xlabel("x", color=THEME["muted"])
+            ax.set_ylabel("f(x)", color=THEME["muted"])
+            ax.tick_params(colors=THEME["muted"], labelsize=9)
+            for side in ("top", "right"):
+                if side in ax.spines:
+                    ax.spines[side].set_visible(False)
+            for side in ("bottom", "left"):
+                if side in ax.spines:
+                    ax.spines[side].set_color(THEME["border_soft"])
+        if hasattr(ax, 'title'):
+            ax.title.set_color(THEME["text"])
+        ax.set_facecolor(THEME["axes_bg"])
+
+    @staticmethod
+    def _style_toolbar(toolbar: tk.Misc) -> None:
+        """Recolour a Matplotlib navigation toolbar to match the dark theme.
+
+        The toolbar is plain Tk (not ttk), so its default light-grey colours
+        ignore the ttk stylesheet and need to be set explicitly.
+        """
+        try:
+            toolbar.configure(background=THEME["bg"])
+        except (tk.TclError, AttributeError):
+            pass
+        for child in toolbar.winfo_children():
+            for opt, val in (("background", THEME["bg"]),
+                             ("foreground", THEME["text"]),
+                             ("activebackground", THEME["surface_alt"]),
+                             ("activeforeground", THEME["text"]),
+                             ("highlightbackground", THEME["bg"])):
+                try:
+                    child.configure(**{opt: val})
+                except tk.TclError:
+                    pass
+            SuperCalcApp._style_toolbar(child)
 
     # ------------------------------------------------------------------
     #  Coordinate marking
@@ -3405,7 +3611,7 @@ class SuperCalcApp:
         win = tk.Toplevel(self.root)
         win.title(t("win_intersect"))
         win.geometry("420x420")
-        win.configure(bg="#1e1e2e")
+        win.configure(bg=THEME["bg"])
         win.minsize(320, 300)
         win.transient(self.root)
         win.grab_set()
@@ -3434,7 +3640,7 @@ class SuperCalcApp:
         else:
             combo_b.current(0)
 
-        result_text = tk.Text(win, height=10, bg="#313244", fg="#cdd6f4",
+        result_text = tk.Text(win, height=10, bg=THEME["surface"], fg=THEME["text"],
                               font=("Consolas", 10), wrap=tk.WORD, state=tk.DISABLED)
         result_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=8)
 
@@ -3578,7 +3784,7 @@ class SuperCalcApp:
         win = tk.Toplevel(self.root)
         win.title(t("win_table"))
         win.geometry("420x500")
-        win.configure(bg="#1e1e2e")
+        win.configure(bg=THEME["bg"])
         win.minsize(320, 300)
 
         ttk.Label(win, text=f"f(x) = {expr}", style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(10, 4))
@@ -3595,9 +3801,9 @@ class SuperCalcApp:
 
         # Style the treeview for dark theme
         style = ttk.Style(win)
-        style.configure("Treeview", background="#313244", foreground="#cdd6f4",
-                        fieldbackground="#313244", rowheight=22)
-        style.configure("Treeview.Heading", background="#45475a", foreground="#cdd6f4")
+        style.configure("Treeview", background=THEME["surface"], foreground=THEME["text"],
+                        fieldbackground=THEME["surface"], rowheight=22)
+        style.configure("Treeview.Heading", background=THEME["border"], foreground=THEME["text"])
 
         for x, y in self._table_data:
             xv = f"{x:.10g}"
@@ -3942,16 +4148,16 @@ class SuperCalcApp:
         self._setup_axes(self.ax_fft_amp, is_3d=False)
         self._setup_axes(self.ax_fft_phase, is_3d=False)
 
-        self.ax_fft_amp.set_title(f"{t('fft_amp_title')} — {expr}", color="#cdd6f4", fontsize=11)
-        self.ax_fft_phase.set_title(f"{t('fft_phase_title')} — {expr}", color="#cdd6f4", fontsize=11)
+        self.ax_fft_amp.set_title(f"{t('fft_amp_title')} — {expr}", color=THEME["text"], fontsize=11)
+        self.ax_fft_phase.set_title(f"{t('fft_phase_title')} — {expr}", color=THEME["text"], fontsize=11)
         self.ax_fft_amp.set_xlabel(t("fft_freq"))
         self.ax_fft_amp.set_ylabel(t("fft_amp"))
         self.ax_fft_phase.set_xlabel(t("fft_freq"))
         self.ax_fft_phase.set_ylabel(t("fft_phase_rad"))
 
         # Amplitude plot with stem-like visualization using vlines for performance
-        self.ax_fft_amp.plot(freqs, amps, color="#00e5c9", linewidth=1.2, alpha=0.9)
-        self.ax_fft_amp.fill_between(freqs, amps, color="#00e5c9", alpha=0.15)
+        self.ax_fft_amp.plot(freqs, amps, color=THEME["cyan"], linewidth=1.2, alpha=0.9)
+        self.ax_fft_amp.fill_between(freqs, amps, color=THEME["cyan"], alpha=0.15)
         # Highlight dominant frequencies
         if len(amps) > 1:
             peak_idx = int(np.argmax(amps[1:])) + 1
@@ -3960,11 +4166,11 @@ class SuperCalcApp:
                 self.ax_fft_amp.annotate(f"f={freqs[peak_idx]:.4g}, A={amps[peak_idx]:.4g}",
                                          xy=(freqs[peak_idx], amps[peak_idx]),
                                          xytext=(10, 10), textcoords='offset points',
-                                         color='#f38ba8', fontsize=9)
+                                         color=THEME["pink"], fontsize=9)
 
         # Phase plot
-        self.ax_fft_phase.plot(freqs, phases, color="#4f8cff", linewidth=1.0, alpha=0.8)
-        self.ax_fft_phase.axhline(y=0, color="#585b70", linewidth=0.5, linestyle="--")
+        self.ax_fft_phase.plot(freqs, phases, color=THEME["indigo"], linewidth=1.0, alpha=0.8)
+        self.ax_fft_phase.axhline(y=0, color=THEME["border_soft"], linewidth=0.5, linestyle="--")
 
         self.canvas_fft.draw()
 
@@ -4100,10 +4306,10 @@ class SuperCalcApp:
         if y_at_a is not None:
             self.ax_2d.plot(a, y_at_a, 'go', markersize=8)
             self.ax_2d.annotate(f"a={a:.3g}", xy=(a, y_at_a), xytext=(10, 10),
-                                textcoords='offset points', color='#a6e3a1', fontsize=9)
+                                textcoords='offset points', color=THEME["green"], fontsize=9)
 
-        self.ax_2d.legend(loc="upper right", facecolor="#313244",
-                          edgecolor="#585b70", labelcolor="#cdd6f4", fontsize=9)
+        self.ax_2d.legend(loc="upper right", facecolor=THEME["surface"],
+                          edgecolor=THEME["border_soft"], labelcolor=THEME["text"], fontsize=9)
         self.canvas_2d.draw()
         self.status_var.set(t("status_taylor_plot", a, order))
 
@@ -4173,13 +4379,13 @@ class SuperCalcApp:
         expr = self._var_ode_expr.get().strip()
         x0 = self._var_ode_x0.get()
         y0 = self._var_ode_y0.get()
-        self.ax_2d.plot(xs, ys, color="#00e5c9", linewidth=2,
+        self.ax_2d.plot(xs, ys, color=THEME["cyan"], linewidth=2,
                         label=f"RK4: dy/dx={expr}", alpha=0.9)
         self.ax_2d.plot(xs[0], ys[0], 'go', markersize=8,
                         label=f"y({x0})={y0}")
 
-        self.ax_2d.legend(loc="upper right", facecolor="#313244",
-                          edgecolor="#585b70", labelcolor="#cdd6f4", fontsize=9)
+        self.ax_2d.legend(loc="upper right", facecolor=THEME["surface"],
+                          edgecolor=THEME["border_soft"], labelcolor=THEME["text"], fontsize=9)
         self.canvas_2d.draw()
         self.status_var.set(t("status_ode_plotted", len(xs)))
 
@@ -4275,12 +4481,12 @@ class SuperCalcApp:
             return
         self.ax_2d.plot(x0_val, y0_val, 'go', markersize=8,
                         label=f"y({x0_str})={y0_str}")
-        self.ax_2d.set_title(f"dy/dx = {expr}", color='#cdd6f4', fontsize=12)
-        self.ax_2d.set_xlabel('x', color='#cdd6f4')
-        self.ax_2d.set_ylabel('y', color='#cdd6f4')
+        self.ax_2d.set_title(f"dy/dx = {expr}", color=THEME["text"], fontsize=12)
+        self.ax_2d.set_xlabel('x', color=THEME["text"])
+        self.ax_2d.set_ylabel('y', color=THEME["text"])
 
-        self.ax_2d.legend(loc="upper right", facecolor="#313244",
-                          edgecolor="#585b70", labelcolor="#cdd6f4", fontsize=9)
+        self.ax_2d.legend(loc="upper right", facecolor=THEME["surface"],
+                          edgecolor=THEME["border_soft"], labelcolor=THEME["text"], fontsize=9)
         self.canvas_2d.draw()
         n_steps = self._var_cmp_steps.get()
         self.status_var.set(t("status_compare_plotted", 5, n_steps))
@@ -4335,8 +4541,8 @@ class SuperCalcApp:
         if ic_str:
             try:
                 pairs = [p.strip() for p in ic_str.split(";") if p.strip()]
-                colors_solutions = ["#a6e3a1", "#f9e2af", "#89b4fa", "#f38ba8",
-                                    "#cba6f7", "#fab387"]
+                colors_solutions = [THEME["green"], THEME["yellow"], THEME["blue"], THEME["pink"],
+                                    THEME["purple"], THEME["orange"]]
                 for idx, pair in enumerate(pairs):
                     parts = pair.split(",")
                     x0_ic = float(parts[0].strip())
@@ -4356,11 +4562,11 @@ class SuperCalcApp:
 
         self.ax_2d.set_xlim(x_min, x_max)
         self.ax_2d.set_ylim(y_min, y_max)
-        self.ax_2d.set_xlabel("x", color="#cdd6f4")
-        self.ax_2d.set_ylabel("y", color="#cdd6f4")
-        self.ax_2d.set_title(f"Direction Field: dy/dx = {expr}", color="#cdd6f4")
-        self.ax_2d.grid(True, alpha=0.3, color="#585b70")
-        self.ax_2d.set_facecolor("#1e1e2e")
+        self.ax_2d.set_xlabel("x", color=THEME["text"])
+        self.ax_2d.set_ylabel("y", color=THEME["text"])
+        self.ax_2d.set_title(f"Direction Field: dy/dx = {expr}", color=THEME["text"])
+        self.ax_2d.grid(True, alpha=0.3, color=THEME["border_soft"])
+        self.ax_2d.set_facecolor(THEME["bg"])
         self.canvas_2d.draw()
         self.status_var.set(t("status_df_plotted", n_arrows, n_arrows, n_solutions))
 
@@ -4417,11 +4623,11 @@ class SuperCalcApp:
                                  t("msg_contour_plot_failed", str(e)))
             return
 
-        self.ax_2d.set_xlabel("x", color="#cdd6f4")
-        self.ax_2d.set_ylabel("y", color="#cdd6f4")
-        self.ax_2d.set_title(f"Contour: {expr}", color="#cdd6f4")
-        self.ax_2d.grid(True, alpha=0.3, color="#585b70")
-        self.ax_2d.set_facecolor("#1e1e2e")
+        self.ax_2d.set_xlabel("x", color=THEME["text"])
+        self.ax_2d.set_ylabel("y", color=THEME["text"])
+        self.ax_2d.set_title(f"Contour: {expr}", color=THEME["text"])
+        self.ax_2d.grid(True, alpha=0.3, color=THEME["border_soft"])
+        self.ax_2d.set_facecolor(THEME["bg"])
         self.canvas_2d.draw()
         self.status_var.set(t("status_contour_plotted", n_grid, n_grid, n_levels))
 
@@ -4507,15 +4713,15 @@ class SuperCalcApp:
                             # Solve system using RK4
                             curve = self._solve_vf_rk4(expr_p, expr_q, icx, icy, xmin, xmax, ymin, ymax, n_grid)
                             if curve is not None and len(curve[0]) > 1:
-                                self.ax_2d.plot(curve[0], curve[1], color='#f38ba8', linewidth=2.0, alpha=0.9)
+                                self.ax_2d.plot(curve[0], curve[1], color=THEME["pink"], linewidth=2.0, alpha=0.9)
                         except ValueError:
                             pass
 
-        self.ax_2d.set_xlabel("x", color="#cdd6f4")
-        self.ax_2d.set_ylabel("y", color="#cdd6f4")
-        self.ax_2d.set_title(f"Vector Field: dx/dt={expr_p}, dy/dt={expr_q}", color="#cdd6f4", fontsize=11)
-        self.ax_2d.grid(True, alpha=0.3, color="#585b70")
-        self.ax_2d.set_facecolor("#1e1e2e")
+        self.ax_2d.set_xlabel("x", color=THEME["text"])
+        self.ax_2d.set_ylabel("y", color=THEME["text"])
+        self.ax_2d.set_title(f"Vector Field: dx/dt={expr_p}, dy/dt={expr_q}", color=THEME["text"], fontsize=11)
+        self.ax_2d.grid(True, alpha=0.3, color=THEME["border_soft"])
+        self.ax_2d.set_facecolor(THEME["bg"])
         self.canvas_2d.draw()
         self.status_var.set(t("status_vf_plotted", fallback="Vector field plotted: {0}x{0} grid").format(n_grid))
 
@@ -5126,21 +5332,21 @@ class SuperCalcApp:
 
         import statistics as _stats
         n_bins = max(5, min(20, int(len(values) ** 0.5) + 1))
-        self.ax_2d.hist(values, bins=n_bins, color="#89b4fa", edgecolor="#313244",
+        self.ax_2d.hist(values, bins=n_bins, color=THEME["blue"], edgecolor=THEME["surface"],
                         alpha=0.85, linewidth=1.2)
 
         data_mean = _stats.mean(values)
         data_median = _stats.median(values)
-        self.ax_2d.axvline(data_mean, color="#f38ba8", linestyle="--", linewidth=2,
+        self.ax_2d.axvline(data_mean, color=THEME["pink"], linestyle="--", linewidth=2,
                            label=t("stat_mean_label", f"{data_mean:.4g}"))
-        self.ax_2d.axvline(data_median, color="#a6e3a1", linestyle=":", linewidth=2,
+        self.ax_2d.axvline(data_median, color=THEME["green"], linestyle=":", linewidth=2,
                            label=t("stat_median_label", f"{data_median:.4g}"))
 
-        self.ax_2d.legend(loc="upper right", facecolor="#313244",
-                          edgecolor="#585b70", labelcolor="#cdd6f4", fontsize=9)
-        self.ax_2d.set_title(t("histogram_title"), color="#cdd6f4", fontsize=12)
-        self.ax_2d.set_xlabel(t("histogram_xlabel"), color="#cdd6f4")
-        self.ax_2d.set_ylabel(t("histogram_ylabel"), color="#cdd6f4")
+        self.ax_2d.legend(loc="upper right", facecolor=THEME["surface"],
+                          edgecolor=THEME["border_soft"], labelcolor=THEME["text"], fontsize=9)
+        self.ax_2d.set_title(t("histogram_title"), color=THEME["text"], fontsize=12)
+        self.ax_2d.set_xlabel(t("histogram_xlabel"), color=THEME["text"])
+        self.ax_2d.set_ylabel(t("histogram_ylabel"), color=THEME["text"])
 
         self.canvas_2d.draw()
         self.status_var.set(t("status_histogram", len(values), n_bins))
@@ -5317,9 +5523,9 @@ class SuperCalcApp:
             self.fig_2d.subplots_adjust(hspace=0.4)
 
             # Dark theme colors
-            bg_color = "#1e1e2e"
-            text_color = "#cdd6f4"
-            grid_color = "#45475a"
+            bg_color = THEME["bg"]
+            text_color = THEME["text"]
+            grid_color = THEME["border"]
             self.fig_2d.set_facecolor(bg_color)
 
             for ax in (self.ax_2d, ax2):
@@ -5332,14 +5538,14 @@ class SuperCalcApp:
                 ax.grid(True, alpha=0.3, color=grid_color)
 
             if is_discrete:
-                self.ax_2d.bar(xs, pdf_vals, color="#89b4fa", alpha=0.85, width=0.6,
-                        edgecolor="#313244", linewidth=0.8)
-                ax2.step(xs, cdf_vals, where="post", color="#a6e3a1", linewidth=2)
+                self.ax_2d.bar(xs, pdf_vals, color=THEME["blue"], alpha=0.85, width=0.6,
+                        edgecolor=THEME["surface"], linewidth=0.8)
+                ax2.step(xs, cdf_vals, where="post", color=THEME["green"], linewidth=2)
             else:
-                self.ax_2d.fill_between(xs, pdf_vals, alpha=0.3, color="#89b4fa")
-                self.ax_2d.plot(xs, pdf_vals, color="#89b4fa", linewidth=2)
-                ax2.fill_between(xs, cdf_vals, alpha=0.3, color="#a6e3a1")
-                ax2.plot(xs, cdf_vals, color="#a6e3a1", linewidth=2)
+                self.ax_2d.fill_between(xs, pdf_vals, alpha=0.3, color=THEME["blue"])
+                self.ax_2d.plot(xs, pdf_vals, color=THEME["blue"], linewidth=2)
+                ax2.fill_between(xs, cdf_vals, alpha=0.3, color=THEME["green"])
+                ax2.plot(xs, cdf_vals, color=THEME["green"], linewidth=2)
 
             self.ax_2d.set_title(f"{dist_name} — {pdf_label}", color=text_color, fontsize=11)
             self.ax_2d.set_ylabel(pdf_label, color=text_color, fontsize=10)
@@ -5394,16 +5600,16 @@ class SuperCalcApp:
                     return
 
             # Generate plots for each parameter combination
-            colors = ["#89b4fa", "#f38ba8", "#a6e3a1", "#f9e2af", "#cba6f7", "#fab387"]
+            colors = [THEME["blue"], THEME["pink"], THEME["green"], THEME["yellow"], THEME["purple"], THEME["orange"]]
             self._ensure_2d_window()
             self.fig_2d.clear()
             self.ax_2d = self.fig_2d.add_subplot(211)
             ax2 = self.fig_2d.add_subplot(212)
             self.fig_2d.subplots_adjust(hspace=0.4)
 
-            bg_color = "#1e1e2e"
-            text_color = "#cdd6f4"
-            grid_color = "#45475a"
+            bg_color = THEME["bg"]
+            text_color = THEME["text"]
+            grid_color = THEME["border"]
             self.fig_2d.set_facecolor(bg_color)
 
             for ax in (self.ax_2d, ax2):
@@ -5448,12 +5654,12 @@ class SuperCalcApp:
 
             self.ax_2d.set_title(f"{dist_name} — {pdf_label} Comparison", color=text_color, fontsize=11)
             self.ax_2d.set_ylabel(pdf_label, color=text_color, fontsize=10)
-            self.ax_2d.legend(facecolor="#313244", edgecolor="#585b70",
+            self.ax_2d.legend(facecolor=THEME["surface"], edgecolor=THEME["border_soft"],
                        labelcolor=text_color, fontsize=8)
             ax2.set_title(f"{dist_name} — CDF Comparison", color=text_color, fontsize=11)
             ax2.set_ylabel(t("label_cdf"), color=text_color, fontsize=10)
             ax2.set_xlabel("x", color=text_color, fontsize=10)
-            ax2.legend(facecolor="#313244", edgecolor="#585b70",
+            ax2.legend(facecolor=THEME["surface"], edgecolor=THEME["border_soft"],
                        labelcolor=text_color, fontsize=8)
 
             self.canvas_2d.draw()
@@ -5595,18 +5801,18 @@ class SuperCalcApp:
             xs = list(range(1, len(ys) + 1)) if ys else []
 
         if xs and ys:
-            self.ax_2d.scatter(xs, ys, color="#f38ba8", s=30, zorder=5,
-                             label=t("curve_fit_data_label"), edgecolors="#313244", linewidths=0.5)
+            self.ax_2d.scatter(xs, ys, color=THEME["pink"], s=30, zorder=5,
+                             label=t("curve_fit_data_label"), edgecolors=THEME["surface"], linewidths=0.5)
 
         # Plot fitted curve
-        self.ax_2d.plot(xs_fit, ys_fit, color="#89b4fa", linewidth=2,
+        self.ax_2d.plot(xs_fit, ys_fit, color=THEME["blue"], linewidth=2,
                        label=f"Fit: {result['equation']}\nR²={result['r_squared']:.6f}")
 
-        self.ax_2d.legend(loc="best", facecolor="#313244",
-                          edgecolor="#585b70", labelcolor="#cdd6f4", fontsize=9)
-        self.ax_2d.set_title(t("curve_fit_title"), color="#cdd6f4", fontsize=12)
-        self.ax_2d.set_xlabel("X", color="#cdd6f4")
-        self.ax_2d.set_ylabel("Y", color="#cdd6f4")
+        self.ax_2d.legend(loc="best", facecolor=THEME["surface"],
+                          edgecolor=THEME["border_soft"], labelcolor=THEME["text"], fontsize=9)
+        self.ax_2d.set_title(t("curve_fit_title"), color=THEME["text"], fontsize=12)
+        self.ax_2d.set_xlabel("X", color=THEME["text"])
+        self.ax_2d.set_ylabel("Y", color=THEME["text"])
 
         self.canvas_2d.draw()
         self.status_var.set(t("status_fit_plotted", result['equation']))
@@ -5750,23 +5956,23 @@ class SuperCalcApp:
         self._ensure_2d_window()
         self.ax_2d.clear()
         self._setup_axes(self.ax_2d, is_3d=False)
-        color = "#f38ba8"
+        color = THEME["pink"]
         if chart_type == "scatter":
             self.ax_2d.scatter(xs, ys, color=color, s=30, zorder=5,
-                             edgecolors="#313244", linewidths=0.5)
+                             edgecolors=THEME["surface"], linewidths=0.5)
         elif chart_type == "line":
             sorted_pairs = sorted(zip(xs, ys))
             sx, sy = zip(*sorted_pairs)
             self.ax_2d.plot(sx, sy, color=color, linewidth=1.5, alpha=0.9)
             self.ax_2d.scatter(xs, ys, color=color, s=20, zorder=5,
-                             edgecolors="#313244", linewidths=0.5)
+                             edgecolors=THEME["surface"], linewidths=0.5)
         elif chart_type == "bar":
-            self.ax_2d.bar(xs, ys, color=color, alpha=0.8, edgecolor="#313244", linewidth=0.5)
+            self.ax_2d.bar(xs, ys, color=color, alpha=0.8, edgecolor=THEME["surface"], linewidth=0.5)
         label = self._data_filename or t("data_label_fallback")
-        self.ax_2d.set_title(f"{chart_type.title()}: {label}", color="#cdd6f4", fontsize=12)
-        self.ax_2d.set_xlabel("X", color="#cdd6f4")
-        self.ax_2d.set_ylabel("Y", color="#cdd6f4")
-        self.ax_2d.grid(True, alpha=0.2, color="#585b70")
+        self.ax_2d.set_title(f"{chart_type.title()}: {label}", color=THEME["text"], fontsize=12)
+        self.ax_2d.set_xlabel("X", color=THEME["text"])
+        self.ax_2d.set_ylabel("Y", color=THEME["text"])
+        self.ax_2d.grid(True, alpha=0.2, color=THEME["border_soft"])
         self.canvas_2d.draw()
         self.status_var.set(t("status_data_plotted", len(xs), chart_type))
 
@@ -5808,28 +6014,28 @@ class SuperCalcApp:
         self.ax_2d.clear()
         self._setup_axes(self.ax_2d, is_3d=False)
         chart_type = self._var_data_chart.get()
-        color = "#f38ba8"
+        color = THEME["pink"]
         if chart_type == "scatter":
             self.ax_2d.scatter(xs, ys, color=color, s=30, zorder=5,
-                             edgecolors="#313244", linewidths=0.5)
+                             edgecolors=THEME["surface"], linewidths=0.5)
         elif chart_type == "line":
             sorted_pairs = sorted(zip(xs, ys))
             sx, sy = zip(*sorted_pairs)
             self.ax_2d.plot(sx, sy, color=color, linewidth=1.5, alpha=0.9)
             self.ax_2d.scatter(xs, ys, color=color, s=20, zorder=5,
-                             edgecolors="#313244", linewidths=0.5)
+                             edgecolors=THEME["surface"], linewidths=0.5)
         elif chart_type == "bar":
-            self.ax_2d.bar(xs, ys, color=color, alpha=0.8, edgecolor="#313244", linewidth=0.5)
+            self.ax_2d.bar(xs, ys, color=color, alpha=0.8, edgecolor=THEME["surface"], linewidth=0.5)
         if xs_fit and ys_fit:
-            self.ax_2d.plot(xs_fit, ys_fit, color="#89b4fa", linewidth=2,
+            self.ax_2d.plot(xs_fit, ys_fit, color=THEME["blue"], linewidth=2,
                           label=f"Fit: {result['equation']}\nR²={result['r_squared']:.6f}")
-            self.ax_2d.legend(loc="best", facecolor="#313244",
-                            edgecolor="#585b70", labelcolor="#cdd6f4", fontsize=9)
+            self.ax_2d.legend(loc="best", facecolor=THEME["surface"],
+                            edgecolor=THEME["border_soft"], labelcolor=THEME["text"], fontsize=9)
         label = self._data_filename or t("data_label_fallback")
-        self.ax_2d.set_title(f"{chart_type.title()}: {label}", color="#cdd6f4", fontsize=12)
-        self.ax_2d.set_xlabel("X", color="#cdd6f4")
-        self.ax_2d.set_ylabel("Y", color="#cdd6f4")
-        self.ax_2d.grid(True, alpha=0.2, color="#585b70")
+        self.ax_2d.set_title(f"{chart_type.title()}: {label}", color=THEME["text"], fontsize=12)
+        self.ax_2d.set_xlabel("X", color=THEME["text"])
+        self.ax_2d.set_ylabel("Y", color=THEME["text"])
+        self.ax_2d.grid(True, alpha=0.2, color=THEME["border_soft"])
         self.canvas_2d.draw()
         self.status_var.set(t("status_trendline_fit", result['equation'], result['r_squared']))
 
@@ -5903,10 +6109,10 @@ class SuperCalcApp:
         win = tk.Toplevel(self.root)
         win.title(title)
         win.geometry("450x350")
-        win.configure(bg="#1e1e2e")
+        win.configure(bg=THEME["bg"])
         win.minsize(300, 200)
         ttk.Label(win, text=title, style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(10, 4))
-        text = tk.Text(win, height=15, bg="#313244", fg="#cdd6f4",
+        text = tk.Text(win, height=15, bg=THEME["surface"], fg=THEME["text"],
                        font=("Consolas", 11), wrap=tk.WORD)
         text.pack(fill=tk.BOTH, expand=True, padx=10, pady=4)
         text.insert("1.0", result_str)
@@ -7313,19 +7519,19 @@ class SuperCalcApp:
                 "natural_spline": t("interp_method_natural_spline"),
                 "akima": t("interp_method_akima"),
             }
-            self.ax_2d.plot(x_plot, y_plot, color="#4f8cff", linewidth=2,
+            self.ax_2d.plot(x_plot, y_plot, color=THEME["indigo"], linewidth=2,
                            label=method_names.get(method, method))
-            self.ax_2d.scatter(xs, ys, color="#ff6b6b", s=60, zorder=5,
+            self.ax_2d.scatter(xs, ys, color=THEME["red"], s=60, zorder=5,
                               label="Data points")
             for xi, yi in zip(xs, ys):
                 self.ax_2d.annotate(f"({xi:.2g},{yi:.2g})",
                                    (xi, yi), textcoords="offset points",
-                                   xytext=(6, 6), fontsize=8, color="#cdd6f4")
-            self.ax_2d.legend(fontsize=10, facecolor="#1e1e2e",
-                             edgecolor="#45475a", labelcolor="#cdd6f4")
-            self.ax_2d.set_title(t("sec_interpolation"), color="#cdd6f4", fontsize=13)
-            self.ax_2d.set_xlabel("x", color="#cdd6f4")
-            self.ax_2d.set_ylabel("y", color="#cdd6f4")
+                                   xytext=(6, 6), fontsize=8, color=THEME["text"])
+            self.ax_2d.legend(fontsize=10, facecolor=THEME["bg"],
+                             edgecolor=THEME["border"], labelcolor=THEME["text"])
+            self.ax_2d.set_title(t("sec_interpolation"), color=THEME["text"], fontsize=13)
+            self.ax_2d.set_xlabel("x", color=THEME["text"])
+            self.ax_2d.set_ylabel("y", color=THEME["text"])
             self.fig_2d.tight_layout()
             self.canvas_2d.draw()
             self.status_var.set(t("status_interp_plotted",

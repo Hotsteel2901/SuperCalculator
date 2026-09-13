@@ -55,11 +55,11 @@ public class Surface3DView extends View {
         gridPaint.setStrokeWidth(2f);
 
         axisPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        axisPaint.setColor(Color.parseColor("#cdd6f4"));
+        axisPaint.setColor(Color.parseColor("#E6EAFF"));
         axisPaint.setStrokeWidth(3f);
 
         textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        textPaint.setColor(Color.parseColor("#cdd6f4"));
+        textPaint.setColor(Color.parseColor("#E6EAFF"));
         textPaint.setTextSize(28f);
 
         scaleDetector = new ScaleGestureDetector(getContext(), new ScaleGestureDetector.SimpleOnScaleGestureListener() {
@@ -171,7 +171,7 @@ public class Surface3DView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        canvas.drawColor(Color.parseColor("#181825"));
+        canvas.drawColor(Color.parseColor("#0B0E1C"));
 
         if (getWidth() <= 0 || getHeight() <= 0) {
             return;

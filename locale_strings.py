@@ -3835,6 +3835,11 @@ STRINGS = {
         "en": "Invalid number format in sequence. Use comma-separated numbers.",
         "zh": "序列中包含无效数字格式。请使用逗号分隔的数字。",
     },
+    # ---- Application header ----
+    "app_tagline": {
+        "en": "Bridge-mode graphing & numerical computing workbench",
+        "zh": "桥接模式函数绘图与数值计算工作台",
+    },
 }
 
 

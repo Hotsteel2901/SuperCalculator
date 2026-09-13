@@ -1,52 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- "Aurora Lab" palette — shared with the web landing page and the
+         Python desktop theme so all four clients look like one product. -->
+
     <!-- Void background scale -->
-    <color name="sc_void">#FF0A0B10</color>
-    <color name="void_surface">#FF12131C</color>
-    <color name="void_elevated">#FF1A1B28</color>
-    <color name="void_overlay">#E61E1F2E</color>
+    <color name="sc_void">#FF070A16</color>
+    <color name="void_surface">#FF0B0E1C</color>
+    <color name="void_elevated">#FF121629</color>
+    <color name="void_overlay">#E61A1F38</color>
 
     <!-- Spectral accent colors — one per operation type -->
-    <color name="spectral_evaluate">#FF00E676</color>
-    <color name="spectral_derivative">#FF00BCD4</color>
-    <color name="spectral_derivative2">#FF448AFF</color>
-    <color name="spectral_integrate">#FFFFC107</color>
-    <color name="spectral_solve">#FFE040FB</color>
+    <color name="spectral_evaluate">#FF34D399</color>
+    <color name="spectral_derivative">#FF22D3EE</color>
+    <color name="spectral_derivative2">#FF60A5FA</color>
+    <color name="spectral_integrate">#FFFBBF24</color>
+    <color name="spectral_solve">#FFA78BFA</color>
 
     <!-- M3 mapped tones -->
-    <color name="m3_primary">#FF6EC6FF</color>
-    <color name="m3_on_primary">#FF003548</color>
-    <color name="m3_primary_container">#FF004D69</color>
-    <color name="m3_on_primary_container">#FFC3E8FF</color>
-    <color name="m3_surface">#FF12131C</color>
-    <color name="m3_on_surface">#FFE2E2E9</color>
-    <color name="m3_surface_variant">#FF43474E</color>
-    <color name="m3_on_surface_variant">#FFC3C6CF</color>
-    <color name="m3_outline">#FF8D9199</color>
-    <color name="m3_outline_variant">#FF43474E</color>
+    <color name="m3_primary">#FF818CF8</color>
+    <color name="m3_on_primary">#FF0B0E1C</color>
+    <color name="m3_primary_container">#FF312E81</color>
+    <color name="m3_on_primary_container">#FFC7D2FE</color>
+    <color name="m3_surface">#FF0B0E1C</color>
+    <color name="m3_on_surface">#FFE6EAFF</color>
+    <color name="m3_surface_variant">#FF1C2340</color>
+    <color name="m3_on_surface_variant">#FFA7B0D6</color>
+    <color name="m3_outline">#FF6B7699</color>
+    <color name="m3_outline_variant">#FF2B3350</color>
 
     <!-- Result surface -->
-    <color name="result_bg">#FF181922</color>
-    <color name="result_text">#FFD4D4DC</color>
+    <color name="result_bg">#FF070A16</color>
+    <color name="result_text">#FFDCE3FF</color>
 
     <!-- Chip / pill colors -->
-    <color name="chip_bg">#25222731</color>
-    <color name="chip_text">#FFB0B8C8</color>
-    
-    <!-- Chart curve colors (matching Python GUI) -->
-    <color name="chart_color_1">#FF1f77b4</color>
-    <color name="chart_color_2">#FFff7f0e</color>
-    <color name="chart_color_3">#FF2ca02c</color>
-    <color name="chart_color_4">#FFd62728</color>
-    <color name="chart_color_5">#FF9467bd</color>
-    <color name="chart_color_6">#FF8c564b</color>
-    <color name="chart_color_7">#FFe377c2</color>
-    <color name="chart_color_8">#FF7f7f7f</color>
-    <color name="chart_color_9">#FFbcbd22</color>
-    <color name="chart_color_10">#FF17becf</color>
-    
+    <color name="chip_bg">#261C2340</color>
+    <color name="chip_text">#FFC7CFEE</color>
+
+    <!-- Chart curve colors (matching the Python + web palettes) -->
+    <color name="chart_color_1">#FF6366F1</color>
+    <color name="chart_color_2">#FF22D3EE</color>
+    <color name="chart_color_3">#FF34D399</color>
+    <color name="chart_color_4">#FFF472B6</color>
+    <color name="chart_color_5">#FFA78BFA</color>
+    <color name="chart_color_6">#FFFBBF24</color>
+    <color name="chart_color_7">#FFFB923C</color>
+    <color name="chart_color_8">#FF60A5FA</color>
+    <color name="chart_color_9">#FF2DD4BF</color>
+    <color name="chart_color_10">#FFF87171</color>
+
     <!-- Chart UI colors -->
-    <color name="chart_grid">#FF45475a</color>
-    <color name="chart_text">#FFcdd6f4</color>
-    <color name="chart_bg">#FF181825</color>
+    <color name="chart_grid">#FF2B3350</color>
+    <color name="chart_text">#FFA7B0D6</color>
+    <color name="chart_bg">#FF0B0E1C</color>
 </resources>

@@ -6,22 +6,41 @@
     android:layout_height="match_parent"
     android:background="@color/sc_void"
     android:fitsSystemWindows="true">
-    <View android:layout_width="match_parent" android:layout_height="4dp" android:background="@drawable/spectral_line" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+    <View android:layout_width="match_parent" android:layout_height="3dp" android:background="@drawable/spectral_line" />
+    <LinearLayout
+        style="@style/Widget.SuperCalc.Header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/app_name" android:textSize="19sp" android:textColor="@color/m3_on_surface" android:fontFamily="@font/outfit_regular" android:letterSpacing="-0.01" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/app_subtitle" android:textSize="11sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.06" />
+        </LinearLayout>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/app_version" android:textSize="10sp" android:textColor="@color/m3_outline" android:fontFamily="@font/jetbrains_mono" android:background="@color/void_elevated" android:paddingStart="8dp" android:paddingEnd="8dp" android:paddingTop="4dp" android:paddingBottom="4dp" />
+    </LinearLayout>
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/m3_outline_variant" />
     <androidx.core.widget.NestedScrollView
         android:id="@+id/main_scroll"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:paddingStart="16dp" android:paddingEnd="16dp"
-        android:paddingTop="24dp" android:paddingBottom="32dp"
+        android:paddingTop="18dp" android:paddingBottom="32dp"
         android:clipToPadding="false">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center_horizontal">
-            <Space android:layout_width="0dp" android:layout_height="24dp" />
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/app_name" android:textSize="32sp" android:textColor="@color/m3_on_surface" android:fontFamily="@font/outfit_regular" android:letterSpacing="-0.02" />
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/app_subtitle" android:textSize="13sp" android:textColor="@color/m3_on_surface_variant" android:fontFamily="@font/outfit_regular" android:letterSpacing="0.08" android:layout_marginBottom="24dp" />
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.SuperCalc.Card"
                 android:layout_width="match_parent"
@@ -1156,4 +1175,18 @@
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/app_version" android:textSize="11sp" android:textColor="@color/m3_outline_variant" android:fontFamily="@font/outfit_regular" android:layout_marginTop="12dp" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+    </LinearLayout>
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_scroll_top"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="20dp"
+        android:contentDescription="@string/back_to_top"
+        android:src="@drawable/ic_arrow_up"
+        android:visibility="gone"
+        app:backgroundTint="@color/m3_primary"
+        app:tint="@color/sc_void"
+        app:elevation="6dp"
+        app:fabSize="mini" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

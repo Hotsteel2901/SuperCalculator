@@ -24,6 +24,19 @@ from typing import Any
 ArrayLike = np.ndarray | float | list[float]
 
 
+def _trapz(y: np.ndarray, x: np.ndarray) -> float:
+    """Trapezoidal integration that works on both NumPy 1.x and 2.x.
+
+    NumPy 2.0 removed ``np.trapz`` in favour of ``np.trapezoid``.  Keep a
+    single call site so the desktop statistics module does not crash on a
+    modern NumPy install.
+    """
+    trapezoid = getattr(np, "trapezoid", None)
+    if trapezoid is not None:
+        return float(trapezoid(y, x))
+    return float(np.trapz(y, x))  # type: ignore[attr-defined]
+
+
 # ---------------------------------------------------------------------------
 #  Helper: Gamma and Beta functions via Lanczos approximation
 # ---------------------------------------------------------------------------
@@ -246,13 +259,13 @@ class StudentTDist:
                     # Vectorized trapezoidal integration
                     t_vals = np.linspace(0, xi_val, n + 1)
                     pdf_vals = self.pdf(t_vals)
-                    total = np.trapz(pdf_vals, t_vals)
+                    total = _trapz(pdf_vals, t_vals)
                     result.flat[i] = 0.5 + total
                 else:
                     # CDF(x) = 1 - CDF(-x) for x < 0
                     t_vals = np.linspace(0, -xi_val, n + 1)
                     pdf_vals = self.pdf(t_vals)
-                    total = np.trapz(pdf_vals, t_vals)
+                    total = _trapz(pdf_vals, t_vals)
                     result.flat[i] = 0.5 - total
         return result
 

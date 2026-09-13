@@ -39,22 +39,22 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
     private LineDataSet markedPointDataSet;
     
     private static final int[] COLOR_PALETTE = {
-        Color.parseColor("#1f77b4"),
-        Color.parseColor("#ff7f0e"),
-        Color.parseColor("#2ca02c"),
-        Color.parseColor("#d62728"),
-        Color.parseColor("#9467bd"),
-        Color.parseColor("#8c564b"),
-        Color.parseColor("#e377c2"),
-        Color.parseColor("#7f7f7f"),
-        Color.parseColor("#bcbd22"),
-        Color.parseColor("#17becf")
+        Color.parseColor("#6366F1"),
+        Color.parseColor("#FB923C"),
+        Color.parseColor("#34D399"),
+        Color.parseColor("#F87171"),
+        Color.parseColor("#A78BFA"),
+        Color.parseColor("#A16207"),
+        Color.parseColor("#F472B6"),
+        Color.parseColor("#94A3B8"),
+        Color.parseColor("#FBBF24"),
+        Color.parseColor("#22D3EE")
     };
     
-    private static final int COLOR_GRID = Color.parseColor("#45475a");
-    private static final int COLOR_TEXT = Color.parseColor("#cdd6f4");
-    private static final int COLOR_BG = Color.parseColor("#181825");
-    private static final int MARK_COLOR = Color.parseColor("#f38ba8");
+    private static final int COLOR_GRID = Color.parseColor("#2B3350");
+    private static final int COLOR_TEXT = Color.parseColor("#E6EAFF");
+    private static final int COLOR_BG = Color.parseColor("#0B0E1C");
+    private static final int MARK_COLOR = Color.parseColor("#F472B6");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -272,7 +272,7 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
         
         Legend legend = lineChart.getLegend();
         legend.setEnabled(true);
-        legend.setTextColor(Color.parseColor("#cdd6f4"));
+        legend.setTextColor(Color.parseColor("#E6EAFF"));
         
         Description desc = lineChart.getDescription();
         desc.setEnabled(false);

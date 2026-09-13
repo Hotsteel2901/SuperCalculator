@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
@@ -14,6 +15,7 @@ import androidx.core.widget.NestedScrollView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
@@ -93,20 +95,17 @@ public class CalcActivity extends AppCompatActivity {
         lineChart  = findViewById(R.id.line_chart);
         graphCard  = findViewById(R.id.graph_card);
 
-        // Restore state from savedInstanceState if available
-        if (savedInstanceState != null) {
-            String savedExpr = savedInstanceState.getString("expr_input", "");
-            String savedX = savedInstanceState.getString("x_input", "");
-            String savedA = savedInstanceState.getString("a_input", "");
-            String savedB = savedInstanceState.getString("b_input", "");
-            String savedGuess = savedInstanceState.getString("guess_input", "");
-            String savedResult = savedInstanceState.getString("result_text", "");
-            if (exprInput != null) exprInput.setText(savedExpr);
-            if (xInput != null) xInput.setText(savedX);
-            if (aInput != null) aInput.setText(savedA);
-            if (bInput != null) bInput.setText(savedB);
-            if (guessInput != null) guessInput.setText(savedGuess);
-            if (resultView != null) resultView.setText(savedResult);
+        // Scroll-to-top affordance for the very long tool list.
+        FloatingActionButton fabTop = findViewById(R.id.fab_scroll_top);
+        if (fabTop != null && scrollView != null) {
+            fabTop.setOnClickListener(v -> scrollView.smoothScrollTo(0, 0));
+            scrollView.setOnScrollChangeListener((v, scrollX, scrollY, oldX, oldY) -> {
+                if (scrollY > 700) {
+                    if (fabTop.getVisibility() != View.VISIBLE) fabTop.show();
+                } else if (fabTop.getVisibility() == View.VISIBLE) {
+                    fabTop.hide();
+                }
+            });
         }
 
         // Operation buttons — MaterialButton extends Button, so findViewById works
@@ -504,9 +503,19 @@ public class CalcActivity extends AppCompatActivity {
     }
 
     private void scrollToResult() {
-        if (scrollView != null && resultView != null) {
-            scrollView.post(() -> scrollView.scrollTo(0, resultView.getTop() - 100));
-        }
+        if (scrollView == null || resultView == null) return;
+        scrollView.post(() -> {
+            // getTop() is relative to the parent card, so accumulate offsets up
+            // to the scroll view before jumping to the result block.
+            int offset = 0;
+            View v = resultView;
+            while (v != null && v != scrollView) {
+                offset += v.getTop();
+                android.view.ViewParent parent = v.getParent();
+                v = (parent instanceof View) ? (View) parent : null;
+            }
+            scrollView.smoothScrollTo(0, Math.max(0, offset - 140));
+        });
     }
 
     private void appendResult(String label, double value) {
@@ -832,8 +841,8 @@ public class CalcActivity extends AppCompatActivity {
         tv.setTypeface(android.graphics.Typeface.MONOSPACE);
         tv.setTextSize(13);
         tv.setPadding(40, 24, 40, 24);
-        tv.setTextColor(android.graphics.Color.parseColor("#cdd6f4"));
-        tv.setBackgroundColor(android.graphics.Color.parseColor("#181825"));
+        tv.setTextColor(android.graphics.Color.parseColor("#E6EAFF"));
+        tv.setBackgroundColor(android.graphics.Color.parseColor("#0B0E1C"));
 
         android.widget.ScrollView sv = new android.widget.ScrollView(this);
         sv.addView(tv);
@@ -912,8 +921,8 @@ public class CalcActivity extends AppCompatActivity {
         tv.setTypeface(android.graphics.Typeface.MONOSPACE);
         tv.setTextSize(13);
         tv.setPadding(40, 24, 40, 24);
-        tv.setTextColor(android.graphics.Color.parseColor("#cdd6f4"));
-        tv.setBackgroundColor(android.graphics.Color.parseColor("#181825"));
+        tv.setTextColor(android.graphics.Color.parseColor("#E6EAFF"));
+        tv.setBackgroundColor(android.graphics.Color.parseColor("#0B0E1C"));
 
         android.widget.ScrollView sv = new android.widget.ScrollView(this);
         sv.addView(tv);
@@ -1037,8 +1046,8 @@ public class CalcActivity extends AppCompatActivity {
         tv.setTypeface(android.graphics.Typeface.MONOSPACE);
         tv.setTextSize(13);
         tv.setPadding(40, 24, 40, 24);
-        tv.setTextColor(android.graphics.Color.parseColor("#cdd6f4"));
-        tv.setBackgroundColor(android.graphics.Color.parseColor("#181825"));
+        tv.setTextColor(android.graphics.Color.parseColor("#E6EAFF"));
+        tv.setBackgroundColor(android.graphics.Color.parseColor("#0B0E1C"));
 
         android.widget.ScrollView sv = new android.widget.ScrollView(this);
         sv.addView(tv);
@@ -1105,8 +1114,8 @@ public class CalcActivity extends AppCompatActivity {
         tv.setTypeface(android.graphics.Typeface.MONOSPACE);
         tv.setTextSize(13);
         tv.setPadding(40, 24, 40, 24);
-        tv.setTextColor(android.graphics.Color.parseColor("#cdd6f4"));
-        tv.setBackgroundColor(android.graphics.Color.parseColor("#181825"));
+        tv.setTextColor(android.graphics.Color.parseColor("#E6EAFF"));
+        tv.setBackgroundColor(android.graphics.Color.parseColor("#0B0E1C"));
 
         android.widget.ScrollView sv = new android.widget.ScrollView(this);
         sv.addView(tv);
@@ -1243,8 +1252,8 @@ public class CalcActivity extends AppCompatActivity {
         tv.setTypeface(android.graphics.Typeface.MONOSPACE);
         tv.setTextSize(13);
         tv.setPadding(40, 24, 40, 24);
-        tv.setTextColor(android.graphics.Color.parseColor("#cdd6f4"));
-        tv.setBackgroundColor(android.graphics.Color.parseColor("#181825"));
+        tv.setTextColor(android.graphics.Color.parseColor("#E6EAFF"));
+        tv.setBackgroundColor(android.graphics.Color.parseColor("#0B0E1C"));
 
         android.widget.ScrollView sv = new android.widget.ScrollView(this);
         sv.addView(tv);
@@ -1465,7 +1474,7 @@ public class CalcActivity extends AppCompatActivity {
                 int w = getWidth();
                 int h = getHeight();
                 android.graphics.Paint bgPaint = new android.graphics.Paint();
-                bgPaint.setColor(android.graphics.Color.parseColor("#181825"));
+                bgPaint.setColor(android.graphics.Color.parseColor("#0B0E1C"));
                 canvas.drawRect(0, 0, w, h, bgPaint);
 
                 // Scale from math coords to screen coords
@@ -1477,7 +1486,7 @@ public class CalcActivity extends AppCompatActivity {
 
                 // Draw axes
                 android.graphics.Paint axisPaint = new android.graphics.Paint();
-                axisPaint.setColor(android.graphics.Color.parseColor("#585b70"));
+                axisPaint.setColor(android.graphics.Color.parseColor("#3B4570"));
                 axisPaint.setStrokeWidth(1f);
 
                 float axX = margin + (float)((0 - xmin) * scaleX);
@@ -1491,7 +1500,7 @@ public class CalcActivity extends AppCompatActivity {
 
                 // Draw direction arrows
                 android.graphics.Paint arrowPaint = new android.graphics.Paint();
-                arrowPaint.setColor(android.graphics.Color.parseColor("#89b4fa"));
+                arrowPaint.setColor(android.graphics.Color.parseColor("#60A5FA"));
                 arrowPaint.setStrokeWidth(2f);
                 arrowPaint.setStyle(android.graphics.Paint.Style.STROKE);
                 arrowPaint.setAntiAlias(true);
@@ -1543,7 +1552,7 @@ public class CalcActivity extends AppCompatActivity {
 
                 // Draw solution curves
                 android.graphics.Paint curvePaint = new android.graphics.Paint();
-                curvePaint.setColor(android.graphics.Color.parseColor("#f38ba8"));
+                curvePaint.setColor(android.graphics.Color.parseColor("#F472B6"));
                 curvePaint.setStrokeWidth(2.5f);
                 curvePaint.setStyle(android.graphics.Paint.Style.STROKE);
                 curvePaint.setAntiAlias(true);
@@ -1567,7 +1576,7 @@ public class CalcActivity extends AppCompatActivity {
 
                 // Draw labels
                 android.graphics.Paint labelPaint = new android.graphics.Paint();
-                labelPaint.setColor(android.graphics.Color.parseColor("#a6adc8"));
+                labelPaint.setColor(android.graphics.Color.parseColor("#A7B0D6"));
                 labelPaint.setTextSize(24f);
                 canvas.drawText("dy/dx = " + expr, margin, h - margin / 2, labelPaint);
             }
@@ -1761,7 +1770,7 @@ public class CalcActivity extends AppCompatActivity {
                 int w = getWidth();
                 int h = getHeight();
                 android.graphics.Paint bgPaint = new android.graphics.Paint();
-                bgPaint.setColor(android.graphics.Color.parseColor("#181825"));
+                bgPaint.setColor(android.graphics.Color.parseColor("#0B0E1C"));
                 canvas.drawRect(0, 0, w, h, bgPaint);
 
                 float margin = 20f;
@@ -1772,7 +1781,7 @@ public class CalcActivity extends AppCompatActivity {
 
                 // Draw axes
                 android.graphics.Paint axisPaint = new android.graphics.Paint();
-                axisPaint.setColor(android.graphics.Color.parseColor("#585b70"));
+                axisPaint.setColor(android.graphics.Color.parseColor("#3B4570"));
                 axisPaint.setStrokeWidth(1f);
 
                 float axX = margin + (float)((0 - xmin) * scaleX);
@@ -1796,7 +1805,7 @@ public class CalcActivity extends AppCompatActivity {
 
                 // Draw vector arrows
                 android.graphics.Paint arrowPaint = new android.graphics.Paint();
-                arrowPaint.setColor(android.graphics.Color.parseColor("#89b4fa"));
+                arrowPaint.setColor(android.graphics.Color.parseColor("#60A5FA"));
                 arrowPaint.setStrokeWidth(2f);
                 arrowPaint.setStyle(android.graphics.Paint.Style.STROKE);
                 arrowPaint.setAntiAlias(true);
@@ -1843,7 +1852,7 @@ public class CalcActivity extends AppCompatActivity {
 
                 // Draw solution curves
                 android.graphics.Paint curvePaint = new android.graphics.Paint();
-                curvePaint.setColor(android.graphics.Color.parseColor("#f38ba8"));
+                curvePaint.setColor(android.graphics.Color.parseColor("#F472B6"));
                 curvePaint.setStrokeWidth(2.5f);
                 curvePaint.setStyle(android.graphics.Paint.Style.STROKE);
                 curvePaint.setAntiAlias(true);
@@ -1867,7 +1876,7 @@ public class CalcActivity extends AppCompatActivity {
 
                 // Draw labels
                 android.graphics.Paint labelPaint = new android.graphics.Paint();
-                labelPaint.setColor(android.graphics.Color.parseColor("#a6adc8"));
+                labelPaint.setColor(android.graphics.Color.parseColor("#A7B0D6"));
                 labelPaint.setTextSize(22f);
                 canvas.drawText("dx/dt = " + exprP, margin, h - margin / 2, labelPaint);
                 canvas.drawText("dy/dt = " + exprQ, margin, h - margin / 2 + 28, labelPaint);
@@ -1954,7 +1963,7 @@ public class CalcActivity extends AppCompatActivity {
                 int w = getWidth();
                 int h = getHeight();
                 android.graphics.Paint bgPaint = new android.graphics.Paint();
-                bgPaint.setColor(android.graphics.Color.parseColor("#181825"));
+                bgPaint.setColor(android.graphics.Color.parseColor("#0B0E1C"));
                 canvas.drawRect(0, 0, w, h, bgPaint);
 
                 float margin = 20f;
@@ -1988,12 +1997,12 @@ public class CalcActivity extends AppCompatActivity {
                 float cellH = plotH / (nRows - 1);
 
                 int[] contourColors = {
-                    android.graphics.Color.parseColor("#89b4fa"),
-                    android.graphics.Color.parseColor("#a6e3a1"),
-                    android.graphics.Color.parseColor("#f9e2af"),
-                    android.graphics.Color.parseColor("#f38ba8"),
-                    android.graphics.Color.parseColor("#cba6f7"),
-                    android.graphics.Color.parseColor("#fab387"),
+                    android.graphics.Color.parseColor("#60A5FA"),
+                    android.graphics.Color.parseColor("#34D399"),
+                    android.graphics.Color.parseColor("#FBBF24"),
+                    android.graphics.Color.parseColor("#F472B6"),
+                    android.graphics.Color.parseColor("#A78BFA"),
+                    android.graphics.Color.parseColor("#FB923C"),
                 };
 
                 for (int li = 0; li < levels.length; li++) {
@@ -2013,7 +2022,7 @@ public class CalcActivity extends AppCompatActivity {
 
                 // Draw axes
                 android.graphics.Paint axisPaint = new android.graphics.Paint();
-                axisPaint.setColor(android.graphics.Color.parseColor("#585b70"));
+                axisPaint.setColor(android.graphics.Color.parseColor("#3B4570"));
                 axisPaint.setStrokeWidth(1f);
                 float axX = margin + (float)((0 - xmin) / (xmax - xmin) * plotW);
                 float axY = margin + (float)((ymax - 0) / (ymax - ymin) * plotH);
@@ -2026,7 +2035,7 @@ public class CalcActivity extends AppCompatActivity {
 
                 // Draw labels
                 android.graphics.Paint textPaint = new android.graphics.Paint();
-                textPaint.setColor(android.graphics.Color.parseColor("#cdd6f4"));
+                textPaint.setColor(android.graphics.Color.parseColor("#E6EAFF"));
                 textPaint.setTextSize(20f);
                 textPaint.setAntiAlias(true);
                 canvas.drawText(String.format("f(x,y) = %s", expr), margin, margin - 4, textPaint);
@@ -2252,8 +2261,8 @@ public class CalcActivity extends AppCompatActivity {
         tv.setTypeface(android.graphics.Typeface.MONOSPACE);
         tv.setTextSize(13);
         tv.setPadding(40, 24, 40, 24);
-        tv.setTextColor(android.graphics.Color.parseColor("#cdd6f4"));
-        tv.setBackgroundColor(android.graphics.Color.parseColor("#181825"));
+        tv.setTextColor(android.graphics.Color.parseColor("#E6EAFF"));
+        tv.setBackgroundColor(android.graphics.Color.parseColor("#0B0E1C"));
 
         android.widget.ScrollView sv = new android.widget.ScrollView(this);
         sv.addView(tv);
@@ -2336,8 +2345,8 @@ public class CalcActivity extends AppCompatActivity {
         tv.setTypeface(android.graphics.Typeface.MONOSPACE);
         tv.setTextSize(13);
         tv.setPadding(40, 24, 40, 24);
-        tv.setTextColor(android.graphics.Color.parseColor("#cdd6f4"));
-        tv.setBackgroundColor(android.graphics.Color.parseColor("#181825"));
+        tv.setTextColor(android.graphics.Color.parseColor("#E6EAFF"));
+        tv.setBackgroundColor(android.graphics.Color.parseColor("#0B0E1C"));
         android.widget.ScrollView sv = new android.widget.ScrollView(this);
         sv.addView(tv);
         new androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert)
@@ -2661,8 +2670,8 @@ public class CalcActivity extends AppCompatActivity {
         tv.setTypeface(android.graphics.Typeface.MONOSPACE);
         tv.setTextSize(13);
         tv.setPadding(40, 24, 40, 24);
-        tv.setTextColor(android.graphics.Color.parseColor("#cdd6f4"));
-        tv.setBackgroundColor(android.graphics.Color.parseColor("#181825"));
+        tv.setTextColor(android.graphics.Color.parseColor("#E6EAFF"));
+        tv.setBackgroundColor(android.graphics.Color.parseColor("#0B0E1C"));
 
         android.widget.ScrollView sv = new android.widget.ScrollView(this);
         sv.addView(tv);
@@ -2726,8 +2735,8 @@ public class CalcActivity extends AppCompatActivity {
         tv.setTypeface(android.graphics.Typeface.MONOSPACE);
         tv.setTextSize(14);
         tv.setPadding(40, 24, 40, 24);
-        tv.setTextColor(android.graphics.Color.parseColor("#cdd6f4"));
-        tv.setBackgroundColor(android.graphics.Color.parseColor("#181825"));
+        tv.setTextColor(android.graphics.Color.parseColor("#E6EAFF"));
+        tv.setBackgroundColor(android.graphics.Color.parseColor("#0B0E1C"));
         new androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dialog_Alert)
             .setTitle(title)
             .setView(tv)
@@ -3159,8 +3168,8 @@ public class CalcActivity extends AppCompatActivity {
         textView.setTypeface(android.graphics.Typeface.MONOSPACE);
         textView.setTextSize(13);
         textView.setPadding(40, 24, 40, 24);
-        textView.setTextColor(android.graphics.Color.parseColor("#cdd6f4"));
-        textView.setBackgroundColor(android.graphics.Color.parseColor("#181825"));
+        textView.setTextColor(android.graphics.Color.parseColor("#E6EAFF"));
+        textView.setBackgroundColor(android.graphics.Color.parseColor("#0B0E1C"));
 
         android.widget.ScrollView scrollView = new android.widget.ScrollView(this);
         scrollView.addView(textView);
@@ -4741,7 +4750,7 @@ public class CalcActivity extends AppCompatActivity {
         }
 
         LineDataSet curveSet = new LineDataSet(curveEntries, getString(R.string.interp_title));
-        curveSet.setColor(android.graphics.Color.parseColor("#4f8cff"));
+        curveSet.setColor(android.graphics.Color.parseColor("#818CF8"));
         curveSet.setLineWidth(2.5f);
         curveSet.setDrawCircles(false);
         curveSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
@@ -4751,7 +4760,7 @@ public class CalcActivity extends AppCompatActivity {
             pointEntries.add(new Entry((float) p[0], (float) p[1]));
         }
         LineDataSet pointSet = new LineDataSet(pointEntries, "Data");
-        pointSet.setColor(android.graphics.Color.parseColor("#ff6b6b"));
+        pointSet.setColor(android.graphics.Color.parseColor("#F87171"));
         pointSet.setLineWidth(0f);
         pointSet.setCircleRadius(5f);
         pointSet.setDrawCircleHole(false);

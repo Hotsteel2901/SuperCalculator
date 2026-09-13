@@ -740,4 +740,5 @@
     <string name="conv_compute">计算卷积</string>
     <string name="conv_empty_input">请输入序列 A 和 B。</string>
     <string name="conv_invalid_input">无效的数字格式。请使用逗号分隔的数字。</string>
+    <string name="back_to_top">返回顶部</string>
 </resources>

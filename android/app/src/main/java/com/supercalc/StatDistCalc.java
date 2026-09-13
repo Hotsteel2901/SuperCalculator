@@ -111,18 +111,13 @@ public class StatDistCalc {
 
     private static double tCdf(double x, int nu) {
         if (nu < 1) return Double.NaN;
-        // Use numerical integration (trapezoidal) from 0 to x, plus 0.5 offset
-        // to get integral from -infinity to x
-        if (x > 10) return 1.0;
-        if (x < -10) return 0.0;
-        int n = 2000;
-        double h = x / n;
-        double sum = tPdf(0, nu) / 2.0;
-        for (int i = 1; i < n; i++) {
-            sum += tPdf(i * h, nu);
-        }
-        sum += tPdf(x, nu) / 2.0;
-        return sum * h + 0.5;
+        // Exact relation through the regularized incomplete beta function.
+        // The previous trapezoidal approximation clamped |x| > 10 to 0/1,
+        // which was wrong for small nu (e.g. P(T<=12) = 0.9735 for nu = 1,
+        // not 1.0).
+        double v = nu;
+        double ib = incompleteBeta(v / 2.0, 0.5, v / (v + x * x));
+        return x >= 0 ? 1.0 - 0.5 * ib : 0.5 * ib;
     }
 
     // --- Chi-squared distribution ---
@@ -279,8 +274,10 @@ public class StatDistCalc {
         if (x > (a + 1) / (a + b + 2)) {
             return 1.0 - incompleteBeta(b, a, 1.0 - x);
         }
+        // beta(a,b) = Γ(a)Γ(b)/Γ(a+b); the front factor must divide by it.
+        // The previous sign mistake made every F-distribution CDF wrong.
         double lbeta = logGamma(a) + logGamma(b) - logGamma(a + b);
-        double front = Math.exp(Math.log(x) * a + Math.log(1.0 - x) * b + lbeta) / a;
+        double front = Math.exp(Math.log(x) * a + Math.log(1.0 - x) * b - lbeta) / a;
         // Lentz's continued fraction
         double f = 1.0, c = 1.0, d = 1.0 - (a + b) * x / (a + 1);
         if (Math.abs(d) < 1e-30) d = 1e-30;
