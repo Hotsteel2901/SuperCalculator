@@ -81,6 +81,11 @@ public class PlotActivity extends AppCompatActivity {
         yMaxInput = findViewById(R.id.y_max_input);
         exprInput = findViewById(R.id.plot_expr_input);
         btnZoom = findViewById(R.id.btn_zoom);
+
+        // The toolbar's back arrow is drawn from app:navigationIcon; without a
+        // click listener it looks tappable but does nothing.
+        com.google.android.material.appbar.MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        if (toolbar != null) toolbar.setNavigationOnClickListener(v -> finish());
         
         MaterialButton btnAddCurve = findViewById(R.id.btn_add_curve);
         MaterialButton btnPlot = findViewById(R.id.btn_plot_all);
