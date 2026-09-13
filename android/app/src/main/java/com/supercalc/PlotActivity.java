@@ -3,7 +3,12 @@ package com.supercalc;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import android.view.MotionEvent;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.widget.NestedScrollView;
@@ -30,6 +35,11 @@ public class PlotActivity extends AppCompatActivity {
     private TextInputEditText xMinInput, xMaxInput, yMinInput, yMaxInput;
     private TextInputEditText exprInput;
     private MaterialButton btnZoom;
+
+    /** Curve list + intersection report shown under the expression input. */
+    private View curveListContainer;
+    private TextView curveListView;
+    private TextView intersectResultView;
     
     private ArrayList<ArrayList<Entry>> allEntries;
     private ArrayList<String> allExpressions;
@@ -81,11 +91,18 @@ public class PlotActivity extends AppCompatActivity {
         yMaxInput = findViewById(R.id.y_max_input);
         exprInput = findViewById(R.id.plot_expr_input);
         btnZoom = findViewById(R.id.btn_zoom);
+        curveListContainer = findViewById(R.id.curve_list_container);
+        curveListView = findViewById(R.id.curve_list_view);
+        intersectResultView = findViewById(R.id.intersect_result_view);
 
         // The toolbar's back arrow is drawn from app:navigationIcon; without a
         // click listener it looks tappable but does nothing.
         com.google.android.material.appbar.MaterialToolbar toolbar = findViewById(R.id.toolbar);
         if (toolbar != null) toolbar.setNavigationOnClickListener(v -> finish());
+
+        // This button existed in the layout but was never wired up.
+        MaterialButton btnIntersect = findViewById(R.id.btn_find_intersections);
+        if (btnIntersect != null) btnIntersect.setOnClickListener(v -> onFindIntersections());
         
         MaterialButton btnAddCurve = findViewById(R.id.btn_add_curve);
         MaterialButton btnPlot = findViewById(R.id.btn_plot_all);
@@ -437,22 +454,53 @@ public class PlotActivity extends AppCompatActivity {
         toast(getString(R.string.toast_polar_plotted));
     }
     
-    private void plotImplicitCurve(String impExpr, int resolution, double xMin, double xMax, double yMin, double yMax) {
+    /**
+     * Sampling a (resolution+1)^2 grid used to run on the UI thread with one JNI
+     * call per point, which froze the screen for seconds at high resolutions.
+     * Now the grid is evaluated in a single batched call, off the main thread.
+     */
+    private void plotImplicitCurve(final String impExpr, int resolution,
+                                   final double xMin, final double xMax,
+                                   final double yMin, final double yMax) {
+        final int res = Math.max(20, Math.min(resolution, 200));
+        new Thread(() -> {
+            final ArrayList<Entry> entries =
+                    buildImplicitEntries(impExpr, res, xMin, xMax, yMin, yMax);
+            runOnUiThread(() -> showImplicitCurve(impExpr, entries));
+        }, "implicit-plot").start();
+    }
+
+    /** Pure computation: batched grid sampling + marching squares. */
+    private ArrayList<Entry> buildImplicitEntries(String expr, int resolution,
+                                                  double xMin, double xMax,
+                                                  double yMin, double yMax) {
         ArrayList<Entry> entries = new ArrayList<>();
-        
+        int side = resolution + 1;
         double dx = (xMax - xMin) / resolution;
         double dy = (yMax - yMin) / resolution;
-        
-        double[][] grid = new double[resolution + 1][resolution + 1];
-        for (int i = 0; i <= resolution; i++) {
+
+        // One batched JNI call instead of (resolution+1)^2 single-point calls.
+        double[] gx = new double[side * side];
+        double[] gy = new double[side * side];
+        int k = 0;
+        for (int i = 0; i < side; i++) {
             double y = yMin + i * dy;
-            for (int j = 0; j <= resolution; j++) {
-                double x = xMin + j * dx;
-                double val = CalcEngine.evaluateXY(impExpr, x, y);
-                grid[i][j] = (!Double.isNaN(val) && !Double.isInfinite(val)) ? val : Double.NaN;
+            for (int j = 0; j < side; j++) {
+                gx[k] = xMin + j * dx;
+                gy[k] = y;
+                k++;
             }
         }
-        
+        double[] values = CalcEngine.evaluateXYArray(expr, gx, gy);
+
+        double[][] grid = new double[side][side];
+        for (int i = 0; i < side; i++) {
+            for (int j = 0; j < side; j++) {
+                double val = values == null ? Double.NaN : values[i * side + j];
+                grid[i][j] = (Double.isNaN(val) || Double.isInfinite(val)) ? Double.NaN : val;
+            }
+        }
+
         for (int i = 0; i < resolution; i++) {
             for (int j = 0; j < resolution; j++) {
                 double v00 = grid[i][j];
@@ -526,6 +574,12 @@ public class PlotActivity extends AppCompatActivity {
             }
         }
         
+        return entries;
+    }
+
+    /** UI update for a finished implicit plot, back on the main thread. */
+    private void showImplicitCurve(String impExpr, ArrayList<Entry> entries) {
+        if (isFinishing() || isDestroyed()) return;
         allEntries.add(entries);
         String label = "Imp: " + impExpr + " = 0";
         allExpressions.add(label);
@@ -1053,6 +1107,162 @@ public class PlotActivity extends AppCompatActivity {
             allEntries.remove(idx);
         }
         toast(getString(R.string.toast_removed_curve, idx < allExpressions.size() ? allExpressions.get(idx) : "last"));
+        refreshCurveList();
+    }
+
+    /** Colour-coded list of the curves currently on the plot. */
+    private void refreshCurveList() {
+        if (curveListContainer == null || curveListView == null) return;
+        if (allExpressions == null || allExpressions.isEmpty()) {
+            curveListContainer.setVisibility(View.GONE);
+            return;
+        }
+        curveListContainer.setVisibility(View.VISIBLE);
+        SpannableStringBuilder sb = new SpannableStringBuilder();
+        for (int i = 0; i < allExpressions.size(); i++) {
+            int color = (curveColors != null && i < curveColors.size())
+                    ? curveColors.get(i) : Color.parseColor("#E6EAFF");
+            sb.append(String.valueOf(i + 1)).append(". ");
+            int start = sb.length();
+            sb.append("\u25CF");
+            sb.setSpan(new ForegroundColorSpan(color), start, sb.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            sb.append(" ").append(allExpressions.get(i));
+            if (i < allExpressions.size() - 1) sb.append("\n");
+        }
+        curveListView.setText(sb);
+    }
+
+    /**
+     * Intersections of the first two function curves over the current X range.
+     * Mirrors the desktop implementation: sample the difference, look for sign
+     * changes, refine with bisection, then deduplicate.
+     */
+    private void onFindIntersections() {
+        if (allExpressions == null || allExpressions.size() < 2) {
+            toast(getString(R.string.toast_need_two_curves));
+            return;
+        }
+        int first = -1, second = -1;
+        for (int i = 0; i < allExpressions.size(); i++) {
+            String type = i < curveTypes.size() ? curveTypes.get(i) : "regular";
+            if (!"regular".equals(type)) continue;      // function curves only
+            if (first < 0) {
+                first = i;
+            } else if (second < 0) {
+                second = i;
+                break;
+            }
+        }
+        if (first < 0 || second < 0) {
+            toast(getString(R.string.toast_need_two_curves));
+            return;
+        }
+
+        double xMin, xMax;
+        try {
+            xMin = Double.parseDouble(xMinInput.getText().toString().trim());
+            xMax = Double.parseDouble(xMaxInput.getText().toString().trim());
+        } catch (NumberFormatException e) {
+            toast(getString(R.string.toast_invalid_range));
+            return;
+        }
+        if (xMin >= xMax) {
+            toast(getString(R.string.toast_xmin_xmax));
+            return;
+        }
+
+        List<double[]> points = findIntersections(
+                allExpressions.get(first), allExpressions.get(second), xMin, xMax);
+        if (points.isEmpty()) {
+            if (intersectResultView != null) intersectResultView.setVisibility(View.GONE);
+            toast(getString(R.string.toast_no_intersections));
+            return;
+        }
+
+        StringBuilder report = new StringBuilder(getString(R.string.intersect_result_title)).append(":\n");
+        ArrayList<Entry> markers = new ArrayList<>();
+        for (int i = 0; i < points.size(); i++) {
+            double[] p = points.get(i);
+            report.append("(").append(String.format("%.4g", p[0]))
+                  .append(", ").append(String.format("%.4g", p[1])).append(")");
+            if (i < points.size() - 1) report.append("\n");
+            markers.add(new Entry((float) p[0], (float) p[1]));
+        }
+        if (intersectResultView != null) {
+            intersectResultView.setVisibility(View.VISIBLE);
+            intersectResultView.setText(report.toString());
+        }
+
+        // Mark them on the chart: circles only, the connecting line is invisible.
+        LineData data = lineChart.getLineData();
+        if (data != null) {
+            LineDataSet markerSet = new LineDataSet(markers, getString(R.string.intersect));
+            markerSet.setColor(Color.TRANSPARENT);
+            markerSet.setCircleColor(Color.parseColor("#FBBF24"));
+            markerSet.setCircleRadius(5f);
+            markerSet.setDrawCircles(true);
+            markerSet.setDrawValues(false);
+            markerSet.setLineWidth(0f);
+            data.addDataSet(markerSet);
+            lineChart.notifyDataSetChanged();
+            lineChart.invalidate();
+        }
+        toast(getString(R.string.toast_found_intersections, points.size()));
+    }
+
+    private List<double[]> findIntersections(String fa, String fb, double xMin, double xMax) {
+        List<double[]> result = new ArrayList<>();
+        int n = 400;
+        double step = (xMax - xMin) / (n - 1);
+        double[] xs = new double[n];
+        for (int i = 0; i < n; i++) xs[i] = xMin + i * step;
+
+        double[] ya = CalcEngine.evaluateArray(fa, xs);
+        double[] yb = CalcEngine.evaluateArray(fb, xs);
+        if (ya == null || yb == null) return result;
+
+        final double tolZero = 1e-6;
+        final double tolDup = 1e-4;
+        List<Double> foundX = new ArrayList<>();
+        List<Double> foundY = new ArrayList<>();
+
+        for (int i = 0; i < n; i++) {
+            if (Double.isNaN(ya[i]) || Double.isNaN(yb[i])) continue;
+            if (Math.abs(ya[i] - yb[i]) < tolZero) {
+                foundX.add(xs[i]);
+                foundY.add((ya[i] + yb[i]) / 2.0);
+            }
+        }
+
+        String diff = "(" + fa + ")-(" + fb + ")";
+        for (int i = 0; i < n - 1; i++) {
+            if (Double.isNaN(ya[i]) || Double.isNaN(yb[i])
+                    || Double.isNaN(ya[i + 1]) || Double.isNaN(yb[i + 1])) continue;
+            double d1 = ya[i] - yb[i];
+            double d2 = ya[i + 1] - yb[i + 1];
+            if (d1 == 0.0 || d2 == 0.0 || d1 * d2 >= 0) continue;
+            double root = CalcEngine.solveBisection(diff, xs[i], xs[i + 1]);
+            if (Double.isNaN(root)) continue;
+            double y = CalcEngine.evaluate(fa, root);
+            if (!Double.isNaN(y)) {
+                foundX.add(root);
+                foundY.add(y);
+            }
+        }
+
+        // Sort by x, then drop duplicates that are closer than tolDup.
+        Integer[] order = new Integer[foundX.size()];
+        for (int i = 0; i < order.length; i++) order[i] = i;
+        java.util.Arrays.sort(order, (p, q) -> Double.compare(foundX.get(p), foundX.get(q)));
+        double lastX = Double.NaN;
+        for (int idx : order) {
+            double x = foundX.get(idx);
+            if (!Double.isNaN(lastX) && Math.abs(x - lastX) <= tolDup) continue;
+            lastX = x;
+            result.add(new double[]{x, foundY.get(idx)});
+        }
+        return result;
     }
     
     private void onPlotAll() {

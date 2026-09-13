@@ -215,10 +215,10 @@
     <string name="toast_x0_xend">x0不能等于x终点</string>
     <string name="toast_set_ab">设置 a &lt; b 作为绘图范围</string>
     <string name="toast_enter_data">请输入数据点</string>
-    <string name="toast_invalid_num">无效数字：{0}</string>
+    <string name="toast_invalid_num">无效数字：%1$s</string>
     <string name="toast_no_valid_nums">未输入有效数字</string>
-    <string name="toast_data_sorted">数据已排序（{0}个值）</string>
-    <string name="toast_invalid_num_matrix">无效数字：{0}</string>
+    <string name="toast_data_sorted">数据已排序（%1$s个值）</string>
+    <string name="toast_invalid_num_matrix">无效数字：%1$s</string>
     <string name="toast_cols_match">所有行必须具有相同的列数</string>
     <string name="toast_dims_match">维度必须匹配</string>
     <string name="toast_cols_rows">A的列数必须等于B的行数</string>
@@ -228,7 +228,7 @@
     <string name="toast_eig_square">特征值需要方阵</string>
     <string name="toast_need_2y">至少需要2个Y数据点</string>
     <string name="toast_zero_variance">X数据方差为零</string>
-    <string name="toast_need_n_points">至少需要{0}个数据点</string>
+    <string name="toast_need_n_points">至少需要%1$s个数据点</string>
     <string name="toast_cannot_fit">奇异矩阵 - 无法拟合</string>
     <string name="toast_need_2_pos_y">至少需要2个正Y值</string>
     <string name="toast_need_2_pos">至少需要2个正数据点</string>
@@ -245,32 +245,32 @@
     <string name="toast_invalid_value">无效值</string>
     <string name="toast_unknown_category">未知类别：%1$s</string>
     <string name="toast_invalid_unit">此类别的单位无效</string>
-    <string name="toast_error_prefix">错误：{0}</string>
+    <string name="toast_error_prefix">错误：%1$s</string>
     <string name="toast_no_valid_points">没有有效点可绘制</string>
     <string name="toast_parametric_plotted">参数曲线已绘制</string>
     <string name="toast_polar_plotted">极坐标曲线已绘制</string>
     <string name="toast_implicit_plotted">隐函数曲线已绘制</string>
     <string name="toast_no_ode_points">没有有效ODE点可绘制</string>
     <string name="toast_direction_field_plotted">方向场已绘制</string>
-    <string name="toast_invalid_ic">初始条件无效：{0}</string>
+    <string name="toast_invalid_ic">初始条件无效：%1$s</string>
     <string name="toast_ode_plotted">ODE解已绘制</string>
-    <string name="toast_taylor_plotted">泰勒级数（{0}阶）已在a={1}处绘制</string>
+    <string name="toast_taylor_plotted">泰勒级数（%1$s阶）已在a=%2$s处绘制</string>
     <string name="toast_no_data_points">没有有效数据点可绘制</string>
-    <string name="toast_regression_plotted">回归数据已绘制（{0}个点）</string>
+    <string name="toast_regression_plotted">回归数据已绘制（%1$s个点）</string>
     <string name="toast_deleted_mark">已删除标记点</string>
-    <string name="toast_marked_point">已标记点：({0}, {1})</string>
-    <string name="toast_added_curve">已添加曲线：{0}</string>
+    <string name="toast_marked_point">已标记点：(%1$s, %2$s)</string>
+    <string name="toast_added_curve">已添加曲线：%1$s</string>
     <string name="toast_no_curves_remove">没有曲线可删除</string>
-    <string name="toast_removed_curve">已删除曲线：{0}</string>
+    <string name="toast_removed_curve">已删除曲线：%1$s</string>
     <string name="toast_add_curves_first">请先添加曲线</string>
     <string name="toast_invalid_range">范围值无效</string>
     <string name="toast_xmin_xmax">X最小值必须小于X最大值</string>
     <string name="toast_ymin_ymax">Y最小值必须小于Y最大值</string>
-    <string name="toast_error_parametric">参数曲线错误：{0}</string>
-    <string name="toast_error_polar">极坐标曲线错误：{0}</string>
-    <string name="toast_error_expr">{0}中的错误：{1}</string>
+    <string name="toast_error_parametric">参数曲线错误：%1$s</string>
+    <string name="toast_error_polar">极坐标曲线错误：%1$s</string>
+    <string name="toast_error_expr">%1$s中的错误：%2$s</string>
     <string name="toast_no_data_display">没有有效数据可显示</string>
-    <string name="toast_plotted_curves">已绘制{0}条曲线</string>
+    <string name="toast_plotted_curves">已绘制%1$s条曲线</string>
     <string name="toast_plot_first">请先绘制曲线</string>
     <string name="toast_downsampled">已为全屏视图降采样</string>
     <string name="toast_no_plot_data">未收到绘图数据</string>
@@ -289,7 +289,7 @@
     <string name="dialog_direction_field">方向场</string>
     <string name="dialog_statistics">统计结果</string>
     <string name="dialog_histogram">直方图</string>
-    <string name="dialog_function_table">函数表（{0}个点）</string>
+    <string name="dialog_function_table">函数表（%1$s个点）</string>
     <string name="dialog_close">关闭</string>
     <string name="dialog_share_csv">分享CSV</string>
 
@@ -742,6 +742,14 @@
     <string name="conv_empty_input">请输入序列 A 和 B。</string>
     <string name="conv_invalid_input">无效的数字格式。请使用逗号分隔的数字。</string>
     <string name="back_to_top">返回顶部</string>
+
+    <!-- 曲线列表 / 参数系统 / 交点 -->
+    <string name="curve_list_title">已添加曲线</string>
+    <string name="param_hint">参数（自动识别）</string>
+    <string name="intersect_result_title">交点</string>
+    <string name="toast_need_two_curves">请至少添加两条曲线再求交点</string>
+    <string name="toast_no_intersections">该区间内未找到交点</string>
+    <string name="toast_found_intersections">找到 %1$s 个交点</string>
 
     <!-- 顶层工具分类（液态玻璃标签栏） -->
     <string-array name="category_tabs">

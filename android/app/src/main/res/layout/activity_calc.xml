@@ -43,6 +43,30 @@
                 <com.google.android.material.textfield.TextInputLayout style="@style/Widget.SuperCalc.TextInput" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/expr_hint" app:hintTextColor="@color/m3_outline">
                 <com.google.android.material.textfield.TextInputEditText android:id="@+id/expr_input" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/m3_on_surface" android:textSize="18sp" android:fontFamily="@font/jetbrains_mono" android:singleLine="true" android:inputType="text" />
                 </com.google.android.material.textfield.TextInputLayout>
+                <TextView
+                    android:id="@+id/param_hint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/param_hint"
+                    android:textSize="11sp"
+                    android:textColor="@color/m3_on_surface_variant"
+                    android:fontFamily="@font/outfit_regular"
+                    android:letterSpacing="0.06"
+                    android:layout_marginTop="10dp"
+                    android:visibility="gone" />
+                <HorizontalScrollView
+                    android:id="@+id/param_scroll"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:scrollbars="none"
+                    android:visibility="gone">
+                    <LinearLayout
+                        android:id="@+id/param_row"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal" />
+                </HorizontalScrollView>
                 </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
                 <com.google.android.material.card.MaterialCardView
