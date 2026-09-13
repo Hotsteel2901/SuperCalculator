@@ -8,8 +8,6 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.method.ScrollingMovementMethod;
-import android.text.InputType;
-import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
@@ -37,14 +35,9 @@ import com.github.mikephil.charting.components.YAxis;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.io.BufferedReader;
@@ -97,11 +90,6 @@ public class CalcActivity extends AppCompatActivity {
     private HorizontalScrollView paramScroll;
     private TextView paramHint;
     private final Map<String, EditText> paramFields = new LinkedHashMap<>();
-    private static final Set<String> KNOWN_FUNCS = new HashSet<>(Arrays.asList(
-            "sin", "cos", "tan", "log", "ln", "exp", "sqrt", "abs", "floor", "ceil", "mod"));
-    private static final Set<String> KNOWN_CONSTS = new HashSet<>(Arrays.asList("pi", "e"));
-    private static final Set<String> INDEPENDENT_VARS = new HashSet<>(
-            Arrays.asList("x", "y", "t", "theta"));
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -677,88 +665,14 @@ public class CalcActivity extends AppCompatActivity {
 
     /** Rebuild the parameter row whenever the detected parameter set changes. */
     private void updateParamInputs() {
-        if (paramRow == null || paramScroll == null || paramHint == null || exprInput == null) return;
-        List<String> params = detectParameters(exprInput.getText().toString());
-        if (params.equals(new ArrayList<>(paramFields.keySet()))) return;
-
-        Map<String, String> previous = new HashMap<>();
-        for (Map.Entry<String, EditText> entry : paramFields.entrySet()) {
-            previous.put(entry.getKey(), entry.getValue().getText().toString());
-        }
-        paramRow.removeAllViews();
-        paramFields.clear();
-
-        for (String name : params) {
-            LinearLayout cell = new LinearLayout(this);
-            cell.setOrientation(LinearLayout.HORIZONTAL);
-            cell.setGravity(Gravity.CENTER_VERTICAL);
-            cell.setPadding(0, 0, dp(12), 0);
-
-            TextView label = new TextView(this);
-            label.setText(name + " =");
-            label.setTextSize(13f);
-            label.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-            label.setTextColor(getResources().getColor(R.color.m3_on_surface_variant, getTheme()));
-            cell.addView(label);
-
-            EditText field = new EditText(this);
-            field.setText(previous.containsKey(name) ? previous.get(name) : "1");
-            field.setTextSize(13f);
-            field.setSingleLine(true);
-            field.setInputType(InputType.TYPE_CLASS_NUMBER
-                    | InputType.TYPE_NUMBER_FLAG_DECIMAL
-                    | InputType.TYPE_NUMBER_FLAG_SIGNED);
-            field.setTypeface(Typeface.MONOSPACE);
-            field.setTextColor(getResources().getColor(R.color.m3_on_surface, getTheme()));
-            field.setBackgroundColor(getResources().getColor(R.color.result_bg, getTheme()));
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    dp(74), ViewGroup.LayoutParams.WRAP_CONTENT);
-            lp.leftMargin = dp(6);
-            field.setLayoutParams(lp);
-
-            cell.addView(field);
-            paramRow.addView(cell);
-            paramFields.put(name, field);
-        }
-
-        boolean any = !params.isEmpty();
-        paramHint.setVisibility(any ? View.VISIBLE : View.GONE);
-        paramScroll.setVisibility(any ? View.VISIBLE : View.GONE);
-    }
-
-    /** Same rules as the desktop build: single letters other than x/y/t/theta. */
-    private static List<String> detectParameters(String expr) {
-        String lower = expr.toLowerCase();
-        for (String fn : KNOWN_FUNCS) {
-            lower = lower.replaceAll("\\b" + fn + "\\b", " ");
-        }
-        for (String c : KNOWN_CONSTS) {
-            lower = lower.replaceAll("\\b" + c + "\\b", " ");
-        }
-        Set<String> found = new LinkedHashSet<>();
-        Matcher m = Pattern.compile("[a-z]+").matcher(lower);
-        while (m.find()) {
-            String word = m.group();
-            if (word.length() == 1) {
-                if (!INDEPENDENT_VARS.contains(word)) found.add(word);
-            } else if (!KNOWN_FUNCS.contains(word)
-                    && !KNOWN_CONSTS.contains(word)
-                    && !INDEPENDENT_VARS.contains(word)) {
-                found.add(word);
-            }
-        }
-        return new ArrayList<>(found);
+        if (paramRow == null || exprInput == null) return;
+        ParamSupport.rebuild(this, paramRow, paramHint, paramScroll, paramFields,
+                exprInput.getText().toString());
     }
 
     /** Replace detected parameter names with their current values. */
     private String substituteParameters(String expr) {
-        String out = expr;
-        for (Map.Entry<String, EditText> entry : paramFields.entrySet()) {
-            String value = entry.getValue().getText().toString().trim();
-            if (value.isEmpty()) continue;
-            out = out.replaceAll("\\b" + Pattern.quote(entry.getKey()) + "\\b", "(" + value + ")");
-        }
-        return out;
+        return ParamSupport.substitute(expr, paramFields);
     }
 
     private void scrollToResult() {

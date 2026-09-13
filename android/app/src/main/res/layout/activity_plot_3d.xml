@@ -78,6 +78,32 @@
 
                     </com.google.android.material.textfield.TextInputLayout>
 
+                    <!-- 动态参数（自动识别） -->
+                    <TextView
+                        android:id="@+id/param_hint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/param_hint"
+                        android:textSize="11sp"
+                        android:textColor="@color/m3_on_surface_variant"
+                        android:fontFamily="@font/outfit_regular"
+                        android:letterSpacing="0.06"
+                        android:layout_marginTop="10dp"
+                        android:visibility="gone" />
+                    <HorizontalScrollView
+                        android:id="@+id/param_scroll"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:scrollbars="none"
+                        android:visibility="gone">
+                        <LinearLayout
+                            android:id="@+id/param_row"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal" />
+                    </HorizontalScrollView>
+
                     <TextView
                         android:text="@string/x_range"
                         android:textSize="12sp"

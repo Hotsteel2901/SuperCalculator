@@ -79,49 +79,6 @@
 
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- 已添加曲线（动态列出） -->
-                    <LinearLayout
-                        android:id="@+id/curve_list_container"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:layout_marginBottom="8dp"
-                        android:visibility="gone">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/curve_list_title"
-                            android:textSize="11sp"
-                            android:textColor="@color/m3_on_surface_variant"
-                            android:fontFamily="@font/outfit_regular"
-                            android:letterSpacing="0.06" />
-
-                        <TextView
-                            android:id="@+id/curve_list_view"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:background="@color/result_bg"
-                            android:padding="10dp"
-                            android:textSize="12sp"
-                            android:textColor="@color/m3_on_surface"
-                            android:fontFamily="@font/jetbrains_mono"
-                            android:lineSpacingExtra="3dp" />
-
-                        <TextView
-                            android:id="@+id/intersect_result_view"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:background="@color/result_bg"
-                            android:padding="10dp"
-                            android:textSize="12sp"
-                            android:textColor="@color/m3_on_surface"
-                            android:fontFamily="@font/jetbrains_mono"
-                            android:lineSpacingExtra="3dp"
-                            android:visibility="gone" />
-                    </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -165,6 +122,64 @@
                             android:layout_marginStart="4dp" />
 
                     </LinearLayout>
+
+                    <!-- 已添加曲线（动态列出，位于三个按钮下方） -->
+                    <LinearLayout
+                        android:id="@+id/curve_list_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginTop="10dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/curve_list_title"
+                            android:textSize="11sp"
+                            android:textColor="@color/m3_on_surface_variant"
+                            android:fontFamily="@font/outfit_regular"
+                            android:letterSpacing="0.06" />
+
+                        <TextView
+                            android:id="@+id/curve_list_view"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:background="@color/result_bg"
+                            android:padding="10dp"
+                            android:textSize="12sp"
+                            android:textColor="@color/m3_on_surface"
+                            android:fontFamily="@font/jetbrains_mono"
+                            android:lineSpacingExtra="3dp" />
+                    </LinearLayout>
+
+                    <!-- 动态参数（自动识别） -->
+                    <TextView
+                        android:id="@+id/param_hint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/param_hint"
+                        android:textSize="11sp"
+                        android:textColor="@color/m3_on_surface_variant"
+                        android:fontFamily="@font/outfit_regular"
+                        android:letterSpacing="0.06"
+                        android:layout_marginTop="10dp"
+                        android:visibility="gone" />
+                    <HorizontalScrollView
+                        android:id="@+id/param_scroll"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:scrollbars="none"
+                        android:visibility="gone">
+                        <LinearLayout
+                            android:id="@+id/param_row"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal" />
+                    </HorizontalScrollView>
+
 
                 </LinearLayout>
 
@@ -352,6 +367,44 @@
 
                 </LinearLayout>
 
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 交点坐标（页面最底部） -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/intersect_card"
+                style="@style/Widget.SuperCalc.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/intersect_result_title"
+                        android:textSize="12sp"
+                        android:textColor="@color/spectral_integrate"
+                        android:fontFamily="@font/outfit_regular"
+                        android:letterSpacing="0.06" />
+
+                    <TextView
+                        android:id="@+id/intersect_result_view"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:background="@color/result_bg"
+                        android:padding="10dp"
+                        android:textSize="12sp"
+                        android:textColor="@color/m3_on_surface"
+                        android:fontFamily="@font/jetbrains_mono"
+                        android:lineSpacingExtra="3dp" />
+                </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.button.MaterialButton

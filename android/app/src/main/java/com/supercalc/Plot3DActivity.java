@@ -2,16 +2,29 @@ package com.supercalc;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.widget.EditText;
+import android.widget.HorizontalScrollView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class Plot3DActivity extends AppCompatActivity {
 
     private Surface3DView surface3DView;
     private TextInputEditText exprInput, xMinInput, xMaxInput, yMinInput, yMaxInput, zMinInput, zMaxInput;
+    private LinearLayout paramRow;
+    private HorizontalScrollView paramScroll;
+    private TextView paramHint;
+    private final Map<String, EditText> paramFields = new LinkedHashMap<>();
 
     private String lastExpression;
     private float lastXMin, lastXMax, lastYMin, lastYMax, lastZMin, lastZMax;
@@ -27,6 +40,19 @@ public class Plot3DActivity extends AppCompatActivity {
 
         surface3DView = findViewById(R.id.surface_3d_view);
         exprInput = findViewById(R.id.expr_3d_input);
+        paramRow = findViewById(R.id.param_row);
+        paramScroll = findViewById(R.id.param_scroll);
+        paramHint = findViewById(R.id.param_hint);
+        if (exprInput != null) {
+            exprInput.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int a, int b, int c) { }
+                @Override
+                public void onTextChanged(CharSequence s, int a, int b, int c) { }
+                @Override
+                public void afterTextChanged(Editable s) { updateParams(); }
+            });
+        }
         xMinInput = findViewById(R.id.x_min_3d_input);
         xMaxInput = findViewById(R.id.x_max_3d_input);
         yMinInput = findViewById(R.id.y_min_3d_input);
@@ -67,6 +93,8 @@ public class Plot3DActivity extends AppCompatActivity {
             toast(getString(R.string.toast_enter_xy));
             return;
         }
+        // Parameters (a, b, ...) detected in the expression are substituted here.
+        expr = ParamSupport.substitute(expr, paramFields);
 
         float xMin, xMax, yMin, yMax, zMin, zMax;
         try {
@@ -153,6 +181,13 @@ public class Plot3DActivity extends AppCompatActivity {
         lastZMax = zMax;
         hasPlot = true;
         toast(getString(R.string.toast_plotted_3d));
+    }
+
+    /** Rebuild the parameter fields for the expression being typed. */
+    private void updateParams() {
+        if (paramRow == null || exprInput == null) return;
+        ParamSupport.rebuild(this, paramRow, paramHint, paramScroll, paramFields,
+                exprInput.getText().toString());
     }
 
     private void openFullScreen3D() {

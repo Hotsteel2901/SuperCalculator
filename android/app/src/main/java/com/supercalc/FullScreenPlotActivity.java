@@ -33,6 +33,8 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
     private ArrayList<ArrayList<Entry>> allEntries;
     private ArrayList<String> allExpressions;
     private ArrayList<Integer> curveColors;
+    /** Intersection points handed over by the plot screen, so full screen keeps them. */
+    private final ArrayList<Entry> intersectionMarkers = new ArrayList<>();
     
     // Marked points for coordinate marking
     private ArrayList<Entry> markedPoints;
@@ -217,7 +219,21 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
             }
             allEntries.add(entries);
         }
-        
+
+        String intersectData = getIntent().getStringExtra("intersect_points");
+        if (intersectData != null && !intersectData.isEmpty()) {
+            for (String point : intersectData.split(";")) {
+                String[] coords = point.split(",");
+                if (coords.length != 2) continue;
+                try {
+                    intersectionMarkers.add(new Entry(
+                            Float.parseFloat(coords[0]), Float.parseFloat(coords[1])));
+                } catch (NumberFormatException ignored) {
+                    // skip malformed pair
+                }
+            }
+        }
+
         renderChart(xMin, xMax, yMin, yMax);
     }
     
@@ -245,7 +261,21 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
         markedPointDataSet.setDrawValues(false);
         markedPointDataSet.setHighlightEnabled(false);
         dataSets.add(markedPointDataSet);
-        
+
+        // Intersection markers carried over from the plot screen.
+        if (!intersectionMarkers.isEmpty()) {
+            LineDataSet intersectSet =
+                    new LineDataSet(new ArrayList<>(intersectionMarkers), getString(R.string.intersect));
+            intersectSet.setColor(Color.TRANSPARENT);
+            intersectSet.setDrawCircles(true);
+            intersectSet.setCircleColor(Color.parseColor("#FBBF24"));
+            intersectSet.setCircleRadius(6f);
+            intersectSet.setDrawValues(false);
+            intersectSet.setLineWidth(0f);
+            intersectSet.setHighlightEnabled(false);
+            dataSets.add(intersectSet);
+        }
+
         if (dataSets.isEmpty()) {
             toast(getString(R.string.toast_no_data_display));
             return;

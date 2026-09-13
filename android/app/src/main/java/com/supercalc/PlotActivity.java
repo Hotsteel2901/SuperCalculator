@@ -5,9 +5,15 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.TextWatcher;
+import android.text.Editable;
 import android.text.style.ForegroundColorSpan;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.HorizontalScrollView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -27,7 +33,9 @@ import com.github.mikephil.charting.listener.OnChartGestureListener;
 import com.github.mikephil.charting.listener.ChartTouchListener;
 import com.github.mikephil.charting.utils.MPPointD;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PlotActivity extends AppCompatActivity {
 
@@ -40,6 +48,13 @@ public class PlotActivity extends AppCompatActivity {
     private View curveListContainer;
     private TextView curveListView;
     private TextView intersectResultView;
+    private View intersectCard;
+    private LinearLayout paramRow;
+    private HorizontalScrollView paramScroll;
+    private TextView paramHint;
+    private final Map<String, EditText> paramFields = new LinkedHashMap<>();
+    /** Intersection markers, kept so the full-screen view can draw them too. */
+    private final ArrayList<Entry> intersectionMarkers = new ArrayList<>();
     
     private ArrayList<ArrayList<Entry>> allEntries;
     private ArrayList<String> allExpressions;
@@ -94,6 +109,22 @@ public class PlotActivity extends AppCompatActivity {
         curveListContainer = findViewById(R.id.curve_list_container);
         curveListView = findViewById(R.id.curve_list_view);
         intersectResultView = findViewById(R.id.intersect_result_view);
+        intersectCard = findViewById(R.id.intersect_card);
+        paramRow = findViewById(R.id.param_row);
+        paramScroll = findViewById(R.id.param_scroll);
+        paramHint = findViewById(R.id.param_hint);
+        if (exprInput != null) {
+            exprInput.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int a, int b, int c) { }
+                @Override
+                public void onTextChanged(CharSequence s, int a, int b, int c) { }
+                @Override
+                public void afterTextChanged(Editable s) { updateParams(); }
+            });
+        }
+        updateParams();
+        refreshCurveList();
 
         // The toolbar's back arrow is drawn from app:navigationIcon; without a
         // click listener it looks tappable but does nothing.
@@ -1051,6 +1082,8 @@ public class PlotActivity extends AppCompatActivity {
             toast(getString(R.string.toast_enter_expr));
             return;
         }
+        // Keep the symbolic expression (with parameters) in the list; values are
+        // substituted when plotting so the sliders stay live.
         allExpressions.add(expr);
         curveColors.add(getNextColor());
         curveTypes.add("regular");
@@ -1058,6 +1091,18 @@ public class PlotActivity extends AppCompatActivity {
         allEntries.add(new ArrayList<Entry>());
         toast(getString(R.string.toast_added_curve, expr));
         exprInput.setText("");
+        refreshCurveList();
+    }
+
+    /** Rebuild the parameter fields for the expression currently being typed. */
+    private void updateParams() {
+        if (paramRow == null || exprInput == null) return;
+        ParamSupport.rebuild(this, paramRow, paramHint, paramScroll, paramFields,
+                exprInput.getText().toString());
+    }
+
+    private String withParams(String expr) {
+        return ParamSupport.substitute(expr, paramFields);
     }
     
     private void onRemoveCurve() {
@@ -1173,9 +1218,11 @@ public class PlotActivity extends AppCompatActivity {
         }
 
         List<double[]> points = findIntersections(
-                allExpressions.get(first), allExpressions.get(second), xMin, xMax);
+                withParams(allExpressions.get(first)), withParams(allExpressions.get(second)),
+                xMin, xMax);
         if (points.isEmpty()) {
-            if (intersectResultView != null) intersectResultView.setVisibility(View.GONE);
+            intersectionMarkers.clear();
+            if (intersectCard != null) intersectCard.setVisibility(View.GONE);
             toast(getString(R.string.toast_no_intersections));
             return;
         }
@@ -1189,10 +1236,13 @@ public class PlotActivity extends AppCompatActivity {
             if (i < points.size() - 1) report.append("\n");
             markers.add(new Entry((float) p[0], (float) p[1]));
         }
+        // Keep them so the full-screen view can draw the same markers.
+        intersectionMarkers.clear();
+        intersectionMarkers.addAll(markers);
         if (intersectResultView != null) {
-            intersectResultView.setVisibility(View.VISIBLE);
             intersectResultView.setText(report.toString());
         }
+        if (intersectCard != null) intersectCard.setVisibility(View.VISIBLE);
 
         // Mark them on the chart: circles only, the connecting line is invisible.
         LineData data = lineChart.getLineData();
@@ -1385,7 +1435,8 @@ public class PlotActivity extends AppCompatActivity {
                 allEntries.add(new ArrayList<Entry>());
             } else {
                 // Regular expression curve
-                String expr = allExpressions.get(curveIdx);
+                // Substituted here (not when added) so parameters stay live.
+                String expr = withParams(allExpressions.get(curveIdx));
                 double[] xs = new double[numPoints];
                 for (int i = 0; i < numPoints; i++) {
                     xs[i] = xMin + (xMax - xMin) * i / (numPoints - 1);
@@ -1470,6 +1521,7 @@ public class PlotActivity extends AppCompatActivity {
         desc.setEnabled(false);
         
         lineChart.invalidate();
+        refreshCurveList();
         toast(getString(R.string.toast_plotted_curves, dataSets.size()));
     }
     
@@ -1524,6 +1576,14 @@ public class PlotActivity extends AppCompatActivity {
         for (int i = 0; i < curveColors.size(); i++) {
             colors[i] = curveColors.get(i);
         }
+
+        // Intersection markers must survive the jump to full screen.
+        StringBuilder markerData = new StringBuilder();
+        for (Entry e : intersectionMarkers) {
+            if (markerData.length() > 0) markerData.append(";");
+            markerData.append(String.format("%.4g,%.4g", e.getX(), e.getY()));
+        }
+        intent.putExtra("intersect_points", markerData.toString());
         
         try {
             float xMin = Float.parseFloat(xMinInput.getText().toString().trim());
