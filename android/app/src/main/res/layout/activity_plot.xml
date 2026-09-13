@@ -86,7 +86,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_add_curve"
-                            style="@style/Widget.Material3.Button.TonalButton"
+                            style="@style/Widget.SuperCalc.GlassButton"
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="48dp"
@@ -98,7 +98,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_remove_curve"
-                            style="@style/Widget.Material3.Button.TonalButton"
+                            style="@style/Widget.SuperCalc.GlassButton"
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="48dp"
@@ -110,7 +110,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_find_intersections"
-                            style="@style/Widget.Material3.Button.TonalButton"
+                            style="@style/Widget.SuperCalc.GlassButton"
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="48dp"
@@ -247,7 +247,7 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_plot_all"
-                        style="@style/Widget.Material3.Button"
+                        style="@style/Widget.SuperCalc.GlassButton"
                         android:layout_width="match_parent"
                         android:layout_height="56dp"
                         android:text="@string/plot_all_curves"
@@ -290,7 +290,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_zoom"
-                            style="@style/Widget.Material3.Button.TonalButton"
+                            style="@style/Widget.SuperCalc.GlassButton"
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="48dp"
@@ -312,7 +312,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_back"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+                style="@style/Widget.SuperCalc.GlassButton"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:text="@string/back_to_calc"

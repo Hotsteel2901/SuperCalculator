@@ -53,7 +53,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_exit"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+            style="@style/Widget.SuperCalc.GlassButton"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_margin="16dp"

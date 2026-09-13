@@ -274,7 +274,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_plot_3d"
-                            style="@style/Widget.Material3.Button"
+                            style="@style/Widget.SuperCalc.GlassButton"
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="56dp"
@@ -286,7 +286,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_reset_3d_view"
-                            style="@style/Widget.Material3.Button.TonalButton"
+                            style="@style/Widget.SuperCalc.GlassButton"
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="56dp"
@@ -332,7 +332,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_full_screen_3d"
-                            style="@style/Widget.Material3.Button.TonalButton"
+                            style="@style/Widget.SuperCalc.GlassButton"
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="48dp"
@@ -354,7 +354,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_back_3d"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+                style="@style/Widget.SuperCalc.GlassButton"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:text="@string/back_to_calc"

@@ -40,6 +40,8 @@
          it, opaque enough to keep every text colour readable. -->
     <color name="glass_fill">#B3121629</color>
     <color name="glass_stroke">#33FFFFFF</color>
+    <color name="glass_ripple">#33FFFFFF</color>
+    <color name="glass_field_fill">#14FFFFFF</color>
 
     <!-- Chart curve colors (matching the Python + web palettes) -->
     <color name="chart_color_1">#FF6366F1</color>

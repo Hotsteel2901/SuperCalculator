@@ -46,12 +46,36 @@
 
     <!-- Outlined text field — expression input -->
     <style name="Widget.SuperCalc.TextInput" parent="Widget.Material3.TextInputLayout.OutlinedBox">
-        <item name="boxStrokeColor">@color/spectral_evaluate</item>
+        <item name="boxStrokeColor">@color/glass_field_stroke</item>
+        <item name="boxBackgroundColor">@color/glass_field_fill</item>
         <item name="boxStrokeWidth">1dp</item>
         <item name="boxStrokeWidthFocused">2dp</item>
         <item name="boxCornerRadiusTopStart">14dp</item>
         <item name="boxCornerRadiusTopEnd">14dp</item>
         <item name="boxCornerRadiusBottomStart">14dp</item>
         <item name="boxCornerRadiusBottomEnd">14dp</item>
+    </style>
+
+    <!-- In-card action button — same frosted material language as the floating
+         glass bars: translucent fill, hairline light edge, no elevation.
+         The per-operation colour lives on the label instead of a hard outline. -->
+    <style name="Widget.SuperCalc.GlassButton" parent="Widget.Material3.Button.TonalButton">
+        <item name="backgroundTint">@color/glass_button_tint</item>
+        <item name="strokeColor">@color/glass_stroke</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="cornerRadius">16dp</item>
+        <item name="elevation">0dp</item>
+        <item name="rippleColor">@color/glass_ripple</item>
+        <item name="android:textColor">@color/m3_on_surface</item>
+        <item name="iconTint">@color/m3_on_surface</item>
+    </style>
+
+    <!-- Quick-select chip — frosted pill -->
+    <style name="Widget.SuperCalc.GlassChip" parent="Widget.Material3.Chip.Suggestion">
+        <item name="chipBackgroundColor">@color/glass_chip_tint</item>
+        <item name="chipStrokeColor">@color/glass_stroke</item>
+        <item name="chipStrokeWidth">1dp</item>
+        <item name="android:textColor">@color/m3_on_surface</item>
+        <item name="ensureMinTouchTargetSize">false</item>
     </style>
 </resources>

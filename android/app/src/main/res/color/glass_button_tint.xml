@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Translucent frosted fill for the in-card action buttons. Matches the
+     floating glass surfaces instead of the old opaque grey tonal fill. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true" android:color="#3DFFFFFF" />
+    <item android:state_focused="true" android:color="#2EFFFFFF" />
+    <item android:state_enabled="false" android:color="#0DFFFFFF" />
+    <item android:color="#1FFFFFFF" />
+</selector>
