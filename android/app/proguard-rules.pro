@@ -12,3 +12,9 @@
 # MPAndroidChart
 -dontwarn com.github.mikephil.charting.**
 -keep class com.github.mikephil.charting.** { *; }
+
+# LiquidGlass views are inflated from XML by name and call into JNI
+-keep class com.example.liquidglass.** { *; }
+-keep class com.example.blur.** { *; }
+-dontwarn com.example.liquidglass.**
+-dontwarn com.example.blur.**

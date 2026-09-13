@@ -741,4 +741,14 @@
     <string name="conv_empty_input">Please enter both sequences A and B.</string>
     <string name="conv_invalid_input">Invalid number format. Use comma-separated numbers.</string>
     <string name="back_to_top">Back to top</string>
+
+    <!-- Top-level tool categories (liquid glass tab bar) -->
+    <string-array name="category_tabs">
+        <item>Basic</item>
+        <item>Plot</item>
+        <item>Calculus</item>
+        <item>Algebra</item>
+        <item>Stats</item>
+        <item>Tools</item>
+    </string-array>
 </resources>

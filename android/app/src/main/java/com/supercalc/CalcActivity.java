@@ -15,7 +15,8 @@ import androidx.core.widget.NestedScrollView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.example.liquidglass.LiquidGlassTabBar;
+import com.example.liquidglass.LiquidGlassView;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
@@ -31,6 +32,8 @@ import java.time.temporal.ChronoUnit;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 
 public class CalcActivity extends AppCompatActivity {
 
@@ -65,6 +68,12 @@ public class CalcActivity extends AppCompatActivity {
     private TextView historyListView;
     private static final String PREFS_NAME = "SuperCalcPrefs";
     private static final String KEY_HISTORY = "calc_history";
+    private static final String KEY_CATEGORY = "category_index";
+
+    /** One page per tool category, switched by the glass tab bar. */
+    private View[] categoryPages;
+    private LiquidGlassTabBar categoryTabs;
+    private int categoryIndex = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,21 +104,22 @@ public class CalcActivity extends AppCompatActivity {
         lineChart  = findViewById(R.id.line_chart);
         graphCard  = findViewById(R.id.graph_card);
 
-        // Scroll-to-top affordance for the very long tool list.
-        FloatingActionButton fabTop = findViewById(R.id.fab_scroll_top);
+        // Scroll-to-top affordance for the long category pages.
+        View fabTop = findViewById(R.id.fab_scroll_top);
         if (fabTop != null && scrollView != null) {
             fabTop.setOnClickListener(v -> scrollView.smoothScrollTo(0, 0));
             // NestedScrollView declares its own OnScrollChangeListener, which
             // makes a bare lambda ambiguous; pin it to the View interface.
             scrollView.setOnScrollChangeListener(
                     (View.OnScrollChangeListener) (v, scrollX, scrollY, oldX, oldY) -> {
-                        if (scrollY > 700) {
-                            if (fabTop.getVisibility() != View.VISIBLE) fabTop.show();
-                        } else if (fabTop.getVisibility() == View.VISIBLE) {
-                            fabTop.hide();
+                        boolean show = scrollY > 700;
+                        if (show != (fabTop.getVisibility() == View.VISIBLE)) {
+                            fabTop.setVisibility(show ? View.VISIBLE : View.GONE);
                         }
                     });
         }
+
+        setupToolCategories();
 
         // Operation buttons — MaterialButton extends Button, so findViewById works
         MaterialButton btnEval   = findViewById(R.id.btn_evaluate);
@@ -479,7 +489,53 @@ public class CalcActivity extends AppCompatActivity {
             if (!savedB.isEmpty() && bInput != null) bInput.setText(savedB);
             if (!savedGuess.isEmpty() && guessInput != null) guessInput.setText(savedGuess);
             if (!savedResult.isEmpty() && resultView != null) resultView.setText(savedResult);
+            showToolCategory(savedInstanceState.getInt(KEY_CATEGORY, 0), false);
         }
+    }
+
+    /**
+     * The 34 tool cards are split into six pages so the screen is no longer one
+     * endless scroll. The glass tab bar switches pages.
+     */
+    private void setupToolCategories() {
+        categoryTabs = findViewById(R.id.category_tabs);
+        categoryPages = new View[]{
+                findViewById(R.id.page_basic),
+                findViewById(R.id.page_plot),
+                findViewById(R.id.page_calculus),
+                findViewById(R.id.page_algebra),
+                findViewById(R.id.page_stats),
+                findViewById(R.id.page_tools)
+        };
+
+        // Glass only updates when told to; scrolling must re-capture the backdrop.
+        LiquidGlassView headerGlass = findViewById(R.id.header_glass);
+        if (headerGlass != null) headerGlass.setEnableDynamicBackground(true);
+        if (categoryTabs == null) return;
+        categoryTabs.setEnableDynamicBackground(true);
+
+        categoryTabs.setOnTabSelected(new Function1<Integer, Unit>() {
+            @Override
+            public Unit invoke(Integer index) {
+                showToolCategory(index == null ? 0 : index, true);
+                return Unit.INSTANCE;
+            }
+        });
+    }
+
+    private void showToolCategory(int index, boolean scrollToTop) {
+        if (categoryPages == null || index < 0 || index >= categoryPages.length) return;
+        categoryIndex = index;
+        if (categoryTabs != null && categoryTabs.getSelectedIndex() != index) {
+            categoryTabs.setSelectedIndex(index);
+        }
+        for (int i = 0; i < categoryPages.length; i++) {
+            View page = categoryPages[i];
+            if (page != null) {
+                page.setVisibility(i == index ? View.VISIBLE : View.GONE);
+            }
+        }
+        if (scrollToTop && scrollView != null) scrollView.smoothScrollTo(0, 0);
     }
 
     @Override
@@ -491,6 +547,7 @@ public class CalcActivity extends AppCompatActivity {
         if (bInput != null) outState.putString("b_input", bInput.getText().toString());
         if (guessInput != null) outState.putString("guess_input", guessInput.getText().toString());
         if (resultView != null) outState.putString("result_text", resultView.getText().toString());
+        outState.putInt(KEY_CATEGORY, categoryIndex);
     }
 
     private String getExpr()  { return exprInput != null ? exprInput.getText().toString().trim() : ""; }

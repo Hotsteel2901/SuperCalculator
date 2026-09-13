@@ -741,4 +741,14 @@
     <string name="conv_empty_input">请输入序列 A 和 B。</string>
     <string name="conv_invalid_input">无效的数字格式。请使用逗号分隔的数字。</string>
     <string name="back_to_top">返回顶部</string>
+
+    <!-- 顶层工具分类（液态玻璃标签栏） -->
+    <string-array name="category_tabs">
+        <item>基础</item>
+        <item>绘图</item>
+        <item>微积分</item>
+        <item>代数</item>
+        <item>统计</item>
+        <item>工具</item>
+    </string-array>
 </resources>

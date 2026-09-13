@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Layered aurora backdrop. The floating liquid-glass surfaces sample this
+     plus the scrolling content, which is what makes the refraction visible. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/sc_void" />
+        </shape>
+    </item>
+
+    <!-- indigo bloom, top-left -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:centerX="0.16"
+                android:centerY="0.04"
+                android:gradientRadius="78%p"
+                android:startColor="#996366F1"
+                android:endColor="#006366F1" />
+        </shape>
+    </item>
+
+    <!-- cyan bloom, top-right -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:centerX="0.92"
+                android:centerY="0.16"
+                android:gradientRadius="70%p"
+                android:startColor="#7A22D3EE"
+                android:endColor="#0022D3EE" />
+        </shape>
+    </item>
+
+    <!-- violet bloom, lower-right -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:centerX="0.80"
+                android:centerY="0.78"
+                android:gradientRadius="86%p"
+                android:startColor="#6BA78BFA"
+                android:endColor="#00A78BFA" />
+        </shape>
+    </item>
+
+    <!-- warm accent, bottom-left -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:centerX="0.06"
+                android:centerY="0.96"
+                android:gradientRadius="66%p"
+                android:startColor="#5CFB923C"
+                android:endColor="#00FB923C" />
+        </shape>
+    </item>
+</layer-list>

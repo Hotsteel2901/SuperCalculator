@@ -14,8 +14,9 @@ android {
         versionCode = 2
         versionName = "1.0.1"
         ndk {
-            // Support multiple ABIs for broader device compatibility
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
+            // LiquidGlass ships prebuilt JNI code for ARM only, and its native
+            // loader is not guarded, so restrict the APK to the ABIs it supports.
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
         }
     }
 
@@ -49,4 +50,6 @@ dependencies {
     implementation("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
     // Use actively maintained fork of MPAndroidChart
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+    // iOS 26 style liquid glass for the Android View system (no Compose needed)
+    implementation("com.github.QWEA0:liquidglass:v2.0.10")
 }
