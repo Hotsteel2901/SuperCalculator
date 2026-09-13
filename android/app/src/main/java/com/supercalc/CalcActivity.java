@@ -99,13 +99,16 @@ public class CalcActivity extends AppCompatActivity {
         FloatingActionButton fabTop = findViewById(R.id.fab_scroll_top);
         if (fabTop != null && scrollView != null) {
             fabTop.setOnClickListener(v -> scrollView.smoothScrollTo(0, 0));
-            scrollView.setOnScrollChangeListener((v, scrollX, scrollY, oldX, oldY) -> {
-                if (scrollY > 700) {
-                    if (fabTop.getVisibility() != View.VISIBLE) fabTop.show();
-                } else if (fabTop.getVisibility() == View.VISIBLE) {
-                    fabTop.hide();
-                }
-            });
+            // NestedScrollView declares its own OnScrollChangeListener, which
+            // makes a bare lambda ambiguous; pin it to the View interface.
+            scrollView.setOnScrollChangeListener(
+                    (View.OnScrollChangeListener) (v, scrollX, scrollY, oldX, oldY) -> {
+                        if (scrollY > 700) {
+                            if (fabTop.getVisibility() != View.VISIBLE) fabTop.show();
+                        } else if (fabTop.getVisibility() == View.VISIBLE) {
+                            fabTop.hide();
+                        }
+                    });
         }
 
         // Operation buttons — MaterialButton extends Button, so findViewById works
