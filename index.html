@@ -1630,6 +1630,36 @@ img, svg, canvas { max-width: 100%; }
     }
     .reveal { opacity: 1; transform: none; }
 }
+
+/* ------------------------------------------------------- liquid glass --- */
+/* Shared-context WebGL refraction layer, ported from liquid-glass-js
+   (github.com/dashersw/liquid-glass-js, MIT).  Surfaces opt in through
+   the .lg-glass class; html.lg-liquid is only added after the first
+   successful frame, so the CSS glass above stays as the safe fallback. */
+
+#lgCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: none;
+    pointer-events: none;
+    z-index: -1;
+}
+
+html.lg-liquid #lgCanvas { display: block; }
+
+/* Keep the aurora and grid behind the glass layer. */
+html.lg-liquid body::before { z-index: -3; }
+html.lg-liquid body::after { z-index: -2; }
+
+/* Let the WebGL shader supply the surface; keep borders and hover lift. */
+html.lg-liquid .lg-glass {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
     </style>
 </head>
 <body>
@@ -6358,6 +6388,645 @@ img, svg, canvas { max-width: 100%; }
                 try { if (typeof jobs[i] === 'function') jobs[i](); } catch (e) { /* demo not on page */ }
             }
         };
+    </script>
+
+    <script>
+        /* ------------------------------------------------------------------
+         *  Liquid Glass layer — shared-context port of the shaders from
+         *  https://github.com/dashersw/liquid-glass-js
+         *
+         *  MIT License, Copyright (c) 2025 Armagan Amcalar
+         *  Permission is hereby granted, free of charge, to any person
+         *  obtaining a copy of this software and associated documentation
+         *  files (the "Software"), to deal in the Software without
+         *  restriction, including without limitation the rights to use,
+         *  copy, modify, merge, publish, distribute, sublicense, and/or
+         *  sell copies of the Software, and to permit persons to whom the
+         *  Software is furnished to do so, subject to the following
+         *  conditions: the above copyright notice and this permission
+         *  notice shall be included in all copies or substantial portions
+         *  of the Software.  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT
+         *  WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
+         *
+         *  A single fixed WebGL canvas draws refractive, tinted glass behind
+         *  every registered surface (.lg-glass).  Only surfaces intersecting
+         *  the viewport are rendered, so hundreds of cards stay cheap while
+         *  one shared context sidesteps the browser's WebGL context cap.
+         *  The refraction texture is generated procedurally from the page's
+         *  aurora tokens, keeping the page fully offline.
+         * ------------------------------------------------------------------ */
+        (function () {
+            'use strict';
+
+            var docEl = document.documentElement;
+            var raf = window.requestAnimationFrame
+                ? function (cb) { return window.requestAnimationFrame(cb); }
+                : function (cb) { return window.setTimeout(cb, 16); };
+            var nowFn = window.performance && window.performance.now
+                ? function () { return window.performance.now(); }
+                : function () { return Date.now(); };
+
+            /* Bail out when WebGL is unavailable so the CSS glass stays. */
+            try {
+                var probe = document.createElement('canvas');
+                var probeGL = probe.getContext('webgl') || probe.getContext('experimental-webgl');
+                if (!probeGL) return;
+                var loseCtx = probeGL.getExtension('WEBGL_lose_context');
+                if (loseCtx) loseCtx.loseContext();
+            } catch (e) { return; }
+
+            var canvas = document.createElement('canvas');
+            canvas.id = 'lgCanvas';
+            canvas.setAttribute('aria-hidden', 'true');
+            document.body.appendChild(canvas);
+
+            var gl = null;
+            try {
+                gl = canvas.getContext('webgl', {
+                    alpha: true,
+                    depth: false,
+                    stencil: false,
+                    antialias: false,
+                    premultipliedAlpha: false,
+                    preserveDrawingBuffer: true
+                });
+            } catch (e) { gl = null; }
+            if (!gl) {
+                canvas.parentNode.removeChild(canvas);
+                return;
+            }
+
+            var VS = [
+                'attribute vec2 a_position;',
+                'attribute vec2 a_texcoord;',
+                'varying vec2 v_texcoord;',
+                'void main() {',
+                '    gl_Position = vec4(a_position, 0.0, 1.0);',
+                '    v_texcoord = a_texcoord;',
+                '}'
+            ].join('\n');
+
+            /* Shape-aware refraction, multi-layer glass and tinted blur from
+               liquid-glass-js, trimmed to a single 9x9 gaussian pass and
+               made theme-aware. */
+            var FS = [
+                'precision mediump float;',
+                'uniform sampler2D u_image;',
+                'uniform vec2 u_resolution;',
+                'uniform vec2 u_textureSize;',
+                'uniform vec2 u_panelCenter;',
+                'uniform float u_borderRadius;',
+                'uniform float u_shape;',
+                'uniform float u_blurRadius;',
+                'uniform float u_edgeIntensity;',
+                'uniform float u_rimIntensity;',
+                'uniform float u_baseIntensity;',
+                'uniform float u_edgeDistance;',
+                'uniform float u_rimDistance;',
+                'uniform float u_baseDistance;',
+                'uniform float u_cornerBoost;',
+                'uniform float u_rippleEffect;',
+                'uniform float u_tintOpacity;',
+                'uniform float u_specular;',
+                'uniform float u_alpha;',
+                'uniform vec3 u_tintTop;',
+                'uniform vec3 u_tintBottom;',
+                'varying vec2 v_texcoord;',
+                '',
+                'float roundedRectDistance(vec2 coord, vec2 size, float radius) {',
+                '    vec2 center = size * 0.5;',
+                '    vec2 pixelCoord = coord * size;',
+                '    vec2 toCorner = abs(pixelCoord - center) - (center - radius);',
+                '    float outsideCorner = length(max(toCorner, 0.0));',
+                '    float insideCorner = min(max(toCorner.x, toCorner.y), 0.0);',
+                '    return outsideCorner + insideCorner - radius;',
+                '}',
+                '',
+                'float circleDistance(vec2 coord, vec2 size, float radius) {',
+                '    vec2 pixelCoord = coord * size;',
+                '    return length(pixelCoord - size * 0.5) - radius;',
+                '}',
+                '',
+                'float pillDistance(vec2 coord, vec2 size, float radius) {',
+                '    vec2 pixelCoord = coord * size;',
+                '    vec2 capsuleStart = vec2(radius, size.y * 0.5);',
+                '    vec2 capsuleEnd = vec2(size.x - radius, size.y * 0.5);',
+                '    vec2 axis = capsuleEnd - capsuleStart;',
+                '    float len2 = dot(axis, axis);',
+                '    if (len2 > 0.0001) {',
+                '        float t = clamp(dot(pixelCoord - capsuleStart, axis) / len2, 0.0, 1.0);',
+                '        return length(pixelCoord - (capsuleStart + t * axis)) - radius;',
+                '    }',
+                '    return circleDistance(coord, size, radius);',
+                '}',
+                '',
+                'float shapeDistance(vec2 coord) {',
+                '    if (u_shape > 1.5) return circleDistance(coord, u_resolution, u_borderRadius);',
+                '    if (u_shape > 0.5) return pillDistance(coord, u_resolution, u_borderRadius);',
+                '    return roundedRectDistance(coord, u_resolution, u_borderRadius);',
+                '}',
+                '',
+                'void main() {',
+                '    vec2 coord = v_texcoord;',
+                '    vec2 center = vec2(0.5, 0.5);',
+                '    float nd = max(-shapeDistance(coord), 0.0);',
+                '',
+                '    vec2 shapeNormal;',
+                '    if (u_shape > 1.5) {',
+                '        shapeNormal = normalize(coord - center);',
+                '    } else if (u_shape > 0.5) {',
+                '        vec2 pixelCoord = coord * u_resolution;',
+                '        vec2 capsuleStart = vec2(u_borderRadius, u_resolution.y * 0.5);',
+                '        vec2 capsuleEnd = vec2(u_resolution.x - u_borderRadius, u_resolution.y * 0.5);',
+                '        vec2 axis = capsuleEnd - capsuleStart;',
+                '        float len2 = dot(axis, axis);',
+                '        if (len2 > 0.0001) {',
+                '            float t = clamp(dot(pixelCoord - capsuleStart, axis) / len2, 0.0, 1.0);',
+                '            vec2 dir = pixelCoord - (capsuleStart + t * axis);',
+                '            shapeNormal = length(dir) > 0.0 ? normalize(dir) : vec2(0.0, 1.0);',
+                '        } else {',
+                '            shapeNormal = normalize(coord - center);',
+                '        }',
+                '    } else {',
+                '        shapeNormal = normalize(coord - center);',
+                '    }',
+                '',
+                '    float minRes = min(u_resolution.x, u_resolution.y);',
+                '    float baseI = 1.0 - exp(-nd * u_baseDistance);',
+                '    float edgeI = exp(-nd * u_edgeDistance);',
+                '    float rimI = exp(-nd * u_rimDistance);',
+                '',
+                '    vec2 refraction = shapeNormal * (edgeI * u_edgeIntensity + rimI * u_rimIntensity + baseI * u_baseIntensity * 0.4);',
+                '',
+                '    float cornerProximity = max(min(coord.x, 1.0 - coord.x), min(coord.y, 1.0 - coord.y));',
+                '    refraction += shapeNormal * (exp(-cornerProximity * minRes * 0.3) * u_cornerBoost);',
+                '',
+                '    float distFromEdge = nd / minRes;',
+                '    vec2 perpendicular = vec2(-shapeNormal.y, shapeNormal.x);',
+                '    refraction += perpendicular * (sin(distFromEdge * 25.0) * u_rippleEffect * rimI);',
+                '',
+                '    vec2 pagePixel = u_panelCenter + (coord - 0.5) * u_resolution;',
+                '    vec2 texCoord = pagePixel / u_textureSize + refraction;',
+                '',
+                '    vec3 color = vec3(0.0);',
+                '    vec2 texel = 1.0 / u_textureSize;',
+                '    float sigma = max(u_blurRadius, 0.0001) / 2.0;',
+                '    float totalWeight = 0.0;',
+                '    for (float i = -4.0; i <= 4.0; i += 1.0) {',
+                '        for (float j = -4.0; j <= 4.0; j += 1.0) {',
+                '            float d = length(vec2(i, j));',
+                '            if (d > 4.0) continue;',
+                '            float w = exp(-(d * d) / (2.0 * sigma * sigma));',
+                '            color += texture2D(u_image, texCoord + vec2(i, j) * texel * sigma).rgb * w;',
+                '            totalWeight += w;',
+                '        }',
+                '    }',
+                '    color /= totalWeight;',
+                '',
+                '    vec3 tint = mix(u_tintTop, u_tintBottom, coord.y);',
+                '    color = mix(color, tint, u_tintOpacity);',
+                '',
+                '    float edgeLight = exp(-nd * 0.45);',
+                '    float rimLight = pow(max(shapeNormal.y, 0.0), 2.0) * exp(-nd * 0.6);',
+                '    color += vec3(1.0) * (edgeLight * u_specular * 0.20 + rimLight * u_specular * 0.5);',
+                '',
+                '    float mask = 1.0 - smoothstep(-1.0, 1.0, shapeDistance(coord));',
+                '    gl_FragColor = vec4(color, mask * u_alpha);',
+                '}'
+            ].join('\n');
+
+            function compileShader(type, source) {
+                var shader = gl.createShader(type);
+                gl.shaderSource(shader, source);
+                gl.compileShader(shader);
+                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                    gl.deleteShader(shader);
+                    return null;
+                }
+                return shader;
+            }
+
+            var vs = compileShader(gl.VERTEX_SHADER, VS);
+            var fs = compileShader(gl.FRAGMENT_SHADER, FS);
+            var program = (vs && fs) ? gl.createProgram() : null;
+            if (program) {
+                gl.attachShader(program, vs);
+                gl.attachShader(program, fs);
+                gl.linkProgram(program);
+                if (!gl.getProgramParameter(program, gl.LINK_STATUS)) program = null;
+            }
+            if (!program) {
+                canvas.parentNode.removeChild(canvas);
+                return;
+            }
+            gl.useProgram(program);
+            gl.disable(gl.DEPTH_TEST);
+            gl.disable(gl.CULL_FACE);
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+            var positionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+            var positionLoc = gl.getAttribLocation(program, 'a_position');
+            gl.enableVertexAttribArray(positionLoc);
+            gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
+
+            var texcoordBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0]), gl.STATIC_DRAW);
+            var texcoordLoc = gl.getAttribLocation(program, 'a_texcoord');
+            gl.enableVertexAttribArray(texcoordLoc);
+            gl.vertexAttribPointer(texcoordLoc, 2, gl.FLOAT, false, 0, 0);
+
+            function U(name) { return gl.getUniformLocation(program, name); }
+            var UNIFORMS = {
+                image: U('u_image'),
+                resolution: U('u_resolution'),
+                textureSize: U('u_textureSize'),
+                panelCenter: U('u_panelCenter'),
+                borderRadius: U('u_borderRadius'),
+                shape: U('u_shape'),
+                blurRadius: U('u_blurRadius'),
+                edgeIntensity: U('u_edgeIntensity'),
+                rimIntensity: U('u_rimIntensity'),
+                baseIntensity: U('u_baseIntensity'),
+                edgeDistance: U('u_edgeDistance'),
+                rimDistance: U('u_rimDistance'),
+                baseDistance: U('u_baseDistance'),
+                cornerBoost: U('u_cornerBoost'),
+                rippleEffect: U('u_rippleEffect'),
+                tintOpacity: U('u_tintOpacity'),
+                specular: U('u_specular'),
+                alpha: U('u_alpha'),
+                tintTop: U('u_tintTop'),
+                tintBottom: U('u_tintBottom')
+            };
+
+            /* ---------------- procedural aurora backdrop ---------------- */
+
+            var texture = gl.createTexture();
+            var texCanvas = document.createElement('canvas');
+            var TEX_SCALE = 0.5;
+            var lastTexW = 0;
+            var lastTexH = 0;
+
+            function cssVar(name, fallback) {
+                return window.SCTheme ? window.SCTheme.cssVar(name, fallback) : fallback;
+            }
+
+            var themeLight = false;
+            var themeTint = { top: [0.16, 0.19, 0.36], bottom: [0.05, 0.07, 0.15] };
+
+            function readTheme() {
+                themeLight = docEl.getAttribute('data-theme') === 'light';
+                if (themeLight) {
+                    themeTint.top = [1.0, 1.0, 1.0];
+                    themeTint.bottom = [0.85, 0.89, 0.99];
+                } else {
+                    themeTint.top = [0.16, 0.19, 0.36];
+                    themeTint.bottom = [0.05, 0.07, 0.15];
+                }
+            }
+
+            function buildTexture() {
+                var w = Math.max(2, Math.round(window.innerWidth * TEX_SCALE));
+                var h = Math.max(2, Math.round(window.innerHeight * TEX_SCALE));
+                lastTexW = w;
+                lastTexH = h;
+                texCanvas.width = w;
+                texCanvas.height = h;
+                var ctx = texCanvas.getContext('2d');
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.globalAlpha = 1;
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.fillStyle = cssVar('--bg-deep', themeLight ? '#f4f6fd' : '#070912');
+                ctx.fillRect(0, 0, w, h);
+
+                var blobs = [
+                    ['--glow-primary', 0.18, 0.24, 0.50, 0.95],
+                    ['--glow-accent', 0.84, 0.16, 0.44, 0.85],
+                    ['--glow-purple', 0.62, 0.84, 0.54, 0.95],
+                    ['--glow-warm', 0.10, 0.90, 0.40, 0.75]
+                ];
+                var soft = ('filter' in ctx);
+                if (soft) ctx.filter = 'blur(' + Math.max(6, Math.round(Math.min(w, h) * 0.05)) + 'px)';
+                for (var i = 0; i < blobs.length; i++) {
+                    var b = blobs[i];
+                    var cx = b[1] * w;
+                    var cy = b[2] * h;
+                    var r = b[3] * Math.max(w, h);
+                    var gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+                    gradient.addColorStop(0, cssVar(b[0], 'rgba(0,0,0,0)'));
+                    gradient.addColorStop(1, 'rgba(0,0,0,0)');
+                    ctx.globalAlpha = b[4];
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+                if (soft) ctx.filter = 'none';
+
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texCanvas);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            }
+
+            /* ---------------- glass panel registry ---------------- */
+
+            var DEFAULTS = {
+                edge: 0.020, rim: 0.075, base: 0.010,
+                edgeDist: 0.14, rimDist: 0.75, baseDist: 0.10,
+                corner: 0.030, ripple: 0.10
+            };
+            var REGISTRY = [
+                { sel: '.glass', blur: 14, tint: 0.34, spec: 0.70 },
+                { sel: '.bento-item', blur: 14, tint: 0.34, spec: 0.70 },
+                { sel: '.platform-card', blur: 14, tint: 0.34, spec: 0.70 },
+                { sel: '.hero-panel', blur: 16, tint: 0.38, spec: 0.75 },
+                { sel: '.demo-link', blur: 9, tint: 0.42, spec: 0.65 },
+                { sel: '.feature-item', blur: 9, tint: 0.40, spec: 0.65 },
+                { sel: '.chip', blur: 8, tint: 0.45, spec: 0.65 },
+                { sel: '.section-label', blur: 8, tint: 0.45, spec: 0.65 },
+                { sel: '.btn-glass', blur: 8, tint: 0.50, spec: 0.85 },
+                { sel: '.hero-badge', blur: 8, tint: 0.45, spec: 0.65 },
+                { sel: '.code-block', blur: 12, tint: 0.58, spec: 0.40 },
+                { sel: '.syntax-example', blur: 8, tint: 0.50, spec: 0.55 },
+                { sel: '.base-result-card', blur: 8, tint: 0.45, spec: 0.60 },
+                { sel: '.bw-result-card', blur: 8, tint: 0.45, spec: 0.60 }
+            ];
+            var panels = [];
+
+            function registerPanel(el, cfg) {
+                if (!el || el.__lgPanel) return;
+                var panel = { el: el, cfg: cfg, rawRadius: -1, animUntil: 0 };
+                el.__lgPanel = panel;
+                el.classList.add('lg-glass');
+                panels.push(panel);
+            }
+
+            function collectPanels() {
+                var firstNew = panels.length;
+                for (var i = 0; i < REGISTRY.length; i++) {
+                    var cfg = REGISTRY[i];
+                    var nodes;
+                    try { nodes = document.querySelectorAll(cfg.sel); } catch (e) { continue; }
+                    for (var j = 0; j < nodes.length; j++) registerPanel(nodes[j], cfg);
+                }
+                var now = nowFn();
+                for (var k = firstNew; k < panels.length; k++) {
+                    try {
+                        var op = parseFloat(window.getComputedStyle(panels[k].el).opacity);
+                        if (isFinite(op) && op < 0.85) panels[k].animUntil = now + 1500;
+                    } catch (e2) { /* element went away */ }
+                }
+            }
+
+            function panelRawRadius(panel) {
+                if (panel.rawRadius === -1) {
+                    var raw = 0;
+                    try {
+                        var cs = window.getComputedStyle(panel.el);
+                        var rv = cs.borderTopLeftRadius || '0';
+                        raw = parseFloat(rv);
+                        if (!isFinite(raw)) raw = 0;
+                        if (rv.indexOf('%') >= 0) raw = -2;
+                    } catch (e) { raw = 0; }
+                    panel.rawRadius = raw;
+                }
+                return panel.rawRadius;
+            }
+
+            /* ---------------- renderer ---------------- */
+
+            var PX = 1;
+            var quality = 1;
+            var started = false;
+            var scheduled = false;
+            var activeUntil = 0;
+            var needCollect = false;
+            var costAcc = 0;
+            var costFrames = 0;
+
+            function computePX() {
+                return Math.min(window.devicePixelRatio || 1, 1.5) * quality;
+            }
+
+            function resizeBacking() {
+                PX = computePX();
+                var cw = Math.max(2, Math.round(window.innerWidth * PX));
+                var ch = Math.max(2, Math.round(window.innerHeight * PX));
+                if (canvas.width !== cw || canvas.height !== ch) {
+                    canvas.width = cw;
+                    canvas.height = ch;
+                    canvas.style.width = window.innerWidth + 'px';
+                    canvas.style.height = window.innerHeight + 'px';
+                }
+            }
+
+            function panelAnimating(now) {
+                for (var i = 0; i < panels.length; i++) {
+                    if (panels[i].animUntil > now) return true;
+                }
+                return false;
+            }
+
+            function drawPanel(panel, rect, now) {
+                var cfg = panel.cfg;
+                var cx = (rect.left + rect.width * 0.5) * PX;
+                var cy = (rect.top + rect.height * 0.5) * PX;
+                var w = Math.max(2, Math.round(rect.width * PX));
+                var h = Math.max(2, Math.round(rect.height * PX));
+                var raw = panelRawRadius(panel);
+                var half = Math.min(w, h) * 0.5;
+                var radius = raw === -2 ? half : Math.min(raw * PX, half);
+                var shape = 0;
+                if (radius >= half - 1.5) {
+                    shape = Math.abs(w - h) <= Math.max(6, half * 0.2) ? 2 : 1;
+                }
+                var alpha = 1;
+                if (panel.animUntil > now) {
+                    try {
+                        var op = parseFloat(window.getComputedStyle(panel.el).opacity);
+                        if (isFinite(op)) alpha = Math.max(0, Math.min(1, op));
+                    } catch (e) { /* keep 1 */ }
+                }
+                var x0 = Math.round(rect.left * PX);
+                var y0 = Math.round(rect.top * PX);
+
+                gl.viewport(x0, canvas.height - y0 - h, w, h);
+                gl.uniform2f(UNIFORMS.resolution, w, h);
+                gl.uniform2f(UNIFORMS.textureSize, canvas.width, canvas.height);
+                gl.uniform2f(UNIFORMS.panelCenter, cx, cy);
+                gl.uniform1f(UNIFORMS.borderRadius, radius);
+                gl.uniform1f(UNIFORMS.shape, shape);
+                gl.uniform1f(UNIFORMS.blurRadius, cfg.blur * PX);
+                gl.uniform1f(UNIFORMS.edgeIntensity, cfg.edge !== undefined ? cfg.edge : DEFAULTS.edge);
+                gl.uniform1f(UNIFORMS.rimIntensity, cfg.rim !== undefined ? cfg.rim : DEFAULTS.rim);
+                gl.uniform1f(UNIFORMS.baseIntensity, cfg.base !== undefined ? cfg.base : DEFAULTS.base);
+                gl.uniform1f(UNIFORMS.edgeDistance, cfg.edgeDist !== undefined ? cfg.edgeDist : DEFAULTS.edgeDist);
+                gl.uniform1f(UNIFORMS.rimDistance, cfg.rimDist !== undefined ? cfg.rimDist : DEFAULTS.rimDist);
+                gl.uniform1f(UNIFORMS.baseDistance, cfg.baseDist !== undefined ? cfg.baseDist : DEFAULTS.baseDist);
+                gl.uniform1f(UNIFORMS.cornerBoost, cfg.corner !== undefined ? cfg.corner : DEFAULTS.corner);
+                gl.uniform1f(UNIFORMS.rippleEffect, cfg.ripple !== undefined ? cfg.ripple : DEFAULTS.ripple);
+                gl.uniform1f(UNIFORMS.tintOpacity, cfg.tint);
+                gl.uniform1f(UNIFORMS.specular, cfg.spec);
+                gl.uniform1f(UNIFORMS.alpha, alpha);
+                gl.uniform3fv(UNIFORMS.tintTop, themeTint.top);
+                gl.uniform3fv(UNIFORMS.tintBottom, themeTint.bottom);
+                gl.drawArrays(gl.TRIANGLES, 0, 6);
+            }
+
+            function renderFrame() {
+                if (!started || gl.isContextLost()) return;
+                if (needCollect) {
+                    needCollect = false;
+                    collectPanels();
+                }
+                resizeBacking();
+                var now = nowFn();
+                gl.viewport(0, 0, canvas.width, canvas.height);
+                gl.clearColor(0, 0, 0, 0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+
+                var vw = window.innerWidth;
+                var vh = window.innerHeight;
+                for (var i = panels.length - 1; i >= 0; i--) {
+                    var panel = panels[i];
+                    var el = panel.el;
+                    if (!el || !el.parentNode) {
+                        if (el) el.__lgPanel = null;
+                        panels.splice(i, 1);
+                        continue;
+                    }
+                    if (el.classList.contains('reveal') && !el.classList.contains('visible')) continue;
+                    var rect = el.getBoundingClientRect();
+                    if (rect.width < 6 || rect.height < 6) continue;
+                    if (rect.bottom < -24 || rect.top > vh + 24 || rect.right < -24 || rect.left > vw + 24) continue;
+                    drawPanel(panel, rect, now);
+                }
+            }
+
+            function kick(ms) {
+                activeUntil = Math.max(activeUntil, nowFn() + (ms || 300));
+                if (!scheduled) {
+                    scheduled = true;
+                    raf(tick);
+                }
+            }
+
+            function tick() {
+                scheduled = false;
+                if (!started) return;
+                var t0 = nowFn();
+                renderFrame();
+                costAcc += nowFn() - t0;
+                costFrames++;
+                var now = nowFn();
+                if (now < activeUntil || panelAnimating(now)) {
+                    scheduled = true;
+                    raf(tick);
+                    return;
+                }
+                if (costFrames >= 8) {
+                    if (costAcc / costFrames > 20 && quality > 0.6) {
+                        quality *= 0.7;
+                        activeUntil = now + 600;
+                        scheduled = true;
+                        raf(tick);
+                    }
+                    costAcc = 0;
+                    costFrames = 0;
+                }
+            }
+
+            function start() {
+                if (started || gl.isContextLost()) return;
+                resizeBacking();
+                buildTexture();
+                started = true;
+                renderFrame();
+                docEl.classList.add('lg-liquid');
+                kick(800);
+            }
+
+            /* ---------------- lifecycle ---------------- */
+
+            window.addEventListener('scroll', function () { if (started) kick(240); }, { passive: true });
+            window.addEventListener('resize', function () {
+                if (!started) return;
+                var w = Math.max(2, Math.round(window.innerWidth * TEX_SCALE));
+                var h = Math.max(2, Math.round(window.innerHeight * TEX_SCALE));
+                if (Math.abs(w - lastTexW) > 8 || Math.abs(h - lastTexH) > 8) buildTexture();
+                kick(600);
+            }, { passive: true });
+            window.addEventListener('orientationchange', function () { if (started) kick(800); }, { passive: true });
+            document.addEventListener('pointerover', function () { if (started) kick(450); }, { passive: true });
+            document.addEventListener('pointerout', function () { if (started) kick(450); }, { passive: true });
+            document.addEventListener('focusin', function () { if (started) kick(300); }, true);
+
+            var observer = new MutationObserver(function (records) {
+                if (!started) return;
+                var bump = false;
+                for (var i = 0; i < records.length; i++) {
+                    var record = records[i];
+                    if (record.type === 'attributes' && record.target && record.target.__lgPanel) {
+                        if (record.attributeName === 'class') {
+                            record.target.__lgPanel.animUntil = nowFn() + 900;
+                        }
+                        bump = true;
+                    } else {
+                        if (record.type === 'childList' &&
+                            ((record.addedNodes && record.addedNodes.length) ||
+                             (record.removedNodes && record.removedNodes.length))) {
+                            needCollect = true;
+                        }
+                        bump = true;
+                    }
+                }
+                if (bump) kick(400);
+            });
+            observer.observe(document.body, {
+                subtree: true,
+                childList: true,
+                attributes: true,
+                attributeFilter: ['class', 'style']
+            });
+
+            var themeObserver = new MutationObserver(function () {
+                if (!started) return;
+                readTheme();
+                buildTexture();
+                kick(700);
+            });
+            themeObserver.observe(docEl, { attributes: true, attributeFilter: ['data-theme'] });
+
+            canvas.addEventListener('webglcontextlost', function (e) {
+                e.preventDefault();
+                started = false;
+                docEl.classList.remove('lg-liquid');
+            }, false);
+
+            if (document.fonts && document.fonts.ready && document.fonts.ready.then) {
+                document.fonts.ready.then(function () { if (started) kick(500); });
+            }
+
+            try {
+                collectPanels();
+                readTheme();
+                start();
+                window.addEventListener('load', function () { if (started) kick(800); });
+            } catch (e) {
+                started = false;
+                docEl.classList.remove('lg-liquid');
+                if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
+            }
+        })();
     </script>
 </body>
 </html>
