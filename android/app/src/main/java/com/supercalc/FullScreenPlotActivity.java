@@ -33,6 +33,8 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
     private ArrayList<ArrayList<Entry>> allEntries;
     private ArrayList<String> allExpressions;
     private ArrayList<Integer> curveColors;
+    /** Maps each chart dataset index to the curve index it belongs to. */
+    private final ArrayList<Integer> datasetCurveIndex = new ArrayList<>();
     /** Intersection points handed over by the plot screen, so full screen keeps them. */
     private final ArrayList<Entry> intersectionMarkers = new ArrayList<>();
     
@@ -57,6 +59,9 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
     private static final int COLOR_TEXT = Color.parseColor("#E6EAFF");
     private static final int COLOR_BG = Color.parseColor("#0B0E1C");
     private static final int MARK_COLOR = Color.parseColor("#F472B6");
+
+    /** Sentinel entry that separates two continuous segments of one curve. */
+    private static final Entry NaN_MARKER = new Entry(Float.NaN, Float.NaN);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -200,21 +205,34 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
             } else {
                 curveColors.add(COLOR_PALETTE[i % COLOR_PALETTE.length]);
             }
-            
+
             ArrayList<Entry> entries = new ArrayList<>();
-            String[] points = entriesData[i].split(";");
-            for (String point : points) {
-                String[] coords = point.split(",");
-                if (coords.length == 2) {
-                    try {
-                        float x = Float.parseFloat(coords[0]);
-                        float y = Float.parseFloat(coords[1]);
-                        if (y >= yMin && y <= yMax) {
-                            entries.add(new Entry(x, y));
+            // Each curve is encoded as continuous segments separated by '|',
+            // points inside a segment separated by ';' (see PlotActivity).
+            // MPAndroidChart v3.1.0 does NOT break a line at a NaN entry, so we
+            // must keep the segments apart as separate datasets.  We store them
+            // here as one flat list with NaN markers and expand into separate
+            // datasets in renderChart().
+            String[] segments = entriesData[i].split("\\|", -1);
+            for (String seg : segments) {
+                if (seg.isEmpty()) continue;
+                ArrayList<Entry> segEntries = new ArrayList<>();
+                String[] points = seg.split(";");
+                for (String point : points) {
+                    String[] coords = point.split(",");
+                    if (coords.length == 2) {
+                        try {
+                            float x = Float.parseFloat(coords[0]);
+                            float y = Float.parseFloat(coords[1]);
+                            segEntries.add(new Entry(x, y));
+                        } catch (NumberFormatException e) {
+                            // Skip invalid points
                         }
-                    } catch (NumberFormatException e) {
-                        // Skip invalid points
                     }
+                }
+                if (!segEntries.isEmpty()) {
+                    if (!entries.isEmpty()) entries.add(NaN_MARKER);
+                    entries.addAll(segEntries);
                 }
             }
             allEntries.add(entries);
@@ -239,15 +257,37 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
     
     private void renderChart(float xMin, float xMax, float yMin, float yMax) {
         List<ILineDataSet> dataSets = new ArrayList<>();
+        datasetCurveIndex.clear();
         for (int i = 0; i < allEntries.size(); i++) {
             if (allEntries.get(i).isEmpty()) continue;
-            
-            LineDataSet dataSet = new LineDataSet(allEntries.get(i), allExpressions.get(i));
-            dataSet.setColor(curveColors.get(i));
-            dataSet.setLineWidth(2f);
-            dataSet.setDrawCircles(false);
-            dataSet.setDrawValues(false);
-            dataSets.add(dataSet);
+
+            // Split the flat list back into segments at the NaN markers and
+            // create one dataset per segment: this is what actually produces a
+            // clean gap at each asymptote in MPAndroidChart.
+            ArrayList<ArrayList<Entry>> segments = new ArrayList<>();
+            ArrayList<Entry> cur = new ArrayList<>();
+            for (Entry e : allEntries.get(i)) {
+                if (Float.isNaN(e.getX()) && Float.isNaN(e.getY())) {
+                    if (!cur.isEmpty()) { segments.add(cur); cur = new ArrayList<>(); }
+                } else {
+                    cur.add(e);
+                }
+            }
+            if (!cur.isEmpty()) segments.add(cur);
+
+            boolean first = true;
+            String label = allExpressions.get(i);
+            for (ArrayList<Entry> seg : segments) {
+                if (seg.isEmpty()) continue;
+                LineDataSet dataSet = new LineDataSet(seg, first ? label : "");
+                dataSet.setColor(curveColors.get(i));
+                dataSet.setLineWidth(2f);
+                dataSet.setDrawCircles(false);
+                dataSet.setDrawValues(false);
+                dataSets.add(dataSet);
+                datasetCurveIndex.add(i);
+                first = false;
+            }
         }
         
         // Marked points dataset
@@ -320,12 +360,23 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
         
         if (allExpressions.size() > 1) {
             int idx = highlight.getDataSetIndex();
-            if (idx >= 0 && idx < allExpressions.size()) {
-                coordText.append(" - ").append(allExpressions.get(idx));
+            // Several datasets can belong to one curve (one per continuous
+            // segment); map the dataset index back to its curve label.
+            String curveLabel = datasetToExpression(idx);
+            if (curveLabel != null && !curveLabel.isEmpty()) {
+                coordText.append(" - ").append(curveLabel);
             }
         }
         
         coordinateDisplay.setText(coordText.toString());
+    }
+
+    /** Curve label for a given chart dataset index, or null if out of range. */
+    private String datasetToExpression(int datasetIndex) {
+        if (datasetIndex < 0 || datasetIndex >= datasetCurveIndex.size()) return null;
+        int curveIdx = datasetCurveIndex.get(datasetIndex);
+        if (curveIdx < 0 || curveIdx >= allExpressions.size()) return null;
+        return allExpressions.get(curveIdx);
     }
     
     @Override

@@ -228,6 +228,107 @@
             }
             return { cssVar: cssVar, palette: palette };
         })();
+
+        /* ------------------------------------------------------------------
+           Shared discontinuity detection for the canvas demos.
+           Sampled functions such as tan(x) or 1/x have poles; connecting the
+           two samples that straddle a pole draws a bogus near-vertical line.
+           `SCBreak.detect` returns the sample indices where the polyline must
+           be split, working against the *visible* y-band so it is independent
+           of the sampling density.
+           ------------------------------------------------------------------ */
+        window.SCBreak = (function () {
+            function isFiniteNum(v) {
+                return typeof v === 'number' && isFinite(v);
+            }
+
+            /* ys: array of numbers (NaN allowed). lo/hi: visible y band.
+               Returns a sorted array of indices i meaning "break before i". */
+            function detect(ys, lo, hi) {
+                var breaks = [], n = ys.length;
+                if (n < 2) return breaks;
+
+                var finite = [];
+                for (var i = 1; i < n; i++) {
+                    if (isFiniteNum(ys[i - 1]) && isFiniteNum(ys[i])) {
+                        finite.push([i, ys[i - 1], ys[i]]);
+                    }
+                }
+                if (!finite.length) return breaks;
+
+                if (!isFiniteNum(lo) || !isFiniteNum(hi) || hi <= lo) {
+                    var mn = Infinity, mx = -Infinity;
+                    for (var k = 0; k < finite.length; k++) {
+                        mn = Math.min(mn, finite[k][1], finite[k][2]);
+                        mx = Math.max(mx, finite[k][1], finite[k][2]);
+                    }
+                    lo = mn; hi = mx;
+                }
+                var span = hi - lo;
+                if (!isFiniteNum(span) || span <= 0) span = 1;
+                // widen band slightly so edge points count as near-pole
+                var blo = lo - 0.10 * span, bhi = hi + 0.10 * span;
+
+                var jumps = [];
+                for (var k2 = 0; k2 < finite.length; k2++) {
+                    jumps.push(Math.abs(finite[k2][2] - finite[k2][1]));
+                }
+                jumps.sort(function (a, b) { return a - b; });
+                var med = jumps[Math.floor(jumps.length / 2)] || 1e-12;
+
+                var bandThresh = 0.5 * span;
+                var jumpThresh = Math.max(6 * med, 1e-9);
+                var outside = function (v) { return v < blo || v > bhi; };
+
+                var set = {};
+                for (var m = 0; m < finite.length; m++) {
+                    var idx = finite[m][0], a = finite[m][1], b = finite[m][2];
+                    var ao = outside(a), bo = outside(b);
+                    if (ao && bo) {
+                        if ((a < 0) !== (b < 0) || (a > bhi && b < blo) || (a < blo && b > bhi)) {
+                            set[idx] = 1;
+                        }
+                    } else if ((ao || bo) && Math.abs(b - a) > bandThresh) {
+                        set[idx] = 1;
+                    } else if (Math.abs(b - a) > bandThresh &&
+                               Math.abs(b - a) > jumpThresh &&
+                               (a < 0) !== (b < 0)) {
+                        set[idx] = 1;
+                    }
+                }
+
+                var keys = Object.keys(set).map(Number).sort(function (a, b) { return a - b; });
+                var collapsed = [], prev = null;
+                for (var q = 0; q < keys.length; q++) {
+                    if (prev === null || keys[q] - prev > 1) collapsed.push(keys[q]);
+                    prev = keys[q];
+                }
+                return collapsed;
+            }
+
+            /* Plot a sampled curve, breaking the stroke at every discontinuity.
+               `moveToFn(x, y)` / `lineToFn(x, y)` abstract the coordinate system.
+               `getX(i)` / `getY(i)` supply the sample coordinates. */
+            function stroke(ctx, getX, getY, count, lo, hi) {
+                var raw = new Array(count);
+                for (var i = 0; i < count; i++) raw[i] = getY(i);
+                var breaks = detect(raw, lo, hi);
+                var breakSet = {};
+                for (var b = 0; b < breaks.length; b++) breakSet[breaks[b]] = 1;
+                var started = false;
+                for (var j = 0; j < count; j++) {
+                    if (breakSet[j]) started = false;
+                    var yv = getY(j);
+                    if (!isFiniteNum(yv)) { started = false; continue; }
+                    var X = getX(j);
+                    if (!isFiniteNum(X)) { started = false; continue; }
+                    if (!started) { ctx.moveTo(X, yv); started = true; }
+                    else { ctx.lineTo(X, yv); }
+                }
+            }
+
+            return { detect: detect, stroke: stroke };
+        })();
     </script>
     <style>
 /* ==========================================================================
@@ -3173,10 +3274,15 @@ html.lg-liquid .lg-glass {
                     var res=results[m];
                     ctx.strokeStyle=res.color;ctx.lineWidth=2.5;ctx.globalAlpha=0.85;
                     ctx.beginPath();
+                    /* Break the polyline if a solution diverges to infinity. */
+                    var rys=res.data.ys;
+                    var rbreaks=window.SCBreak.detect(rys, yMin, yMax);
+                    var rset={};for(var rb=0;rb<rbreaks.length;rb++)rset[rbreaks[rb]]=1;
                     var started=false;
                     for(var i=0;i<res.data.xs.length;i++){
+                        if(rset[i])started=false;
                         var px=toX(res.data.xs[i]),py=toY(res.data.ys[i]);
-                        if(!isFinite(px)||!isFinite(py))continue;
+                        if(!isFinite(px)||!isFinite(py)){started=false;continue;}
                         if(!started){ctx.moveTo(px,py);started=true;}
                         else ctx.lineTo(px,py);
                     }
@@ -3346,9 +3452,16 @@ html.lg-liquid .lg-glass {
 
                 ctx.strokeStyle=P.series[0];ctx.lineWidth=2.5;ctx.lineJoin='round';
                 ctx.beginPath();
+                /* Splines can overshoot; break the stroke at any discontinuity. */
+                var cpYs=curvePts.map(function(p){return p.y;});
+                var cpBreaks=window.SCBreak.detect(cpYs, yLo, yHi);
+                var cpSet={};for(var cb=0;cb<cpBreaks.length;cb++)cpSet[cpBreaks[cb]]=1;
+                var cpStarted=false;
                 curvePts.forEach(function(p,i){
+                    if(cpSet[i])cpStarted=false;
                     var cx=toCanvasX(p.x),cy=toCanvasY(p.y);
-                    if(i===0)ctx.moveTo(cx,cy);else ctx.lineTo(cx,cy);
+                    if(!cpStarted){ctx.moveTo(cx,cy);cpStarted=true;}
+                    else ctx.lineTo(cx,cy);
                 });
                 ctx.stroke();
 
@@ -6301,12 +6414,26 @@ html.lg-liquid .lg-glass {
                     ctx.lineWidth = width;
                     ctx.lineJoin = 'round';
                     ctx.beginPath();
-                    var started = false;
+                    // Sample the whole span first so we can detect pole break
+                    // points against the visible band, then stroke segment by
+                    // segment (no bogus line across an asymptote).
+                    var pts = [];
                     for (var px = 0; px <= pw; px += 2) {
                         var x = xMin + px / pw * (xMax - xMin);
-                        var y = fn(x);
-                        if (!isFinite(y) || y < yMin - 1 || y > yMax + 1) { started = false; continue; }
-                        var X = pad.l + px, Y = ty(y);
+                        pts.push({ X: pad.l + px, y: fn(x) });
+                    }
+                    var ys = pts.map(function (p) { return p.y; });
+                    var breaks = window.SCBreak.detect(ys, yMin, yMax);
+                    var bset = {};
+                    for (var b = 0; b < breaks.length; b++) bset[breaks[b]] = 1;
+                    var started = false;
+                    for (var k = 0; k < pts.length; k++) {
+                        if (bset[k]) started = false;
+                        var yv = pts[k].y;
+                        if (!isFinite(yv) || yv < yMin - 1 || yv > yMax + 1) {
+                            started = false; continue;
+                        }
+                        var X = pts[k].X, Y = ty(yv);
                         if (!started) { ctx.moveTo(X, Y); started = true; }
                         else { ctx.lineTo(X, Y); }
                     }

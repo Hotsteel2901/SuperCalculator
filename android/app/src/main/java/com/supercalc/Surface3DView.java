@@ -17,6 +17,8 @@ import android.view.View;
 public class Surface3DView extends View {
 
     private float[][] zValues;
+    private boolean[][] lowOk;
+    private boolean[][] highOk;
     private int[][] colors;
     private float[][] projX;
     private float[][] projY;
@@ -73,6 +75,24 @@ public class Surface3DView extends View {
         });
     }
 
+    /**
+     * Install a pole-cleaned surface mesh.
+     *
+     * <p>The mesh already has outliers blanked to {@code NaN}; {@code lowOk} /
+     * {@code highOk} additionally tell us which neighbour edge may be drawn, so
+     * the wireframe is torn apart at every pole instead of spiking across it.</p>
+     */
+    public void setMesh(CurveBreak.Mesh mesh, float xMin, float xMax,
+                        float yMin, float yMax, float zMin, float zMax) {
+        if (mesh == null || mesh.isEmpty()) {
+            setData(null, xMin, xMax, yMin, yMax, zMin, zMax);
+            return;
+        }
+        this.lowOk = mesh.lowOk;
+        this.highOk = mesh.highOk;
+        setData(mesh.z, xMin, xMax, yMin, yMax, zMin, zMax);
+    }
+
     public void setData(float[][] zValues, float xMin, float xMax, float yMin, float yMax, float zMin, float zMax) {
         this.zValues = zValues;
         this.xMin = xMin;
@@ -81,6 +101,27 @@ public class Surface3DView extends View {
         this.yMax = yMax;
         this.zMin = zMin;
         this.zMax = zMax;
+
+        // Without an edge mask every pair of finite neighbours may connect.
+        // (Callers normally pass a mesh via setMesh, which supplies the real
+        // masks; this keeps the raw setData path working too.)
+        if (zValues != null && zValues.length > 0 && zValues[0].length > 0) {
+            int rows = zValues.length;
+            int cols = zValues[0].length;
+            if (lowOk == null || lowOk.length != rows || lowOk[0].length != cols) {
+                lowOk = new boolean[rows][cols];
+                highOk = new boolean[rows][cols];
+                for (int i = 0; i < rows; i++) {
+                    for (int j = 0; j < cols; j++) {
+                        lowOk[i][j] = true;
+                        highOk[i][j] = true;
+                    }
+                }
+            }
+        } else {
+            lowOk = null;
+            highOk = null;
+        }
 
         // Precompute colors to avoid per-frame allocation during drawing
         if (zValues != null && zValues.length > 0 && zValues[0].length > 0) {
@@ -235,12 +276,14 @@ public class Surface3DView extends View {
                 gridPaint.setColor(colors[i][j]);
 
                 if (j + 1 < cols
+                        && highOk != null && highOk[i][j]
                         && !Float.isNaN(zValues[i][j + 1])
                         && !Float.isNaN(projX[i][j + 1])
                         && !Float.isNaN(projY[i][j + 1])) {
                     canvas.drawLine(projX[i][j], projY[i][j], projX[i][j + 1], projY[i][j + 1], gridPaint);
                 }
                 if (i + 1 < rows
+                        && lowOk != null && lowOk[i][j]
                         && !Float.isNaN(zValues[i + 1][j])
                         && !Float.isNaN(projX[i + 1][j])
                         && !Float.isNaN(projY[i + 1][j])) {

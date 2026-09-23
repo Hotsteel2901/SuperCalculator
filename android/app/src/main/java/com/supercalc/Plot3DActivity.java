@@ -114,8 +114,12 @@ public class Plot3DActivity extends AppCompatActivity {
             return;
         }
 
-        // Determine grid size: keep total points reasonable for mobile
-        int gridSize = 35;
+        // Determine grid size.  A coarse grid aliases fast-oscillating surfaces
+        // (50*sin(3x)cos(3y) jumps ~25 between samples at 60x60), which is
+        // indistinguishable from a real pole and would tear a perfectly good
+        // surface.  At 120x120 the sampling is fine enough that genuine poles
+        // still tear while smooth surfaces render exactly.
+        int gridSize = 120;
         int cols = gridSize;
         int rows = gridSize;
 
@@ -163,6 +167,12 @@ public class Plot3DActivity extends AppCompatActivity {
             return;
         }
 
+        // Cull poles against the range the *user* asked for, before any z-range
+        // auto-fit. Doing it after would use the tightened band and could blank
+        // a perfectly good surface (e.g. z = x + 2y over [-5,5]^2 spans [-15,15],
+        // so every sample would fall outside a user band of [-5,5]).
+        CurveBreak.Mesh mesh = CurveBreak.cull3D(zValues, zMin, zMax, false);
+
         // Auto-adjust Z range if all values fit within user-specified tighter bounds
         if (actualZMin > zMin) zMin = actualZMin;
         if (actualZMax < zMax) zMax = actualZMax;
@@ -171,7 +181,9 @@ public class Plot3DActivity extends AppCompatActivity {
             zMax = zMin + 1f;
         }
 
-        surface3DView.setData(zValues, xMin, xMax, yMin, yMax, zMin, zMax);
+        // The mesh keeps a clean tear at every pole instead of drawing a bogus
+        // spike across it (e.g. z = 1/(x*y)).
+        surface3DView.setMesh(mesh, xMin, xMax, yMin, yMax, zMin, zMax);
         lastExpression = expr;
         lastXMin = xMin;
         lastXMax = xMax;

@@ -36,7 +36,9 @@ public class FullScreenPlot3DActivity extends AppCompatActivity {
             return;
         }
 
-        int gridSize = 35;
+        // Match Plot3DActivity: 120x120 avoids aliasing fast-oscillating surfaces
+        // while still resolving genuine poles.
+        int gridSize = 120;
         int cols = gridSize;
         int rows = gridSize;
 
@@ -84,13 +86,18 @@ public class FullScreenPlot3DActivity extends AppCompatActivity {
             return;
         }
 
+        // Cull poles against the user's requested range, before auto-fitting z
+        // (see Plot3DActivity for why the order matters). Same handling as the
+        // small 3D view: blank outliers and drop the edges bridging across them.
+        CurveBreak.Mesh mesh = CurveBreak.cull3D(zValues, zMin, zMax, false);
+
         if (actualZMin > zMin) zMin = actualZMin;
         if (actualZMax < zMax) zMax = actualZMax;
         if (zMin >= zMax) {
             zMax = zMin + 1f;
         }
 
-        surface3DView.setData(zValues, xMin, xMax, yMin, yMax, zMin, zMax);
+        surface3DView.setMesh(mesh, xMin, xMax, yMin, yMax, zMin, zMax);
     }
 
     private void toast(String msg) {

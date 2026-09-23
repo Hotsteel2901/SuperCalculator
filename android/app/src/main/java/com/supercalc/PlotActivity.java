@@ -1377,10 +1377,10 @@ public class PlotActivity extends AppCompatActivity {
         }
         
         allEntries.clear();
-        // Limit points to avoid TransactionTooLargeException (1MB limit)
-        // Each point is ~8 bytes (float pair), 300 points * 10 curves = ~24KB safe
-        int numPoints = Math.min(300, (int)((xMax - xMin) / 0.1));
-        numPoints = Math.max(50, Math.min(500, numPoints));
+        // Dense enough that steep / oscillatory curves (tan, 1/x, high-frequency
+        // sin) render accurately. Still bounded to keep the Intent payload small.
+        int numPoints = (int) ((xMax - xMin) / 0.02);
+        numPoints = Math.max(400, Math.min(1500, numPoints));
         
         int paramIdx = 0;  // index into parametric lists
         int polarIdx = 0;  // index into polar lists
@@ -1463,21 +1463,33 @@ public class PlotActivity extends AppCompatActivity {
                 for (int i = 0; i < numPoints; i++) {
                     xs[i] = xMin + (xMax - xMin) * i / (numPoints - 1);
                 }
-                
+
                 double[] ys = CalcEngine.evaluateArray(expr, xs);
                 if (ys == null) {
                     toast(getString(R.string.toast_error_expr, expr, CalcEngine.getLastError()));
                     allEntries.add(new ArrayList<Entry>());
                     continue;
                 }
-                
+
+                // Add extra samples next to any pole so every tan branch reaches
+                // the same clipped height, then re-evaluate on the finer grid.
+                double[] fineXs = CurveBreak.refineNearPoles(
+                        xs, ys, (float) yMin, (float) yMax, 8);
+                if (fineXs.length != xs.length) {
+                    double[] fineYs = CalcEngine.evaluateArray(expr, fineXs);
+                    if (fineYs != null) {
+                        xs = fineXs;
+                        ys = fineYs;
+                    }
+                }
+
                 ArrayList<Entry> entries = new ArrayList<>();
-                for (int i = 0; i < numPoints; i++) {
+                for (int i = 0; i < xs.length; i++) {
                     if (!Double.isNaN(ys[i]) && !Double.isInfinite(ys[i])) {
-                        float y = (float) ys[i];
-                        if (y >= yMin && y <= yMax) {
-                            entries.add(new Entry((float) xs[i], y));
-                        }
+                        // Keep every finite sample (even far outside the visible
+                        // band) so CurveBreak can locate the poles; the renderer
+                        // splits the polyline there instead of connecting across.
+                        entries.add(new Entry((float) xs[i], (float) ys[i]));
                     }
                 }
                 allEntries.add(entries);
@@ -1492,13 +1504,10 @@ public class PlotActivity extends AppCompatActivity {
         List<ILineDataSet> dataSets = new ArrayList<>();
         for (int i = 0; i < allEntries.size(); i++) {
             if (allEntries.get(i).isEmpty()) continue;
-            
-            LineDataSet dataSet = new LineDataSet(allEntries.get(i), allExpressions.get(i));
-            dataSet.setColor(curveColors.get(i));
-            dataSet.setLineWidth(2f);
-            dataSet.setDrawCircles(false);
-            dataSet.setDrawValues(false);
-            dataSets.add(dataSet);
+            String kind = i < curveTypes.size() ? curveTypes.get(i) : "regular";
+            boolean xyBreaks = "parametric".equals(kind) || "polar".equals(kind);
+            addCurveDataSets(dataSets, allEntries.get(i), allExpressions.get(i),
+                    curveColors.get(i), (float) yMin, (float) yMax, xyBreaks);
         }
         
         // Marked points dataset
@@ -1546,7 +1555,94 @@ public class PlotActivity extends AppCompatActivity {
         refreshCurveList();
         toast(getString(R.string.toast_plotted_curves, dataSets.size()));
     }
-    
+
+    /**
+     * Add one curve to {@code dataSets}, split into continuous segments so a
+     * polyline never connects across an asymptote (tan(x), 1/x, ...).  The first
+     * segment carries the legend label; the rest are anonymous so the legend
+     * stays readable.
+     */
+    private void addCurveDataSets(List<ILineDataSet> dataSets, ArrayList<Entry> entries,
+                                  String label, int color, float yLo, float yHi) {
+        addCurveDataSets(dataSets, entries, label, color, yLo, yHi, false);
+    }
+
+    private void addCurveDataSets(List<ILineDataSet> dataSets, ArrayList<Entry> entries,
+                                  String label, int color, float yLo, float yHi,
+                                  boolean xyBreaks) {
+        if (entries.isEmpty()) return;
+        double[] xs = new double[entries.size()];
+        double[] ys = new double[entries.size()];
+        for (int i = 0; i < entries.size(); i++) {
+            xs[i] = entries.get(i).getX();
+            ys[i] = entries.get(i).getY();
+        }
+        List<CurveBreak.Segment> segments = xyBreaks
+                ? CurveBreak.splitXY(xs, ys)
+                : CurveBreak.split(xs, ys, yLo, yHi);
+        if (segments.isEmpty()) {
+            // Nothing finite: fall back to a plain dataset so nothing disappears.
+            segments = new ArrayList<>();
+            CurveBreak.Segment all = new CurveBreak.Segment();
+            for (Entry e : entries) { all.xs.add(e.getX()); all.ys.add(e.getY()); }
+            segments.add(all);
+        }
+        boolean first = true;
+        for (CurveBreak.Segment seg : segments) {
+            if (seg.size() < 1) continue;
+            LineDataSet ds = new LineDataSet(seg.toEntries(), first ? label : "");
+            ds.setColor(color);
+            ds.setLineWidth(2f);
+            ds.setDrawCircles(false);
+            ds.setDrawValues(false);
+            dataSets.add(ds);
+            first = false;
+        }
+    }
+
+    /**
+     * Serialize one curve's entries as continuous segments.
+     * Format: {@code "x,y;x,y| x,y;x,y| ..."} -- segments separated by '|',
+     * points inside a segment separated by ';'.  {@code step} > 1 downsamples.
+     */
+    private String serializeSegments(ArrayList<Entry> entries, int step) {
+        return serializeSegments(entries, step, false);
+    }
+
+    private String serializeSegments(ArrayList<Entry> entries, int step, boolean xyBreaks) {
+        if (entries.isEmpty()) return "";
+        double[] xs = new double[entries.size()];
+        double[] ys = new double[entries.size()];
+        for (int i = 0; i < entries.size(); i++) {
+            xs[i] = entries.get(i).getX();
+            ys[i] = entries.get(i).getY();
+        }
+        // Split using the current y-range so poles are cut consistently.
+        float yLo = Float.NEGATIVE_INFINITY, yHi = Float.POSITIVE_INFINITY;
+        try {
+            yLo = Float.parseFloat(yMinInput.getText().toString().trim());
+            yHi = Float.parseFloat(yMaxInput.getText().toString().trim());
+        } catch (Exception ignored) { /* keep infinite band */ }
+
+        List<CurveBreak.Segment> segments = xyBreaks
+                ? CurveBreak.splitXY(xs, ys)
+                : CurveBreak.split(xs, ys, yLo, yHi);
+        if (segments.isEmpty()) return "";
+
+        StringBuilder out = new StringBuilder();
+        for (CurveBreak.Segment seg : segments) {
+            if (seg.size() == 0) continue;
+            if (out.length() > 0) out.append("|");
+            boolean firstPoint = true;
+            for (int j = 0; j < seg.size(); j += Math.max(1, step)) {
+                if (!firstPoint) out.append(";");
+                out.append(String.format("%.6g,%.6g", seg.xs.get(j), seg.ys.get(j)));
+                firstPoint = false;
+            }
+        }
+        return out.toString();
+    }
+
     private void openFullScreen() {
         if (allEntries.isEmpty()) {
             toast(getString(R.string.toast_plot_first));
@@ -1566,31 +1662,27 @@ public class PlotActivity extends AppCompatActivity {
         }
         
         String[] entriesData;
+        // Encode each curve as its continuous segments joined by '|', with the
+        // points inside a segment joined by ';'.  This carries the break
+        // information across the Intent so the full-screen view also draws clean
+        // gaps at asymptotes.
+        entriesData = new String[allEntries.size()];
         if (totalPoints > maxTotalPoints && !allEntries.isEmpty()) {
             // Downsample
-            entriesData = new String[allEntries.size()];
             int pointsPerCurve = Math.max(1, maxTotalPoints / allEntries.size());
             for (int i = 0; i < allEntries.size(); i++) {
-                StringBuilder sb = new StringBuilder();
                 ArrayList<Entry> entries = allEntries.get(i);
                 int step = Math.max(1, entries.size() / pointsPerCurve);
-                for (int j = 0; j < entries.size(); j += step) {
-                    Entry e = entries.get(j);
-                    if (sb.length() > 0) sb.append(";");
-                    sb.append(String.format("%.4g,%.4g", e.getX(), e.getY()));
-                }
-                entriesData[i] = sb.toString();
+                String kind = i < curveTypes.size() ? curveTypes.get(i) : "regular";
+                boolean xyBreaks = "parametric".equals(kind) || "polar".equals(kind);
+                entriesData[i] = serializeSegments(entries, step, xyBreaks);
             }
             toast(getString(R.string.toast_downsampled));
         } else {
-            entriesData = new String[allEntries.size()];
             for (int i = 0; i < allEntries.size(); i++) {
-                StringBuilder sb = new StringBuilder();
-                for (Entry e : allEntries.get(i)) {
-                    if (sb.length() > 0) sb.append(";");
-                    sb.append(String.format("%.4g,%.4g", e.getX(), e.getY()));
-                }
-                entriesData[i] = sb.toString();
+                String kind = i < curveTypes.size() ? curveTypes.get(i) : "regular";
+                boolean xyBreaks = "parametric".equals(kind) || "polar".equals(kind);
+                entriesData[i] = serializeSegments(allEntries.get(i), 1, xyBreaks);
             }
         }
         

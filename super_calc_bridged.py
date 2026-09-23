@@ -62,6 +62,425 @@ MAX_PLOT_POINTS = 5000
 MIN_3D_POINTS = 10
 MAX_3D_POINTS = 120
 DEFAULT_3D_POINTS = 50
+
+# ---------------------------------------------------------------------------
+#  Discontinuity handling for plotting
+# ---------------------------------------------------------------------------
+# Sampled functions such as tan(x), 1/x or ln(x) have asymptotes / poles where
+# the function value shoots to +/-infinity between two adjacent samples.  If we
+# simply feed the sampled values to matplotlib (or to MPAndroidChart / a raw
+# canvas) the two finite samples that straddle the pole get connected by a bogus
+# near-vertical "line".  To avoid that we detect those break points and split
+# the curve into independent segments (matplotlib breaks a line wherever a
+# y-value is NaN).
+#
+# The detection is done against the *visible* y-band the user asked to draw, so
+# it is completely independent of the sampling density: a sample that leaves the
+# visible band together with a huge local jump marks a pole.
+
+_BREAK_MIN_ABS = 1e-9       # guard against degenerate/empty data
+# A consecutive pair is a discontinuity when the step between them is at least
+# this fraction of the visible height AND it dwarfs the curve's typical step.
+_BREAK_JUMP_FACTOR = 6.0
+# An edge in a 3D surface is refused when it spans more than this fraction of
+# the visible z-band (a pole edge crosses most of the band; a steep-but-smooth
+# surface stays far below).
+_BREAK_BAND_FRAC = 0.5
+
+
+def _visible_band(ys, y_lo, y_hi):
+    """Return a sane (lo, hi, span) for the visible y-band.
+
+    Falls back to the sample range when the caller did not supply a band.
+    """
+    finite_vals = []
+    for v in ys:
+        try:
+            fv = float(v)
+        except (TypeError, ValueError):
+            continue
+        if math.isfinite(fv):
+            finite_vals.append(fv)
+    if not finite_vals:
+        finite_vals = [0.0]
+
+    have_band = (y_lo is not None and y_hi is not None
+                 and math.isfinite(y_lo) and math.isfinite(y_hi)
+                 and float(y_hi) > float(y_lo))
+    if have_band:
+        lo, hi = float(y_lo), float(y_hi)
+        # Expand the band a little so points just off-screen still count as
+        # "near the pole" rather than as a hard data error.
+        lo -= 0.10 * (hi - lo)
+        hi += 0.10 * (hi - lo)
+    else:
+        lo, hi = min(finite_vals), max(finite_vals)
+    span = hi - lo
+    if not math.isfinite(span) or span <= 0:
+        span = 1.0
+    return lo, hi, span
+
+
+def _detect_break_indices(xs, ys, y_lo=None, y_hi=None):
+    """Return the sorted set of sample indices *before* which the curve breaks.
+
+    ``xs``/``ys`` are equal-length numeric sequences (NaN is allowed and is
+    already treated as a break).  The result lists indices ``i`` such that the
+    segment ``[.., i-1]`` and ``[i ..]`` must be drawn separately, i.e. the jump
+    from ``ys[i-1]`` to ``ys[i]`` is a discontinuity.
+
+    ``y_lo``/``y_hi`` give the visible y-range of the plot; when omitted the
+    sample range is used.  Working against the visible band makes the detection
+    independent of the sampling density.
+    """
+    breaks = set()
+    n = len(ys)
+    if n < 2:
+        return breaks
+
+    def _fin(v):
+        try:
+            return v is not None and math.isfinite(float(v))
+        except (TypeError, ValueError):
+            return False
+
+    # Adjacent finite pairs, in order, with their original index.
+    finite = []
+    for i in range(1, n):
+        y0, y1 = ys[i - 1], ys[i]
+        if _fin(y0) and _fin(y1):
+            finite.append((i, float(y0), float(y1)))
+
+    if not finite:
+        return breaks
+
+    lo, hi, span = _visible_band([y for pair in finite for y in pair[1:]], y_lo, y_hi)
+
+    # Typical contiguous step of the curve.  The median is robust: the handful
+    # of enormous pole jumps never move it.
+    jumps = sorted(abs(b - a) for _, a, b in finite)
+    median_jump = jumps[len(jumps) // 2]
+
+    # Thresholds: a break must clear the visible band AND dwarf the typical step.
+    band_thresh = 0.5 * span
+    jump_thresh = max(_BREAK_JUMP_FACTOR * median_jump, _BREAK_MIN_ABS)
+
+    def _outside(v):
+        return v < lo or v > hi
+
+    # ------------------------------------------------------------------
+    # Rule 1 -- pole between two samples that both leave the visible band.
+    # This is the exact tan() / 1/x situation.  We additionally require a sign
+    # change OR opposite exits (one above, one below) so that a function which
+    # simply runs off the top of the screen (e.g. x^3) is NOT broken.
+    # ------------------------------------------------------------------
+    for i, a, b in finite:
+        ao, bo = _outside(a), _outside(b)
+        if ao and bo:
+            if (a < 0) != (b < 0) or (a > hi and b < lo) or (a < lo and b > hi):
+                breaks.add(i)
+        elif (ao or bo) and abs(b - a) > band_thresh:
+            # One side already left the band and the remaining step is
+            # enormous: the pole sits between the two samples (the sampling
+            # skipped over it asymmetrically).
+            breaks.add(i)
+
+    # ------------------------------------------------------------------
+    # Rule 2 -- generic huge jump well beyond the curve's typical step.
+    # Requires a sign reversal so smooth off-screen growth is never split.
+    # ------------------------------------------------------------------
+    for i, a, b in finite:
+        d = abs(b - a)
+        if d > band_thresh and d > jump_thresh and (a < 0) != (b < 0):
+            breaks.add(i)
+
+    # Collapse runs of adjacent breaks (one pole can leave a whole run of
+    # samples outside the band) into a single gap so we do not explode the
+    # polyline into dozens of tiny segments.
+    if not breaks:
+        return breaks
+    collapsed = set()
+    ordered = sorted(breaks)
+    prev = None
+    for idx in ordered:
+        if prev is None or idx - prev > 1:
+            collapsed.add(idx)
+        prev = idx
+    return collapsed
+
+
+def _segment_curve(xs, ys, y_lo=None, y_hi=None):
+    """Split a sampled curve into contiguous (xs, ys) segments at breaks.
+
+    Returns a list of ``(xs_seg, ys_seg)`` tuples.  NaN samples act as natural
+    separators (they are dropped from the returned segments).
+    """
+    n = len(ys)
+    if n == 0:
+        return []
+    breaks = _detect_break_indices(xs, ys, y_lo, y_hi)
+
+    segments = []
+    cur_x = []
+    cur_y = []
+    for i in range(n):
+        y = ys[i]
+        is_nan = False
+        try:
+            is_nan = y is None or not math.isfinite(float(y))
+        except (TypeError, ValueError):
+            is_nan = True
+
+        if is_nan:
+            if cur_x:
+                segments.append((cur_x, cur_y))
+                cur_x, cur_y = [], []
+            continue
+
+        if i in breaks and cur_x:
+            segments.append((cur_x, cur_y))
+            cur_x, cur_y = [], []
+
+        cur_x.append(xs[i])
+        cur_y.append(y)
+
+    if cur_x:
+        segments.append((cur_x, cur_y))
+    return segments
+
+
+def _break_at_nan(xs, ys, y_lo=None, y_hi=None):
+    """Return a copy of ``ys`` with an extra NaN inserted at every detected break.
+
+    Handy for APIs that expect a single (x, y) array pair (matplotlib): the extra
+    NaN splits the polyline into independent pieces.
+    """
+    xs_out = list(xs)
+    ys_out = list(ys)
+    breaks = _detect_break_indices(xs_out, ys_out, y_lo, y_hi)
+    if not breaks:
+        return list(xs), ys_out
+
+    new_x = []
+    new_y = []
+    for i in range(len(xs_out)):
+        if i in breaks and new_x:
+            # insert a NaN midway between i-1 and i so the line is broken
+            mid_x = (xs_out[i - 1] + xs_out[i]) / 2.0
+            new_x.append(mid_x)
+            new_y.append(float("nan"))
+        new_x.append(xs_out[i])
+        new_y.append(ys_out[i])
+    return new_x, new_y
+
+
+def _refine_near_poles(xs, ys, y_lo=None, y_hi=None, extra=8):
+    """Insert extra sample columns right next to detected poles.
+
+    Sampling ``tan(x)`` uniformly means each branch is truncated at a slightly
+    different height (whichever sample happens to fall closest to the pole wins),
+    which is exactly the "every tan branch has a different height" artefact.
+    By adding a few geometrically-closer samples on both sides of every pole we
+    let each branch reach the same clipped extremum, so the branches look
+    consistent.
+
+    Returns ``(xs2, ys2)`` -- new sample abscissae (unsorted values allowed) with
+    the values evaluated by the caller are NOT returned here; this function only
+    produces the *candidate* abscissae.  Callers re-evaluate the expression on
+    the returned grid.
+    """
+    xs = list(xs)
+    if len(xs) < 3:
+        return xs
+
+    breaks = _detect_break_indices(xs, ys, y_lo, y_hi)
+    if not breaks:
+        return xs
+
+    extra_xs = []
+    n = len(xs)
+    for i in sorted(breaks):
+        if i <= 0 or i >= n:
+            continue
+        x_left, x_right = xs[i - 1], xs[i]
+        gap = x_right - x_left
+        if gap <= 0:
+            continue
+        # Geometric sequence of offsets: 1/2, 1/4, 1/8 ... of the pole gap.
+        for k in range(1, extra + 1):
+            frac = 0.5 ** k
+            extra_xs.append(x_left + gap * frac)
+            extra_xs.append(x_right - gap * frac)
+
+    if not extra_xs:
+        return xs
+
+    merged = sorted(set(xs + extra_xs))
+    return merged
+
+
+def _cull_3d_outliers(Z, z_lo=None, z_hi=None, factor=6.0, want_mask=False):
+    """Return a copy of the 2D grid ``Z`` with pole spikes replaced by NaN.
+
+    ``plot_surface`` fills every quad between four grid corners, so a sample near
+    a pole (e.g. z = 1/(x*y), or tan(x) whose pole falls *between* grid lines)
+    drags the whole neighbouring cell up into a sharp bogus spike.  Two things
+    are needed to tear the surface cleanly:
+
+    1. blank the samples that genuinely explode, and
+    2. refuse to draw the *edges* that bridge across a pole.
+
+    Step 2 matters because a pole rarely lands exactly on a sample: for tan(x)
+    the nearest column only reaches ~30, which is not a spike by itself, yet the
+    edge joining it to the opposite branch jumps by ~60 while the rest of the
+    grid steps by ~1.  Leaving such edges in is exactly the "bogus line"
+    artefact.
+
+    The scale used to judge a jump is the 98th percentile of adjacent-sample
+    differences — not the median, which collapses to ~0 on a mostly-flat surface
+    and would make a smooth Gaussian peak look spiky.
+
+    ``z_lo``/``z_hi`` give the visible z-band (informational only); when omitted
+    the grid's own spread is used.  With ``want_mask`` the return value becomes
+    ``(Z2, ok_h, ok_v)`` where ``ok_h[i][j]`` permits the edge from ``(i, j)`` to
+    ``(i, j+1)`` and ``ok_v[i][j]`` the edge from ``(i, j)`` to ``(i+1, j)``.
+    """
+    Z = np.asarray(Z, dtype=float)
+    if Z.ndim != 2 or Z.size == 0:
+        return Z
+
+    finite_mask = np.isfinite(Z)
+    if not finite_mask.any():
+        return Z
+
+    have_band = (z_lo is not None and z_hi is not None
+                 and math.isfinite(z_lo) and math.isfinite(z_hi)
+                 and float(z_hi) > float(z_lo))
+    band = (float(z_hi) - float(z_lo)) if have_band else None
+
+    nb_scale = _neighbour_scale(Z)
+    if nb_scale > 0:
+        # Compare each sample with the median of its four immediate neighbours:
+        # on smooth surface this stays near zero, at a pole it explodes.
+        padded = np.pad(Z, 1, mode='constant', constant_values=np.nan)
+        stack = np.stack([
+            padded[0:-2, 1:-1], padded[2:, 1:-1],
+            padded[1:-1, 0:-2], padded[1:-1, 2:],
+        ])
+        with np.errstate(all='ignore'):
+            nb_med = np.nanmedian(stack, axis=0)
+            contrast = np.abs(Z - nb_med)
+        outlier = (~finite_mask) | (contrast > factor * nb_scale)
+    else:
+        outlier = ~finite_mask
+
+    Z2 = Z.copy()
+    Z2[outlier] = np.nan
+
+    if not want_mask:
+        return Z2
+
+    # Decide, per edge, whether it may be drawn.  An edge is refused when the two
+    # samples it would join differ by more than half the visible band: a pole
+    # edge crosses most of the band (tan(x): 1.65x, 1/(x*y): 4.6x) while a
+    # merely steep-but-smooth surface stays far below (20*sin*cos: 0.17x,
+    # x+2y: 0.02x).  This is the same idea as the 2D break test and, unlike a
+    # contrast-vs-neighbour test, it still catches a pole that falls between two
+    # grid lines — the common case for tan().
+    if have_band:
+        limit = _BREAK_BAND_FRAC * band
+    elif nb_scale > 0:
+        limit = factor * nb_scale
+    else:
+        limit = float('inf')
+
+    # ok_h[i][j] -> may draw the edge from (i, j) to (i, j + 1)
+    # ok_v[i][j] -> may draw the edge from (i, j) to (i + 1, j)
+    # They MUST be kept separate: a cell can be fine horizontally while its
+    # vertical neighbour sits across a pole, and collapsing them to one flag
+    # (e.g. ok_h | ok_v) would let the bad edge through.
+    ok_h = np.zeros(Z.shape, dtype=bool)
+    ok_v = np.zeros(Z.shape, dtype=bool)
+    if Z.shape[1] > 1:
+        left = Z2[:, :-1]
+        right = Z2[:, 1:]
+        both_h = np.isfinite(left) & np.isfinite(right)
+        ok_h[:, :-1] = both_h & (np.abs(right - left) <= limit)
+    if Z.shape[0] > 1:
+        top = Z2[:-1, :]
+        bottom = Z2[1:, :]
+        both_v = np.isfinite(top) & np.isfinite(bottom)
+        ok_v[:-1, :] = both_v & (np.abs(bottom - top) <= limit)
+
+    return Z2, ok_h, ok_v
+
+
+def _neighbour_scale(Z):
+    """98th-percentile absolute difference between adjacent samples."""
+    Z = np.asarray(Z, dtype=float)
+    diffs = []
+    for ax in (0, 1):
+        if Z.shape[ax] < 2:
+            continue
+        a = np.take(Z, np.arange(0, Z.shape[ax] - 1), axis=ax)
+        b = np.take(Z, np.arange(1, Z.shape[ax]), axis=ax)
+        d = np.abs(b - a)
+        d = d[np.isfinite(d)]
+        if d.size:
+            diffs.append(d)
+    if not diffs:
+        return 0.0
+    nb = np.concatenate(diffs)
+    scale = float(np.percentile(nb, 98))
+    if not math.isfinite(scale) or scale <= 0:
+        scale = float(np.max(nb)) if nb.size else 0.0
+    return scale
+
+
+def _split_xy_on_jumps(xs, ys):
+    """Split a 2D polyline at points where either x or y jumps discontinuously.
+
+    Returns a list of ``(xs_seg, ys_seg)`` fragments.  Used for parametric /
+    polar curves where a single coordinate can diverge independently.
+    """
+    n = len(xs)
+    if n == 0:
+        return []
+
+    # A jump in either coordinate breaks the curve.  For each coordinate we use
+    # the other one's range as the "visible band" so the check is scale aware.
+    breaks = set()
+    breaks |= _detect_break_indices(xs, ys)          # y jumps (band = y range)
+    breaks |= _detect_break_indices(ys, xs)          # x jumps (band = x range)
+
+    segments = []
+    cur_x = []
+    cur_y = []
+    for i in range(n):
+        xv, yv = xs[i], ys[i]
+        bad = False
+        try:
+            bad = (xv is None or yv is None
+                   or not math.isfinite(float(xv)) or not math.isfinite(float(yv)))
+        except (TypeError, ValueError):
+            bad = True
+
+        if bad:
+            if cur_x:
+                segments.append((cur_x, cur_y))
+                cur_x, cur_y = [], []
+            continue
+
+        if i in breaks and cur_x:
+            segments.append((cur_x, cur_y))
+            cur_x, cur_y = [], []
+
+        cur_x.append(xv)
+        cur_y.append(yv)
+
+    if cur_x:
+        segments.append((cur_x, cur_y))
+    return segments
 PRESET_FUNCTIONS = {
     "sin(x)":              "sin(x)",
     "cos(x)":              "cos(x)",
@@ -3223,7 +3642,12 @@ class SuperCalcApp:
         if self.x_min >= self.x_max or self.step_size <= 0:
             self.status_var.set(t("status_invalid_plot"))
             return
-        n_pts = max(MIN_PLOT_POINTS, min(MAX_PLOT_POINTS, int((self.x_max - self.x_min) / self.step_size)))
+        # Use a generous sampling density: the step size gives a lower bound,
+        # but we never go below ~1200 samples so steep / oscillatory curves
+        # (tan, high-frequency sin, rational functions) render accurately.
+        n_pts = int((self.x_max - self.x_min) / self.step_size)
+        n_pts = max(n_pts, 1200)
+        n_pts = max(MIN_PLOT_POINTS, min(MAX_PLOT_POINTS, n_pts))
         xs_np = np.linspace(self.x_min, self.x_max, n_pts)
         xs_list = xs_np.tolist()
 
@@ -3250,9 +3674,15 @@ class SuperCalcApp:
                     continue
                 x_arr = np.array([x if x is not None else np.nan for x in xs_param])
                 y_arr = np.array([y if y is not None else np.nan for y in ys_param])
-                self.ax_2d.plot(x_arr, y_arr, color=curve.color,
-                             linewidth=curve.linewidth, linestyle=curve.linestyle,
-                             label=curve.label, alpha=0.9)
+                # Break the parametric polyline where either coordinate jumps
+                # (e.g. tan(t) based parametrisations) so no stray line appears.
+                first_seg = True
+                for sx, sy in _split_xy_on_jumps(x_arr.tolist(), y_arr.tolist()):
+                    self.ax_2d.plot(sx, sy, color=curve.color,
+                                 linewidth=curve.linewidth, linestyle=curve.linestyle,
+                                 label=curve.label if first_seg else None,
+                                 alpha=0.9)
+                    first_seg = False
             elif curve.is_polar:
                 try:
                     theta_min = float(self._resolve_t_range(self._var_theta_min.get()))
@@ -3273,9 +3703,13 @@ class SuperCalcApp:
                                   for r, t in zip(rs, theta_list)])
                 y_arr = np.array([r * math.sin(t) if r is not None else np.nan 
                                   for r, t in zip(rs, theta_list)])
-                self.ax_2d.plot(x_arr, y_arr, color=curve.color,
-                             linewidth=curve.linewidth, linestyle=curve.linestyle,
-                             label=curve.label, alpha=0.9)
+                first_seg = True
+                for sx, sy in _split_xy_on_jumps(x_arr.tolist(), y_arr.tolist()):
+                    self.ax_2d.plot(sx, sy, color=curve.color,
+                                 linewidth=curve.linewidth, linestyle=curve.linestyle,
+                                 label=curve.label if first_seg else None,
+                                 alpha=0.9)
+                    first_seg = False
             elif curve.is_implicit:
                 try:
                     imp_expr = self._substitute_params(curve.implicit_expr)
@@ -3304,7 +3738,23 @@ class SuperCalcApp:
                 if ys is None:
                     continue
                 ys_clean = np.array([y if y is not None else np.nan for y in ys])
-                self.ax_2d.plot(xs_np, ys_clean, color=curve.color,
+                # Refine the sampling right next to every detected pole so each
+                # branch reaches the same clipped extremum (fixes the "every tan
+                # branch has a different height" artefact) before we break the
+                # polyline at the asymptotes.
+                fine_xs = _refine_near_poles(xs_list, ys_clean.tolist(),
+                                             self.y_min, self.y_max)
+                if len(fine_xs) != len(xs_list):
+                    ys2 = CalcEngine.evaluate_array(expr, fine_xs)
+                    if ys2 is not None:
+                        xs_list = fine_xs
+                        ys_clean = np.array([y if y is not None else np.nan
+                                             for y in ys2])
+                bx, by = _break_at_nan(xs_list, ys_clean.tolist(),
+                                       self.y_min, self.y_max)
+                bx_np = np.asarray(bx, dtype=float)
+                by_np = np.asarray(by, dtype=float)
+                self.ax_2d.plot(bx_np, by_np, color=curve.color,
                              linewidth=curve.linewidth, linestyle=curve.linestyle,
                              label=curve.label, alpha=0.9)
 
@@ -3403,6 +3853,9 @@ class SuperCalcApp:
             if Z_flat is None:
                 continue
             Z = np.array([np.nan if z is None else z for z in Z_flat]).reshape(n_pts, n_pts)
+            # Cull pole spikes so a single huge sample does not drag a whole
+            # quad up into a bogus needle (e.g. z = 1/(x*y)).
+            Z = _cull_3d_outliers(Z, self.z_min, self.z_max)
 
             cmap = CMAP_3D_OPTIONS[cmap_idx % len(CMAP_3D_OPTIONS)]
             cmap_idx += 1
@@ -4296,7 +4749,10 @@ class SuperCalcApp:
         self.ax_2d.clear()
         self._setup_axes(self.ax_2d, is_3d=False)
 
-        self.ax_2d.plot(xs_np, ys_orig_np, color="#1f77b4", linewidth=2,
+        bx_o, by_o = _break_at_nan(xs_list, ys_orig_np.tolist(),
+                                   self.y_min, self.y_max)
+        self.ax_2d.plot(np.asarray(bx_o, dtype=float), np.asarray(by_o, dtype=float),
+                        color="#1f77b4", linewidth=2,
                         label=f"Original: {expr}", alpha=0.9)
         self.ax_2d.plot(xs_np, ys_taylor, color="#ff7f0e", linewidth=2, linestyle="--",
                         label=f"Taylor (order {order})", alpha=0.9)
@@ -4379,7 +4835,11 @@ class SuperCalcApp:
         expr = self._var_ode_expr.get().strip()
         x0 = self._var_ode_x0.get()
         y0 = self._var_ode_y0.get()
-        self.ax_2d.plot(xs, ys, color=THEME["cyan"], linewidth=2,
+        # An ODE solution can blow up to infinity; break the polyline instead of
+        # drawing a bogus near-vertical line back into frame.
+        bx, by = _break_at_nan(xs.tolist(), ys.tolist())
+        self.ax_2d.plot(np.asarray(bx, dtype=float), np.asarray(by, dtype=float),
+                        color=THEME["cyan"], linewidth=2,
                         label=f"RK4: dy/dx={expr}", alpha=0.9)
         self.ax_2d.plot(xs[0], ys[0], 'go', markersize=8,
                         label=f"y({x0})={y0}")
@@ -4468,8 +4928,12 @@ class SuperCalcApp:
                 xs = np.array(data['xs'])
                 ys = np.array([y if y is not None else np.nan for y in data['ys']])
                 if len(xs) > 0 and len(ys) > 0:
-                    self.ax_2d.plot(xs, ys, color=color, linewidth=2,
-                                    label=name, alpha=0.8)
+                    # Break a diverging method's polyline instead of connecting
+                    # across an infinity.
+                    bx, by = _break_at_nan(xs.tolist(), ys.tolist())
+                    self.ax_2d.plot(np.asarray(bx, dtype=float),
+                                    np.asarray(by, dtype=float), color=color,
+                                    linewidth=2, label=name, alpha=0.8)
 
         expr = self._var_cmp_expr.get().strip()
         x0_str = self._var_cmp_x0.get()
@@ -4553,8 +5017,13 @@ class SuperCalcApp:
                         sol_xs = sol['xs']
                         sol_ys = [y if y is not None else np.nan for y in sol['ys']]
                         color = colors_solutions[idx % len(colors_solutions)]
-                        self.ax_2d.plot(sol_xs, sol_ys, color=color, linewidth=2,
-                                        alpha=0.9)
+                        # Break trajectories that diverge instead of connecting
+                        # across an infinity (visible band = plot limits).
+                        bx, by = _break_at_nan(list(sol_xs), list(sol_ys),
+                                               y_min, y_max)
+                        self.ax_2d.plot(np.asarray(bx, dtype=float),
+                                        np.asarray(by, dtype=float),
+                                        color=color, linewidth=2, alpha=0.9)
                         self.ax_2d.plot(x0_ic, y0_ic, 'o', color=color, markersize=6)
                         n_solutions += 1
             except (ValueError, IndexError):
@@ -4713,7 +5182,13 @@ class SuperCalcApp:
                             # Solve system using RK4
                             curve = self._solve_vf_rk4(expr_p, expr_q, icx, icy, xmin, xmax, ymin, ymax, n_grid)
                             if curve is not None and len(curve[0]) > 1:
-                                self.ax_2d.plot(curve[0], curve[1], color=THEME["pink"], linewidth=2.0, alpha=0.9)
+                                # Break streamlines that leave the plotting
+                                # window instead of drawing a stray diagonal.
+                                segs = _split_xy_on_jumps(list(curve[0]),
+                                                          list(curve[1]))
+                                for sx, sy in segs:
+                                    self.ax_2d.plot(sx, sy, color=THEME["pink"],
+                                                    linewidth=2.0, alpha=0.9)
                         except ValueError:
                             pass
 
