@@ -5,7 +5,12 @@
 
      Safety: the outer 18dp of the 108dp canvas is the adaptive-icon safe
      zone border, so nothing outside the centre 72dp square is guaranteed to
-     survive masking. The emblem therefore lives inside x/y = 22..86. -->
+     survive masking. The emblem lives inside the centre 66dp circle so the
+     round mask cannot clip it.
+
+     Note: android:strokeWidth may NOT be supplied through <aapt:attr> — AAPT2
+     rejects it ("Cannot find attribute strokeWidth"). The tapered branch look
+     is therefore built from two overlapping strokes of different widths. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
@@ -44,50 +49,36 @@
         android:strokeWidth="2.6"
         android:strokeLineCap="round" />
 
-    <!-- Branch 1: shoots up, thinning as it approaches the pole -->
+    <!-- Branch 1: shoots up towards the pole.
+         Built as a wide base stroke plus a narrower highlight stroke that
+         stops short of the tip, which reads as a taper without needing a
+         gradient strokeWidth (unsupported by AAPT2). -->
     <path
         android:pathData="M31,79C41,76 50.5,62 55.5,45L60.5,30"
         android:strokeColor="#FF34D399"
-        android:strokeWidth="0"
+        android:strokeWidth="6.4"
         android:strokeLineCap="round"
-        android:strokeLineJoin="round">
-        <aapt:attr name="android:strokeWidth">
-            <gradient
-                android:type="linear"
-                android:startX="31" android:startY="79"
-                android:endX="60.5" android:endY="30">
-                <item android:offset="0.0" android:value="6.4" />
-                <item android:offset="1.0" android:value="2.8" />
-            </gradient>
-        </aapt:attr>
-        <aapt:attr name="android:strokeColor">
-            <gradient
-                android:type="linear"
-                android:startX="31" android:startY="79"
-                android:endX="60.5" android:endY="30">
-                <item android:offset="0.0" android:color="#FF34D399" />
-                <item android:offset="1.0" android:color="#FF6EE7B7" />
-            </gradient>
-        </aapt:attr>
-    </path>
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M42.5,74.5C49.5,68 54,57 56.5,45L58.4,36"
+        android:strokeColor="#FF6EE7B7"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
 
     <!-- Branch 2: re-enters just past the pole and settles towards the axis -->
     <path
         android:pathData="M72,86C69.5,73 68,62 76,57"
         android:strokeColor="#FF22D3EE"
-        android:strokeWidth="0"
+        android:strokeWidth="6.4"
         android:strokeLineCap="round"
-        android:strokeLineJoin="round">
-        <aapt:attr name="android:strokeWidth">
-            <gradient
-                android:type="linear"
-                android:startX="72" android:startY="86"
-                android:endX="76" android:endY="57">
-                <item android:offset="0.0" android:value="6.4" />
-                <item android:offset="1.0" android:value="3.6" />
-            </gradient>
-        </aapt:attr>
-    </path>
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M71,81C69.2,72.5 68.4,63.5 74.6,58.6"
+        android:strokeColor="#FF7DE8FA"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
 
     <!-- The break itself: a dashed asymptote where the curve refuses to connect.
          Drawn as explicit segments (not strokeDashArray) so the pattern renders
