@@ -11,8 +11,8 @@ android {
         applicationId = "com.supercalc"
         minSdk = 26
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.3.0"
         ndk {
             // LiquidGlass ships prebuilt JNI code for ARM only, and its native
             // loader is not guarded, so restrict the APK to the ABIs it supports.

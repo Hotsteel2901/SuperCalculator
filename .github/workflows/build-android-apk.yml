@@ -1,15 +1,34 @@
 # ---------------------------------------------------------------------------
-# Builds the SuperCalculator Android APK (aarch64).
+# Builds the SuperCalculator Android APK (arm64-v8a + armeabi-v7a).
 # Uses the pre-installed Android SDK on the GitHub runner; only installs
 # the NDK version required by the project.
 #
+# Triggers
+#   * workflow_dispatch  — manual run from the Actions tab.
+#   * push on tag v*     — builds and publishes a GitHub Release automatically.
+#
 # WARNING: Each run consumes ~6-8 GitHub Actions minutes on free tier.
-# Run sparingly. Artifacts expire after 7 days.
+# Run sparingly. Artifacts expire after 30 days; Releases are permanent.
 # ---------------------------------------------------------------------------
 name: Build Android APK
 
 on:
   workflow_dispatch:
+    inputs:
+      push-release:
+        description: 'Create a GitHub Release with the signed APK?'
+        type: boolean
+        default: false
+      release-tag:
+        description: 'Release tag, e.g. v1.3.0 (required if creating a release)'
+        type: string
+        default: ''
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
 
 jobs:
   build-apk:
@@ -63,8 +82,64 @@ jobs:
           ls -lh $APK_SIGNED
           file $APK_SIGNED
 
+      - name: Verify signature and read version
+        run: |
+          BUILD_TOOLS_VERSION=$(ls $ANDROID_SDK_ROOT/build-tools | sort -V | tail -1)
+          $ANDROID_SDK_ROOT/build-tools/$BUILD_TOOLS_VERSION/apksigner verify \
+            --print-certs SuperCalculator-android-aarch64.apk
+          echo "APK_VERSION=$(grep -oP 'versionName\s*=\s*"\K[^"]+' android/app/build.gradle.kts)" >> $GITHUB_ENV
+
       - uses: actions/upload-artifact@v4
         with:
           name: SuperCalculator-android-aarch64
           path: SuperCalculator-android-aarch64.apk
-          retention-days: 7
+          retention-days: 30
+
+      # -----------------------------------------------------------------------
+      # GitHub Release
+      # Runs for tag pushes, or for a manual run with push-release=true and a
+      # release-tag. Uses the built-in gh CLI so no extra action is required.
+      # -----------------------------------------------------------------------
+      - name: Create GitHub Release
+        if: |
+          startsWith(github.ref, 'refs/tags/v') ||
+          (github.event_name == 'workflow_dispatch' && inputs.push-release && inputs.release-tag != '')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ inputs.release-tag }}"
+          if [ -z "$TAG" ]; then TAG="${GITHUB_REF_NAME}"; fi
+
+          APK="SuperCalculator-android-aarch64.apk"
+          cp "$APK" "SuperCalculator-android-${TAG}.apk"
+
+          # Re-running on an existing tag should update, not fail.
+          gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
+
+          gh release create "$TAG" \
+            "SuperCalculator-android-${TAG}.apk" \
+            --title "Super Calculator Android ${TAG}" \
+            --prerelease \
+            --notes "## Super Function Graphing Calculator — Android ${TAG}
+
+          Signed release APK for **arm64-v8a** and **armeabi-v7a** devices.
+
+          | Item | Value |
+          |------|-------|
+          | Package | \`com.supercalc\` |
+          | Version | ${APK_VERSION:-unknown} (code 3) |
+          | Min SDK | 26 (Android 8.0) |
+          | Target SDK | 34 (Android 14) |
+          | ABIs | arm64-v8a, armeabi-v7a |
+
+          > **Note:** this build is signed with a generated debug key, so it is
+          > suitable for sideloading and testing. Android will refuse to install
+          > it over a build signed with a different key — uninstall the old app first.
+
+          ### Highlights
+          - 2D plots now break at true discontinuities (tan, 1/x, poles) instead of
+            drawing phantom connecting lines.
+          - 3D surfaces tear along poles and asymptotes instead of spiking across.
+          - ~4x denser sampling plus pole-adjacent refinement for sharper tan branches.
+
+          *Built by GitHub Actions.*"
