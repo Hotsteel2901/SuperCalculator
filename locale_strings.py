@@ -109,8 +109,8 @@ STRINGS = {
         "zh": "在上方输入表达式，然后点击“绘制”（Ctrl+Enter）。",
     },
     "hint_shortcuts": {
-        "en": "Ctrl+Enter Plot   Ctrl+F Search   Ctrl+1-7 Categories",
-        "zh": "Ctrl+Enter 绘制   Ctrl+F 搜索   Ctrl+1-7 切换分类",
+        "en": "Ctrl+Enter Plot   Ctrl+I Quick input   Ctrl+F Search   Ctrl+1-7 Categories   F1 Help",
+        "zh": "Ctrl+Enter 绘制   Ctrl+I 快捷输入   Ctrl+F 搜索   Ctrl+1-7 切换分类   F1 帮助",
     },
     "sec_more_mode": {
         "en": "Other curve types",
@@ -139,6 +139,34 @@ STRINGS = {
     "win_input_panel": {
         "en": "Quick Input Panel",
         "zh": "快速输入面板",
+    },
+    "btn_open_input_panel_short": {
+        "en": "Ctrl + I",
+        "zh": "Ctrl + I",
+    },
+    "act_input_panel_key": {
+        "en": "Ctrl + I",
+        "zh": "Ctrl + I",
+    },
+    "btn_quick_input": {
+        "en": "Symbols ▾",
+        "zh": "符号 ▾",
+    },
+    "tip_quick_input": {
+        "en": "Quick input panel (Ctrl+I) — every supported symbol, with history and undo.",
+        "zh": "快捷输入面板（Ctrl+I）—— 收录全部支持的符号，带历史记录与撤销。",
+    },
+    "act_focus_search": {
+        "en": "Focus the panel search",
+        "zh": "聚焦面板搜索框",
+    },
+    "act_escape": {
+        "en": "Close the active window",
+        "zh": "关闭当前窗口",
+    },
+    "hint_shortcuts_title": {
+        "en": "Show this shortcut list",
+        "zh": "显示本快捷键列表",
     },
 
     # ---- Section headers (LabelFrame text) ----
@@ -715,6 +743,84 @@ STRINGS = {
     "cat_constants": {
         "en": "Constants",
         "zh": "常数",
+    },
+
+    # ---- Input panel: new groupings and affordances ----
+    "cat_algebra": {
+        "en": "Algebra",
+        "zh": "代数",
+    },
+    "cat_compare": {
+        "en": "Compare",
+        "zh": "比较",
+    },
+    "btn_recent": {
+        "en": "Recent",
+        "zh": "最近",
+    },
+    "btn_history": {
+        "en": "History",
+        "zh": "历史",
+    },
+    "ip_preview": {
+        "en": "Preview",
+        "zh": "预览",
+    },
+    "ip_empty": {
+        "en": "Expression is empty",
+        "zh": "表达式为空",
+    },
+    "ip_ok": {
+        "en": "Ready",
+        "zh": "可以绘制",
+    },
+    "ip_warn": {
+        "en": "Check expression",
+        "zh": "表达式待检查",
+    },
+    "ip_history_title": {
+        "en": "Recently plotted expressions",
+        "zh": "最近绘制的表达式",
+    },
+    "ip_history_empty": {
+        "en": "Nothing plotted yet — your expressions will show up here.",
+        "zh": "还没有绘图记录，画过的表达式会出现在这里。",
+    },
+    "ip_history_use": {
+        "en": "Use",
+        "zh": "回填",
+    },
+    "ip_clear_history": {
+        "en": "Clear history",
+        "zh": "清空历史",
+    },
+    "ip_undo": {
+        "en": "Undo",
+        "zh": "撤销",
+    },
+    "ip_backspace": {
+        "en": "Backspace",
+        "zh": "退格",
+    },
+    "ip_clear": {
+        "en": "Clear",
+        "zh": "清空",
+    },
+    "ip_plot_now": {
+        "en": "Insert & Plot",
+        "zh": "插入并绘制",
+    },
+    "ip_hint_keys": {
+        "en": "↑↓←→ move · Enter insert · Esc close · Ctrl+Z undo",
+        "zh": "↑↓←→ 移动 · Enter 插入 · Esc 关闭 · Ctrl+Z 撤销",
+    },
+    "ip_hint_wrap": {
+        "en": "Inserting a function also places the cursor inside its brackets.",
+        "zh": "插入函数后光标会自动落在括号内，可直接续写参数。",
+    },
+    "ip_recent_empty": {
+        "en": "Your most-used symbols will appear here as you work.",
+        "zh": "常用符号会随着使用自动出现在这里。",
     },
 
     # ---- Range labels ----
@@ -3917,6 +4023,42 @@ STRINGS = {
         "en": "Bridge-mode graphing & numerical computing workbench",
         "zh": "桥接模式函数绘图与数值计算工作台",
     },
+
+    # ---- Input panel symbol descriptions (tooltips) ----
+    # Shown when hovering a quick-input key, so the panel teaches the syntax
+    # instead of only offering it.
+    "d_x2":       {"en": "Square: x^2",                "zh": "平方：x^2"},
+    "d_x3":       {"en": "Cube: x^3",                  "zh": "立方：x^3"},
+    "d_xn":       {"en": "Power: x^n",                 "zh": "任意次幂：x^n"},
+    "d_sqrt":     {"en": "Square root of x",           "zh": "开平方"},
+    "d_abs":      {"en": "Absolute value of x",        "zh": "绝对值"},
+    "d_div":      {"en": "Divide",                     "zh": "除法"},
+    "d_mul":      {"en": "Multiply",                   "zh": "乘法"},
+    "d_pow":      {"en": "Power",                      "zh": "幂运算"},
+    "d_sub":      {"en": "Subtract",                   "zh": "减法"},
+    "d_add":      {"en": "Add",                        "zh": "加法"},
+    "d_mod":      {"en": "Remainder (modulo)",         "zh": "取余"},
+    "d_ln":       {"en": "Natural log, base e",        "zh": "自然对数（以 e 为底）"},
+    "d_log":      {"en": "Base-10 log",                "zh": "常用对数（以 10 为底）"},
+    "d_exp":      {"en": "e raised to the power x",    "zh": "e 的 x 次幂"},
+    "d_e":        {"en": "Euler's number, 2.71828…",   "zh": "自然常数，约 2.71828"},
+    "d_sin":      {"en": "Sine (radians)",             "zh": "正弦（弧度）"},
+    "d_cos":      {"en": "Cosine (radians)",           "zh": "余弦（弧度）"},
+    "d_tan":      {"en": "Tangent (radians)",          "zh": "正切（弧度）"},
+    "d_asin":     {"en": "Inverse sine",               "zh": "反正弦"},
+    "d_acos":     {"en": "Inverse cosine",             "zh": "反余弦"},
+    "d_atan":     {"en": "Inverse tangent",            "zh": "反正切"},
+    "d_pi":       {"en": "Pi, 3.14159…",               "zh": "圆周率，约 3.14159"},
+    "d_deg":      {"en": "Convert degrees to radians", "zh": "角度转弧度"},
+    "d_floor":    {"en": "Round down to integer",      "zh": "向下取整"},
+    "d_ceil":     {"en": "Round up to integer",        "zh": "向上取整"},
+    "d_fact":     {"en": "Factorial",                  "zh": "阶乘"},
+    "d_lparen":   {"en": "Open bracket",               "zh": "左括号"},
+    "d_rparen":   {"en": "Close bracket",              "zh": "右括号"},
+    "d_comma":    {"en": "Separate arguments",          "zh": "分隔参数"},
+    "d_lt":       {"en": "Less than (implicit curves)", "zh": "小于（隐函数用）"},
+    "d_gt":       {"en": "Greater than (implicit curves)", "zh": "大于（隐函数用）"},
+    "d_pm":       {"en": "Plus or minus (two branches)", "zh": "正负号（双分支）"},
 }
 
 

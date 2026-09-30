@@ -25,11 +25,12 @@ from __future__ import annotations
 
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Callable
 import math
 import re
 import csv
 import os
+import sys
 
 import matplotlib  # required dependency
 import matplotlib.backend_bases
@@ -1073,6 +1074,369 @@ def apply_ttk_theme(root: tk.Misc) -> ttk.Style:
     return style
 
 
+# ---------------------------------------------------------------------------
+#  Scrollable dialog shell
+# ---------------------------------------------------------------------------
+# Every dialog in this app used to hard-code its own `geometry()` guess
+# ("500x400", "420x420", …).  Those guesses are always wrong somewhere: the
+# real content is taller than the guess, the window has no scrollbar, and the
+# bottom controls become unreachable — the user's only recourse is to drag the
+# window larger, and some dialogs (`resizable(False, False)`) cannot even be
+# dragged.  Measured example: the quick-input panel requested 492x705 inside a
+# 500x400 frame, so 3 of its 7 categories were clipped on open.
+#
+# `ScrollableDialog` replaces the guess with measurement:
+#   * content is laid out inside a Canvas + inner Frame
+#   * the window is sized to `min(content, available screen)`, so it opens at
+#     the height the content actually needs
+#   * a vertical scrollbar appears only when the content cannot fit
+#   * the wheel works anywhere over the window, not just over the scrollbar
+#     (same routing rule as the main window: see SuperCalcApp._install_wheel)
+#   * size is remembered per dialog title, so a resize sticks next time
+#
+# Usage:
+#     dlg = ScrollableDialog(self.root, t("win_input_panel"),
+#                            size_key="quick_input", min_size=(380, 280))
+#     body = dlg.body          # pack your widgets into this Frame
+#     dlg.finalise(title=..., on_close=...)   # measure + show
+
+
+class ScrollableDialog:
+    """A Toplevel whose content scrolls instead of being clipped."""
+
+    # Shared across instances so the same dialog reopens at your chosen size.
+    _sizes: dict[str, tuple[int, int]] = {}
+
+    def __init__(self, parent: tk.Misc, title: str, *,
+                 size_key: Optional[str] = None,
+                 min_size: tuple[int, int] = (360, 260),
+                 max_size: tuple[int, int] = (980, 820),
+                 default_size: Optional[tuple[int, int]] = None,
+                 modal: bool = False,
+                 padding: int = 0) -> None:
+        self.win = tk.Toplevel(parent)
+        self.win.title(title)
+        self.win.configure(bg=THEME["bg"])
+        self.win.transient(parent)
+
+        self._size_key = size_key or title
+        self._min = min_size
+        self._max = max_size
+        self._default = default_size
+        self._padding = padding
+        self._scrollbar: Optional[ttk.Scrollbar] = None
+        self._wheel_bindings: list[tuple[str, str]] = []
+        # Widgets whose natural width should act as a *floor* for the window.
+        # Used when content is laid out in a single non-wrapping row (a tab
+        # strip, a toolbar) which would otherwise be clipped on open.
+        self._width_floors: list[tk.Misc] = []
+
+        # --- scroll plumbing ------------------------------------------------
+        # The canvas holds an inner frame; we keep the inner frame's width
+        # locked to the canvas so children using fill=tk.X behave normally.
+        self.canvas = tk.Canvas(self.win, bg=THEME["bg"],
+                                highlightthickness=0, bd=0)
+        self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        self.body = ttk.Frame(self.canvas, style="Dark.TFrame")
+        self._body_id = self.canvas.create_window((0, 0), window=self.body,
+                                                  anchor="nw")
+
+        self.body.bind("<Configure>", self._on_body_configure)
+        self.canvas.bind("<Configure>", self._on_canvas_configure)
+
+        # --- wheel routing ---------------------------------------------------
+        # Tk delivers wheel events to the widget under the cursor, so binding
+        # the canvas alone means the wheel only works over the thin strip the
+        # canvas actually covers. Bind on the toplevel and walk up instead.
+        self.win.bind("<MouseWheel>", self._on_wheel, add="+")
+        self.win.bind("<Button-4>", self._on_wheel, add="+")
+        self.win.bind("<Button-5>", self._on_wheel, add="+")
+
+        if modal:
+            self.win.grab_set()
+
+    def require_width(self, *widgets: tk.Misc) -> None:
+        """Guarantee the window is at least wide enough for *widgets*.
+
+        Row-laid-out content does not contribute to the body's requested
+        width the way wrapping content does, so a 9-tab strip can be wider
+        than the window and get silently clipped.  Measuring those widgets
+        explicitly is the fix.
+        """
+        self._width_floors.extend(widgets)
+
+    # -- geometry -----------------------------------------------------------
+    def _content_size(self) -> tuple[int, int]:
+        self.body.update_idletasks()
+        w = self.body.winfo_reqwidth()
+        # A non-wrapping row (tab strip / toolbar) reports a wide reqwidth on
+        # its own frame but the *body* may still be narrower, so take the max.
+        for widget in self._width_floors:
+            try:
+                if widget.winfo_exists():
+                    w = max(w, widget.winfo_reqwidth())
+            except tk.TclError:
+                pass
+        return (w + self._padding * 2,
+                self.body.winfo_reqheight() + self._padding * 2)
+
+    def _screen_budget(self) -> tuple[int, int]:
+        """Largest area we are willing to occupy on the current screen."""
+        sw = self.win.winfo_screenwidth()
+        sh = self.win.winfo_screenheight()
+        return (int(sw * 0.9), int(sh * 0.88))
+
+    def finalise(self, *, title: Optional[str] = None,
+                 on_close: Optional[Callable[[], None]] = None,
+                 centre: bool = True) -> tk.Toplevel:
+        """Measure the content and show the window at the right size."""
+        if title is not None:
+            self.win.title(title)
+        if on_close is not None:
+            self.win.protocol("WM_DELETE_WINDOW", on_close)
+
+        self.win.update_idletasks()
+        cw, ch = self._content_size()
+        bw, bh = self._screen_budget()
+
+        remembered = self._sizes.get(self._size_key)
+        w = min(max(remembered[0] if remembered else cw, self._min[0]), bw, self._max[0])
+        h = min(max(remembered[1] if remembered else ch, self._min[1]), bh, self._max[1])
+
+        if self._default and not remembered:
+            w = max(w, self._default[0])
+            h = max(h, self._default[1])
+
+        if centre:
+            x = max(0, (self.win.winfo_screenwidth() - w) // 2)
+            y = max(0, (self.win.winfo_screenheight() - h) // 3)
+            self.win.geometry(f"{w}x{h}+{x}+{y}")
+        else:
+            self.win.geometry(f"{w}x{h}")
+
+        self.win.minsize(self._min[0], self._min[1])
+        self.win.resizable(True, True)
+        # Only remember sizes the *user* chose, not the ones we computed.
+        self.win.bind("<Configure>", self._on_win_configure, add="+")
+        self._sync_scrollbar()
+        return self.win
+
+    # -- scrollbar ----------------------------------------------------------
+    def _needs_scroll(self) -> bool:
+        try:
+            return self.body.winfo_reqheight() > self.canvas.winfo_height() + 1
+        except tk.TclError:
+            return False
+
+    def _sync_scrollbar(self) -> None:
+        need = self._needs_scroll()
+        if need and self._scrollbar is None:
+            self._scrollbar = ttk.Scrollbar(self.win, orient=tk.VERTICAL,
+                                            command=self.canvas.yview)
+            self._scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            self.canvas.configure(yscrollcommand=self._scrollbar.set)
+        elif not need and self._scrollbar is not None:
+            self.canvas.configure(yscrollcommand="")
+            self._scrollbar.destroy()
+            self._scrollbar = None
+
+    # -- events -------------------------------------------------------------
+    def _on_body_configure(self, _event=None) -> None:
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        self._sync_scrollbar()
+
+    def _on_canvas_configure(self, event) -> None:
+        # Keep the inner frame exactly as wide as the canvas.
+        self.canvas.itemconfigure(self._body_id, width=event.width)
+        # Shrinking the window changes the canvas height without changing the
+        # body's *requested* size, so <Configure> on the body never fires and
+        # the scrollbar would never appear.  Re-check on the canvas too.
+        self._sync_scrollbar()
+
+    def _on_win_configure(self, _event=None) -> None:
+        try:
+            if self.win.state() == "normal":
+                self._sizes[self._size_key] = (self.win.winfo_width(),
+                                               self.win.winfo_height())
+        except tk.TclError:
+            pass
+
+    @staticmethod
+    def _wheel_step(event) -> int:
+        num = getattr(event, "num", None)
+        if num == 4:
+            return -1
+        if num == 5:
+            return 1
+        delta = getattr(event, "delta", 0) or 0
+        if delta == 0:
+            return 0
+        if sys.platform == "darwin":
+            return int(-1 * delta)
+        steps = int(-1 * (delta / 120))
+        return steps if steps != 0 else (-1 if delta > 0 else 1)
+
+    def _on_wheel(self, event):
+        """Scroll from anywhere in the window; yield to widgets that scroll."""
+        widget = event.widget
+        # Text/Listbox/Treeview keep native scrolling while they can scroll.
+        while widget is not None:
+            try:
+                cls = widget.winfo_class()
+            except Exception:
+                return None
+            if cls in ("Text", "Listbox", "Treeview", "TCombobox"):
+                try:
+                    first, last = widget.yview()
+                    if not (first <= 0.0 and last >= 1.0):
+                        return None
+                except Exception:
+                    pass
+                break
+            try:
+                widget = widget.master
+            except Exception:
+                break
+        if not self._needs_scroll():
+            return None
+        step = self._wheel_step(event)
+        if step:
+            self.canvas.yview_scroll(step * 3, "units")
+        return "break"
+
+
+def make_scrollable_body(parent: tk.Misc, *, with_scrollbar: bool = True):
+    """Wrap `parent`'s content area in a scrolling canvas.
+
+    Lighter-weight than :class:`ScrollableDialog` for existing windows that
+    already have their own Toplevel and just need their *content* to stop
+    being clipped.  Returns ``(canvas, body_frame)``; pack your widgets into
+    ``body_frame``.
+    """
+    canvas = tk.Canvas(parent, bg=THEME["bg"], highlightthickness=0, bd=0)
+    canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+    body = ttk.Frame(canvas, style="Dark.TFrame")
+    body_id = canvas.create_window((0, 0), window=body, anchor="nw")
+
+    bar: Optional[ttk.Scrollbar] = None
+
+    def _sync() -> None:
+        nonlocal bar
+        try:
+            need = body.winfo_reqheight() > canvas.winfo_height() + 1
+        except tk.TclError:
+            return
+        if need and bar is None and with_scrollbar:
+            bar = ttk.Scrollbar(parent, orient=tk.VERTICAL, command=canvas.yview)
+            bar.pack(side=tk.RIGHT, fill=tk.Y)
+            canvas.configure(yscrollcommand=bar.set)
+        elif not need and bar is not None:
+            canvas.configure(yscrollcommand="")
+            bar.destroy()
+            bar = None
+
+    def _on_body(_event=None) -> None:
+        canvas.configure(scrollregion=canvas.bbox("all"))
+        _sync()
+
+    def _on_canvas(event) -> None:
+        canvas.itemconfigure(body_id, width=event.width)
+        # See ScrollableDialog._on_canvas_configure: a window resize changes
+        # the canvas height without touching the body's requested height, so
+        # the scrollbar only appears if we re-check here as well.
+        _sync()
+
+    body.bind("<Configure>", _on_body)
+    canvas.bind("<Configure>", _on_canvas)
+
+    def _wheel(event):
+        widget = event.widget
+        while widget is not None:
+            try:
+                cls = widget.winfo_class()
+            except Exception:
+                return None
+            if cls in ("Text", "Listbox", "Treeview", "TCombobox"):
+                try:
+                    first, last = widget.yview()
+                    if not (first <= 0.0 and last >= 1.0):
+                        return None
+                except Exception:
+                    pass
+                break
+            try:
+                widget = widget.master
+            except Exception:
+                break
+        if not (body.winfo_reqheight() > canvas.winfo_height() + 1):
+            return None
+        step = ScrollableDialog._wheel_step(event)
+        if step:
+            canvas.yview_scroll(step * 3, "units")
+        return "break"
+
+    top = parent.winfo_toplevel()
+    top.bind("<MouseWheel>", _wheel, add="+")
+    top.bind("<Button-4>", _wheel, add="+")
+    top.bind("<Button-5>", _wheel, add="+")
+    return canvas, body
+
+
+def _fit_window_to_screen(win: tk.Misc, want_w: int, want_h: int, *,
+                          min_w: int = 320, min_h: int = 240,
+                          margin: float = 0.92) -> tuple[int, int]:
+    """Size *win* to ``want_w x want_h`` but never larger than the screen.
+
+    Every dialog in this file used to pick a geometry by hand (``"900x700"``,
+    ``"420x420"``, ...) which is a guess that is wrong on a laptop panel and
+    wrong again on a 4K monitor.  Clamping the *request* to what the screen
+    can actually show, and leaving the window resizable, is what stops buttons
+    from being stranded off-screen.  Returns the size actually applied.
+    """
+    try:
+        sw, sh = win.winfo_screenwidth(), win.winfo_screenheight()
+    except tk.TclError:
+        return want_w, want_h
+
+    # Resolve two separate limits:
+    #   budget = what the screen can show (the outer bound, always respected)
+    #   floor  = the smallest size at which the layout still works
+    # Start from the requested size, pull it inside the budget, then push it
+    # back up to the floor -- but never past the budget again, because a
+    # window larger than the display is unusable while a cramped one can at
+    # least be scrolled.
+    budget_w, budget_h = int(sw * margin), int(sh * margin)
+    floor_w = min(min_w, budget_w)
+    floor_h = min(min_h, budget_h)
+
+    w = min(max(min(want_w, budget_w), floor_w), budget_w)
+    h = min(max(min(want_h, budget_h), floor_h), budget_h)
+
+    x = max(0, (sw - w) // 2)
+    y = max(0, (sh - h) // 3)
+
+    win.geometry(f"{w}x{h}+{x}+{y}")
+    win.minsize(floor_w, floor_h)
+    win.resizable(True, True)
+    return w, h
+
+
+def _index_col(index: str) -> int:
+    """Character column of a Tk text index.
+
+    ``Entry.index()`` normally returns ``"3.0"``, but for a widget with no
+    trailing newline it can return a bare ``"3"`` -- splitting on ``"."``
+    then yields a single part and unpacking into two names raises.  Every
+    caller here only cares about the column.
+    """
+    parts = str(index).split(".")
+    try:
+        return int(parts[1]) if len(parts) > 1 else int(parts[0])
+    except (ValueError, IndexError):
+        return 0
+
+
 def _detect_parameters_static(expr: str) -> list[str]:
     params: set[str] = set()
     expr_lower = expr.lower()
@@ -1151,8 +1515,11 @@ class SuperCalcApp:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title(t("win_title"))
-        self.root.geometry("1360x880")
-        self.root.minsize(1060, 680)
+        # Same rule as every dialog: ask for a comfortable size, but never
+        # larger than the screen can show.  The *floor* has to be low enough
+        # for a 1366x768 laptop: the nav rail is 190px and the category panes
+        # scroll on their own, so ~800px is genuinely usable.
+        _fit_window_to_screen(root, 1360, 880, min_w=820, min_h=560)
         self.root.configure(bg=THEME["bg"])
 
         # Install the shared palette before any widget is created.
@@ -1742,42 +2109,106 @@ class SuperCalcApp:
         root.bind("<Control-f>", self._focus_search)
         root.bind("<Control-F>", self._focus_search)
         root.bind("<F1>", self._show_shortcut_help)
+        # Ctrl+I opens the quick-input panel from anywhere.  Ctrl+Z / Ctrl+B
+        # are bound on the expression entry itself (see _build_control_panel)
+        # because a widget-level binding is the only one that can pre-empt
+        # Tk's ``<Control-Key>`` catch-all on the Entry class.
+        root.bind_all("<Control-i>", self._accel_input_panel, add="+")
+        root.bind_all("<Control-I>", self._accel_input_panel, add="+")
         for idx, key in enumerate(CATEGORY_ORDER, start=1):
             root.bind(f"<Control-Key-{idx}>",
                       lambda e, k=key: self._show_category(k))
 
-    def _show_shortcut_help(self, event=None):
-        """A small modal listing every keyboard shortcut."""
-        win = tk.Toplevel(self.root)
-        win.title(t("hint_shortcuts"))
-        win.configure(bg=THEME["bg"])
-        win.transient(self.root)
-        win.resizable(False, False)
+    # -- global accelerators ------------------------------------------------
+    def _accel_entry_key(self, event=None):
+        """Ctrl+Z / Ctrl+B typed into the expression entry.
 
+        Bound on the widget rather than the window: Tk's ``<Control-Key>``
+        catch-all on the Entry class converts these into literal control
+        characters, and because class bindings run *before* ``bind_all`` the
+        text would be mutated and our handler would also run.  A widget
+        binding runs first, and ``"break"`` stops the chain.
+        """
+        keysym = getattr(event, "keysym", "") or ""
+        lower = keysym.lower()
+        if lower == "z":
+            self._qi_undo_step()
+        elif lower == "b":
+            self._qi_backspace()
+        return "break"
+
+    def _accel_input_panel(self, event=None):
+        self._open_input_panel()
+        return "break"
+
+    def _show_shortcut_help(self, event=None):
+        """A small modal listing every keyboard shortcut.
+
+        This window used to be ``resizable(False, False)`` with no geometry
+        call at all, so Tk picked the size and the user could not drag it
+        larger -- if the content did not fit, it never would.  It now
+        measures its content, clamps to the screen, and stays resizable.
+        """
         rows = [
             ("Ctrl + Enter", t("btn_plot")),
-            ("Ctrl + F", t("search_placeholder")),
-            ("Escape", t("status_ready")),
+            ("Ctrl + F", t("act_focus_search")),
+            ("Escape", t("act_escape")),
+            ("F1", t("hint_shortcuts_title")),
+            ("Ctrl + Z", t("ip_undo")),
+            ("Ctrl + B", t("ip_backspace")),
         ]
         for i, key in enumerate(CATEGORY_ORDER, start=1):
             rows.append((f"Ctrl + {i}", t(CATEGORY_LABEL_KEYS[key])))
+        rows.append((t("act_input_panel_key"), t("win_input_panel")))
 
-        head = ttk.Label(win, text=t("hint_shortcuts"), style="Title.TLabel")
+        dlg = ScrollableDialog(
+            self.root, t("hint_shortcuts"),
+            size_key="shortcut_help", min_size=(360, 240),
+            max_size=(720, 720),
+        )
+        win = dlg.win
+        body = dlg.body
+
+        head = ttk.Label(body, text=t("hint_shortcuts"), style="Title.TLabel")
         head.pack(anchor=tk.W, padx=18, pady=(16, 4))
-        ttk.Label(win, text=t("app_tagline"),
-                  style="Muted.TLabel").pack(anchor=tk.W, padx=18, pady=(0, 10))
+        tagline = ttk.Label(body, text=t("app_tagline"), style="Muted.TLabel",
+                            justify=tk.LEFT)
+        tagline.pack(anchor=tk.W, padx=18, pady=(0, 10))
 
-        grid = ttk.Frame(win, style="Dark.TFrame")
+        grid = ttk.Frame(body, style="Dark.TFrame")
         grid.pack(fill=tk.BOTH, expand=True, padx=18, pady=(0, 8))
+        key_labels, desc_labels = [], []
         for r, (keys, desc) in enumerate(rows):
-            ttk.Label(grid, text=keys, style="Mono.TLabel",
-                      width=14).grid(row=r, column=0, sticky="w", pady=2)
-            ttk.Label(grid, text=desc, style="Dark.TLabel").grid(
-                row=r, column=1, sticky="w", pady=2)
+            kl = ttk.Label(grid, text=keys, style="Mono.TLabel")
+            kl.grid(row=r, column=0, sticky="w", pady=2, padx=(0, 14))
+            dl = ttk.Label(grid, text=desc, style="Dark.TLabel",
+                           justify=tk.LEFT)
+            dl.grid(row=r, column=1, sticky="w", pady=2)
+            key_labels.append(kl)
+            desc_labels.append(dl)
 
-        ttk.Button(win, text="OK", style="Accent.TButton",
+        # The body lives in a canvas whose width follows the window, so any
+        # long single-line label would be *clipped* rather than wrapped the
+        # moment the dialog is narrowed.  Re-wrap on every width change.
+        def rewrap(event=None):
+            try:
+                avail = max(200, body.winfo_width() - 40)
+                key_w = max(kl.winfo_reqwidth() for kl in key_labels) if key_labels else 120
+            except (tk.TclError, ValueError):
+                return
+            head.configure(wraplength=avail)
+            tagline.configure(wraplength=avail)
+            rest = max(100, avail - key_w - 14)
+            for dl in desc_labels:
+                dl.configure(wraplength=rest)
+
+        body.bind("<Configure>", rewrap, add="+")
+
+        ttk.Button(body, text="OK", style="Accent.TButton",
                    command=win.destroy).pack(pady=(4, 16))
         win.bind("<Escape>", lambda e: win.destroy())
+        dlg.finalise()
+        win.grab_set()
         return "break"
 
     def _focus_search(self, event=None):
@@ -1908,13 +2339,31 @@ class SuperCalcApp:
         input_row = ttk.Frame(frm_expr, style="Dark.TFrame")
         input_row.pack(fill=tk.X, padx=6, pady=2)
         
-        self.entry_expr = ttk.Entry(input_row, font=("Consolas", 12), width=28)
-        self.entry_expr.pack(side=tk.LEFT, padx=(0, 4))
+        # mono_font(), not "Consolas": that family does not exist on Linux or
+        # macOS, so Tk silently substitutes a proportional font and the
+        # expression stops lining up with the caret.
+        self.entry_expr = ttk.Entry(input_row, font=(mono_font(), 12), width=28)
+        self.entry_expr.pack(side=tk.LEFT, padx=(0, 4), fill=tk.X, expand=True)
         self.entry_expr.insert(0, "sin(x)")
         self.entry_expr.bind("<Return>", lambda e: self._on_plot())
+        # Undo/backspace accelerators must be bound *on the widget*: Tk's
+        # ``<Control-Key>`` catch-all on the Entry class turns Ctrl+B/Ctrl+Z
+        # into a literal control character, and a ``bind_all`` handler runs
+        # after that class binding, so the entry would eat the keystroke and
+        # also mutate the text.  Widget bindings run first, and returning
+        # "break" stops the chain.
+        for seq in ("<Control-z>", "<Control-Z>", "<Control-b>", "<Control-B>"):
+            self.entry_expr.bind(seq, self._accel_entry_key)
         
-        ttk.Button(input_row, text="📝", width=2,
-                   command=self._open_input_panel).pack(side=tk.RIGHT)
+        # A labelled button instead of a bare "📝": the emoji has no glyph in
+        # several common UI fonts and rendered as a blank box.  Ctrl+I is the
+        # accelerator and is spelled out so it is discoverable.
+        self._btn_quick_input = ttk.Button(
+            input_row, text=t("btn_quick_input"), style="Ghost.TButton",
+            command=self._open_input_panel)
+        self._btn_quick_input.pack(side=tk.RIGHT)
+        self._attach_tooltip(self._btn_quick_input,
+                             t("tip_quick_input"))
         
         self.entry_expr.bind("<FocusIn>", lambda e: self._update_param_inputs())
 
@@ -1969,7 +2418,7 @@ class SuperCalcApp:
         self._var_param_preset = tk.StringVar()
         param_combo = ttk.Combobox(pr4, textvariable=self._var_param_preset,
                                    values=list(PARAMETRIC_PRESETS.keys()),
-                                   state="readonly", font=("Consolas", 10), width=18)
+                                   state="readonly", font=(mono_font(), 10), width=18)
         param_combo.pack(side=tk.LEFT, padx=4)
         param_combo.bind("<<ComboboxSelected>>",
                          lambda e: self._on_parametric_preset(self._var_param_preset.get()))
@@ -2013,7 +2462,7 @@ class SuperCalcApp:
         self._var_polar_preset = tk.StringVar()
         polar_combo = ttk.Combobox(pr4p, textvariable=self._var_polar_preset,
                                    values=list(POLAR_PRESETS.keys()),
-                                   state="readonly", font=("Consolas", 10), width=18)
+                                   state="readonly", font=(mono_font(), 10), width=18)
         polar_combo.pack(side=tk.LEFT, padx=4)
         polar_combo.bind("<<ComboboxSelected>>",
                          lambda e: self._on_polar_preset(self._var_polar_preset.get()))
@@ -2064,7 +2513,7 @@ class SuperCalcApp:
         ]
         implicit_combo = ttk.Combobox(ir3, textvariable=self._var_implicit_preset,
                                       values=implicit_preset_list,
-                                      state="readonly", font=("Consolas", 10), width=20)
+                                      state="readonly", font=(mono_font(), 10), width=20)
         implicit_combo.pack(side=tk.LEFT, padx=4)
         implicit_combo.bind("<<ComboboxSelected>>",
                             lambda e: self._on_implicit_preset(self._var_implicit_preset.get()))
@@ -2087,7 +2536,7 @@ class SuperCalcApp:
         self.preset_var = tk.StringVar()
         combo = ttk.Combobox(frm_preset, textvariable=self.preset_var,
                              values=list(PRESET_FUNCTIONS.keys()),
-                             state="readonly", font=("Consolas", 10))
+                             state="readonly", font=(mono_font(), 10))
         combo.pack(fill=tk.X, padx=6, pady=4)
         combo.bind("<<ComboboxSelected>>",
                    lambda e: self._on_preset(self.preset_var.get()))
@@ -2099,7 +2548,7 @@ class SuperCalcApp:
         self.listbox_curves = tk.Listbox(
             frm_curves, bg=THEME["surface"], fg=THEME["text"],
             selectbackground=THEME["blue"], selectforeground=THEME["bg"],
-            font=("Consolas", 10), height=6, exportselection=False)
+            font=(mono_font(), 10), height=6, exportselection=False)
         self.listbox_curves.pack(fill=tk.X, padx=6, pady=4)
         ttk.Button(frm_curves, text=t("btn_remove"),
                    command=self._on_remove_curve).pack(padx=6, pady=(0, 4))
@@ -2456,7 +2905,7 @@ class SuperCalcApp:
         self._var_ode_preset = tk.StringVar()
         ode_combo = ttk.Combobox(ode_row4, textvariable=self._var_ode_preset,
                                   values=list(ODE_PRESETS.keys()),
-                                  state="readonly", font=("Consolas", 10), width=24)
+                                  state="readonly", font=(mono_font(), 10), width=24)
         ode_combo.pack(side=tk.LEFT, padx=4)
         ode_combo.bind("<<ComboboxSelected>>",
                         lambda e: self._on_ode_preset(self._var_ode_preset.get()))
@@ -2517,7 +2966,7 @@ class SuperCalcApp:
         self._var_cmp_preset = tk.StringVar()
         cmp_combo = ttk.Combobox(cmp_row4, textvariable=self._var_cmp_preset,
                                   values=list(COMPARE_PRESETS.keys()),
-                                  state="readonly", font=("Consolas", 10), width=24)
+                                  state="readonly", font=(mono_font(), 10), width=24)
         cmp_combo.pack(side=tk.LEFT, padx=4)
         cmp_combo.bind("<<ComboboxSelected>>",
                         lambda e: self._on_compare_preset(COMPARE_PRESETS.get(
@@ -2551,7 +3000,7 @@ class SuperCalcApp:
         self._var_df_preset = tk.StringVar()
         df_preset_combo = ttk.Combobox(df_row1b, textvariable=self._var_df_preset,
                                         values=list(DIRECTION_FIELD_PRESETS.keys()),
-                                        state="readonly", font=("Consolas", 10), width=24)
+                                        state="readonly", font=(mono_font(), 10), width=24)
         df_preset_combo.pack(side=tk.LEFT, padx=4)
         df_preset_combo.bind("<<ComboboxSelected>>",
                               lambda e: self._on_df_preset(DIRECTION_FIELD_PRESETS.get(
@@ -2608,7 +3057,7 @@ class SuperCalcApp:
         self._var_contour_preset = tk.StringVar()
         contour_preset_combo = ttk.Combobox(cr1b, textvariable=self._var_contour_preset,
                                             values=list(CONTOUR_PRESETS.keys()),
-                                            state="readonly", font=("Consolas", 10), width=24)
+                                            state="readonly", font=(mono_font(), 10), width=24)
         contour_preset_combo.pack(side=tk.LEFT, padx=4)
 
         def _on_contour_preset(event=None):
@@ -2719,13 +3168,13 @@ class SuperCalcApp:
         ttk.Label(cfr1, text=t("label_custom_func_name"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_cf_name = tk.StringVar(value="")
         ttk.Entry(cfr1, textvariable=self._var_cf_name, width=10,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=2)
         ttk.Label(cfr1, text="(", style="Dark.TLabel").pack(side=tk.LEFT)
         ttk.Label(cfr1, text="x", style="Dark.TLabel").pack(side=tk.LEFT)
         ttk.Label(cfr1, text=") =", style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_cf_body = tk.StringVar(value="x^2")
         ttk.Entry(cfr1, textvariable=self._var_cf_body, width=20,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=2)
 
         cfr2 = ttk.Frame(frm_custom, style="Dark.TFrame")
         cfr2.pack(fill=tk.X, padx=6, pady=(0, 4))
@@ -2750,14 +3199,14 @@ class SuperCalcApp:
         ttk.Label(sfr1, text=t("label_sparse_triplets"), style="Dark.TLabel").pack(anchor=tk.W)
         self._var_sparse_triplets = tk.StringVar(value="0,0,4;0,1,1;1,0,1;1,1,3;1,2,2;2,1,2;2,2,5")
         ttk.Entry(sfr1, textvariable=self._var_sparse_triplets, width=36,
-                  font=("Consolas", 10)).pack(fill=tk.X, padx=2, pady=2)
+                  font=(mono_font(), 10)).pack(fill=tk.X, padx=2, pady=2)
 
         sfr2 = ttk.Frame(frm_sparse, style="Dark.TFrame")
         sfr2.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(sfr2, text=t("label_sparse_rhs"), style="Dark.TLabel").pack(anchor=tk.W)
         self._var_sparse_rhs = tk.StringVar(value="1,2,3")
         ttk.Entry(sfr2, textvariable=self._var_sparse_rhs, width=36,
-                  font=("Consolas", 10)).pack(fill=tk.X, padx=2, pady=2)
+                  font=(mono_font(), 10)).pack(fill=tk.X, padx=2, pady=2)
 
         sfr3 = ttk.Frame(frm_sparse, style="Dark.TFrame")
         sfr3.pack(fill=tk.X, padx=6, pady=(0, 4))
@@ -2777,14 +3226,14 @@ class SuperCalcApp:
         ttk.Label(cfr1, text=t("leg_conv_seq_a"), style="Dark.TLabel").pack(anchor=tk.W)
         self._var_conv_seq_a = tk.StringVar(value="1, 2, 3")
         ttk.Entry(cfr1, textvariable=self._var_conv_seq_a, width=36,
-                  font=("Consolas", 10)).pack(fill=tk.X, padx=2, pady=2)
+                  font=(mono_font(), 10)).pack(fill=tk.X, padx=2, pady=2)
 
         cfr2 = ttk.Frame(frm_conv, style="Dark.TFrame")
         cfr2.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(cfr2, text=t("leg_conv_seq_b"), style="Dark.TLabel").pack(anchor=tk.W)
         self._var_conv_seq_b = tk.StringVar(value="4, 5, 6")
         ttk.Entry(cfr2, textvariable=self._var_conv_seq_b, width=36,
-                  font=("Consolas", 10)).pack(fill=tk.X, padx=2, pady=2)
+                  font=(mono_font(), 10)).pack(fill=tk.X, padx=2, pady=2)
 
         cfr3 = ttk.Frame(frm_conv, style="Dark.TFrame")
         cfr3.pack(fill=tk.X, padx=6, pady=(0, 4))
@@ -2850,7 +3299,7 @@ class SuperCalcApp:
 
         self._var_stats_data = tk.StringVar(value="1, 2, 3, 4, 5, 6, 7, 8, 9, 10")
         stats_entry = ttk.Entry(stats_row1, textvariable=self._var_stats_data, width=36,
-                                font=("Consolas", 10))
+                                font=(mono_font(), 10))
         stats_entry.pack(fill=tk.X, padx=2, pady=(0, 4))
 
         stats_row2 = ttk.Frame(frm_stats, style="Dark.TFrame")
@@ -2904,7 +3353,7 @@ class SuperCalcApp:
                 ttk.Label(_pframe, text=f"{_psym}=",
                           style="Dark.TLabel").pack(side=tk.LEFT, padx=2)
                 ttk.Entry(_pframe, textvariable=_sv, width=6,
-                          font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+                          font=(mono_font(), 10)).pack(side=tk.LEFT, padx=2)
             self._dist_param_frames[_dk] = _pframe
             self._dist_param_vars[_dk] = _pvars
 
@@ -2917,7 +3366,7 @@ class SuperCalcApp:
                   style="Dark.TLabel").pack(side=tk.LEFT, padx=2)
         self._var_dist_x = tk.StringVar(value="0")
         ttk.Entry(drow2, textvariable=self._var_dist_x, width=8,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=2)
         ttk.Button(drow2, text=t("btn_dist_pdf"),
                    command=self._on_dist_pdf).pack(side=tk.LEFT, padx=2)
         ttk.Button(drow2, text=t("btn_dist_cdf"),
@@ -2939,7 +3388,7 @@ class SuperCalcApp:
                   style="Dark.TLabel").pack(anchor=tk.W, padx=2)
         self._var_reg_xdata = tk.StringVar(value="")
         ttk.Entry(reg_row1, textvariable=self._var_reg_xdata, width=36,
-                  font=("Consolas", 10)).pack(fill=tk.X, padx=2, pady=(0, 4))
+                  font=(mono_font(), 10)).pack(fill=tk.X, padx=2, pady=(0, 4))
 
         reg_row1b = ttk.Frame(frm_regression, style="Dark.TFrame")
         reg_row1b.pack(fill=tk.X, padx=6, pady=2)
@@ -2947,7 +3396,7 @@ class SuperCalcApp:
                   style="Dark.TLabel").pack(anchor=tk.W, padx=2)
         self._var_reg_ydata = tk.StringVar(value="")
         ttk.Entry(reg_row1b, textvariable=self._var_reg_ydata, width=36,
-                  font=("Consolas", 10)).pack(fill=tk.X, padx=2, pady=(0, 4))
+                  font=(mono_font(), 10)).pack(fill=tk.X, padx=2, pady=(0, 4))
 
         reg_row2 = ttk.Frame(frm_regression, style="Dark.TFrame")
         reg_row2.pack(fill=tk.X, padx=6, pady=2)
@@ -2972,7 +3421,7 @@ class SuperCalcApp:
         ttk.Label(reg_row4, text=t("label_poly_degree"), style="Dark.TLabel").pack(side=tk.LEFT, padx=2)
         self._var_reg_degree = tk.StringVar(value="3")
         ttk.Entry(reg_row4, textvariable=self._var_reg_degree, width=5,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=2)
         ttk.Button(reg_row4, text=t("btn_plot_fit"),
                    command=self._on_reg_plot).pack(side=tk.LEFT, padx=(8, 2))
         ttk.Button(reg_row4, text=t("btn_export_csv"),
@@ -2995,7 +3444,7 @@ class SuperCalcApp:
         self._var_data_delim = tk.StringVar(value="comma")
         delim_combo = ttk.Combobox(drow1b, textvariable=self._var_data_delim,
                                    values=["comma", "tab", "semicolon", "space"],
-                                   state="readonly", font=("Consolas", 10), width=10)
+                                   state="readonly", font=(mono_font(), 10), width=10)
         delim_combo.pack(side=tk.LEFT, padx=4)
         self._var_data_header = tk.BooleanVar(value=True)
         ttk.Checkbutton(drow1b, text=t("label_has_header"),
@@ -3006,16 +3455,16 @@ class SuperCalcApp:
         ttk.Label(drow2, text=t("label_x_column"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_data_xcol = tk.StringVar(value="0")
         ttk.Entry(drow2, textvariable=self._var_data_xcol, width=5,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=2)
         ttk.Label(drow2, text=t("label_y_column"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(8, 0))
         self._var_data_ycol = tk.StringVar(value="1")
         ttk.Entry(drow2, textvariable=self._var_data_ycol, width=5,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=2)
         ttk.Label(drow2, text=t("label_chart_type"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(8, 0))
         self._var_data_chart = tk.StringVar(value="scatter")
         chart_combo = ttk.Combobox(drow2, textvariable=self._var_data_chart,
                                    values=["scatter", "line", "bar"],
-                                   state="readonly", font=("Consolas", 10), width=9)
+                                   state="readonly", font=(mono_font(), 10), width=9)
         chart_combo.pack(side=tk.LEFT, padx=2)
 
         drow3 = ttk.Frame(frm_data, style="Dark.TFrame")
@@ -3024,7 +3473,7 @@ class SuperCalcApp:
         self._var_data_trend = tk.StringVar(value="none")
         trend_combo = ttk.Combobox(drow3, textvariable=self._var_data_trend,
                                    values=["none", "linear", "quadratic", "exponential", "power", "logarithmic"],
-                                   state="readonly", font=("Consolas", 10), width=13)
+                                   state="readonly", font=(mono_font(), 10), width=13)
         trend_combo.pack(side=tk.LEFT, padx=4)
 
         drow4 = ttk.Frame(frm_data, style="Dark.TFrame")
@@ -3058,7 +3507,7 @@ class SuperCalcApp:
                   style="Dark.TLabel").pack(anchor=tk.W, padx=2)
         self._var_matrix_a = tk.StringVar(value="1,2;3,4")
         ttk.Entry(mrow1, textvariable=self._var_matrix_a, width=36,
-                  font=("Consolas", 10)).pack(fill=tk.X, padx=2, pady=(0, 4))
+                  font=(mono_font(), 10)).pack(fill=tk.X, padx=2, pady=(0, 4))
 
         mrow2 = ttk.Frame(frm_matrix, style="Dark.TFrame")
         mrow2.pack(fill=tk.X, padx=6, pady=2)
@@ -3066,7 +3515,7 @@ class SuperCalcApp:
                   style="Dark.TLabel").pack(anchor=tk.W, padx=2)
         self._var_matrix_b = tk.StringVar(value="5,6;7,8")
         ttk.Entry(mrow2, textvariable=self._var_matrix_b, width=36,
-                  font=("Consolas", 10)).pack(fill=tk.X, padx=2, pady=(0, 4))
+                  font=(mono_font(), 10)).pack(fill=tk.X, padx=2, pady=(0, 4))
 
         mrow3 = ttk.Frame(frm_matrix, style="Dark.TFrame")
         mrow3.pack(fill=tk.X, padx=6, pady=2)
@@ -3098,11 +3547,11 @@ class SuperCalcApp:
         ttk.Label(crow1, text=t("label_z1"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_complex_z1 = tk.StringVar(value="1+2i")
         ttk.Entry(crow1, textvariable=self._var_complex_z1, width=15,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=2)
         ttk.Label(crow1, text=t("label_z2"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(8, 0))
         self._var_complex_z2 = tk.StringVar(value="3+4i")
         ttk.Entry(crow1, textvariable=self._var_complex_z2, width=15,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=2)
 
         crow2 = ttk.Frame(frm_complex, style="Dark.TFrame")
         crow2.pack(fill=tk.X, padx=6, pady=2)
@@ -3117,7 +3566,7 @@ class SuperCalcApp:
         ttk.Label(crow3, text=t("label_single_z"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_complex_z = tk.StringVar(value="1+1i")
         ttk.Entry(crow3, textvariable=self._var_complex_z, width=15,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=2)
 
         crow4 = ttk.Frame(frm_complex, style="Dark.TFrame")
         crow4.pack(fill=tk.X, padx=6, pady=2)
@@ -3140,7 +3589,7 @@ class SuperCalcApp:
         ttk.Label(crow6, text=t("label_result"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_complex_result = tk.StringVar(value="")
         ttk.Entry(crow6, textvariable=self._var_complex_result, width=30,
-                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+                  font=(mono_font(), 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
 
         # --- Number Theory Calculator ---
         frm_nt = ttk.LabelFrame(self._cat_frames["tools"], text=t("sec_number_theory"),
@@ -3152,7 +3601,7 @@ class SuperCalcApp:
         ttk.Label(nt_row1, text=t("label_nt_n"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_nt_n = tk.StringVar(value="12")
         ttk.Entry(nt_row1, textvariable=self._var_nt_n, width=15,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=4)
         ttk.Button(nt_row1, text=t("btn_nt_factorize"),
                    command=self._on_nt_factorize).pack(side=tk.LEFT, padx=2)
         ttk.Button(nt_row1, text=t("btn_nt_is_prime"),
@@ -3164,11 +3613,11 @@ class SuperCalcApp:
         ttk.Label(nt_row2, text=t("label_nt_a"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_nt_a = tk.StringVar(value="12")
         ttk.Entry(nt_row2, textvariable=self._var_nt_a, width=10,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=4)
         ttk.Label(nt_row2, text=t("label_nt_b"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_nt_b = tk.StringVar(value="18")
         ttk.Entry(nt_row2, textvariable=self._var_nt_b, width=10,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=4)
         ttk.Button(nt_row2, text=t("btn_nt_gcd"),
                    command=self._on_nt_gcd).pack(side=tk.LEFT, padx=2)
         ttk.Button(nt_row2, text=t("btn_nt_lcm"),
@@ -3180,7 +3629,7 @@ class SuperCalcApp:
         ttk.Label(nt_row3, text=t("label_nt_count"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_nt_fib_count = tk.StringVar(value="20")
         ttk.Entry(nt_row3, textvariable=self._var_nt_fib_count, width=10,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=4)
         ttk.Button(nt_row3, text=t("btn_nt_fibonacci"),
                    command=self._on_nt_fibonacci).pack(side=tk.LEFT, padx=2)
         ttk.Button(nt_row3, text=t("btn_nt_totient"),
@@ -3192,15 +3641,15 @@ class SuperCalcApp:
         ttk.Label(nt_row4, text=t("label_nt_base"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_nt_modpow_base = tk.StringVar(value="2")
         ttk.Entry(nt_row4, textvariable=self._var_nt_modpow_base, width=8,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=2)
         ttk.Label(nt_row4, text=t("label_nt_exp"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_nt_modpow_exp = tk.StringVar(value="10")
         ttk.Entry(nt_row4, textvariable=self._var_nt_modpow_exp, width=8,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=2)
         ttk.Label(nt_row4, text=t("label_nt_mod"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_nt_modpow_mod = tk.StringVar(value="1000")
         ttk.Entry(nt_row4, textvariable=self._var_nt_modpow_mod, width=8,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=2)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=2)
         ttk.Button(nt_row4, text=t("btn_nt_mod_pow"),
                    command=self._on_nt_mod_pow).pack(side=tk.LEFT, padx=2)
 
@@ -3210,7 +3659,7 @@ class SuperCalcApp:
         ttk.Label(nt_row5, text=t("label_nt_result"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_nt_result = tk.StringVar(value="")
         ttk.Entry(nt_row5, textvariable=self._var_nt_result, width=40,
-                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+                  font=(mono_font(), 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
         ttk.Button(nt_row5, text=t("btn_nt_clear"),
                    command=self._on_nt_clear).pack(side=tk.LEFT, padx=2)
 
@@ -3225,14 +3674,14 @@ class SuperCalcApp:
         self._var_bw_width = tk.StringVar(value="16")
         bw_width_combo = ttk.Combobox(bw_row1, textvariable=self._var_bw_width,
                                        values=["8", "16", "32"], width=5,
-                                       state="readonly", font=("Consolas", 10))
+                                       state="readonly", font=(mono_font(), 10))
         bw_width_combo.pack(side=tk.LEFT, padx=4)
 
         ttk.Label(bw_row1, text=t("label_bw_op"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(12, 0))
         self._var_bw_op = tk.StringVar(value="AND")
         bw_op_combo = ttk.Combobox(bw_row1, textvariable=self._var_bw_op,
                                     values=["AND", "OR", "XOR", "NOT", "<<", ">>"], width=5,
-                                    state="readonly", font=("Consolas", 10))
+                                    state="readonly", font=(mono_font(), 10))
         bw_op_combo.pack(side=tk.LEFT, padx=4)
 
         # Row 2: Operand A
@@ -3241,7 +3690,7 @@ class SuperCalcApp:
         ttk.Label(bw_row2, text=t("label_bw_a"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_bw_a = tk.StringVar(value="12")
         ttk.Entry(bw_row2, textvariable=self._var_bw_a, width=15,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=4)
         ttk.Label(bw_row2, text=t("label_dec"), style="Dark.TLabel").pack(side=tk.LEFT)
 
         # Row 3: Operand B
@@ -3250,7 +3699,7 @@ class SuperCalcApp:
         ttk.Label(bw_row3, text=t("label_bw_b"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_bw_b = tk.StringVar(value="5")
         ttk.Entry(bw_row3, textvariable=self._var_bw_b, width=15,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=4)
         ttk.Label(bw_row3, text=t("label_dec"), style="Dark.TLabel").pack(side=tk.LEFT)
 
         # Row 4: Calculate + Clear
@@ -3267,7 +3716,7 @@ class SuperCalcApp:
         ttk.Label(bw_row5, text=t("label_bw_res_bin"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_bw_res_bin = tk.StringVar(value="")
         ttk.Entry(bw_row5, textvariable=self._var_bw_res_bin, width=35,
-                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+                  font=(mono_font(), 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
 
         # Row 6: Result (hex, oct, dec)
         bw_row6 = ttk.Frame(frm_bw, style="Dark.TFrame")
@@ -3275,15 +3724,15 @@ class SuperCalcApp:
         ttk.Label(bw_row6, text=t("label_bw_res_hex"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_bw_res_hex = tk.StringVar(value="")
         ttk.Entry(bw_row6, textvariable=self._var_bw_res_hex, width=10,
-                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2)
+                  font=(mono_font(), 10), state="readonly").pack(side=tk.LEFT, padx=2)
         ttk.Label(bw_row6, text=t("label_bw_res_oct"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(8, 0))
         self._var_bw_res_oct = tk.StringVar(value="")
         ttk.Entry(bw_row6, textvariable=self._var_bw_res_oct, width=10,
-                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2)
+                  font=(mono_font(), 10), state="readonly").pack(side=tk.LEFT, padx=2)
         ttk.Label(bw_row6, text=t("label_bw_res_dec"), style="Dark.TLabel").pack(side=tk.LEFT, padx=(8, 0))
         self._var_bw_res_dec = tk.StringVar(value="")
         ttk.Entry(bw_row6, textvariable=self._var_bw_res_dec, width=10,
-                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2)
+                  font=(mono_font(), 10), state="readonly").pack(side=tk.LEFT, padx=2)
 
         # --- Unit Converter ---
         UNIT_CATEGORIES: dict[str, dict[str, float | str]] = {
@@ -3379,7 +3828,7 @@ class SuperCalcApp:
         self._var_unit_cat = tk.StringVar(value="Length")
         self._unit_cat_combo = ttk.Combobox(urow1, textvariable=self._var_unit_cat,
                                             values=list(UNIT_CATEGORIES.keys()),
-                                            state="readonly", font=("Consolas", 10), width=14)
+                                            state="readonly", font=(mono_font(), 10), width=14)
         self._unit_cat_combo.pack(side=tk.LEFT, padx=4)
         self._unit_cat_combo.bind("<<ComboboxSelected>>",
                                   lambda e: self._on_unit_category_change())
@@ -3389,7 +3838,7 @@ class SuperCalcApp:
         ttk.Label(urow2, text=t("label_from_unit"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_unit_from = tk.StringVar()
         self._unit_from_combo = ttk.Combobox(urow2, textvariable=self._var_unit_from,
-                                             state="readonly", font=("Consolas", 10), width=20)
+                                             state="readonly", font=(mono_font(), 10), width=20)
         self._unit_from_combo.pack(side=tk.LEFT, padx=4)
 
         urow3 = ttk.Frame(frm_unit, style="Dark.TFrame")
@@ -3397,7 +3846,7 @@ class SuperCalcApp:
         ttk.Label(urow3, text=t("label_to_unit"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_unit_to = tk.StringVar()
         self._unit_to_combo = ttk.Combobox(urow3, textvariable=self._var_unit_to,
-                                           state="readonly", font=("Consolas", 10), width=20)
+                                           state="readonly", font=(mono_font(), 10), width=20)
         self._unit_to_combo.pack(side=tk.LEFT, padx=4)
 
         urow4 = ttk.Frame(frm_unit, style="Dark.TFrame")
@@ -3405,7 +3854,7 @@ class SuperCalcApp:
         ttk.Label(urow4, text=t("label_value"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_unit_value = tk.StringVar(value="1")
         ttk.Entry(urow4, textvariable=self._var_unit_value, width=15,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=4)
         ttk.Button(urow4, text=t("btn_convert"),
                    command=self._on_unit_convert).pack(side=tk.LEFT, padx=8)
 
@@ -3414,7 +3863,7 @@ class SuperCalcApp:
         ttk.Label(urow5, text=t("label_result"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_unit_result = tk.StringVar(value="")
         ttk.Entry(urow5, textvariable=self._var_unit_result, width=30,
-                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+                  font=(mono_font(), 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
 
         # Initialize unit dropdowns
         self._on_unit_category_change()
@@ -3429,7 +3878,7 @@ class SuperCalcApp:
         ttk.Label(cal_row1, text=t("label_cal_date"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_cal_date1 = tk.StringVar(value="2026-01-01")
         ttk.Entry(cal_row1, textvariable=self._var_cal_date1, width=14,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=4)
         ttk.Button(cal_row1, text=t("btn_cal_today"),
                    command=self._on_cal_today).pack(side=tk.LEFT, padx=4)
 
@@ -3439,7 +3888,7 @@ class SuperCalcApp:
         ttk.Label(cal_row2, text=t("label_cal_date2"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_cal_date2 = tk.StringVar(value="2026-12-31")
         ttk.Entry(cal_row2, textvariable=self._var_cal_date2, width=14,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=4)
 
         # Row 3: Add/Subtract days
         cal_row3 = ttk.Frame(frm_cal, style="Dark.TFrame")
@@ -3447,7 +3896,7 @@ class SuperCalcApp:
         ttk.Label(cal_row3, text=t("label_cal_add_days"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_cal_add_days = tk.StringVar(value="0")
         ttk.Entry(cal_row3, textvariable=self._var_cal_add_days, width=10,
-                  font=("Consolas", 10)).pack(side=tk.LEFT, padx=4)
+                  font=(mono_font(), 10)).pack(side=tk.LEFT, padx=4)
 
         # Row 4: Buttons
         cal_row4 = ttk.Frame(frm_cal, style="Dark.TFrame")
@@ -3467,7 +3916,7 @@ class SuperCalcApp:
         ttk.Label(cal_row5, text=t("label_result"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_cal_result = tk.StringVar(value="")
         ttk.Entry(cal_row5, textvariable=self._var_cal_result, width=35,
-                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+                  font=(mono_font(), 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
 
         # --- Probability Calculator ---
         frm_prob = ttk.LabelFrame(self._cat_frames["discrete"], text=t("sec_probability"),
@@ -3490,7 +3939,7 @@ class SuperCalcApp:
         ]
         prob_combo = ttk.Combobox(prob_mode_row, textvariable=self._var_prob_mode,
                                    values=[m[0] for m in prob_modes],
-                                   state="readonly", font=("Consolas", 10), width=22)
+                                   state="readonly", font=(mono_font(), 10), width=22)
         prob_combo.pack(side=tk.LEFT, padx=4)
         self._prob_mode_map = {m[0]: m[1] for m in prob_modes}
         prob_combo.bind("<<ComboboxSelected>>",
@@ -3652,7 +4101,7 @@ class SuperCalcApp:
         ttk.Label(prob_res_row, text=t("label_result"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_prob_result = tk.StringVar(value="")
         ttk.Entry(prob_res_row, textvariable=self._var_prob_result, width=38,
-                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+                  font=(mono_font(), 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
         ttk.Button(prob_res_row, text=t("btn_prob_clear"),
                    command=lambda: self._var_prob_result.set("")).pack(side=tk.LEFT, padx=2)
 
@@ -3678,7 +4127,7 @@ class SuperCalcApp:
         ]
         fin_combo = ttk.Combobox(fin_mode_row, textvariable=self._var_fin_mode,
                                   values=[m[0] for m in fin_modes],
-                                  state="readonly", font=("Consolas", 10), width=22)
+                                  state="readonly", font=(mono_font(), 10), width=22)
         fin_combo.pack(side=tk.LEFT, padx=4)
         self._fin_mode_map = {m[0]: m[1] for m in fin_modes}
         fin_combo.bind("<<ComboboxSelected>>",
@@ -3822,7 +4271,7 @@ class SuperCalcApp:
         ttk.Label(fin_res_row, text=t("label_result"), style="Dark.TLabel").pack(side=tk.LEFT)
         self._var_fin_result = tk.StringVar(value="")
         ttk.Entry(fin_res_row, textvariable=self._var_fin_result, width=38,
-                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+                  font=(mono_font(), 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
         ttk.Button(fin_res_row, text=t("btn_prob_clear"),
                    command=lambda: self._var_fin_result.set("")).pack(side=tk.LEFT, padx=2)
 
@@ -3845,7 +4294,7 @@ class SuperCalcApp:
         ]
         vol_combo = ttk.Combobox(vol_row0, textvariable=self._var_vol_method,
                                   values=[m[0] for m in vol_methods],
-                                  state="readonly", font=("Consolas", 10), width=22)
+                                  state="readonly", font=(mono_font(), 10), width=22)
         vol_combo.pack(side=tk.LEFT, padx=4)
         self._vol_mode_map = {m[0]: m[1] for m in vol_methods}
         vol_combo.bind("<<ComboboxSelected>>",
@@ -3901,7 +4350,7 @@ class SuperCalcApp:
         ]
         interp_combo = ttk.Combobox(ip_row0, textvariable=self._var_interp_method,
                                      values=[m[0] for m in interp_methods],
-                                     state="readonly", font=("Consolas", 10), width=22)
+                                     state="readonly", font=(mono_font(), 10), width=22)
         interp_combo.pack(side=tk.LEFT, padx=4)
         self._interp_mode_map = {m[0]: m[1] for m in interp_methods}
 
@@ -3938,7 +4387,7 @@ class SuperCalcApp:
                   style="Dark.TLabel", width=8).pack(side=tk.LEFT)
         self._var_interp_result = tk.StringVar(value="")
         ttk.Entry(ip_row3, textvariable=self._var_interp_result, width=38,
-                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+                  font=(mono_font(), 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
 
         ip_row4 = ttk.Frame(frm_interp, style="Dark.TFrame")
         ip_row4.pack(fill=tk.X, padx=6, pady=(0, 4))
@@ -3946,7 +4395,7 @@ class SuperCalcApp:
                   style="Dark.TLabel", width=8).pack(side=tk.LEFT)
         self._var_interp_formula = tk.StringVar(value="")
         ttk.Entry(ip_row4, textvariable=self._var_interp_formula, width=50,
-                  font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+                  font=(mono_font(), 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
 
         # The status bar now lives outside the scrolling region (see
         # ``_build_ui``) so it stays visible no matter how far the user
@@ -3999,8 +4448,7 @@ class SuperCalcApp:
         if not embedded:
             host = tk.Toplevel(self.root)
             host.title(t("win_2d"))
-            host.geometry("900x700")
-            host.minsize(600, 400)
+            _fit_window_to_screen(host, 900, 700, min_w=560, min_h=380)
             host.configure(bg=THEME["bg"])
             host.protocol("WM_DELETE_WINDOW", self._on_2d_window_close)
         self.window_2d = host
@@ -4081,8 +4529,7 @@ class SuperCalcApp:
         if not embedded:
             host = tk.Toplevel(self.root)
             host.title(t("win_3d"))
-            host.geometry("900x700")
-            host.minsize(600, 400)
+            _fit_window_to_screen(host, 900, 700, min_w=560, min_h=380)
             host.configure(bg=THEME["bg"])
             host.protocol("WM_DELETE_WINDOW", self._on_3d_window_close)
         self.window_3d = host
@@ -4172,8 +4619,7 @@ class SuperCalcApp:
             return
         self.window_fft = tk.Toplevel(self.root)
         self.window_fft.title(t("win_fft"))
-        self.window_fft.geometry("900x750")
-        self.window_fft.minsize(600, 500)
+        _fit_window_to_screen(self.window_fft, 900, 750, min_w=560, min_h=460)
         self.window_fft.configure(bg=THEME["bg"])
         self.window_fft.protocol("WM_DELETE_WINDOW", self._on_fft_window_close)
 
@@ -4215,87 +4661,787 @@ class SuperCalcApp:
     # ------------------------------------------------------------------
     #  Input Panel
     # ------------------------------------------------------------------
+    # The quick-input panel used to be seven stacked LabelFrames of 5-wide
+    # ttk buttons laid out in a rigid single row each.  Three things were
+    # wrong with it, and all three are fixed here:
+    #
+    #   * geometry -- it asked for 492x705 of content and then forced the
+    #     window to 500x400, so ~43% of the keys were unreachable and there
+    #     was no scrollbar to reach them.  Now the window is measured and
+    #     scrolls whenever it still does not fit.
+    #   * navigation -- categories were stacked vertically, so finding a key
+    #     meant reading every frame.  They are now tabs.
+    #   * "key" semantics -- most label/text pairs were plain literals; the
+    #     only structured ones were x²/x³ where the user genuinely wants the
+    #     exponent *after* the caret.  A proper `caret` model replaces the
+    #     old ad-hoc behaviour.
+    #
+    # Every entry is (label, text, caret, desc_key) where `caret` is how far
+    # back from the end of the inserted text the cursor lands.  That single
+    # field is what makes `sin(` drop you inside the bracket, and it is why
+    # the table below carries the tedium of being explicit about all 66 keys.
+    QUICK_INPUT_KEYS: tuple[tuple[str, tuple[tuple[str, str, int, str], ...]], ...] = (
+        # -- 基本 ------------------------------------------------------
+        ("cat_basic", (
+            ("x²",  "^2",               0, "d_x2"),
+            ("x³",  "^3",               0, "d_x3"),
+            ("xⁿ",  "^",                0, "d_xn"),
+            ("√",   "sqrt()",           1, "d_sqrt"),
+            ("|x|", "abs()",            1, "d_abs"),
+            ("eˣ",  "exp()",            1, "d_exp"),
+            ("x!",  "!",                0, "d_fact"),
+            ("−x",  "-",                0, "d_sub"),
+        )),
+        # -- 运算符 ----------------------------------------------------
+        ("cat_operators", (
+            ("+",   " + ",              0, "d_add"),
+            ("−",   " - ",              0, "d_sub"),
+            ("×",   "*",                0, "d_mul"),
+            ("÷",   "/",                0, "d_div"),
+            ("^",   "^",                0, "d_pow"),
+            ("mod", " mod ",            0, "d_mod"),
+            ("±",   "+/-",              0, "d_pm"),
+            ("%",   "/100",             0, "d_div"),
+        )),
+        # -- 代数 ------------------------------------------------------
+        ("cat_algebra", (
+            ("asinh", "asinh()",        1, "d_sin"),
+            ("acosh", "acosh()",        1, "d_cos"),
+            ("atanh", "atanh()",        1, "d_tan"),
+            ("sinh",  "sinh()",         1, "d_sin"),
+            ("cosh",  "cosh()",         1, "d_cos"),
+            ("tanh",  "tanh()",         1, "d_tan"),
+            ("abs",   "abs()",          1, "d_abs"),
+            ("√",     "sqrt()",         1, "d_sqrt"),
+        )),
+        # -- 比较 ------------------------------------------------------
+        ("cat_compare", (
+            ("<",  " < ",               0, "d_lt"),
+            (">",  " > ",               0, "d_gt"),
+            ("≤",  " <= ",              0, "d_lt"),
+            ("≥",  " >= ",              0, "d_gt"),
+            ("=",  " = ",               0, "d_lt"),
+            ("≠",  " != ",              0, "d_lt"),
+        )),
+        # -- 对数指数 --------------------------------------------------
+        ("cat_logexp", (
+            ("ln",  "ln()",             1, "d_ln"),
+            ("log", "log()",            1, "d_log"),
+            ("eˣ",  "exp()",            1, "d_exp"),
+            ("e",   "e",                0, "d_e"),
+            ("10ˣ", "10^",              0, "d_pow"),
+            ("lg",  "log10()",          1, "d_log"),
+        )),
+        # -- 三角 ------------------------------------------------------
+        ("cat_trig", (
+            ("sin",  "sin()",           1, "d_sin"),
+            ("cos",  "cos()",           1, "d_cos"),
+            ("tan",  "tan()",           1, "d_tan"),
+            ("asin", "asin()",          1, "d_asin"),
+            ("acos", "acos()",          1, "d_acos"),
+            ("atan", "atan()",          1, "d_atan"),
+            ("π",    "pi",              0, "d_pi"),
+            ("°",    "*pi/180",         0, "d_deg"),
+        )),
+        # -- 取整 ------------------------------------------------------
+        ("cat_rounding", (
+            ("floor",  "floor()",       1, "d_floor"),
+            ("ceil",   "ceil()",        1, "d_ceil"),
+            ("round",  "round()",       1, "d_floor"),
+            ("trunc",  "trunc()",       1, "d_floor"),
+            ("min",    "min(,)",        2, "d_comma"),
+            ("max",    "max(,)",        2, "d_comma"),
+        )),
+        # -- 特殊 ------------------------------------------------------
+        ("cat_special", (
+            ("(",   "(",                0, "d_lparen"),
+            (")",   ")",                0, "d_rparen"),
+            ("()",  "()",               1, "d_lparen"),
+            (",",   ",",                0, "d_comma"),
+            ("!",   "!",                0, "d_fact"),
+            ("|x|", "abs()",            1, "d_abs"),
+            ("=",   " = ",              0, "d_lt"),
+            ("空格", " ",                0, "d_add"),
+        )),
+        # -- 常数 ------------------------------------------------------
+        ("cat_constants", (
+            ("π",   "pi",               0, "d_pi"),
+            ("e",   "e",                0, "d_e"),
+            ("φ",   "1.618033988749895", 0, "d_e"),
+            ("τ",   "2*pi",             0, "d_pi"),
+            ("∞",   "1e308",            0, "d_e"),
+            ("π/2", "pi/2",             0, "d_pi"),
+            ("π/3", "pi/3",             0, "d_pi"),
+            ("π/4", "pi/4",             0, "d_pi"),
+            ("π/6", "pi/6",             0, "d_pi"),
+            ("2π",  "2*pi",             0, "d_pi"),
+        )),
+    )
+
+    # 0 = use whichever rail the tab already owns; -1 = neutral.  Only the
+    # genuinely destructive keys are red, so the colour still means something.
+    QUICK_INPUT_DANGER = frozenset({"ip_clear", "ip_backspace"})
+
+    def _qi_palette(self) -> dict:
+        """Colours for the hand-drawn quick-input buttons.
+
+        These are plain ``tk`` widgets rather than ``ttk`` so hover, press and
+        focus can be painted directly -- fighting the ttk element layout for
+        per-category accents was strictly more code for a worse result.
+        """
+        return {
+            "bg":        THEME["bg"],
+            "surface":   THEME["surface"],
+            "hover":     THEME["surface_alt"],
+            "active":    THEME["border"],
+            "border":    THEME["border"],
+            "text":      THEME["text"],
+            "muted":     THEME["muted"],
+            "subtle":    THEME["subtle"],
+            "on_accent": "#0b1020",
+        }
+
+    def _make_qi_button(self, parent: tk.Misc, label: str, command: Callable[[], None],
+                        *, accent: str, tooltip: Optional[str] = None,
+                        wide: bool = False, danger: bool = False) -> tk.Frame:
+        """A quick-input key with hover / press / focus states.
+
+        Returns the outer frame so grid/pack callers keep working; the button
+        itself is the frame's only child.
+        """
+        pal = self._qi_palette()
+        edge = THEME["red"] if danger else accent
+        font_pt = 13 if wide else 11
+
+        frame = tk.Frame(parent, bg=pal["border"], padx=1, pady=1)
+        btn = tk.Button(
+            frame, text=label, font=(mono_font(), font_pt),
+            bg=pal["surface"], fg=pal["text"], activebackground=accent,
+            activeforeground=pal["on_accent"], relief="flat", bd=0,
+            highlightthickness=0, cursor="hand2", takefocus=True,
+            padx=12 if wide else 9, pady=7 if wide else 5,
+            command=command,
+        )
+        btn.pack(fill=tk.BOTH, expand=True)
+
+        # 2px rail along the bottom edge = the category's identity, and the
+        # only colour that survives the surface/hover/active repaints.
+        rail = tk.Frame(frame, bg=edge, height=2)
+        rail.pack(fill=tk.X)
+
+        def paint(bg=None, fg=None):
+            btn.configure(bg=bg or pal["surface"], fg=fg or pal["text"])
+
+        def on_enter(_e=None):
+            paint(pal["hover"], edge)
+
+        def on_leave(_e=None):
+            paint(pal["surface"], pal["text"])
+
+        def on_press(_e=None):
+            paint(accent, pal["on_accent"])
+
+        def on_release(_e=None):
+            # Stay "pressed" while the pointer is still over the button.
+            if btn.winfo_containing(btn.winfo_pointerx(), btn.winfo_pointery()) is btn:
+                on_enter()
+            else:
+                on_leave()
+
+        btn.bind("<Enter>", on_enter)
+        btn.bind("<Leave>", on_leave)
+        btn.bind("<ButtonPress-1>", on_press)
+        btn.bind("<ButtonRelease-1>", on_release)
+        btn.bind("<FocusIn>",
+                 lambda e: frame.configure(bg=edge))
+        btn.bind("<FocusOut>",
+                 lambda e: (frame.configure(bg=pal["border"]), on_leave()))
+        btn.bind("<Return>", lambda e: (command(), "break")[1])
+        btn.bind("<space>", lambda e: (command(), "break")[1])
+
+        if tooltip:
+            self._attach_tooltip(btn, tooltip)
+            self._attach_tooltip(frame, tooltip)
+        return frame
+
+    def _attach_tooltip(self, widget: tk.Misc, text: str) -> None:
+        """Show *text* in a small borderless window after a short hover.
+
+        Deliberately minimal: no positioning maths beyond clamping to the
+        screen, and a single shared ``after`` id so moving across a row of
+        keys never leaves a stray popup behind.
+        """
+        state: dict = {"after": None, "win": None}
+
+        def hide(_e=None):
+            if state["after"] is not None:
+                try:
+                    widget.after_cancel(state["after"])
+                except Exception:
+                    pass
+                state["after"] = None
+            win = state["win"]
+            if win is not None:
+                try:
+                    win.destroy()
+                except tk.TclError:
+                    pass
+                state["win"] = None
+
+        def show():
+            state["after"] = None
+            win = tk.Toplevel(widget)
+            win.wm_overrideredirect(True)
+            win.configure(bg=THEME["border"])
+            tk.Label(win, text=text, bg=THEME["surface"], fg=THEME["text"],
+                     font=(ui_font(), 9), padx=8, pady=5,
+                     justify=tk.LEFT, wraplength=260).pack(padx=1, pady=1)
+            win.update_idletasks()
+            x = widget.winfo_rootx()
+            y = widget.winfo_rooty() + widget.winfo_height() + 6
+            w = win.winfo_reqwidth()
+            if x + w > widget.winfo_screenwidth():
+                x = max(0, widget.winfo_screenwidth() - w - 8)
+            if y + 40 > widget.winfo_screenheight():
+                y = widget.winfo_rooty() - win.winfo_reqheight() - 6
+            win.wm_geometry(f"+{x}+{y}")
+            state["win"] = win
+
+        def schedule(_e=None):
+            hide()
+            state["after"] = widget.after(450, show)
+
+        last = {"geom": None}
+
+        def on_configure(_e=None):
+            # Hide only on a real move/resize: <Configure> also fires once at
+            # creation, which would otherwise cancel the very first tooltip.
+            try:
+                geom = (widget.winfo_rootx(), widget.winfo_rooty())
+            except tk.TclError:
+                return
+            if last["geom"] is not None and geom != last["geom"]:
+                hide()
+            last["geom"] = geom
+
+        widget.bind("<Enter>", schedule, add="+")
+        widget.bind("<Leave>", hide, add="+")
+        widget.bind("<ButtonPress>", hide, add="+")
+        widget.bind("<Configure>", on_configure, add="+")
+        # Created here rather than in the panel: tooltips are attached while
+        # the main window is being built, long before the panel exists.
+        if not hasattr(self, "_active_tooltips"):
+            self._active_tooltips = []
+        self._active_tooltips.append(hide)
+
+    def _qi_hide_tooltips(self) -> None:
+        """Dismiss any tooltip left over from before a layout change."""
+        for hide in getattr(self, "_active_tooltips", ()):
+            try:
+                hide()
+            except Exception:
+                pass
+
     def _open_input_panel(self):
         if hasattr(self, '_input_panel') and self._input_panel is not None:
             try:
                 self._input_panel.lift()
+                self._input_panel.focus_force()
                 return
             except tk.TclError:
                 self._input_panel = None
-        panel = tk.Toplevel(self.root)
-        panel.title(t("win_input_panel"))
-        panel.geometry("500x400")
-        panel.configure(bg=THEME["bg"])
-        panel.transient(self.root)
-        panel.grab_set()
-        
-        main_frame = ttk.Frame(panel, style="Dark.TFrame")
-        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-        
-        # Only include operators/functions/constants supported by the C core
-        buttons_config = [
-            (t("cat_basic"), [
-                ("x²", "x^2"), ("x³", "x^3"), ("xⁿ", "x^n"),
-                ("√", "sqrt("), ("|x|", "abs("),
-            ]),
-            (t("cat_operators"), [
-                ("÷", "/"), ("×", "*"), ("^", "^"), ("-", "-"), ("+", "+"),
-                ("mod", " mod "),
-            ]),
-            (t("cat_logexp"), [
-                ("ln", "ln("), ("log", "log("), ("eˣ", "exp("), ("e", "e"),
-            ]),
-            (t("cat_trig"), [
-                ("sin", "sin("), ("cos", "cos("), ("tan", "tan("),
-                ("π", "pi"), ("°", "*pi/180"),
-            ]),
-            (t("cat_rounding"), [
-                ("floor", "floor("), ("ceil", "ceil("),
-            ]),
-            (t("cat_special"), [
-                ("!", "!"), ("(", "("), (")", ")"), (",", ","),
-            ]),
-            (t("cat_constants"), [
-                ("π", "pi"), ("e", "e"),
-            ]),
-        ]
-        
-        for category, buttons in buttons_config:
-            frame = ttk.LabelFrame(main_frame, text=category, style="Dark.TLabelframe")
-            frame.pack(fill=tk.X, pady=4)
-            
-            btn_frame = ttk.Frame(frame, style="Dark.TFrame")
-            btn_frame.pack(fill=tk.X, padx=4, pady=4)
-            
-            for i, (label, text) in enumerate(buttons):
-                btn = ttk.Button(btn_frame, text=label, width=5,
-                                command=lambda t=text: self._insert_text(t))
-                btn.grid(row=0, column=i, padx=2, pady=2)
 
-        ttk.Button(main_frame, text=t("btn_close"), command=self._on_input_panel_close).pack(pady=10)
-        self._input_panel = panel
+        dlg = ScrollableDialog(
+            self.root, t("win_input_panel"),
+            size_key="input_panel", min_size=(430, 300),
+            max_size=(1040, 880),
+        )
+        panel = dlg.win
+        body = dlg.body
+
+        # --- state for this panel instance ------------------------------
+        # `_qi_undo` is a stack of (text, caret) snapshots; entries are pushed
+        # *before* every mutation so Ctrl+Z is a straight pop.
+        self._qi_dlg = dlg
+        self._qi_undo: list[tuple[str, Optional[int]]] = []
+        self._qi_counts: dict[str, int] = {}
+        self._qi_tab = "cat_basic"
+        self._qi_tab_buttons: dict[str, tk.Frame] = {}
+        self._qi_cat_frames: dict[str, ttk.Frame] = {}
+
+        outer = ttk.Frame(body, style="Dark.TFrame")
+        outer.pack(fill=tk.BOTH, expand=True, padx=12, pady=12)
+
+        # ---- header: title + live preview -----------------------------
+        head = ttk.Frame(outer, style="Dark.TFrame")
+        head.pack(fill=tk.X)
+
+        title_row = ttk.Frame(head, style="Dark.TFrame")
+        title_row.pack(fill=tk.X)
+        tk.Frame(title_row, bg=THEME["indigo"], width=3, height=16
+                 ).pack(side=tk.LEFT, padx=(0, 8), pady=1)
+        ttk.Label(title_row, text=t("win_input_panel"), style="Title.TLabel"
+                  ).pack(side=tk.LEFT)
+
+        self._qi_status = ttk.Label(title_row, text="", style="Tagline.TLabel")
+        self._qi_status.pack(side=tk.RIGHT, padx=(8, 0))
+
+        prev_card = tk.Frame(head, bg=THEME["surface"],
+                             highlightbackground=THEME["border"],
+                             highlightthickness=1)
+        prev_card.pack(fill=tk.X, pady=(10, 4))
+        prev_label = tk.Frame(prev_card, bg=THEME["surface"])
+        prev_label.pack(fill=tk.X, padx=10, pady=(8, 0))
+        tk.Label(prev_label, text=t("ip_preview"),
+                 bg=THEME["surface"], fg=THEME["subtle"],
+                 font=(ui_font(), 9)).pack(side=tk.LEFT)
+        self._qi_tip = tk.Label(prev_label, text="", bg=THEME["surface"],
+                                fg=THEME["cyan"], font=(ui_font(), 9))
+        self._qi_tip.pack(side=tk.RIGHT)
+
+        self._qi_preview = tk.Label(
+            prev_card, text="", bg=THEME["surface"], fg=THEME["text"],
+            font=(mono_font(), 13), anchor="w", justify=tk.LEFT,
+            wraplength=760, padx=10, pady=8)
+        self._qi_preview.pack(fill=tk.X)
+
+        # ---- tabs -----------------------------------------------------
+        # Laid out by hand in rows that wrap to the available width.  A flat
+        # `side=LEFT` strip is ~533px wide, which clips the last two tabs the
+        # moment the window is narrower than that -- and the window *will* be
+        # narrower, because the user can drag it.  Measuring inside <Configure>
+        # and re-flowing is the only way the strip survives a narrow window.
+        tabs = tk.Frame(outer, bg=THEME["bg"])
+        tabs.pack(fill=tk.X, pady=(8, 0))
+        self._qi_tab_cards: list[tuple[str, tk.Frame]] = []
+        for key, _keys in self.QUICK_INPUT_KEYS:
+            card = tk.Frame(tabs, bg=THEME["bg"], cursor="hand2")
+
+            rail = tk.Frame(card, bg=THEME["bg"], height=2)
+            rail.pack(fill=tk.X, side=tk.BOTTOM)
+            lbl = tk.Label(card, text=t(key), bg=THEME["bg"],
+                           fg=THEME["muted"], font=(ui_font(), 10),
+                           padx=11, pady=7, cursor="hand2")
+            lbl.pack(side=tk.TOP)
+
+            card._rail = rail            # type: ignore[attr-defined]
+            card._label = lbl            # type: ignore[attr-defined]
+            self._qi_tab_buttons[key] = card
+            self._qi_tab_cards.append((key, card))
+
+            for w in (card, rail, lbl):
+                w.bind("<Button-1>", lambda e, k=key: self._qi_show_tab(k))
+                w.bind("<Enter>", lambda e, k=key: self._qi_tab_hover(k, True))
+                w.bind("<Leave>", lambda e, k=key: self._qi_tab_hover(k, False))
+
+        def flow_tabs(event=None):
+            self._qi_hide_tooltips()
+            avail = event.width if event is not None else tabs.winfo_width()
+            if avail <= 1:
+                avail = tabs.winfo_reqwidth()
+            x = y = row_h = 0
+            for _k, card in self._qi_tab_cards:
+                cw = card.winfo_reqwidth()
+                ch = card.winfo_reqheight()
+                if x and x + cw > avail:
+                    x = 0
+                    y += row_h
+                    row_h = 0
+                card.place(x=x, y=y, width=cw, height=ch)
+                x += cw
+                row_h = max(row_h, ch)
+            # `place`d children contribute no height, so the strip must be
+            # told how tall it became or the rows would overlap the keys.
+            total = y + row_h
+            if tabs.winfo_height() != total:
+                tabs.configure(height=total)
+
+        tabs.bind("<Configure>", flow_tabs)
+        self._qi_flow_tabs = flow_tabs
+
+        ttk.Separator(outer, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=(0, 8))
+
+        # ---- key pages -------------------------------------------------
+        pages = ttk.Frame(outer, style="Dark.TFrame")
+        pages.pack(fill=tk.BOTH, expand=True)
+        for key, keys in self.QUICK_INPUT_KEYS:
+            page = ttk.Frame(pages, style="Dark.TFrame")
+            grid_host = ttk.Frame(page, style="Dark.TFrame")
+            grid_host.pack(fill=tk.X, padx=2, pady=2)
+
+            accent = self._qi_accent(key)
+            for i, (label, text, caret, desc) in enumerate(keys):
+                wide = len(label) > 3
+                cell = self._make_qi_button(
+                    grid_host, label,
+                    lambda txt=text, c=caret, l=label, k=key:
+                        self._qi_insert(txt, c, l, k),
+                    accent=accent, tooltip=t(desc), wide=wide)
+                cell.grid(row=i // 4, column=i % 4, padx=3, pady=3, sticky="nsew")
+            for col in range(4):
+                grid_host.grid_columnconfigure(col, weight=1, minsize=96)
+
+            self._qi_cat_frames[key] = page
+
+        # ---- action bar ------------------------------------------------
+        bar = ttk.Frame(outer, style="Dark.TFrame")
+        bar.pack(fill=tk.X, pady=(12, 0))
+
+        def action(key, cmd, *, danger=False, wide=False, accent=None):
+            accent = accent or THEME["indigo"]
+            cell = self._make_qi_button(
+                bar, t(key), cmd, accent=accent, wide=wide, danger=danger,
+                tooltip=t(f"d_{'sub' if key == 'ip_undo' else 'add'}"))
+            cell.pack(side=tk.LEFT, padx=(0, 5))
+            return cell
+
+        action("ip_undo",
+               lambda: self._qi_undo_step(),
+               accent=THEME["cyan"], wide=True)
+        action("ip_backspace",
+               lambda: self._qi_backspace(),
+               danger=True, wide=True)
+        action("ip_clear",
+               lambda: self._qi_clear(),
+               danger=True, wide=True)
+        action("ip_plot_now",
+               lambda: self._qi_insert_and_plot(),
+               accent=THEME["green"], wide=True)
+
+        ttk.Button(bar, text=t("btn_close"), style="Ghost.TButton",
+                   command=self._on_input_panel_close).pack(side=tk.RIGHT)
+
+        # ---- history strip ---------------------------------------------
+        hist = ttk.Frame(outer, style="Dark.TFrame")
+        hist.pack(fill=tk.X, pady=(12, 0))
+        hh = ttk.Frame(hist, style="Dark.TFrame")
+        hh.pack(fill=tk.X)
+        tk.Frame(hh, bg=THEME["purple"], width=3, height=14
+                 ).pack(side=tk.LEFT, padx=(0, 8))
+        ttk.Label(hh, text=t("ip_history_title"), style="CardTitle.TLabel",
+                  foreground=THEME["text"]).pack(side=tk.LEFT)
+        ttk.Button(hh, text=t("ip_clear_history"), style="Link.TButton",
+                   command=lambda: self._qi_refresh_history(clear=True)
+                   ).pack(side=tk.RIGHT)
+
+        self._qi_hist_host = ttk.Frame(hist, style="Dark.TFrame")
+        self._qi_hist_host.pack(fill=tk.X, pady=(6, 0))
+
+        # ---- hints ------------------------------------------------------
+        ttk.Label(outer, text=t("ip_hint_wrap"), style="Tagline.TLabel"
+                  ).pack(fill=tk.X, pady=(12, 0))
+        ttk.Label(outer, text=t("ip_hint_keys"), style="Tagline.TLabel"
+                  ).pack(fill=tk.X, pady=(2, 0))
+
+        # ---- behaviour ---------------------------------------------------
         panel.protocol("WM_DELETE_WINDOW", self._on_input_panel_close)
+        panel.bind("<Escape>", lambda e: self._on_input_panel_close())
+        panel.bind("<Control-z>", lambda e: self._qi_undo_step())
+        panel.bind("<Control-Z>", lambda e: self._qi_undo_step())
+        panel.bind("<Control-y>", lambda e: self._qi_undo_step())
+        panel.bind("<Control-BackSpace>", lambda e: self._qi_backspace())
+        panel.bind("<BackSpace>", lambda e: self._qi_backspace())
+
+        self._qi_show_tab("cat_basic")
+        self._qi_refresh_preview()
+        self._qi_refresh_history()
+
+        self._input_panel = panel
+        # The tab strip is a single non-wrapping row, so measure it explicitly
+        # or the rightmost tabs get clipped at the computed width.
+        dlg.require_width(tabs)
+        dlg.finalise()
+        # Focus the expression entry only *after* the window exists, so the
+        # caret lands where the user is about to type.
+        panel.after(60, self._qi_focus_entry)
+
+    # -- quick-input internals --------------------------------------------
+    def _qi_focus_entry(self) -> None:
+        try:
+            self.entry_expr.focus_set()
+        except tk.TclError:
+            pass
+
+    @staticmethod
+    def _qi_accent(key: str) -> str:
+        """Stable accent per quick-input category."""
+        return {
+            "cat_basic":     THEME["indigo"],
+            "cat_operators": THEME["cyan"],
+            "cat_algebra":   THEME["green"],
+            "cat_compare":   THEME["yellow"],
+            "cat_logexp":    THEME["blue"],
+            "cat_trig":      THEME["purple"],
+            "cat_rounding":  THEME["orange"],
+            "cat_special":   THEME["pink"],
+            "cat_constants": THEME["red"],
+        }.get(key, THEME["indigo"])
+
+    def _qi_show_tab(self, key: str) -> None:
+        self._qi_hide_tooltips()
+        self._qi_tab = key
+        for k, page in self._qi_cat_frames.items():
+            if k == key:
+                page.pack(fill=tk.BOTH, expand=True)
+            else:
+                page.pack_forget()
+        self._qi_paint_tabs()
+        if getattr(self, "_qi_dlg", None) is not None:
+            self._qi_dlg._on_body_configure()
+
+    def _qi_tab_hover(self, key: str, entering: bool) -> None:
+        if key == self._qi_tab:
+            return
+        card = self._qi_tab_buttons.get(key)
+        if card is None:
+            return
+        bg = THEME["surface"] if entering else THEME["bg"]
+        card.configure(bg=bg)
+        card._label.configure(bg=bg)
+        card._rail.configure(bg=bg)
+
+    def _qi_paint_tabs(self) -> None:
+        for key, card in self._qi_tab_buttons.items():
+            active = (key == self._qi_tab)
+            accent = self._qi_accent(key)
+            bg = THEME["surface"] if active else THEME["bg"]
+            card.configure(bg=bg)
+            card._label.configure(
+                bg=bg, fg=THEME["text"] if active else THEME["muted"],
+                font=(ui_font(), 10, "bold" if active else "normal"))
+            card._rail.configure(bg=accent if active else bg)
+
+    def _qi_current(self) -> tuple[str, Optional[int]]:
+        try:
+            return self.entry_expr.get(), self.entry_expr.index(tk.INSERT)
+        except tk.TclError:
+            return "", None
+
+    def _qi_push_undo(self) -> None:
+        # Lazily created: the Ctrl+B / Ctrl+Z accelerators work even when the
+        # panel is closed, so this state cannot depend on the panel existing.
+        stack = getattr(self, "_qi_undo", None)
+        if stack is None:
+            stack = self._qi_undo = []
+        text, caret = self._qi_current()
+        stack.append((text, caret))
+        if len(stack) > 100:
+            stack.pop(0)
+
+    def _qi_apply(self, text: str, caret: Optional[int]) -> None:
+        try:
+            self.entry_expr.delete("0", tk.END)
+            self.entry_expr.insert("0", text)
+            # String cursor index -- see the note in _qi_insert.
+            self.entry_expr.icursor(str(caret if caret is not None
+                                       else len(text)))
+        except tk.TclError:
+            pass
+        self._qi_refresh_preview()
+
+    def _qi_insert(self, text: str, caret_back: int, label: str, category: str) -> None:
+        """Insert ``text`` at the caret, leaving the caret ``caret_back`` in.
+
+        Replaces any current selection, exactly like typing would.
+        """
+        self._qi_push_undo()
+        try:
+            try:
+                start = str(self.entry_expr.index(tk.SEL_FIRST))
+                end = str(self.entry_expr.index(tk.SEL_LAST))
+                self.entry_expr.delete(start, end)
+                pos = start
+            except tk.TclError:
+                pos = str(self.entry_expr.index(tk.INSERT))
+            self.entry_expr.insert(pos, text)
+            new_col = _index_col(pos) + len(text) - caret_back
+            # Both the index and the cursor want the *string* form here:
+            # ttk::entry ignores a bare-integer icursor("0.4"), and
+            # delete(0, 5) with ints is a silent no-op (see _qi_backspace).
+            self.entry_expr.icursor(str(max(0, new_col)))
+            self.entry_expr.focus_set()
+            self.entry_expr.selection_clear()
+        except tk.TclError:
+            pass
+
+        self._qi_counts[label] = self._qi_counts.get(label, 0) + 1
+        self._qi_refresh_preview()
+
+    def _qi_backspace(self) -> None:
+        self._qi_push_undo()
+        try:
+            # Delete the selection if there is one, else one char left.
+            try:
+                start = self.entry_expr.index(tk.SEL_FIRST)
+                end = self.entry_expr.index(tk.SEL_LAST)
+            except tk.TclError:
+                cur = int(self.entry_expr.index(tk.INSERT))
+                if cur == 0:
+                    self._qi_refresh_preview()
+                    return
+                start, end = cur - 1, cur
+            # String indices on purpose: `delete(0, 5)` silently does nothing
+            # while `delete("0", "5")` removes the right range.  The "N-1c"
+            # Text-style form is invalid for ttk::entry.
+            self.entry_expr.delete(str(start), str(end))
+            self.entry_expr.icursor(str(start))
+            self.entry_expr.focus_set()
+        except tk.TclError:
+            pass
+        self._qi_refresh_preview()
+
+    def _qi_clear(self) -> None:
+        self._qi_push_undo()
+        try:
+            self.entry_expr.delete("0", tk.END)
+            self.entry_expr.focus_set()
+        except tk.TclError:
+            pass
+        self._qi_refresh_preview()
+
+    def _qi_undo_step(self) -> None:
+        stack = getattr(self, "_qi_undo", None)
+        if not stack:
+            return
+        text, caret = stack.pop()
+        self._qi_apply(text, caret)
+
+    def _qi_insert_and_plot(self) -> None:
+        self._on_plot()
+        self._qi_refresh_history()
+
+    # -- preview / history -------------------------------------------------
+    def _qi_refresh_preview(self) -> None:
+        if getattr(self, "_qi_preview", None) is None:
+            return
+        try:
+            expr = self.entry_expr.get()
+        except tk.TclError:
+            return
+        shown = expr if expr.strip() else t("ip_empty")
+        self._qi_preview.configure(
+            text=shown, fg=THEME["text"] if expr.strip() else THEME["subtle"])
+
+        if not expr.strip():
+            state, colour = t("ip_empty"), THEME["subtle"]
+        else:
+            balanced = expr.count("(") == expr.count(")")
+            defined = all(w in KNOWN_FUNCTIONS | KNOWN_CONSTANTS | INDEPENDENT_VARS
+                          or len(w) == 1
+                          for w in re.findall(r"[A-Za-z]+", expr))
+            if balanced and defined:
+                state, colour = t("ip_ok"), THEME["green"]
+            else:
+                state, colour = t("ip_warn"), THEME["yellow"]
+        self._qi_status.configure(text=state, foreground=colour)
+
+        # "tip" line surfaces the most-used key in the *current* tab, so the
+        # panel quietly teaches which symbols you actually reach for.
+        if self._qi_counts:
+            top, n = max(self._qi_counts.items(), key=lambda kv: kv[1])
+            self._qi_tip.configure(text=f"{top} ×{n}")
+        else:
+            self._qi_tip.configure(text="")
+
+    def _qi_refresh_history(self, clear: bool = False) -> None:
+        host = getattr(self, "_qi_hist_host", None)
+        if host is None:
+            return
+        for child in host.winfo_children():
+            child.destroy()
+        if clear:
+            try:
+                CalcEngine.history_clear()
+            except Exception:
+                pass
+
+        try:
+            raw = CalcEngine.history_get_all() or ""
+        except Exception:
+            raw = ""
+        lines = [ln.strip() for ln in str(raw).splitlines() if ln.strip()]
+        entries = lines[-6:][::-1]
+
+        if not entries:
+            ttk.Label(host, text=t("ip_history_empty"), style="Tagline.TLabel"
+                      ).pack(anchor=tk.W, pady=4)
+            return
+        for line in entries:
+            row = tk.Frame(host, bg=THEME["surface"],
+                           highlightbackground=THEME["border"],
+                           highlightthickness=1, cursor="hand2")
+            row.pack(fill=tk.X, pady=2)
+            tk.Frame(row, bg=THEME["purple"], width=3).pack(side=tk.LEFT, fill=tk.Y)
+            lbl = tk.Label(row, text=line, bg=THEME["surface"], fg=THEME["text"],
+                           font=(mono_font(), 10), anchor="w", padx=8, pady=5)
+            lbl.pack(side=tk.LEFT, fill=tk.X, expand=True)
+            use = tk.Label(row, text=t("ip_history_use"), bg=THEME["surface"],
+                           fg=THEME["cyan"], font=(ui_font(), 9), padx=8,
+                           cursor="hand2")
+            use.pack(side=tk.RIGHT)
+
+            def apply_line(_e=None, value=line):
+                self._qi_push_undo()
+                expr = value.split("=")[0].strip()
+                self._qi_apply(expr, None)
+                self._qi_focus_entry()
+
+            for w in (row, lbl, use):
+                w.bind("<Button-1>", apply_line)
+        if getattr(self, "_qi_dlg", None) is not None:
+            self._qi_dlg._on_body_configure()
 
     def _on_input_panel_close(self):
+        self._qi_hide_tooltips()
         if hasattr(self, '_input_panel') and self._input_panel is not None:
             try:
                 self._input_panel.destroy()
             except tk.TclError:
                 pass
             self._input_panel = None
+        # Drop the tooltip/undo state along with the window so a reopen
+        # starts clean rather than replaying a stale undo stack.
+        self._qi_dlg = None
+        self._qi_undo = []
+        self._qi_counts = {}
+        self._qi_tab_buttons = {}
+        self._qi_tab_cards = []
+        self._qi_cat_frames = {}
+        self._active_tooltips = []
+        self._qi_preview = None
+        self._qi_status = None
+        self._qi_tip = None
+        self._qi_hist_host = None
 
-    def _insert_text(self, text: str) -> None:
-        """Insert text at cursor, replacing any selected text."""
+    def _insert_text(self, text: str, caret_back: int = 0) -> None:
+        """Insert text at cursor, replacing any selected text.
+
+        ``caret_back`` pulls the cursor back from the end of the inserted
+        text, which is how ``sin(`` leaves you ready to type ``x``.
+
+        Note on indices: a ``ttk::entry`` wants *string* indices.  Passing
+        ints to ``delete`` is a silent no-op, and ``icursor("0.4")`` is
+        ignored -- both were live bugs in the old single-argument version.
+        """
         try:
-            sel_start = self.entry_expr.index(tk.SEL_FIRST)
-            sel_end = self.entry_expr.index(tk.SEL_LAST)
+            sel_start = str(self.entry_expr.index(tk.SEL_FIRST))
+            sel_end = str(self.entry_expr.index(tk.SEL_LAST))
             self.entry_expr.delete(sel_start, sel_end)
             self.entry_expr.insert(sel_start, text)
+            base = sel_start
         except tk.TclError:
             # No selection
-            pos = self.entry_expr.index(tk.INSERT)
-            self.entry_expr.insert(pos, text)
+            base = str(self.entry_expr.index(tk.INSERT))
+            self.entry_expr.insert(base, text)
+        if caret_back:
+            try:
+                self.entry_expr.icursor(
+                    str(max(0, _index_col(base) + len(text) - caret_back)))
+            except tk.TclError:
+                pass
         self.entry_expr.focus()
+        if getattr(self, "_qi_preview", None) is not None:
+            self._qi_refresh_preview()
 
     # ------------------------------------------------------------------
     #  Parameter handling
@@ -5134,40 +6280,41 @@ class SuperCalcApp:
         if len(curves_2d) < 2:
             messagebox.showinfo(t("err_info"), t("msg_add_two_curves"))
             return
-        win = tk.Toplevel(self.root)
-        win.title(t("win_intersect"))
-        win.geometry("420x420")
-        win.configure(bg=THEME["bg"])
-        win.minsize(320, 300)
-        win.transient(self.root)
+        dlg = ScrollableDialog(
+            self.root, t("win_intersect"),
+            size_key="win_intersect", min_size=(360, 340),
+            max_size=(760, 820),
+        )
+        win = dlg.win
+        body = dlg.body
         win.grab_set()
 
-        ttk.Label(win, text=t("intersect_select"),
+        ttk.Label(body, text=t("intersect_select"),
                   style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(10, 4))
 
         # Curve A
-        ttk.Label(win, text=t("intersect_curve_a"), style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(8, 0))
+        ttk.Label(body, text=t("intersect_curve_a"), style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(8, 0))
         var_a = tk.StringVar()
-        combo_a = ttk.Combobox(win, textvariable=var_a,
+        combo_a = ttk.Combobox(body, textvariable=var_a,
                                values=[c.label for c in curves_2d],
-                               state="readonly", font=("Consolas", 10), width=40)
+                               state="readonly", font=(mono_font(), 10), width=40)
         combo_a.pack(fill=tk.X, padx=10, pady=2)
         combo_a.current(0)
 
         # Curve B
-        ttk.Label(win, text=t("intersect_curve_b"), style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(8, 0))
+        ttk.Label(body, text=t("intersect_curve_b"), style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(8, 0))
         var_b = tk.StringVar()
-        combo_b = ttk.Combobox(win, textvariable=var_b,
+        combo_b = ttk.Combobox(body, textvariable=var_b,
                                values=[c.label for c in curves_2d],
-                               state="readonly", font=("Consolas", 10), width=40)
+                               state="readonly", font=(mono_font(), 10), width=40)
         combo_b.pack(fill=tk.X, padx=10, pady=2)
         if len(curves_2d) > 1:
             combo_b.current(1)
         else:
             combo_b.current(0)
 
-        result_text = tk.Text(win, height=10, bg=THEME["surface"], fg=THEME["text"],
-                              font=("Consolas", 10), wrap=tk.WORD, state=tk.DISABLED)
+        result_text = tk.Text(body, height=10, bg=THEME["surface"], fg=THEME["text"],
+                              font=(mono_font(), 10), wrap=tk.WORD, state=tk.DISABLED)
         result_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=8)
 
         def do_find():
@@ -5201,11 +6348,12 @@ class SuperCalcApp:
             result_text.configure(state=tk.DISABLED)
             self._plot_all()
 
-        btn_frame = ttk.Frame(win, style="Dark.TFrame")
+        btn_frame = ttk.Frame(body, style="Dark.TFrame")
         btn_frame.pack(fill=tk.X, padx=10, pady=(0, 10))
         ttk.Button(btn_frame, text=t("btn_find_intersections2"), command=do_find).pack(side=tk.LEFT, padx=2)
         ttk.Button(btn_frame, text=t("btn_clear_marks"), command=lambda: (self.intersection_marks.clear(), self._plot_all())).pack(side=tk.LEFT, padx=2)
         ttk.Button(btn_frame, text=t("btn_close"), command=win.destroy).pack(side=tk.RIGHT, padx=2)
+        dlg.finalise()
 
     def _find_intersections(self, curve_a: CurveModel, curve_b: CurveModel) -> list[tuple[float, float]]:
         """Find intersections of two 2D curves within the current X range."""
@@ -5309,18 +6457,22 @@ class SuperCalcApp:
         self.status_var.set(t("status_table_gen", valid_count, n))
 
     def _show_table_window(self, expr: str, valid_count: int) -> None:
-        win = tk.Toplevel(self.root)
-        win.title(t("win_table"))
-        win.geometry("420x500")
-        win.configure(bg=THEME["bg"])
-        win.minsize(320, 300)
+        dlg = ScrollableDialog(
+            self.root, t("win_table"),
+            size_key="win_table", min_size=(340, 300),
+            max_size=(720, 860),
+        )
+        win = dlg.win
+        body = dlg.body
 
-        ttk.Label(win, text=f"f(x) = {expr}", style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(10, 4))
-        ttk.Label(win, text=t("valid_points", valid_count, len(self._table_data)), style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(0, 6))
+        ttk.Label(body, text=f"f(x) = {expr}", style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(10, 4))
+        ttk.Label(body, text=t("valid_points", valid_count, len(self._table_data)), style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(0, 6))
 
-        # Use a treeview for clean tabular display
+        # Use a treeview for clean tabular display.  The height is a hint
+        # only: the Treeview is its own scroller, so a long table scrolls
+        # inside the frame rather than being clipped by the window.
         cols = ("x", "f(x)")
-        tree = ttk.Treeview(win, columns=cols, show="headings", height=18)
+        tree = ttk.Treeview(body, columns=cols, show="headings", height=18)
         tree.heading("x", text="x")
         tree.heading("f(x)", text="f(x)")
         tree.column("x", width=180, anchor="center")
@@ -5338,7 +6490,8 @@ class SuperCalcApp:
             yv = f"{y:.10g}" if y is not None else "N/A"
             tree.insert("", tk.END, values=(xv, yv))
 
-        ttk.Button(win, text=t("btn_close"), command=win.destroy).pack(pady=(0, 10))
+        ttk.Button(body, text=t("btn_close"), command=win.destroy).pack(pady=(0, 10))
+        dlg.finalise()
 
     def _on_export_csv(self):
         if not self._table_data:
@@ -7658,18 +8811,21 @@ class SuperCalcApp:
 
     def _show_matrix_result(self, title: str, result_str: str):
         """Show matrix result in a dialog."""
-        win = tk.Toplevel(self.root)
-        win.title(title)
-        win.geometry("450x350")
-        win.configure(bg=THEME["bg"])
-        win.minsize(300, 200)
-        ttk.Label(win, text=title, style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(10, 4))
-        text = tk.Text(win, height=15, bg=THEME["surface"], fg=THEME["text"],
-                       font=("Consolas", 11), wrap=tk.WORD)
+        dlg = ScrollableDialog(
+            self.root, title, size_key="matrix_result",
+            min_size=(340, 260), max_size=(880, 760),
+        )
+        win = dlg.win
+        body = dlg.body
+        ttk.Label(body, text=title, style="Dark.TLabel").pack(anchor=tk.W, padx=10, pady=(10, 4))
+        # The Text widget scrolls itself; its `height` is only a starting hint.
+        text = tk.Text(body, height=15, bg=THEME["surface"], fg=THEME["text"],
+                       font=(mono_font(), 11), wrap=tk.NONE, padx=8, pady=6)
         text.pack(fill=tk.BOTH, expand=True, padx=10, pady=4)
         text.insert("1.0", result_str)
         text.configure(state=tk.DISABLED)
-        ttk.Button(win, text=t("btn_close"), command=win.destroy).pack(pady=(0, 10))
+        ttk.Button(body, text=t("btn_close"), command=win.destroy).pack(pady=(4, 10))
+        dlg.finalise()
 
     def _on_matrix_add(self):
         a = self._parse_matrix(self._var_matrix_a.get())
