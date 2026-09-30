@@ -114,12 +114,15 @@ public class Plot3DActivity extends AppCompatActivity {
             return;
         }
 
-        // Determine grid size.  A coarse grid aliases fast-oscillating surfaces
-        // (50*sin(3x)cos(3y) jumps ~25 between samples at 60x60), which is
-        // indistinguishable from a real pole and would tear a perfectly good
-        // surface.  At 120x120 the sampling is fine enough that genuine poles
-        // still tear while smooth surfaces render exactly.
-        int gridSize = 120;
+        // Grid density follows the visible x/y range.
+        //
+        // A fixed grid aliases as soon as the window grows: 50*sin(3x)cos(3y)
+        // steps ~25 units between samples at 60x60, which is indistinguishable
+        // from a real pole and would tear a perfectly smooth surface. Pinning
+        // the grid at 120x120 only moves the threshold; it does not remove it,
+        // so a large range (say [-100,100]) aliases again. Deriving the size
+        // from the span keeps resolution constant per data unit instead.
+        int gridSize = PlotSampling.sampleCount3D(xMin, xMax);
         int cols = gridSize;
         int rows = gridSize;
 

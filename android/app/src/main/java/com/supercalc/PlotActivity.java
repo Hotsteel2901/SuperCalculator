@@ -1377,10 +1377,15 @@ public class PlotActivity extends AppCompatActivity {
         }
         
         allEntries.clear();
-        // Dense enough that steep / oscillatory curves (tan, 1/x, high-frequency
-        // sin) render accurately. Still bounded to keep the Intent payload small.
-        int numPoints = (int) ((xMax - xMin) / 0.02);
-        numPoints = Math.max(400, Math.min(1500, numPoints));
+        // Sample density is a function of the visible x range, NOT a constant.
+        //
+        // The old code used `(xMax - xMin) / 0.02` clamped to 1500. That is
+        // fine at small ranges but collapses as the window grows: tan(x) over
+        // [-10,10] got ~157 samples per branch, over [-100,100] only ~47, and
+        // over [-1000,1000] barely 2.4 -- at which point the branches alias
+        // into a comb of near-vertical strokes. Zooming out must add samples,
+        // not stretch a fixed budget thinner.
+        int numPoints = PlotSampling.sampleCount2D(xMin, xMax);
         
         int paramIdx = 0;  // index into parametric lists
         int polarIdx = 0;  // index into polar lists
@@ -1655,12 +1660,15 @@ public class PlotActivity extends AppCompatActivity {
         
         // Limit data to avoid TransactionTooLargeException (~1MB limit)
         // Estimate size: each entry ~50 chars in string form
-        int maxTotalPoints = 10000; // Safe limit for Intent
+        // Hard cap on how many points we hand to the full-screen Intent. The
+        // chart library re-renders every Entry on each draw, so an unbounded
+        // transfer would make full screen stutter.
+        final int maxTotalPoints = 60000; // Safe limit for Intent
         int totalPoints = 0;
         for (ArrayList<Entry> entries : allEntries) {
             totalPoints += entries.size();
         }
-        
+
         String[] entriesData;
         // Encode each curve as its continuous segments joined by '|', with the
         // points inside a segment joined by ';'.  This carries the break
@@ -1668,11 +1676,15 @@ public class PlotActivity extends AppCompatActivity {
         // gaps at asymptotes.
         entriesData = new String[allEntries.size()];
         if (totalPoints > maxTotalPoints && !allEntries.isEmpty()) {
-            // Downsample
+            // Decimate to the budget. Crucially the stride is derived from the
+            // visible x range (pixel-width work), not from a constant -- a fixed
+            // "1500 points" budget is exactly what made large ranges alias, and
+            // repeating that mistake here would undo the fix in full screen.
             int pointsPerCurve = Math.max(1, maxTotalPoints / allEntries.size());
+            int screenCols = Math.max(1, Math.min(pointsPerCurve, 3000));
             for (int i = 0; i < allEntries.size(); i++) {
                 ArrayList<Entry> entries = allEntries.get(i);
-                int step = Math.max(1, entries.size() / pointsPerCurve);
+                int step = Math.max(1, entries.size() / screenCols);
                 String kind = i < curveTypes.size() ? curveTypes.get(i) : "regular";
                 boolean xyBreaks = "parametric".equals(kind) || "polar".equals(kind);
                 entriesData[i] = serializeSegments(entries, step, xyBreaks);

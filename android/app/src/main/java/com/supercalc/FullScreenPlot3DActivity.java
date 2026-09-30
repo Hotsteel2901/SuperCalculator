@@ -36,9 +36,9 @@ public class FullScreenPlot3DActivity extends AppCompatActivity {
             return;
         }
 
-        // Match Plot3DActivity: 120x120 avoids aliasing fast-oscillating surfaces
-        // while still resolving genuine poles.
-        int gridSize = 120;
+        // Match Plot3DActivity: grid density is derived from the visible range
+        // so enlarging the window adds detail instead of aliasing.
+        int gridSize = PlotSampling.sampleCount3D(xMin, xMax);
         int cols = gridSize;
         int rows = gridSize;
 

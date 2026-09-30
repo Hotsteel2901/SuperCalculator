@@ -58,10 +58,73 @@ def _get_lang():
 #  Constants
 # ---------------------------------------------------------------------------
 MIN_PLOT_POINTS = 10
-MAX_PLOT_POINTS = 5000
+MAX_PLOT_POINTS = 200000
 MIN_3D_POINTS = 10
-MAX_3D_POINTS = 120
+MAX_3D_POINTS = 240
 DEFAULT_3D_POINTS = 50
+
+# Target number of samples per unit of the *x* axis (2D) or per axis (3D).
+#
+# The bug this replaces: the sample count used to be a constant (a fixed step
+# size with a hard ceiling).  That works at small ranges and falls apart as the
+# range grows, because the *same* number of samples gets spread over a wider
+# interval -- so tan(x) over [-10,10] got ~157 samples per branch, but over
+# [-100,100] only ~47, and the branches visibly aliased into a comb.  The fix is
+# to derive the count from the range instead: every screen-width of x keeps its
+# own sampling density no matter how far you zoom out.
+SAMPLES_PER_UNIT_2D = 200     # -> 4000 samples over [-10,10]
+MIN_SAMPLES_2D = 2000         # never sample coarser than this, however narrow
+SAMPLES_PER_UNIT_3D = 24      # -> 120x120 over [-5,5]^2, as before
+MIN_SAMPLES_3D = 60           # guard against ludicrously narrow 3D windows
+
+# --- 3D pole handling -------------------------------------------------------
+# These four must stay in lock-step with android/.../CurveBreak.java.  The two
+# clients are required to tear the same surfaces and leave the same smooth ones
+# intact; a mismatch here showed up as tan(x) being torn on Android and left
+# whole on desktop.
+CONTRAST_FACTOR = 6.0         # blank a sample when it towers over its neighbours
+LOCAL_EDGE_FACTOR = 12.0      # refuse an edge that towers over its own ring
+NEIGHBOUR_SCALE_PCT = 90.0    # percentile describing the "ordinary" local step
+NEIGHBOUR_SCALE_CAP = 20000   # upper bound on differences feeding that percentile
+
+
+def _target_samples(span, per_unit, floor, ceiling):
+    """Sample count for a range of ``span`` units, clamped to sane bounds.
+
+    Density is held constant in *data* units, so enlarging the range adds
+    samples proportionally instead of stretching a fixed budget thinner.
+    """
+    try:
+        span = abs(float(span))
+    except (TypeError, ValueError):
+        return floor
+    if not np.isfinite(span) or span <= 0:
+        return ceiling
+    n = int(round(span * per_unit)) + 1
+    return max(floor, min(ceiling, n))
+
+
+def _auto_sample_count_2d(x_min, x_max):
+    """2D abscissa count for the visible x range."""
+    return _target_samples(x_max - x_min, SAMPLES_PER_UNIT_2D,
+                           MIN_SAMPLES_2D, MAX_PLOT_POINTS)
+
+
+def _auto_sample_count_3d(x_min, x_max, user_pts=None):
+    """3D grid edge length for the visible x/y range.
+
+    ``user_pts`` is the resolution the user asked for; the automatic density
+    may only ever *raise* it, never lower it, so an explicit request is honoured.
+    """
+    auto = _target_samples(x_max - x_min, SAMPLES_PER_UNIT_3D,
+                           MIN_SAMPLES_3D, MAX_3D_POINTS)
+    if user_pts is None:
+        return auto
+    try:
+        user_pts = int(user_pts)
+    except (TypeError, ValueError):
+        return auto
+    return max(MIN_3D_POINTS, min(MAX_3D_POINTS, max(user_pts, auto)))
 
 # ---------------------------------------------------------------------------
 #  Discontinuity handling for plotting
@@ -319,7 +382,8 @@ def _refine_near_poles(xs, ys, y_lo=None, y_hi=None, extra=8):
     return merged
 
 
-def _cull_3d_outliers(Z, z_lo=None, z_hi=None, factor=6.0, want_mask=False):
+def _cull_3d_outliers(Z, z_lo=None, z_hi=None, factor=CONTRAST_FACTOR,
+                      want_mask=False, local_factor=LOCAL_EDGE_FACTOR):
     """Return a copy of the 2D grid ``Z`` with pole spikes replaced by NaN.
 
     ``plot_surface`` fills every quad between four grid corners, so a sample near
@@ -380,43 +444,133 @@ def _cull_3d_outliers(Z, z_lo=None, z_hi=None, factor=6.0, want_mask=False):
     if not want_mask:
         return Z2
 
-    # Decide, per edge, whether it may be drawn.  An edge is refused when the two
-    # samples it would join differ by more than half the visible band: a pole
-    # edge crosses most of the band (tan(x): 1.65x, 1/(x*y): 4.6x) while a
-    # merely steep-but-smooth surface stays far below (20*sin*cos: 0.17x,
-    # x+2y: 0.02x).  This is the same idea as the 2D break test and, unlike a
-    # contrast-vs-neighbour test, it still catches a pole that falls between two
-    # grid lines — the common case for tan().
-    if have_band:
-        limit = _BREAK_BAND_FRAC * band
-    elif nb_scale > 0:
-        limit = factor * nb_scale
-    else:
-        limit = float('inf')
+    # Decide, per edge, whether it may be drawn, using a *local* and
+    # dimension-free test.
+    #
+    # Two earlier attempts got this wrong, both by comparing against a global
+    # scale that had to be re-tuned whenever the range changed:
+    #
+    #   * band-relative (0.5 * z-span).  On 50*sin(3x)cos(3y) over [-50,50]^2
+    #     the span is 100 so the limit was 50, which sits BELOW the surface's own
+    #     p90 (51.8) -- it discarded 7,872 of 57,360 edges and shredded a smooth
+    #     surface.  It only looked fine at narrow ranges because there the
+    #     surface aliased *below* the threshold.
+    #
+    #   * global contrast (6 * p90 of all adjacent differences).  This cannot
+    #     separate the two cases at all; measured at 120x120,
+    #         tan(x)+y        max/(6*p90) = 8.72   <- real pole
+    #         exp(-(x^2+y^2)) max/(6*p90) = 2.04   <- merely a Gaussian peak
+    #     The margin is too thin to tune safely across ranges.
+    #
+    # What actually separates them is locality.  A pole is an isolated spike, so
+    # the edges around it are small; a Gaussian peak is a whole neighbourhood
+    # rising together, so the edges around it are large too.  Each edge is
+    # therefore compared against the *median* jump of the edges sharing a vertex
+    # with it, floored by the largest of those jumps.  Both sides are measured at
+    # the same grid spacing, which is why this needs no range-dependent tuning.
+    #
+    # The implementation indexes neighbours directly (rather than building
+    # shifted copies of the whole grid) so it stays readable and obviously
+    # correct for a 200k-sample surface.
+    ok_h = np.zeros(Z2.shape, dtype=bool)
+    ok_v = np.zeros(Z2.shape, dtype=bool)
 
-    # ok_h[i][j] -> may draw the edge from (i, j) to (i, j + 1)
-    # ok_v[i][j] -> may draw the edge from (i, j) to (i + 1, j)
-    # They MUST be kept separate: a cell can be fine horizontally while its
-    # vertical neighbour sits across a pole, and collapsing them to one flag
-    # (e.g. ok_h | ok_v) would let the bad edge through.
-    ok_h = np.zeros(Z.shape, dtype=bool)
-    ok_v = np.zeros(Z.shape, dtype=bool)
-    if Z.shape[1] > 1:
-        left = Z2[:, :-1]
-        right = Z2[:, 1:]
-        both_h = np.isfinite(left) & np.isfinite(right)
-        ok_h[:, :-1] = both_h & (np.abs(right - left) <= limit)
-    if Z.shape[0] > 1:
-        top = Z2[:-1, :]
-        bottom = Z2[1:, :]
-        both_v = np.isfinite(top) & np.isfinite(bottom)
-        ok_v[:-1, :] = both_v & (np.abs(bottom - top) <= limit)
+    # Pad once with NaN so every neighbour lookup is in-range and any missing
+    # sample automatically fails the finite test.
+    P = np.pad(Z2, 1, mode='constant', constant_values=np.nan)
+
+    # Only the four orthogonal directions are needed: the two edge directions
+    # that get judged (right, down) plus their reverses (needed to express
+    # endpoint 2's ring in endpoint 1's frame). Diagonals are deliberately
+    # excluded -- see the note on `ortho` below.
+    dirs = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+    idx = {d: k for k, d in enumerate(dirs)}
+    jumps = []
+    a = P[1:-1, 1:-1]
+    for dr, dc in dirs:
+        b = P[1 + dr:P.shape[0] - 1 + dr, 1 + dc:P.shape[1] - 1 + dc]
+        ok = np.isfinite(a) & np.isfinite(b)
+        jumps.append(np.where(ok, np.abs(b - a), np.nan))
+
+    h_jump, v_jump = jumps[0], jumps[2]
+
+    # Only the four ORTHOGONAL neighbours may contribute. This mirrors Android's
+    # CurveBreak.collectEdgeJumps exactly, and it matters: the desktop once also
+    # scanned the four diagonals, which on tan(x) pulled the *adjacent row's*
+    # pole jump (76.45) into the ring of the pole edge itself. The median then
+    # rose to 76.6, the limit became 919, and not a single pole edge was torn --
+    # while Android, seeing only orthogonal steps (~0.08 next to the pole),
+    # tore all 1444 of them. Same surface, two different pictures.
+    ortho = dirs
+
+    def shifted(arr, dr, dc):
+        """`arr` re-indexed into the frame of the sample at +(dr, dc).
+
+        ``jumps[k]`` is laid out on the grid and indexed one ahead of the pad, so
+        shifting offsets by ``dr``/``dc`` directly and pads the vacated edge with
+        NaN. Used to express endpoint 2's ring in endpoint 1's coordinates.
+        """
+        r0, r1 = max(0, -dr), arr.shape[0] - max(0, dr)
+        c0, c1 = max(0, -dc), arr.shape[1] - max(0, dc)
+        out = np.full_like(arr, np.nan)
+        if r1 > r0 and c1 > c0:
+            out[r0:r1, c0:c1] = arr[r0 + dr:r1 + dr, c0 + dc:c1 + dc]
+        return out
+
+    def ring_reference(dr, dc):
+        """Median (floored by max) of the orthogonal jumps around both endpoints.
+
+        An edge may be drawn when its own jump does not exceed
+        ``local_factor`` times this reference. Both endpoints are measured at the
+        same grid spacing, so no range-dependent constant is involved.
+        """
+        stack = []
+        for sdr, sdc in ortho:
+            if sdr == dr and sdc == dc:
+                continue                     # the edge under test itself
+            stack.append(jumps[idx[(sdr, sdc)]])              # around endpoint 1
+            # around endpoint 2, brought back into endpoint 1's frame
+            stack.append(shifted(jumps[idx[(-sdr, -sdc)]], dr, dc))
+        st = np.stack(stack)
+        with np.errstate(invalid='ignore'):
+            med = np.nanmedian(st, axis=0)
+            top = np.nanmax(st, axis=0)
+        return np.fmax(med, top)
+
+    # Horizontal edges: compare |right - left| against its local ring.
+    ref_h = ring_reference(0, 1)
+    ref_v = ring_reference(1, 0)
+
+    with np.errstate(invalid='ignore'):
+        ok_h_all = (~np.isfinite(h_jump)) | (h_jump <= local_factor * ref_h)
+        ok_v_all = (~np.isfinite(v_jump)) | (v_jump <= local_factor * ref_v)
+    # A NaN reference means there was no neighbour evidence at all: keep it.
+    ok_h_all |= ~np.isfinite(ref_h)
+    ok_v_all |= ~np.isfinite(ref_v)
+
+    both_h = np.isfinite(Z2[:, :-1]) & np.isfinite(Z2[:, 1:])
+    both_v = np.isfinite(Z2[:-1, :]) & np.isfinite(Z2[1:, :])
+    ok_h[:, :-1] = both_h & ok_h_all[:, :-1]
+    ok_v[:-1, :] = both_v & ok_v_all[:-1, :]
 
     return Z2, ok_h, ok_v
 
 
 def _neighbour_scale(Z):
-    """98th-percentile absolute difference between adjacent samples."""
+    """Typical local step between adjacent samples, as a low percentile.
+
+    The percentile must stay *low*, and this is not a detail. Accumulating the
+    differences lets the pole dominate them: ``tan(x)`` over [-5,5] at 120
+    samples reaches only |61.8| but jumps 76.5 between the two samples
+    straddling a pole, so p98 is **51.9** and the contrast limit becomes
+    ``6 * 51.9 = 311`` -- larger than the pole itself, so nothing is blanked and
+    the surface keeps its bogus wall. p90 of the same distribution describes the
+    ordinary surface instead (~0.19 here), giving a limit of ~1.1 that blanks
+    exactly the exploding samples.
+
+    Both directions are scanned because a pole can be invisible along one of
+    them: ``tan(x)+y`` is flat in y and only tears along x.
+    """
     Z = np.asarray(Z, dtype=float)
     diffs = []
     for ax in (0, 1):
@@ -431,7 +585,11 @@ def _neighbour_scale(Z):
     if not diffs:
         return 0.0
     nb = np.concatenate(diffs)
-    scale = float(np.percentile(nb, 98))
+    if nb.size > NEIGHBOUR_SCALE_CAP:
+        # A huge grid can contribute millions of differences; the percentile is
+        # stable long before that, so sample instead of paying for a full sort.
+        nb = nb[::max(1, nb.size // NEIGHBOUR_SCALE_CAP)]
+    scale = float(np.percentile(nb, NEIGHBOUR_SCALE_PCT))
     if not math.isfinite(scale) or scale <= 0:
         scale = float(np.max(nb)) if nb.size else 0.0
     return scale
@@ -3642,11 +3800,14 @@ class SuperCalcApp:
         if self.x_min >= self.x_max or self.step_size <= 0:
             self.status_var.set(t("status_invalid_plot"))
             return
-        # Use a generous sampling density: the step size gives a lower bound,
-        # but we never go below ~1200 samples so steep / oscillatory curves
-        # (tan, high-frequency sin, rational functions) render accurately.
-        n_pts = int((self.x_max - self.x_min) / self.step_size)
-        n_pts = max(n_pts, 1200)
+        # Sample density is derived from the visible x range, so zooming out
+        # keeps the same detail per unit of x instead of spreading a fixed
+        # budget thinner.  The user's step size still acts as a *finer* floor
+        # when it asks for more samples than the density policy would give.
+        n_pts = _auto_sample_count_2d(self.x_min, self.x_max)
+        if self.step_size > 0:
+            by_step = int((self.x_max - self.x_min) / self.step_size) + 1
+            n_pts = max(n_pts, min(MAX_PLOT_POINTS, by_step))
         n_pts = max(MIN_PLOT_POINTS, min(MAX_PLOT_POINTS, n_pts))
         xs_np = np.linspace(self.x_min, self.x_max, n_pts)
         xs_list = xs_np.tolist()
@@ -3836,7 +3997,11 @@ class SuperCalcApp:
         if self.x_min >= self.x_max or self.y_min >= self.y_max or self.n_pts_3d < 2:
             self.status_var.set(t("status_invalid_3d"))
             return
-        n_pts = self.n_pts_3d
+        # Grid density follows the x/y range: a fixed 50x50 (or 120x120) grid
+        # aliases once the window grows, which looks exactly like a pole and
+        # tears surfaces that are perfectly smooth.  The user's resolution acts
+        # as a floor, so an explicit request is never silently reduced.
+        n_pts = _auto_sample_count_3d(self.x_min, self.x_max, self.n_pts_3d)
         x_vals = np.linspace(self.x_min, self.x_max, n_pts)
         y_vals = np.linspace(self.y_min, self.y_max, n_pts)
         X, Y = np.meshgrid(x_vals, y_vals)
@@ -4145,7 +4310,9 @@ class SuperCalcApp:
         expr_a = self._substitute_params(curve_a.expression)
         expr_b = self._substitute_params(curve_b.expression)
 
-        n_samples = max(MIN_PLOT_POINTS, min(MAX_PLOT_POINTS, int((self.x_max - self.x_min) / self.step_size)))
+        # Range-derived density: intersections must stay findable when the
+        # window grows, so this cannot be a fixed step-size budget.
+        n_samples = _auto_sample_count_2d(self.x_min, self.x_max)
         xs = np.linspace(self.x_min, self.x_max, n_samples)
         xs_list = xs.tolist()
 
@@ -4725,7 +4892,9 @@ class SuperCalcApp:
             messagebox.showerror(t("err_taylor"), t("msg_could_not_taylor", err))
             return
 
-        n_pts = max(MIN_PLOT_POINTS, min(MAX_PLOT_POINTS, int((self.x_max - self.x_min) / self.step_size)))
+        # Taylor overlay must sample as densely as the 2D plot it sits on,
+        # otherwise the two curves disagree once the range grows.
+        n_pts = _auto_sample_count_2d(self.x_min, self.x_max)
         xs_np = np.linspace(self.x_min, self.x_max, n_pts)
         xs_list = xs_np.tolist()
 
