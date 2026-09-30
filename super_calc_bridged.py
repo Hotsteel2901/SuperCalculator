@@ -1167,6 +1167,9 @@ class SuperCalcApp:
         #                  search box to jump to a specific panel
         self._cat_frames: dict[str, tk.Misc] = {}
         self._cat_canvases: dict[str, tk.Canvas] = {}
+        self._wheel_canvases: dict[tk.Canvas, tk.Canvas] = {}
+        self._wheel_target = None
+        self._mpl_widgets: list[tk.Misc] = []
         self._panel_cards: list[tuple[str, tk.Misc]] = []
         self._nav_labels: dict[str, tk.Label] = {}
         self._nav_rails: dict[str, tk.Frame] = {}
@@ -1296,6 +1299,7 @@ class SuperCalcApp:
         self._build_control_panel(None)
 
         self._install_shortcuts()
+        self._install_wheel()
         self._show_category(self._active_category)
 
     # ------------------------------------------------------------------
@@ -1564,21 +1568,131 @@ class SuperCalcApp:
         self._paint_plot_tabs()
 
     def _bind_wheel(self, canvas: tk.Canvas) -> None:
-        """Wheel scrolling that works on macOS, Windows and Linux."""
+        """Register a category canvas as the wheel target for its page.
+
+        Tk delivers ``<MouseWheel>`` to the widget *under the cursor*, not to
+        the widget that owns the scrollbar.  Binding to the canvas alone meant
+        the wheel only worked while the pointer happened to be over a thin
+        strip that the canvas actually covers -- hovering any card, entry or
+        button (i.e. most of the page) did nothing.
+
+        The real fix is the window-level handler in :meth:`_install_wheel`;
+        this method only records which canvas belongs to which category.
+        """
+        self._wheel_canvases[canvas] = canvas
+        canvas.bind("<Enter>", lambda e, c=canvas: self._set_wheel_target(c))
+        canvas.bind("<Leave>", lambda e: None)
+
+    def _set_wheel_target(self, canvas: tk.Canvas) -> None:
+        self._wheel_target = canvas
+
+    def _wheel_step(self, event) -> int:
+        """Convert a platform wheel event into a number of ``units``.
+
+        macOS reports small deltas (often ±1), Windows reports ±120 per
+        notch, and X11 sends Button-4/Button-5 instead of a delta entirely.
+        """
+        num = getattr(event, "num", None)
+        if num == 4:
+            return -1
+        if num == 5:
+            return 1
+        delta = getattr(event, "delta", 0) or 0
+        if delta == 0:
+            return 0
         import platform
+        if platform.system() == "Darwin":
+            return int(-1 * delta)
+        # Windows / generic: 120 units per notch.
+        steps = int(-1 * (delta / 120))
+        return steps if steps != 0 else (-1 if delta > 0 else 1)
 
-        def _wheel(event):
-            if platform.system() == "Darwin":
-                canvas.yview_scroll(int(-1 * event.delta), "units")
-            else:
-                canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+    def _active_wheel_canvas(self):
+        """The canvas that should receive a wheel event right now.
 
-        def _wheel_linux(event):
-            canvas.yview_scroll(-1 if event.num == 4 else 1, "units")
+        Prefers the pointer's own category (so hovering a card scrolls its
+        page), falling back to the currently visible category.
+        """
+        target = getattr(self, "_wheel_target", None)
+        if target is not None and target.winfo_exists() and target.winfo_ismapped():
+            return target
+        active = getattr(self, "_active_category", None)
+        canvas = self._cat_canvases.get(active)
+        if canvas is not None and canvas.winfo_ismapped():
+            return canvas
+        for canvas in self._cat_canvases.values():
+            if canvas.winfo_ismapped():
+                return canvas
+        return None
 
-        canvas.bind("<MouseWheel>", _wheel)
-        canvas.bind("<Button-4>", _wheel_linux)
-        canvas.bind("<Button-5>", _wheel_linux)
+    def _install_wheel(self) -> None:
+        """One window-wide wheel handler so scrolling works anywhere.
+
+        Wired with ``bind_all`` so the pointer can be over a LabelFrame, an
+        Entry, a Button, the plot -- anything -- and the page still scrolls.
+        Two exceptions are respected on purpose:
+
+        * a text widget that has its own scrollbar (the curves Listbox and the
+          history Treeview) keeps native behaviour when the pointer is over
+          it and it can still scroll further;
+        * matplotlib canvases handle their own wheel for zooming, so we only
+          scroll the page when Ctrl is held (otherwise the plot would fight
+          the pane).
+        """
+        self._wheel_target = None
+
+        def on_wheel(event):
+            if self._wheel_over_own_scroller(event):
+                return None
+            canvas = self._active_wheel_canvas()
+            if canvas is None:
+                return None
+            step = self._wheel_step(event)
+            if step:
+                # "units" with Tk's default scroll increment is tiny on some
+                # themes, so scroll by a comfortable fixed pixel amount.
+                canvas.yview_scroll(step * 3, "units")
+            return "break"
+
+        self.root.bind_all("<MouseWheel>", on_wheel, add="+")
+        self.root.bind_all("<Button-4>", on_wheel, add="+")
+        self.root.bind_all("<Button-5>", on_wheel, add="+")
+
+    def _wheel_over_own_scroller(self, event) -> bool:
+        """True when the pointer is over a widget that scrolls by itself."""
+        try:
+            widget = event.widget
+        except Exception:
+            return False
+        ctrl = bool(getattr(event, "state", 0) & 0x0004)
+        mpl = [w for w in self._mpl_widgets if w.winfo_exists()]
+        while widget is not None:
+            if widget in mpl:
+                # matplotlib zoom wins, unless Ctrl is held for page scroll.
+                return not ctrl
+            cls = widget.winfo_class()
+            if cls in ("Listbox", "Text", "Treeview", "TCombobox"):
+                # Only hand the event over while that widget can still move.
+                return widget.winfo_ismapped() and self._widget_can_scroll(widget)
+            try:
+                widget = widget.master
+            except Exception:
+                return False
+        return False
+
+    @staticmethod
+    def _widget_can_scroll(widget) -> bool:
+        """Whether a Listbox/Treeview still has more content to reveal."""
+        try:
+            cls = widget.winfo_class()
+            if cls == "Listbox":
+                return widget.size() > widget.winfo_height() // 16
+            if cls == "Treeview":
+                yview = widget.yview()
+                return not (yview[0] <= 0.0 and yview[1] >= 1.0)
+        except Exception:
+            pass
+        return False
 
     def _show_category(self, key: str) -> None:
         """Switch the visible category.
@@ -3906,8 +4020,12 @@ class SuperCalcApp:
             self._style_toolbar(self.toolbar_2d)
         else:
             self.toolbar_2d = None
-        self.canvas_2d.get_tk_widget().pack(fill=tk.BOTH, expand=True,
-                                            padx=2, pady=2)
+        widget_2d = self.canvas_2d.get_tk_widget()
+        # Tag it so the window-wide wheel handler lets matplotlib keep
+        # scroll-to-zoom instead of scrolling the page underneath it.
+        widget_2d._is_mpl_canvas = True
+        self._mpl_widgets.append(widget_2d)
+        widget_2d.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
         self.canvas_2d.mpl_connect('button_press_event', self._on_canvas_click)
 
     def _teardown_2d_canvas(self):
@@ -3984,8 +4102,10 @@ class SuperCalcApp:
             self._style_toolbar(self.toolbar_3d)
         else:
             self.toolbar_3d = None
-        self.canvas_3d.get_tk_widget().pack(fill=tk.BOTH, expand=True,
-                                            padx=2, pady=2)
+        widget_3d = self.canvas_3d.get_tk_widget()
+        widget_3d._is_mpl_canvas = True
+        self._mpl_widgets.append(widget_3d)
+        widget_3d.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
 
     def _teardown_3d_canvas(self):
         widget = None
