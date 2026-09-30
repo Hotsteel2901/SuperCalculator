@@ -39,6 +39,83 @@ STRINGS = {
         "en": "Super Function Graphing Calculator",
         "zh": "超级函数绘图计算器",
     },
+    # ---- Category navigation -------------------------------------------
+    "cat_plot": {
+        "en": "Plot",
+        "zh": "绘图",
+    },
+    "cat_calculus": {
+        "en": "Calculus",
+        "zh": "微积分",
+    },
+    "cat_equation": {
+        "en": "Equations",
+        "zh": "方程",
+    },
+    "cat_data": {
+        "en": "Data",
+        "zh": "数据",
+    },
+    "cat_linalg": {
+        "en": "Linear Algebra",
+        "zh": "线性代数",
+    },
+    "cat_discrete": {
+        "en": "Discrete",
+        "zh": "离散数学",
+    },
+    "cat_tools": {
+        "en": "Tools",
+        "zh": "实用工具",
+    },
+    "nav_title": {
+        "en": "Categories",
+        "zh": "功能分类",
+    },
+    "search_placeholder": {
+        "en": "Search features…",
+        "zh": "搜索功能…",
+    },
+    "search_no_match": {
+        "en": "No feature matches “{0}”",
+        "zh": "没有匹配“{0}”的功能",
+    },
+    "search_found": {
+        "en": "Showing “{0}” — {1} match(es)",
+        "zh": "正在显示“{0}” — 匹配 {1} 项",
+    },
+    "btn_open_window": {
+        "en": "Pop out",
+        "zh": "独立窗口",
+    },
+    "btn_back_embed": {
+        "en": "Dock",
+        "zh": "收回",
+    },
+    "tab_2d": {
+        "en": "2D",
+        "zh": "二维",
+    },
+    "tab_3d": {
+        "en": "3D",
+        "zh": "三维",
+    },
+    "plot_empty_title": {
+        "en": "Nothing plotted yet",
+        "zh": "还没有绘制任何曲线",
+    },
+    "plot_empty_hint": {
+        "en": "Type an expression above and press Plot (Ctrl+Enter).",
+        "zh": "在上方输入表达式，然后点击“绘制”（Ctrl+Enter）。",
+    },
+    "hint_shortcuts": {
+        "en": "Ctrl+Enter Plot   Ctrl+F Search   Ctrl+1-7 Categories",
+        "zh": "Ctrl+Enter 绘制   Ctrl+F 搜索   Ctrl+1-7 切换分类",
+    },
+    "sec_more_mode": {
+        "en": "Other curve types",
+        "zh": "其他曲线类型",
+    },
     "win_2d": {
         "en": "2D Function Plot",
         "zh": "二维函数图像",

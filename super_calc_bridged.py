@@ -710,19 +710,33 @@ ODE_PRESETS = {
 #  Theme — "Aurora Lab"
 #  One palette drives the Tk widgets and every Matplotlib canvas so the
 #  desktop app matches the web landing page and the Android theme.
+#
+#  The palette is a deliberate *luminance ladder* rather than a flat black
+#  slab.  The earlier version used #0b0e1c for both the window and (nearly) the
+#  cards, which read as "one big black wall" with no depth: a card could not be
+#  told apart from the background behind it.  Each surface is now a distinct
+#  step, so a card visibly floats above the page and the plot area visibly
+#  sinks into it.
+#
+#     page  #141a2e   <- window background
+#     card  #1e2540   <- raised above the page
+#     hover #273052   <- raised further (hover / selected)
+#     plot  #0f1424   <- recessed *below* the page
 # ---------------------------------------------------------------------------
 THEME = {
-    "bg":          "#0b0e1c",   # window / figure background
-    "axes_bg":     "#070a16",   # plot area
-    "surface":     "#161b31",   # cards, entries, tree rows
-    "surface_alt": "#1c2340",   # hover / raised surfaces
-    "border":      "#2b3350",
-    "border_soft": "#3b4570",
-    "text":        "#e6eaff",
-    "muted":       "#a7b0d6",
-    "subtle":      "#7b86ad",
-    "indigo":      "#6366f1",
-    "cyan":        "#22d3ee",
+    "bg":          "#141a2e",   # window / figure background (was #0b0e1c)
+    "axes_bg":     "#0f1424",   # plot area, sunk below the page
+    "surface":     "#1e2540",   # cards, entries, tree rows (was #161b31)
+    "surface_alt": "#273052",   # hover / raised surfaces (was #1c2340)
+    "border":      "#334063",   # clearer separation (was #2b3350)
+    "border_soft": "#43507a",
+    "text":        "#eef1ff",   # primary text, lifted slightly
+    "muted":       "#aeb8de",   # secondary text
+    "subtle":      "#7b86ad",   # tertiary / disabled
+    "indigo":      "#6366f1",   # brand primary
+    "indigo_dark": "#4f46e5",
+    "indigo_lite": "#7c7ff5",
+    "cyan":        "#22d3ee",   # brand accent
     "green":       "#34d399",
     "blue":        "#60a5fa",
     "pink":        "#f472b6",
@@ -744,10 +758,107 @@ CMAP_3D_OPTIONS = [
     'coolwarm', 'twilight', 'turbo',
 ]
 
+# ---------------------------------------------------------------------------
+#  Category navigation
+# ---------------------------------------------------------------------------
+# The control panel used to be one linear scroll of 44 identically-styled
+# label frames, ~6959 px tall in a 900 px window: only 12.9% of the UI was ever
+# visible, so every task began with a long hunt.  Grouping the panels into
+# seven named categories is what actually removes that cost -- scrolling itself
+# was never slow (0.2 ms/step), the *search* was.
+CATEGORY_ORDER = [
+    "plot", "calculus", "equation", "data", "linalg", "discrete", "tools",
+]
+
+CATEGORY_LABEL_KEYS = {
+    "plot":     "cat_plot",
+    "calculus": "cat_calculus",
+    "equation": "cat_equation",
+    "data":     "cat_data",
+    "linalg":   "cat_linalg",
+    "discrete": "cat_discrete",
+    "tools":    "cat_tools",
+}
+
+# Colour rail per category, so each group has its own identity on screen.
+CATEGORY_ACCENT = {
+    "plot":     "indigo",
+    "calculus": "cyan",
+    "equation": "green",
+    "data":     "purple",
+    "linalg":   "orange",
+    "discrete": "pink",
+    "tools":    "yellow",
+}
+
 PARAM_PATTERN = re.compile(r'\b([a-zA-Z]+)\b')
 KNOWN_FUNCTIONS = {'sin', 'cos', 'tan', 'log', 'ln', 'exp', 'sqrt', 'abs', 'floor', 'ceil', 'mod'}
 KNOWN_CONSTANTS = {'pi', 'e'}
 INDEPENDENT_VARS = {'x', 'y', 't'}  # variables used by the engine, not parameters
+
+
+# ---------------------------------------------------------------------------
+#  Fonts
+# ---------------------------------------------------------------------------
+# The UI previously hard-coded "Consolas", which does not exist on Linux or
+# macOS -- Tk then silently substituted a proportional font, so expressions
+# like sin(x) rendered misaligned on exactly the platforms where alignment
+# matters most.  These helpers probe what is actually installed.
+_UI_FONT_FALLBACKS = ("Segoe UI", "Helvetica Neue", "Helvetica", "DejaVu Sans",
+                      "Noto Sans", "Arial")
+_MONO_FONT_FALLBACKS = ("JetBrains Mono", "Cascadia Mono", "Consolas",
+                        "Menlo", "SF Mono", "DejaVu Sans Mono",
+                        "Liberation Mono", "Courier New", "Courier")
+
+_font_cache: dict[str, str] = {}
+
+
+def _pick_font(candidates, fallback):
+    """Return the first installed family from *candidates*."""
+    key = "|".join(candidates)
+    if key in _font_cache:
+        return _font_cache[key]
+    try:
+        import tkinter.font as tkfont
+        installed = {f.lower() for f in tkfont.families()}
+    except Exception:
+        installed = set()
+    chosen = fallback
+    for name in candidates:
+        if name.lower() in installed:
+            chosen = name
+            break
+    _font_cache[key] = chosen
+    return chosen
+
+
+def ui_font() -> str:
+    """Proportional family for labels, buttons and menus."""
+    return _pick_font(_UI_FONT_FALLBACKS, "TkDefaultFont")
+
+
+def mono_font() -> str:
+    """Monospaced family for expressions, tables and numeric output."""
+    return _pick_font(_MONO_FONT_FALLBACKS, "TkFixedFont")
+
+
+def _safe_draw(canvas) -> None:
+    """Repaint a matplotlib Tk canvas if it is currently mounted.
+
+    The plot can be docked in the main window *or* popped out into its own
+    window, and while it is moving between the two the canvas is briefly
+    ``None``.  Redraw requests arriving during that window would otherwise
+    raise ``AttributeError``, so every draw goes through here.
+    """
+    if canvas is None:
+        return
+    try:
+        canvas.draw()
+    except tk.TclError:
+        # Widget was destroyed between the check and the draw.
+        pass
+    except Exception:
+        pass
 
 
 def apply_ttk_theme(root: tk.Misc) -> ttk.Style:
@@ -763,11 +874,8 @@ def apply_ttk_theme(root: tk.Misc) -> ttk.Style:
     except tk.TclError:
         pass
 
-    try:
-        import tkinter.font as tkfont
-        family = tkfont.nametofont("TkDefaultFont").actual("family")
-    except Exception:
-        family = "TkDefaultFont"
+    family = ui_font()
+    mono = mono_font()
 
     bg = THEME["bg"]
     surface = THEME["surface"]
@@ -790,45 +898,126 @@ def apply_ttk_theme(root: tk.Misc) -> ttk.Style:
     style.configure("Accent.TLabel", background=bg, foreground=THEME["cyan"],
                     font=(family, 10, "bold"))
     style.configure("Title.TLabel", background=bg, foreground=text,
-                    font=(family, 17, "bold"))
-    style.configure("Status.TLabel", background=surface, foreground=muted,
-                    padding=(10, 5), font=(family, 9))
+                    font=(family, 15, "bold"))
+    style.configure("Tagline.TLabel", background=bg, foreground=subtle,
+                    font=(family, 9))
+    style.configure("Status.TLabel", background=THEME["surface"],
+                    foreground=muted, padding=(14, 7), font=(family, 9))
+    style.configure("StatusAccent.TLabel", background=THEME["surface"],
+                    foreground=THEME["cyan"], padding=(14, 7),
+                    font=(family, 9, "bold"))
+    style.configure("Mono.TLabel", background=bg, foreground=text,
+                    font=(mono, 10))
 
-    # Group boxes
+    # --- Cards ---------------------------------------------------------
+    # A card is a filled surface with a hairline border.  Both the tint and
+    # the border run the *same* family as the page so the rising luminance
+    # reads as depth instead of as a different colour cast.
+    style.configure("Card.TFrame", background=surface, relief="flat",
+                    borderwidth=0)
+    style.configure("CardHead.TFrame", background=surface)
+    style.configure("CardBody.TFrame", background=surface)
+    # A 3px colour rail down the left of every card title.  Without a rail
+    # every section carried identical visual weight, which is what made the
+    # old panel read as an undifferentiated wall of boxes.
+    style.configure("CardRail.TFrame", background=THEME["indigo"])
+    style.configure("CardTitle.TLabel", background=surface,
+                    foreground=text, font=(family, 10, "bold"))
+    style.configure("CardHint.TLabel", background=surface,
+                    foreground=subtle, font=(family, 9))
+    style.configure("Card.TLabel", background=surface, foreground=text)
+    style.configure("CardMuted.TLabel", background=surface, foreground=muted)
+    style.configure("CardSep.TSeparator", background=border)
+
+    # --- Sidebar navigation --------------------------------------------
+    style.configure("Nav.TFrame", background=THEME["bg"])
+    style.configure("Nav.TLabel", background=THEME["bg"], foreground=muted,
+                    font=(family, 10), padding=(16, 9), anchor="w")
+    style.map("Nav.TLabel", background=[("active", surface_alt)])
+    style.configure("NavActive.TLabel", background=surface,
+                    foreground=text, font=(family, 10, "bold"),
+                    padding=(16, 9), anchor="w")
+    style.configure("NavRail.TFrame", background=THEME["bg"])
+
+    # --- Right-hand plot pane -------------------------------------------
+    # Slightly darker than the panel column so the curve sits on the
+    # darkest surface in the window -- the classic "graph paper" reading.
+    style.configure("Plot.TFrame", background=surface)
+    style.configure("Axes.TFrame", background=THEME["axes_bg"])
+    style.configure("Tab.TLabel", background=surface, foreground=muted,
+                    font=(family, 10), padding=(2, 4))
+    style.configure("TabActive.TLabel", background=surface, foreground=text,
+                    font=(family, 10, "bold"), padding=(2, 4))
+    style.configure("EmptyAxes.TLabel", background=THEME["axes_bg"],
+                    foreground=subtle, font=(family, 11), padding=24)
+
+    # --- Top bar --------------------------------------------------------
+    style.configure("TopBar.TFrame", background=surface)
+    style.configure("Search.TEntry", fieldbackground=THEME["bg"],
+                    foreground=text, bordercolor=border, insertcolor=text,
+                    padding=(8, 6), relief="flat")
+
+    # Feature panels.  These are LabelFrames built by ~44 separate blocks
+    # that we deliberately do **not** rewrite; instead the style turns each
+    # one into a "card": a raised surface with a soft border and a coloured
+    # title, so the eye can group a section at a glance instead of seeing
+    # one flat wall of identical boxes.
     for name in ("TLabelframe", "Dark.TLabelframe"):
-        style.configure(name, background=bg, bordercolor=border,
-                        relief="solid", borderwidth=1)
+        style.configure(name, background=surface, bordercolor=border,
+                        relief="solid", borderwidth=1, padding=6)
     for name in ("TLabelframe.Label", "Dark.TLabelframe.Label"):
-        style.configure(name, background=bg, foreground=THEME["cyan"],
+        style.configure(name, background=surface, foreground=THEME["indigo_lite"],
                         font=(family, 10, "bold"))
+    # Highlight used by the search "flash" so a jumped-to card is obvious.
+    style.configure("Flash.TLabelframe", background=surface_alt,
+                    bordercolor=THEME["indigo_lite"], relief="solid",
+                    borderwidth=2, padding=6)
+    style.configure("Flash.TLabelframe.Label", background=surface_alt,
+                    foreground=text, font=(family, 10, "bold"))
 
     # Buttons
     style.configure("TButton", background=surface, foreground=text,
-                    bordercolor=border, relief="flat", padding=(9, 5),
+                    bordercolor=border, relief="flat", padding=(10, 6),
                     font=(family, 10))
     style.map("TButton",
               background=[("pressed", indigo), ("active", surface_alt),
                           ("disabled", bg)],
               foreground=[("disabled", subtle)],
               bordercolor=[("focus", indigo)])
+    # Primary action: filled indigo. Secondary actions stay "ghost" so the
+    # eye lands on Plot rather than on a row of identical grey bricks.
     style.configure("Accent.TButton", background=indigo, foreground="#ffffff",
-                    bordercolor=indigo, relief="flat", padding=(9, 5),
+                    bordercolor=indigo, relief="flat", padding=(12, 6),
                     font=(family, 10, "bold"))
     style.map("Accent.TButton",
-              background=[("pressed", "#4f46e5"), ("active", "#7c7ff5")])
+              background=[("pressed", THEME["indigo_dark"]),
+                          ("active", THEME["indigo_lite"])])
+    style.configure("Ghost.TButton", background=bg, foreground=muted,
+                    bordercolor=border, relief="flat", padding=(10, 6),
+                    font=(family, 10))
+    style.map("Ghost.TButton",
+              background=[("active", surface_alt), ("pressed", surface)],
+              foreground=[("active", text)])
+    style.configure("Link.TButton", background=surface, foreground=muted,
+                    borderwidth=0, relief="flat", padding=(4, 2),
+                    font=(family, 9))
+    style.map("Link.TButton", foreground=[("active", THEME["cyan"])])
 
-    # Text inputs
-    style.configure("TEntry", fieldbackground=surface, foreground=text,
-                    bordercolor=border, insertcolor=text, padding=4)
+    # Text inputs.  A thin border plus a bright focus ring reads as
+    # "editable" far better than the old grey slab, which looked disabled.
+    style.configure("TEntry", fieldbackground=THEME["bg"], foreground=text,
+                    bordercolor=border, insertcolor=text, padding=6,
+                    relief="flat")
     style.map("TEntry",
               bordercolor=[("focus", indigo)],
-              fieldbackground=[("disabled", bg)])
+              fieldbackground=[("disabled", bg)],
+              foreground=[("disabled", subtle)])
 
-    style.configure("TCombobox", fieldbackground=surface, background=surface,
-                    foreground=text, arrowcolor=muted, bordercolor=border,
-                    padding=3)
+    style.configure("TCombobox", fieldbackground=THEME["bg"],
+                    background=surface, foreground=text, arrowcolor=muted,
+                    bordercolor=border, padding=5, relief="flat")
     style.map("TCombobox",
-              fieldbackground=[("readonly", surface)],
+              fieldbackground=[("readonly", THEME["bg"])],
               foreground=[("readonly", text)],
               bordercolor=[("focus", indigo)])
     root.option_add("*TCombobox*Listbox.background", surface)
@@ -838,13 +1027,18 @@ def apply_ttk_theme(root: tk.Misc) -> ttk.Style:
 
     # Toggles
     style.configure("TCheckbutton", background=bg, foreground=text,
-                    indicatorcolor=surface, focuscolor=indigo)
+                    indicatorcolor=THEME["bg"], focuscolor=indigo)
     style.map("TCheckbutton",
               background=[("active", bg)],
               indicatorcolor=[("selected", indigo)],
               foreground=[("disabled", subtle)])
+    style.configure("CardCheck.TCheckbutton", background=surface,
+                    foreground=text, focuscolor=indigo)
+    style.map("CardCheck.TCheckbutton",
+              background=[("active", surface)],
+              indicatorcolor=[("selected", indigo)])
     style.configure("TRadiobutton", background=bg, foreground=text,
-                    indicatorcolor=surface)
+                    indicatorcolor=THEME["bg"])
     style.map("TRadiobutton",
               background=[("active", bg)],
               indicatorcolor=[("selected", indigo)])
@@ -858,7 +1052,7 @@ def apply_ttk_theme(root: tk.Misc) -> ttk.Style:
               background=[("selected", surface_alt)],
               foreground=[("selected", text)])
 
-    style.configure("Treeview", background=surface, fieldbackground=surface,
+    style.configure("Treeview", background=THEME["bg"], fieldbackground=THEME["bg"],
                     foreground=text, bordercolor=border, rowheight=24)
     style.map("Treeview",
               background=[("selected", indigo)],
@@ -869,13 +1063,13 @@ def apply_ttk_theme(root: tk.Misc) -> ttk.Style:
     style.map("Treeview.Heading", background=[("active", border)])
 
     for name in ("TScrollbar", "Vertical.TScrollbar", "Horizontal.TScrollbar"):
-        style.configure(name, background=surface, troughcolor=bg,
-                        bordercolor=bg, arrowcolor=muted)
+        style.configure(name, background=border, troughcolor=bg,
+                        bordercolor=bg, arrowcolor=muted, arrowsize=13)
     style.map("TScrollbar", background=[("active", THEME["border_soft"])])
 
     style.configure("TSeparator", background=border)
-    style.configure("TScale", background=bg, troughcolor=surface)
-    style.configure("TProgressbar", background=indigo, troughcolor=surface)
+    style.configure("TScale", background=bg, troughcolor=THEME["bg"])
+    style.configure("TProgressbar", background=indigo, troughcolor=THEME["bg"])
     return style
 
 
@@ -957,12 +1151,28 @@ class SuperCalcApp:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title(t("win_title"))
-        self.root.geometry("520x900")
-        self.root.minsize(450, 700)
+        self.root.geometry("1360x880")
+        self.root.minsize(1060, 680)
         self.root.configure(bg=THEME["bg"])
 
         # Install the shared palette before any widget is created.
         apply_ttk_theme(self.root)
+
+        # --- Shell navigation state -----------------------------------
+        # `_cat_frames`  : category key -> scrollable body Frame
+        # `_cat_canvases`: category key -> its Canvas (each keeps its own
+        #                  scroll position, so switching back to a category
+        #                  returns you to where you were)
+        # `_panel_cards` : (category key, ttk.LabelFrame) pairs, used by the
+        #                  search box to jump to a specific panel
+        self._cat_frames: dict[str, tk.Misc] = {}
+        self._cat_canvases: dict[str, tk.Canvas] = {}
+        self._panel_cards: list[tuple[str, tk.Misc]] = []
+        self._nav_labels: dict[str, tk.Label] = {}
+        self._nav_rails: dict[str, tk.Frame] = {}
+        self._active_category: str = CATEGORY_ORDER[0]
+        self._search_hits: list[tuple[str, tk.Misc]] = []
+        self._embed_tab = "2d"
 
         self.curves: List[CurveModel] = []
         self.color_index = 0
@@ -1046,54 +1256,537 @@ class SuperCalcApp:
     #  UI Construction
     # ------------------------------------------------------------------
     def _build_ui(self):
-        self._build_control_panel(self.root)
+        """Assemble the application shell.
 
-    def _build_control_panel(self, parent: tk.Misc) -> None:
-        canvas = tk.Canvas(parent, bg=THEME["bg"], highlightthickness=0)
-        scrollbar = ttk.Scrollbar(parent, orient=tk.VERTICAL, command=canvas.yview)
-        scroll_frame = ttk.Frame(canvas, style="Dark.TFrame")
+        Layout:
 
-        scroll_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-        canvas.create_window((0, 0), window=scroll_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
+            ┌──────────────────────────────────────────────┐
+            │ top bar: brand · search · actions            │
+            ├──────────┬───────────────────────────────────┤
+            │ sidebar  │ active category (scrollable)      │
+            │ category │   + embedded plot area            │
+            │ list     │                                   │
+            ├──────────┴───────────────────────────────────┤
+            │ status bar (pinned to the bottom)            │
+            └──────────────────────────────────────────────┘
 
-        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        The status bar is deliberately *outside* the scrolling region.  It used
+        to live inside the control panel's scroll frame, so the moment you
+        scrolled down to reach a tool the status message scrolled away with it.
+        """
+        self._build_top_bar(self.root)
 
-        def _on_mousewheel(event: tk.Event[tk.Canvas]) -> None:
-            import platform
+        shell = ttk.Frame(self.root, style="Dark.TFrame")
+        shell.pack(fill=tk.BOTH, expand=True)
+
+        self._build_sidebar(shell)
+        self._build_content_area(shell)
+
+        # Status bar: pinned, never scrolls.
+        status_wrap = ttk.Frame(self.root, style="TopBar.TFrame")
+        status_wrap.pack(side=tk.BOTTOM, fill=tk.X)
+        ttk.Separator(status_wrap, orient=tk.HORIZONTAL).pack(fill=tk.X)
+        self.status_var = tk.StringVar(value=t("status_ready"))
+        ttk.Label(status_wrap, textvariable=self.status_var,
+                  style="Status.TLabel").pack(side=tk.LEFT, fill=tk.X,
+                                              expand=True, anchor=tk.W)
+        ttk.Label(status_wrap, text=t("hint_shortcuts"),
+                  style="Status.TLabel").pack(side=tk.RIGHT)
+
+        self._build_control_panel(None)
+
+        self._install_shortcuts()
+        self._show_category(self._active_category)
+
+    # ------------------------------------------------------------------
+    #  Shell pieces
+    # ------------------------------------------------------------------
+    def _build_top_bar(self, parent: tk.Misc) -> None:
+        bar = ttk.Frame(parent, style="TopBar.TFrame")
+        bar.pack(side=tk.TOP, fill=tk.X)
+        ttk.Frame(bar, style="CardRail.TFrame", width=4).pack(
+            side=tk.LEFT, fill=tk.Y)
+
+        brand = ttk.Frame(bar, style="TopBar.TFrame")
+        brand.pack(side=tk.LEFT, padx=(12, 18), pady=8)
+        ttk.Label(brand, text=t("win_title"),
+                  style="Title.TLabel").pack(anchor=tk.W)
+        ttk.Label(brand, text=t("app_tagline"),
+                  style="Tagline.TLabel").pack(anchor=tk.W)
+
+        # Search — the single cheapest win against a 44-panel UI.
+        self._var_search = tk.StringVar()
+        search_box = ttk.Frame(bar, style="TopBar.TFrame")
+        search_box.pack(side=tk.LEFT, fill=tk.X, expand=True,
+                        padx=(0, 16), pady=8)
+        self._search_entry = ttk.Entry(search_box, textvariable=self._var_search,
+                                       style="Search.TEntry")
+        self._search_entry.pack(fill=tk.X)
+        self._var_search.trace_add("write", lambda *a: self._on_search_changed())
+        self._search_entry.bind("<Return>", lambda e: self._on_search_submit())
+        self._search_entry.bind("<Escape>",
+                                lambda e: (self._var_search.set(""),
+                                           self.root.focus_set()))
+        self._install_placeholder(self._search_entry,
+                                  t("search_placeholder"))
+
+        actions = ttk.Frame(bar, style="TopBar.TFrame")
+        actions.pack(side=tk.RIGHT, padx=12, pady=8)
+        self._btn_help = ttk.Button(actions, text="?", style="Ghost.TButton",
+                                    width=3, command=self._show_shortcut_help)
+        self._btn_help.pack(side=tk.RIGHT)
+        ttk.Separator(bar, orient=tk.HORIZONTAL).pack(
+            side=tk.BOTTOM, fill=tk.X)
+
+    def _install_placeholder(self, entry: ttk.Entry, text: str) -> None:
+        """Grey placeholder text inside an empty entry.
+
+        Tk has no native placeholder, so the text is written into the entry
+        itself and removed the moment the user focuses it.  The muted
+        foreground plus italic style is what tells the user it is a hint and
+        not an existing value.
+        """
+        state = {"showing": False}
+
+        def show():
+            if state["showing"] or entry.get():
+                return
+            state["showing"] = True
+            entry.insert(0, text)
+            entry.configure(foreground=THEME["muted"])
+
+        def hide(_e=None):
+            if not state["showing"]:
+                return
+            state["showing"] = False
+            entry.delete(0, tk.END)
+            entry.configure(foreground=THEME["text"])
+
+        entry.bind("<FocusIn>", hide, add="+")
+        entry.bind("<FocusOut>", lambda e: show(), add="+")
+        show()
+
+    def _build_sidebar(self, parent: tk.Misc) -> None:
+        side = ttk.Frame(parent, style="Nav.TFrame", width=186)
+        side.pack(side=tk.LEFT, fill=tk.Y)
+        side.pack_propagate(False)
+
+        ttk.Frame(side, style="CardRail.TFrame", width=3).pack(
+            side=tk.RIGHT, fill=tk.Y)
+
+        head = ttk.Frame(side, style="Nav.TFrame")
+        head.pack(fill=tk.X, padx=16, pady=(16, 8))
+        ttk.Label(head, text=t("nav_title").upper(),
+                  style="Tagline.TLabel").pack(anchor=tk.W)
+
+        self.sidebar = side
+        for key in CATEGORY_ORDER:
+            self._add_nav_item(side, key)
+
+    def _add_nav_item(self, parent: tk.Misc, key: str) -> None:
+        """One clickable category row: colour rail + label.
+
+        Plain ``tk`` widgets are used (not ``ttk``) so the hover/active
+        backgrounds can be set per row at runtime without fighting the theme.
+        """
+        row = tk.Frame(parent, bg=THEME["bg"], cursor="hand2")
+        row.pack(fill=tk.X)
+
+        rail = tk.Frame(row, bg=THEME["bg"], width=3)
+        rail.pack(side=tk.LEFT, fill=tk.Y)
+
+        label = tk.Label(row, text=t(CATEGORY_LABEL_KEYS[key]),
+                         bg=THEME["bg"], fg=THEME["muted"],
+                         font=(ui_font(), 10), anchor="w",
+                         padx=13, pady=9, cursor="hand2")
+        label.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        self._nav_labels[key] = label
+        self._nav_rails[key] = rail
+
+        for widget in (row, rail, label):
+            widget.bind("<Button-1>",
+                        lambda e, k=key: self._show_category(k))
+            widget.bind("<Enter>", lambda e, k=key: self._nav_hover(k, True))
+            widget.bind("<Leave>", lambda e, k=key: self._nav_hover(k, False))
+
+    def _nav_hover(self, key: str, entering: bool) -> None:
+        if key == self._active_category:
+            return
+        colour = THEME["surface_alt"] if entering else THEME["bg"]
+        label = self._nav_labels.get(key)
+        if label is not None:
+            label.configure(bg=colour)
+        for child in label.master.winfo_children():
+            if child is not label:
+                child.configure(bg=colour)
+
+    def _paint_nav(self) -> None:
+        for key, label in self._nav_labels.items():
+            active = (key == self._active_category)
+            accent = THEME[CATEGORY_ACCENT[key]]
+            bg = THEME["surface"] if active else THEME["bg"]
+            row = label.master
+            row.configure(bg=bg)
+            for child in row.winfo_children():
+                child.configure(bg=accent if child is self._nav_rails[key]
+                                else bg)
+            label.configure(bg=bg, fg=THEME["text"] if active else THEME["muted"],
+                            font=(ui_font(), 10, "bold" if active else "normal"))
+
+    def _build_content_area(self, parent: tk.Misc) -> None:
+        """Right-hand region: the panel pages plus the embedded plot area."""
+        wrap = ttk.Frame(parent, style="Dark.TFrame")
+        wrap.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.content_host = wrap
+
+        # Panels on the left of the content region, plot on the right.
+        self.panel_host = ttk.Frame(wrap, style="Dark.TFrame")
+        self.panel_host.pack(side=tk.LEFT, fill=tk.BOTH, expand=True,
+                             padx=(0, 6), pady=(10, 10))
+
+        self._build_plot_pane(wrap)
+
+        # One scrollable body per category, created up front so panel
+        # construction can simply target the right one.
+        for key in CATEGORY_ORDER:
+            canvas = tk.Canvas(self.panel_host, bg=THEME["bg"],
+                               highlightthickness=0)
+            scrollbar = ttk.Scrollbar(self.panel_host, orient=tk.VERTICAL,
+                                      command=canvas.yview)
+            body = ttk.Frame(canvas, style="Dark.TFrame")
+            inner = canvas.create_window((0, 0), window=body, anchor="nw")
+
+            body.bind("<Configure>",
+                      lambda e, c=canvas: c.configure(
+                          scrollregion=c.bbox("all")))
+            canvas.bind("<Configure>",
+                        lambda e, c=canvas, i=inner: c.itemconfigure(
+                            i, width=e.width))
+            canvas.configure(yscrollcommand=scrollbar.set)
+
+            self._bind_wheel(canvas)
+            self._cat_canvases[key] = canvas
+            self._cat_frames[key] = body
+            canvas._sb = scrollbar          # kept for _show_category
+
+    def _build_plot_pane(self, parent: tk.Misc) -> None:
+        """The always-visible plot column on the right of the content area."""
+        host = ttk.Frame(parent, style="Plot.TFrame")
+        host.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True,
+                  padx=(0, 10), pady=(10, 10))
+        self.plot_host = host
+
+        head = ttk.Frame(host, style="Plot.TFrame")
+        head.pack(fill=tk.X, padx=8, pady=(6, 2))
+
+        self._tab_2d = ttk.Label(head, text=t("tab_2d"), style="TabActive.TLabel",
+                                 cursor="hand2")
+        self._tab_2d.pack(side=tk.LEFT)
+        self._tab_3d = ttk.Label(head, text=t("tab_3d"), style="Tab.TLabel",
+                                 cursor="hand2")
+        self._tab_3d.pack(side=tk.LEFT, padx=(16, 0))
+        self._tab_2d.bind("<Button-1>", lambda e: self._show_embed_tab("2d"))
+        self._tab_3d.bind("<Button-1>", lambda e: self._show_embed_tab("3d"))
+
+        self._btn_popout = ttk.Button(head, text=t("btn_open_window"),
+                                      style="Ghost.TButton",
+                                      command=self._on_toggle_popout)
+        self._btn_popout.pack(side=tk.RIGHT)
+
+        ttk.Separator(host, orient=tk.HORIZONTAL).pack(fill=tk.X, padx=8)
+
+        self.embed_2d = ttk.Frame(host, style="Axes.TFrame")
+        self.embed_3d = ttk.Frame(host, style="Axes.TFrame")
+
+        self._plot_empty = ttk.Label(
+            host, text=t("plot_empty_title"), style="EmptyAxes.TLabel",
+            anchor="center", justify="center")
+        self._plot_empty_visible = True
+        self._plot_empty.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
+
+    def _show_embed_tab(self, tab: str) -> None:
+        """Switch the embedded pane between the 2D and 3D figures."""
+        if tab == getattr(self, "_embed_tab", "2d"):
+            return
+        self._embed_tab = tab
+        # Which figure is currently docked here?
+        for kind in ("2d", "3d"):
+            if getattr(self, f"_plot_{kind}_embedded", False):
+                if kind == "3d":
+                    self._teardown_3d_canvas()
+                else:
+                    self._teardown_2d_canvas()
+        self._hide_plot_empty()
+        if tab == "3d":
+            self.embed_2d.pack_forget()
+            self.embed_3d.pack(fill=tk.BOTH, expand=True)
+            self._ensure_3d_window(self.embed_3d)
+            if self.fig_3d is not None:
+                self.fig_3d.canvas.draw_idle()
+        else:
+            self.embed_3d.pack_forget()
+            self.embed_2d.pack(fill=tk.BOTH, expand=True)
+            self._ensure_2d_window(self.embed_2d)
+            if self.fig_2d is not None:
+                self.fig_2d.canvas.draw_idle()
+        self._paint_plot_tabs()
+        self._sync_popout_button()
+
+    def _paint_plot_tabs(self) -> None:
+        active = getattr(self, "_embed_tab", "2d")
+        self._tab_2d.configure(
+            style="TabActive.TLabel" if active == "2d" else "Tab.TLabel")
+        self._tab_3d.configure(
+            style="TabActive.TLabel" if active == "3d" else "Tab.TLabel")
+
+    def _hide_plot_empty(self) -> None:
+        if getattr(self, "_plot_empty_visible", False):
+            self._plot_empty.pack_forget()
+            self._plot_empty_visible = False
+
+    def _prepare_embedded_plot(self) -> None:
+        """Make the docked plot visible for the current tab.
+
+        Called right before anything is drawn so the first curve the user
+        ever plots lands in the main window instead of an empty pane.
+        """
+        self._hide_plot_empty()
+        tab = getattr(self, "_embed_tab", "2d")
+        frame = self.embed_3d if tab == "3d" else self.embed_2d
+        other = self.embed_2d if tab == "3d" else self.embed_3d
+        try:
+            other.pack_forget()
+        except Exception:
+            pass
+        if not frame.winfo_ismapped():
+            frame.pack(fill=tk.BOTH, expand=True)
+        self._paint_plot_tabs()
+
+    def _bind_wheel(self, canvas: tk.Canvas) -> None:
+        """Wheel scrolling that works on macOS, Windows and Linux."""
+        import platform
+
+        def _wheel(event):
             if platform.system() == "Darwin":
-                # macOS: event.delta is ±1
                 canvas.yview_scroll(int(-1 * event.delta), "units")
             else:
-                # Windows: event.delta is ±120
                 canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
-        def _on_mousewheel_linux(event: tk.Event[tk.Canvas]) -> None:
-            # Linux (Button-4 = scroll up, Button-5 = scroll down)
-            if event.num == 4:
-                canvas.yview_scroll(-1, "units")
-            elif event.num == 5:
-                canvas.yview_scroll(1, "units")
+        def _wheel_linux(event):
+            canvas.yview_scroll(-1 if event.num == 4 else 1, "units")
 
-        canvas.bind("<MouseWheel>", _on_mousewheel)
-        canvas.bind("<Button-4>", _on_mousewheel_linux)
-        canvas.bind("<Button-5>", _on_mousewheel_linux)
+        canvas.bind("<MouseWheel>", _wheel)
+        canvas.bind("<Button-4>", _wheel_linux)
+        canvas.bind("<Button-5>", _wheel_linux)
 
-        # --- App header ---
-        header = ttk.Frame(scroll_frame, style="Dark.TFrame")
-        header.pack(fill=tk.X, padx=8, pady=(4, 12))
-        ttk.Label(header, text=t("win_title"),
-                  style="Title.TLabel").pack(anchor=tk.W)
-        ttk.Label(header, text=t("app_tagline"),
-                  style="Muted.TLabel").pack(anchor=tk.W, pady=(2, 0))
+    def _show_category(self, key: str) -> None:
+        """Switch the visible category.
 
+        Panels are *re-parented once at build time* and never destroyed, so a
+        switch is just pack/pack_forget.  That keeps it instant and, more
+        importantly, preserves everything the user has typed into the other
+        categories.
+        """
+        if key not in self._cat_frames:
+            return
+        for other, canvas in self._cat_canvases.items():
+            if other == key:
+                continue
+            canvas.pack_forget()
+            canvas._sb.pack_forget()
+
+        canvas = self._cat_canvases[key]
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        canvas._sb.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self._active_category = key
+        self._paint_nav()
+        self._sync_popout_button()
+
+    def _sync_popout_button(self) -> None:
+        kind = getattr(self, "_embed_tab", "2d")
+        embedded = getattr(self, f"_plot_{kind}_embedded", False)
+        # The button reads "Open window" when docked, "Dock back" when out.
+        self._btn_popout.configure(
+            text=t("btn_open_window") if embedded else t("btn_back_embed"))
+
+    def _on_toggle_popout(self) -> None:
+        """Send the current plot to its own window, or dock it back."""
+        kind = getattr(self, "_embed_tab", "2d")
+        if getattr(self, f"_plot_{kind}_embedded", False):
+            self._detach_plot(kind)
+        else:
+            self._attach_plot(kind)
+            self._show_embed_tab(kind)
+        self._sync_popout_button()
+
+    def _install_shortcuts(self) -> None:
+        root = self.root
+        root.bind("<Control-Return>", lambda e: self._on_plot())
+        root.bind("<Control-KP_Enter>", lambda e: self._on_plot())
+        root.bind("<Control-f>", self._focus_search)
+        root.bind("<Control-F>", self._focus_search)
+        root.bind("<F1>", self._show_shortcut_help)
+        for idx, key in enumerate(CATEGORY_ORDER, start=1):
+            root.bind(f"<Control-Key-{idx}>",
+                      lambda e, k=key: self._show_category(k))
+
+    def _show_shortcut_help(self, event=None):
+        """A small modal listing every keyboard shortcut."""
+        win = tk.Toplevel(self.root)
+        win.title(t("hint_shortcuts"))
+        win.configure(bg=THEME["bg"])
+        win.transient(self.root)
+        win.resizable(False, False)
+
+        rows = [
+            ("Ctrl + Enter", t("btn_plot")),
+            ("Ctrl + F", t("search_placeholder")),
+            ("Escape", t("status_ready")),
+        ]
+        for i, key in enumerate(CATEGORY_ORDER, start=1):
+            rows.append((f"Ctrl + {i}", t(CATEGORY_LABEL_KEYS[key])))
+
+        head = ttk.Label(win, text=t("hint_shortcuts"), style="Title.TLabel")
+        head.pack(anchor=tk.W, padx=18, pady=(16, 4))
+        ttk.Label(win, text=t("app_tagline"),
+                  style="Muted.TLabel").pack(anchor=tk.W, padx=18, pady=(0, 10))
+
+        grid = ttk.Frame(win, style="Dark.TFrame")
+        grid.pack(fill=tk.BOTH, expand=True, padx=18, pady=(0, 8))
+        for r, (keys, desc) in enumerate(rows):
+            ttk.Label(grid, text=keys, style="Mono.TLabel",
+                      width=14).grid(row=r, column=0, sticky="w", pady=2)
+            ttk.Label(grid, text=desc, style="Dark.TLabel").grid(
+                row=r, column=1, sticky="w", pady=2)
+
+        ttk.Button(win, text="OK", style="Accent.TButton",
+                   command=win.destroy).pack(pady=(4, 16))
+        win.bind("<Escape>", lambda e: win.destroy())
+        return "break"
+
+    def _focus_search(self, event=None):
+        self._search_entry.focus_set()
+        self._search_entry.select_range(0, tk.END)
+        return "break"
+
+    def _on_search_changed(self) -> None:
+        """Filter panels live and jump to the first hit's category."""
+        query = self._var_search.get().strip().lower()
+        # The placeholder text is written into the same entry, so ignore it.
+        if query == t("search_placeholder").strip().lower():
+            return
+        self._search_hits = []
+        if not query:
+            return
+        for cat, card in self._panel_cards:
+            try:
+                title = str(card.cget("text"))
+            except tk.TclError:
+                continue
+            if query in title.lower():
+                self._search_hits.append((cat, card))
+        if self._search_hits:
+            self._show_category(self._search_hits[0][0])
+            self.status_var.set(
+                t("search_found", query, len(self._search_hits)))
+        else:
+            self.status_var.set(t("search_no_match", query))
+
+    def _on_search_submit(self) -> None:
+        """Enter jumps to the next match and flashes it."""
+        if not self._search_hits:
+            self._on_search_changed()
+            return
+        # Rotate through matches on repeated Enter.
+        self._search_idx = getattr(self, "_search_idx", -1) + 1
+        if self._search_idx >= len(self._search_hits):
+            self._search_idx = 0
+        cat, card = self._search_hits[self._search_idx]
+        self._show_category(cat)
+        self._flash_card(card)
+
+    def _flash_card(self, card: tk.Misc) -> None:
+        """Briefly highlight a card so the eye can find it after a jump."""
+        try:
+            # card -> body -> canvas(window) -> canvas widget
+            parent = card.master
+            canvas = parent.master
+            while canvas is not None and not isinstance(canvas, tk.Canvas):
+                canvas = canvas.master
+            if canvas is not None:
+                canvas.yview_moveto(0.0)
+                card.update_idletasks()
+                top = card.winfo_y()
+                box = canvas.bbox("all")
+                total = max(1, box[3] if box else 1)
+                canvas.yview_moveto(max(0.0, (top - 20) / total))
+        except Exception:
+            pass
+        self.root.after(120, lambda: self._flash_step(card, 3))
+
+    def _flash_step(self, card: tk.Misc, remaining: int) -> None:
+        if remaining <= 0:
+            return
+        try:
+            current = card.cget("style")
+        except tk.TclError:
+            return
+        base = getattr(card, "_base_style", "Card.TLabelframe")
+        card.configure(style="Flash.TLabelframe" if remaining % 2
+                       else base)
+        self.root.after(160, lambda: self._flash_step(card, remaining - 1))
+
+    # ------------------------------------------------------------------
+    def _place(self, panel: tk.Misc, category: str) -> tk.Misc:
+        """Host a feature panel inside its category body as a card.
+
+        The panel itself is *not* rebuilt or restyled by hand: only its
+        container changes.  That keeps every cross-scope ``self.*`` widget
+        attribute and every callback bound inside the panel alive, which is
+        what makes this refactor safe.
+        """
+        body = self._cat_frames.get(category)
+        if body is None:                      # pragma: no cover - defensive
+            return panel
+        panel.pack(fill=tk.X, padx=10, pady=(0, 10))
+        self._panel_cards.append((category, panel))
+        return panel
+
+    def _keep_header_only(self, panel: ttk.LabelFrame, keep: int) -> None:
+        """Hide a card's tail so only its first ``keep`` child rows show.
+
+        Used for the advanced-mode cards (parametric / polar / implicit):
+        their "Enable ..." checkbox stays visible as the entry point while
+        the rows of inputs behind it stay out of the way until requested.
+        Nothing is destroyed, so all bound widgets remain valid.
+        """
+        children = panel.winfo_children()
+        for child in children[keep:]:
+            child.pack_forget()
+        panel._collapsed_children = children[keep:]
+        panel._keep_children = keep
+
+    def _expand_card(self, panel: ttk.LabelFrame) -> None:
+        """Re-show every child row of a collapsed card."""
+        for child in getattr(panel, "_collapsed_children", []):
+            child.pack(fill=tk.X, padx=6, pady=2)
+        panel._collapsed_children = []
+
+    # ------------------------------------------------------------------
+    def _build_control_panel(self, parent: tk.Misc) -> None:
+        """Build every feature panel into its category body.
+
+        ``parent`` is accepted and ignored so the existing call site keeps
+        working; panels now target ``self._cat_frames`` instead of one long
+        scroll frame.
+        """
         # --- Expression Input ---
-        frm_expr = ttk.LabelFrame(scroll_frame, text=t("sec_function_input"),
+        frm_expr = ttk.LabelFrame(self._cat_frames["plot"],
+                                  text=t("sec_function_input"),
                                   style="Dark.TLabelframe")
-        frm_expr.pack(fill=tk.X, padx=8, pady=(8, 4))
+        self._place(frm_expr, "plot")
 
         ttk.Label(frm_expr, text=t("label_expr"),
                   style="Dark.TLabel").pack(anchor=tk.W, padx=6, pady=(6, 0))
@@ -1122,10 +1815,9 @@ class SuperCalcApp:
 
         # --- Parametric Mode ---
         self._var_parametric = tk.BooleanVar(value=False)
-        frm_param = ttk.LabelFrame(scroll_frame, text=t("sec_parametric"),
+        frm_param = ttk.LabelFrame(self._cat_frames["plot"], text=t("sec_parametric"),
                                    style="Dark.TLabelframe")
-        frm_param.pack(fill=tk.X, padx=8, pady=4)
-
+        self.frm_param_card = self._place(frm_param, "plot")
         ptog = ttk.Frame(frm_param, style="Dark.TFrame")
         ptog.pack(fill=tk.X, padx=6, pady=(4, 2))
         ttk.Checkbutton(ptog, text=t("btn_enable_parametric"),
@@ -1173,10 +1865,9 @@ class SuperCalcApp:
 
         # --- Polar Mode ---
         self._var_polar = tk.BooleanVar(value=False)
-        frm_polar = ttk.LabelFrame(scroll_frame, text=t("sec_polar"),
+        frm_polar = ttk.LabelFrame(self._cat_frames["plot"], text=t("sec_polar"),
                                    style="Dark.TLabelframe")
-        frm_polar.pack(fill=tk.X, padx=8, pady=4)
-
+        self.frm_polar_card = self._place(frm_polar, "plot")
         ptog2 = ttk.Frame(frm_polar, style="Dark.TFrame")
         ptog2.pack(fill=tk.X, padx=6, pady=(4, 2))
         ttk.Checkbutton(ptog2, text=t("btn_enable_polar"),
@@ -1218,10 +1909,9 @@ class SuperCalcApp:
 
         # --- Implicit Mode ---
         self._var_implicit = tk.BooleanVar(value=False)
-        frm_implicit = ttk.LabelFrame(scroll_frame, text=t("sec_implicit"),
+        frm_implicit = ttk.LabelFrame(self._cat_frames["plot"], text=t("sec_implicit"),
                                       style="Dark.TLabelframe")
-        frm_implicit.pack(fill=tk.X, padx=8, pady=4)
-
+        self.frm_implicit_card = self._place(frm_implicit, "plot")
         itog = ttk.Frame(frm_implicit, style="Dark.TFrame")
         itog.pack(fill=tk.X, padx=6, pady=(4, 2))
         ttk.Checkbutton(itog, text=t("btn_enable_implicit"),
@@ -1269,18 +1959,17 @@ class SuperCalcApp:
         self._on_implicit_toggle()
 
         # --- Parameter Inputs ---
-        self.frm_params = ttk.LabelFrame(scroll_frame, text=t("sec_parameters"),
+        self.frm_params = ttk.LabelFrame(self._cat_frames["plot"], text=t("sec_parameters"),
                                          style="Dark.TLabelframe")
-        self.frm_params.pack(fill=tk.X, padx=8, pady=4)
+        self._place(self.frm_params, "plot")
         self.param_widgets: dict[str, tk.StringVar] = {}
         ttk.Label(self.frm_params, text=t("label_no_params"),
                   style="Dark.TLabel").pack(padx=6, pady=8)
 
         # --- Presets ---
-        frm_preset = ttk.LabelFrame(scroll_frame, text=t("sec_preset"),
+        frm_preset = ttk.LabelFrame(self._cat_frames["plot"], text=t("sec_preset"),
                                     style="Dark.TLabelframe")
-        frm_preset.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_preset, "plot")
         self.preset_var = tk.StringVar()
         combo = ttk.Combobox(frm_preset, textvariable=self.preset_var,
                              values=list(PRESET_FUNCTIONS.keys()),
@@ -1290,9 +1979,9 @@ class SuperCalcApp:
                    lambda e: self._on_preset(self.preset_var.get()))
 
         # --- Curve List ---
-        frm_curves = ttk.LabelFrame(scroll_frame, text=t("sec_curves"),
+        frm_curves = ttk.LabelFrame(self._cat_frames["plot"], text=t("sec_curves"),
                                     style="Dark.TLabelframe")
-        frm_curves.pack(fill=tk.X, padx=8, pady=4)
+        self._place(frm_curves, "plot")
         self.listbox_curves = tk.Listbox(
             frm_curves, bg=THEME["surface"], fg=THEME["text"],
             selectbackground=THEME["blue"], selectforeground=THEME["bg"],
@@ -1304,10 +1993,9 @@ class SuperCalcApp:
                    command=self._show_intersection_dialog).pack(padx=6, pady=(0, 4))
 
         # --- Range ---
-        frm_range = ttk.LabelFrame(scroll_frame, text=t("sec_range"),
+        frm_range = ttk.LabelFrame(self._cat_frames["plot"], text=t("sec_range"),
                                    style="Dark.TLabelframe")
-        frm_range.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_range, "plot")
         grid = ttk.Frame(frm_range, style="Dark.TFrame")
         grid.pack(fill=tk.X, padx=6, pady=4)
         range_fields = [
@@ -1343,10 +2031,9 @@ class SuperCalcApp:
         ttk.Entry(range_row2, textvariable=self._var_3d_res, width=5).pack(side=tk.LEFT)
 
         # --- Calculus ---
-        frm_calc = ttk.LabelFrame(scroll_frame, text=t("sec_calculus"),
+        frm_calc = ttk.LabelFrame(self._cat_frames["calculus"], text=t("sec_calculus"),
                                   style="Dark.TLabelframe")
-        frm_calc.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_calc, "calculus")
         row1 = ttk.Frame(frm_calc, style="Dark.TFrame")
         row1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(row1, text=t("label_at_x"), style="Dark.TLabel").pack(side=tk.LEFT)
@@ -1384,10 +2071,9 @@ class SuperCalcApp:
                    command=lambda: self._on_limit(two_sided=False, side="right")).pack(side=tk.LEFT, padx=2)
 
         # --- Equation Solver ---
-        frm_solve = ttk.LabelFrame(scroll_frame, text=t("sec_solver"),
+        frm_solve = ttk.LabelFrame(self._cat_frames["equation"], text=t("sec_solver"),
                                    style="Dark.TLabelframe")
-        frm_solve.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_solve, "equation")
         srow1 = ttk.Frame(frm_solve, style="Dark.TFrame")
         srow1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(srow1, text=t("label_guess"), style="Dark.TLabel").pack(side=tk.LEFT)
@@ -1410,10 +2096,9 @@ class SuperCalcApp:
                    command=lambda: self._on_solve_bisection()).pack(side=tk.LEFT, padx=2)
 
         # --- Nonlinear System Solver (2D) ---
-        frm_sys = ttk.LabelFrame(scroll_frame, text=t("sec_system"),
+        frm_sys = ttk.LabelFrame(self._cat_frames["equation"], text=t("sec_system"),
                                  style="Dark.TLabelframe")
-        frm_sys.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_sys, "equation")
         sysrow1 = ttk.Frame(frm_sys, style="Dark.TFrame")
         sysrow1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(sysrow1, text=t("label_sys_f"), style="Dark.TLabel").pack(side=tk.LEFT)
@@ -1440,10 +2125,9 @@ class SuperCalcApp:
                   style="Dark.TLabel").pack(side=tk.LEFT)
 
         # --- Extremum Finder ---
-        frm_extremum = ttk.LabelFrame(scroll_frame, text=t("sec_extremum"),
+        frm_extremum = ttk.LabelFrame(self._cat_frames["calculus"], text=t("sec_extremum"),
                                       style="Dark.TLabelframe")
-        frm_extremum.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_extremum, "calculus")
         erow1 = ttk.Frame(frm_extremum, style="Dark.TFrame")
         erow1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(erow1, text=t("label_a"), style="Dark.TLabel").pack(side=tk.LEFT)
@@ -1461,10 +2145,9 @@ class SuperCalcApp:
                    command=lambda: self._on_find_extremum(minimum=False)).pack(side=tk.LEFT, padx=2)
 
         # --- Auto Root Scanner ---
-        frm_scan = ttk.LabelFrame(scroll_frame, text=t("sec_scan"),
+        frm_scan = ttk.LabelFrame(self._cat_frames["calculus"], text=t("sec_scan"),
                                   style="Dark.TLabelframe")
-        frm_scan.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_scan, "calculus")
         srow = ttk.Frame(frm_scan, style="Dark.TFrame")
         srow.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(srow, text=t("label_scan_desc"),
@@ -1473,10 +2156,9 @@ class SuperCalcApp:
                    command=self._on_scan_roots).pack(side=tk.RIGHT, padx=2)
 
         # --- Coordinate Marking ---
-        frm_mark = ttk.LabelFrame(scroll_frame, text=t("sec_mark"),
+        frm_mark = ttk.LabelFrame(self._cat_frames["calculus"], text=t("sec_mark"),
                                   style="Dark.TLabelframe")
-        frm_mark.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_mark, "calculus")
         ttk.Label(frm_mark, text=t("label_mark_hint"),
                   style="Dark.TLabel").pack(anchor=tk.W, padx=6, pady=(6, 0))
 
@@ -1490,10 +2172,9 @@ class SuperCalcApp:
                    command=self._clear_marks).pack(side=tk.LEFT, padx=2)
 
         # --- Tangent & Normal Lines ---
-        frm_tan = ttk.LabelFrame(scroll_frame, text=t("sec_tangent"),
+        frm_tan = ttk.LabelFrame(self._cat_frames["calculus"], text=t("sec_tangent"),
                                  style="Dark.TLabelframe")
-        frm_tan.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_tan, "calculus")
         trow_tan = ttk.Frame(frm_tan, style="Dark.TFrame")
         trow_tan.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(trow_tan, text=t("label_tan_at_x"), style="Dark.TLabel").pack(side=tk.LEFT)
@@ -1507,10 +2188,9 @@ class SuperCalcApp:
                    command=self._clear_tangent_normal).pack(side=tk.LEFT, padx=2)
 
         # --- Arc Length ---
-        frm_arc = ttk.LabelFrame(scroll_frame, text=t("sec_arc"),
+        frm_arc = ttk.LabelFrame(self._cat_frames["calculus"], text=t("sec_arc"),
                                  style="Dark.TLabelframe")
-        frm_arc.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_arc, "calculus")
         arow = ttk.Frame(frm_arc, style="Dark.TFrame")
         arow.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(arow, text=t("label_arc_uses"),
@@ -1519,10 +2199,9 @@ class SuperCalcApp:
                    command=self._on_arc_length).pack(side=tk.RIGHT, padx=2)
 
         # --- Area Between Curves ---
-        frm_area = ttk.LabelFrame(scroll_frame, text=t("sec_area"),
+        frm_area = ttk.LabelFrame(self._cat_frames["calculus"], text=t("sec_area"),
                                   style="Dark.TLabelframe")
-        frm_area.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_area, "calculus")
         area_row1 = ttk.Frame(frm_area, style="Dark.TFrame")
         area_row1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(area_row1, text=t("label_area_fx"), style="Dark.TLabel").pack(side=tk.LEFT)
@@ -1550,10 +2229,9 @@ class SuperCalcApp:
                    command=self._on_area_between_curves).pack(side=tk.RIGHT, padx=2)
 
         # --- Function Table ---
-        frm_table = ttk.LabelFrame(scroll_frame, text=t("sec_table"),
+        frm_table = ttk.LabelFrame(self._cat_frames["data"], text=t("sec_table"),
                                    style="Dark.TLabelframe")
-        frm_table.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_table, "data")
         trow = ttk.Frame(frm_table, style="Dark.TFrame")
         trow.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(trow, text=t("label_from"), style="Dark.TLabel").pack(side=tk.LEFT)
@@ -1580,10 +2258,9 @@ class SuperCalcApp:
         self._fft_data: dict[str, object] = {}     # last FFT result dict
 
         # --- Fourier Transform & Spectrum ---
-        frm_fft = ttk.LabelFrame(scroll_frame, text=t("sec_fft"),
+        frm_fft = ttk.LabelFrame(self._cat_frames["discrete"], text=t("sec_fft"),
                                  style="Dark.TLabelframe")
-        frm_fft.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_fft, "discrete")
         fft_row1 = ttk.Frame(frm_fft, style="Dark.TFrame")
         fft_row1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(fft_row1, text=t("label_samples"), style="Dark.TLabel").pack(side=tk.LEFT)
@@ -1600,10 +2277,9 @@ class SuperCalcApp:
                    command=self._on_export_fft_csv).pack(side=tk.LEFT, padx=2)
 
         # --- Taylor Series Expansion ---
-        frm_taylor = ttk.LabelFrame(scroll_frame, text=t("sec_taylor"),
+        frm_taylor = ttk.LabelFrame(self._cat_frames["calculus"], text=t("sec_taylor"),
                                     style="Dark.TLabelframe")
-        frm_taylor.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_taylor, "calculus")
         trow1 = ttk.Frame(frm_taylor, style="Dark.TFrame")
         trow1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(trow1, text=t("label_expand_at"), style="Dark.TLabel").pack(side=tk.LEFT)
@@ -1623,10 +2299,9 @@ class SuperCalcApp:
                    command=self._on_taylor_plot).pack(side=tk.LEFT, padx=2)
 
         # --- ODE Solver (RK4) ---
-        frm_ode = ttk.LabelFrame(scroll_frame, text=t("sec_ode"),
+        frm_ode = ttk.LabelFrame(self._cat_frames["calculus"], text=t("sec_ode"),
                                   style="Dark.TLabelframe")
-        frm_ode.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_ode, "calculus")
         ode_row1 = ttk.Frame(frm_ode, style="Dark.TFrame")
         ode_row1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(ode_row1, text=t("label_dydx"), style="Dark.TLabel").pack(side=tk.LEFT)
@@ -1685,10 +2360,9 @@ class SuperCalcApp:
             "Decaying oscillation (-y+sin(x))": "-y+sin(x)",
         }
 
-        frm_compare = ttk.LabelFrame(scroll_frame, text=t("sec_ode_compare"),
+        frm_compare = ttk.LabelFrame(self._cat_frames["calculus"], text=t("sec_ode_compare"),
                                      style="Dark.TLabelframe")
-        frm_compare.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_compare, "calculus")
         cmp_row1 = ttk.Frame(frm_compare, style="Dark.TFrame")
         cmp_row1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(cmp_row1, text=t("label_compare_expr"), style="Dark.TLabel").pack(side=tk.LEFT)
@@ -1747,10 +2421,9 @@ class SuperCalcApp:
             "Predator-prey (-x*y+0.5*x)": "-x*y+0.5*x",
         }
 
-        frm_df = ttk.LabelFrame(scroll_frame, text=t("sec_direction_field"),
+        frm_df = ttk.LabelFrame(self._cat_frames["plot"], text=t("sec_direction_field"),
                                  style="Dark.TLabelframe")
-        frm_df.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_df, "plot")
         df_row1 = ttk.Frame(frm_df, style="Dark.TFrame")
         df_row1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(df_row1, text=t("label_df_expr"), style="Dark.TLabel").pack(side=tk.LEFT)
@@ -1805,10 +2478,9 @@ class SuperCalcApp:
             "Peaks (3*(1-x)^2*exp(-x^2-(y+1)^2))": ("3*(1-x)^2*exp(-x^2-(y+1)^2)-10*(x/5-x^3-y^5)*exp(-x^2-y^2)-1/3*exp(-(x+1)^2-y^2)", -3, 3, -3, 3),
         }
 
-        frm_contour = ttk.LabelFrame(scroll_frame, text=t("sec_contour_plot"),
+        frm_contour = ttk.LabelFrame(self._cat_frames["plot"], text=t("sec_contour_plot"),
                                      style="Dark.TLabelframe")
-        frm_contour.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_contour, "plot")
         cr1 = ttk.Frame(frm_contour, style="Dark.TFrame")
         cr1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(cr1, text=t("label_contour_expr"), style="Dark.TLabel").pack(side=tk.LEFT)
@@ -1853,10 +2525,9 @@ class SuperCalcApp:
                    command=lambda: self._on_contour_plot(filled=True)).pack(side=tk.LEFT, padx=2)
 
         # --- Vector Field (dx/dt = P(x,y), dy/dt = Q(x,y)) ---
-        frm_vf = ttk.LabelFrame(scroll_frame, text=t("sec_vector_field", fallback="Vector Field (dx/dt=P(x,y), dy/dt=Q(x,y))"),
+        frm_vf = ttk.LabelFrame(self._cat_frames["plot"], text=t("sec_vector_field", fallback="Vector Field (dx/dt=P(x,y), dy/dt=Q(x,y))"),
                                  style="Dark.TLabelframe")
-        frm_vf.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_vf, "plot")
         vfr1 = ttk.Frame(frm_vf, style="Dark.TFrame")
         vfr1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(vfr1, text=t("label_vf_expr_p", fallback="dx/dt=P(x,y):"), style="Dark.TLabel").pack(side=tk.LEFT)
@@ -1926,10 +2597,9 @@ class SuperCalcApp:
                    command=self._on_vector_field_solve).pack(side=tk.LEFT, padx=2)
 
         # --- Custom Function Definition ---
-        frm_custom = ttk.LabelFrame(scroll_frame, text=t("sec_custom_func"),
+        frm_custom = ttk.LabelFrame(self._cat_frames["plot"], text=t("sec_custom_func"),
                                     style="Dark.TLabelframe")
-        frm_custom.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_custom, "plot")
         cfr1 = ttk.Frame(frm_custom, style="Dark.TFrame")
         cfr1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(cfr1, text=t("label_custom_func_name"), style="Dark.TLabel").pack(side=tk.LEFT)
@@ -1958,10 +2628,9 @@ class SuperCalcApp:
         self._refresh_custom_func_list()
 
         # --- Sparse Matrix Solver ---
-        frm_sparse = ttk.LabelFrame(scroll_frame, text=t("sec_sparse_matrix"),
+        frm_sparse = ttk.LabelFrame(self._cat_frames["linalg"], text=t("sec_sparse_matrix"),
                                      style="Dark.TLabelframe")
-        frm_sparse.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_sparse, "linalg")
         sfr1 = ttk.Frame(frm_sparse, style="Dark.TFrame")
         sfr1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(sfr1, text=t("label_sparse_triplets"), style="Dark.TLabel").pack(anchor=tk.W)
@@ -1986,10 +2655,9 @@ class SuperCalcApp:
                    command=self._on_sparse_solve_cg).pack(side=tk.LEFT, padx=2)
 
         # --- Convolution Calculator ---
-        frm_conv = ttk.LabelFrame(scroll_frame, text=t("sec_convolution"),
+        frm_conv = ttk.LabelFrame(self._cat_frames["linalg"], text=t("sec_convolution"),
                                    style="Dark.TLabelframe")
-        frm_conv.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_conv, "linalg")
         cfr1 = ttk.Frame(frm_conv, style="Dark.TFrame")
         cfr1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(cfr1, text=t("leg_conv_seq_a"), style="Dark.TLabel").pack(anchor=tk.W)
@@ -2010,10 +2678,9 @@ class SuperCalcApp:
                    command=self._on_convolve).pack(side=tk.LEFT, padx=2)
 
         # --- Calculation History ---
-        frm_history = ttk.LabelFrame(scroll_frame, text=t("sec_history"),
+        frm_history = ttk.LabelFrame(self._cat_frames["discrete"], text=t("sec_history"),
                                      style="Dark.TLabelframe")
-        frm_history.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_history, "discrete")
         hfr1 = ttk.Frame(frm_history, style="Dark.TFrame")
         hfr1.pack(fill=tk.X, padx=6, pady=2)
 
@@ -2032,10 +2699,9 @@ class SuperCalcApp:
         self._refresh_history_list()
 
         # --- Laplace Transform ---
-        frm_laplace = ttk.LabelFrame(scroll_frame, text=t("sec_laplace"),
+        frm_laplace = ttk.LabelFrame(self._cat_frames["discrete"], text=t("sec_laplace"),
                                      style="Dark.TLabelframe")
-        frm_laplace.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_laplace, "discrete")
         lfr1 = ttk.Frame(frm_laplace, style="Dark.TFrame")
         lfr1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(lfr1, text=t("label_laplace_expr"),
@@ -2060,10 +2726,9 @@ class SuperCalcApp:
                    command=self._on_laplace_inverse).pack(side=tk.LEFT, padx=2)
 
         # --- Statistics Calculator ---
-        frm_stats = ttk.LabelFrame(scroll_frame, text=t("sec_stats"),
+        frm_stats = ttk.LabelFrame(self._cat_frames["data"], text=t("sec_stats"),
                                     style="Dark.TLabelframe")
-        frm_stats.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_stats, "data")
         stats_row1 = ttk.Frame(frm_stats, style="Dark.TFrame")
         stats_row1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(stats_row1, text=t("label_data"),
@@ -2093,10 +2758,9 @@ class SuperCalcApp:
         except ImportError:
             pass
 
-        frm_dist = ttk.LabelFrame(scroll_frame, text=t("sec_dist"),
+        frm_dist = ttk.LabelFrame(self._cat_frames["data"], text=t("sec_dist"),
                                   style="Dark.TLabelframe")
-        frm_dist.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_dist, "data")
         drow1 = ttk.Frame(frm_dist, style="Dark.TFrame")
         drow1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(drow1, text=t("label_dist_type"),
@@ -2152,10 +2816,9 @@ class SuperCalcApp:
                    command=self._on_dist_compare).pack(side=tk.LEFT, padx=2)
 
         # --- Curve Fitting / Regression ---
-        frm_regression = ttk.LabelFrame(scroll_frame, text=t("sec_regression"),
+        frm_regression = ttk.LabelFrame(self._cat_frames["data"], text=t("sec_regression"),
                                         style="Dark.TLabelframe")
-        frm_regression.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_regression, "data")
         reg_row1 = ttk.Frame(frm_regression, style="Dark.TFrame")
         reg_row1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(reg_row1, text=t("label_xdata"),
@@ -2202,10 +2865,9 @@ class SuperCalcApp:
                    command=self._on_reg_export_csv).pack(side=tk.LEFT, padx=2)
 
         # --- CSV Data Import & Scatter Plot ---
-        frm_data = ttk.LabelFrame(scroll_frame, text=t("sec_data_import"),
+        frm_data = ttk.LabelFrame(self._cat_frames["data"], text=t("sec_data_import"),
                                   style="Dark.TLabelframe")
-        frm_data.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_data, "data")
         drow1 = ttk.Frame(frm_data, style="Dark.TFrame")
         drow1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Button(drow1, text=t("btn_import_csv"),
@@ -2273,10 +2935,9 @@ class SuperCalcApp:
         self.toolbar_data: Optional[NavigationToolbar2Tk] = None
 
         # --- Matrix Operations ---
-        frm_matrix = ttk.LabelFrame(scroll_frame, text=t("sec_matrix"),
+        frm_matrix = ttk.LabelFrame(self._cat_frames["linalg"], text=t("sec_matrix"),
                                     style="Dark.TLabelframe")
-        frm_matrix.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_matrix, "linalg")
         mrow1 = ttk.Frame(frm_matrix, style="Dark.TFrame")
         mrow1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(mrow1, text=t("label_matrix_a"),
@@ -2315,10 +2976,9 @@ class SuperCalcApp:
         self._matrix_result = None
 
         # --- Complex Number Calculator ---
-        frm_complex = ttk.LabelFrame(scroll_frame, text=t("sec_complex"),
+        frm_complex = ttk.LabelFrame(self._cat_frames["linalg"], text=t("sec_complex"),
                                      style="Dark.TLabelframe")
-        frm_complex.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_complex, "linalg")
         crow1 = ttk.Frame(frm_complex, style="Dark.TFrame")
         crow1.pack(fill=tk.X, padx=6, pady=2)
         ttk.Label(crow1, text=t("label_z1"), style="Dark.TLabel").pack(side=tk.LEFT)
@@ -2369,10 +3029,9 @@ class SuperCalcApp:
                   font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
 
         # --- Number Theory Calculator ---
-        frm_nt = ttk.LabelFrame(scroll_frame, text=t("sec_number_theory"),
+        frm_nt = ttk.LabelFrame(self._cat_frames["tools"], text=t("sec_number_theory"),
                                 style="Dark.TLabelframe")
-        frm_nt.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_nt, "tools")
         # Row 1: n input
         nt_row1 = ttk.Frame(frm_nt, style="Dark.TFrame")
         nt_row1.pack(fill=tk.X, padx=6, pady=2)
@@ -2442,10 +3101,9 @@ class SuperCalcApp:
                    command=self._on_nt_clear).pack(side=tk.LEFT, padx=2)
 
         # --- Bitwise Operations Calculator ---
-        frm_bw = ttk.LabelFrame(scroll_frame, text=t("sec_bitwise"),
+        frm_bw = ttk.LabelFrame(self._cat_frames["tools"], text=t("sec_bitwise"),
                                 style="Dark.TLabelframe")
-        frm_bw.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_bw, "tools")
         # Row 1: Bit width selector
         bw_row1 = ttk.Frame(frm_bw, style="Dark.TFrame")
         bw_row1.pack(fill=tk.X, padx=6, pady=2)
@@ -2598,10 +3256,9 @@ class SuperCalcApp:
 
         self._unit_categories = UNIT_CATEGORIES
 
-        frm_unit = ttk.LabelFrame(scroll_frame, text=t("sec_unit"),
+        frm_unit = ttk.LabelFrame(self._cat_frames["tools"], text=t("sec_unit"),
                                   style="Dark.TLabelframe")
-        frm_unit.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_unit, "tools")
         urow1 = ttk.Frame(frm_unit, style="Dark.TFrame")
         urow1.pack(fill=tk.X, padx=6, pady=(4, 2))
         ttk.Label(urow1, text=t("label_category"), style="Dark.TLabel").pack(side=tk.LEFT)
@@ -2649,10 +3306,9 @@ class SuperCalcApp:
         self._on_unit_category_change()
 
         # --- Perpetual Calendar ---
-        frm_cal = ttk.LabelFrame(scroll_frame, text=t("sec_calendar"),
+        frm_cal = ttk.LabelFrame(self._cat_frames["tools"], text=t("sec_calendar"),
                                   style="Dark.TLabelframe")
-        frm_cal.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_cal, "tools")
         # Row 1: Date 1 (YYYY-MM-DD)
         cal_row1 = ttk.Frame(frm_cal, style="Dark.TFrame")
         cal_row1.pack(fill=tk.X, padx=6, pady=(4, 2))
@@ -2700,10 +3356,9 @@ class SuperCalcApp:
                   font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
 
         # --- Probability Calculator ---
-        frm_prob = ttk.LabelFrame(scroll_frame, text=t("sec_probability"),
+        frm_prob = ttk.LabelFrame(self._cat_frames["discrete"], text=t("sec_probability"),
                                    style="Dark.TLabelframe")
-        frm_prob.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_prob, "discrete")
         # Mode selector
         prob_mode_row = ttk.Frame(frm_prob, style="Dark.TFrame")
         prob_mode_row.pack(fill=tk.X, padx=6, pady=(4, 2))
@@ -2891,10 +3546,9 @@ class SuperCalcApp:
         self._on_prob_mode_change()
 
         # --- Finance Calculator ---
-        frm_fin = ttk.LabelFrame(scroll_frame, text=t("sec_finance"),
+        frm_fin = ttk.LabelFrame(self._cat_frames["data"], text=t("sec_finance"),
                                   style="Dark.TLabelframe")
-        frm_fin.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_fin, "data")
         # Mode selector
         fin_mode_row = ttk.Frame(frm_fin, style="Dark.TFrame")
         fin_mode_row.pack(fill=tk.X, padx=6, pady=(4, 2))
@@ -3062,10 +3716,9 @@ class SuperCalcApp:
         self._on_fin_mode_change()
 
         # --- Volume of Revolution Calculator ---
-        frm_vol = ttk.LabelFrame(scroll_frame, text=t("sec_volume"),
+        frm_vol = ttk.LabelFrame(self._cat_frames["calculus"], text=t("sec_volume"),
                                   style="Dark.TLabelframe")
-        frm_vol.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_vol, "calculus")
         vol_row0 = ttk.Frame(frm_vol, style="Dark.TFrame")
         vol_row0.pack(fill=tk.X, padx=6, pady=(4, 2))
         ttk.Label(vol_row0, text=t("label_vol_method"),
@@ -3116,10 +3769,9 @@ class SuperCalcApp:
         self._on_vol_mode_change()
 
         # --- Data Interpolation Calculator ---
-        frm_interp = ttk.LabelFrame(scroll_frame, text=t("sec_interpolation"),
+        frm_interp = ttk.LabelFrame(self._cat_frames["calculus"], text=t("sec_interpolation"),
                                     style="Dark.TLabelframe")
-        frm_interp.pack(fill=tk.X, padx=8, pady=4)
-
+        self._place(frm_interp, "calculus")
         ip_row0 = ttk.Frame(frm_interp, style="Dark.TFrame")
         ip_row0.pack(fill=tk.X, padx=6, pady=(4, 2))
         ttk.Label(ip_row0, text=t("label_interp_method"),
@@ -3182,91 +3834,218 @@ class SuperCalcApp:
         ttk.Entry(ip_row4, textvariable=self._var_interp_formula, width=50,
                   font=("Consolas", 10), state="readonly").pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
 
-        # --- Status ---
-        self.status_var = tk.StringVar(value=t("status_ready"))
-        status_bar = ttk.Label(scroll_frame, textvariable=self.status_var,
-                               style="Status.TLabel",
-                               anchor=tk.W)
-        status_bar.pack(fill=tk.X, padx=8, pady=8)
-
-        # --- Styles ---
-        apply_ttk_theme(self.root)
+        # The status bar now lives outside the scrolling region (see
+        # ``_build_ui``) so it stays visible no matter how far the user
+        # scrolls.  The theme is applied once during ``__init__``.
+        #
+        # Finally, tuck the advanced-mode rows away.  These three cards are
+        # the tallest in the Plot category and are only needed occasionally;
+        # leaving their "Enable ..." toggle as the visible entry point cuts
+        # roughly 500 px of scroll without removing a single widget.
+        for panel, keep in ((frm_param, 1), (frm_polar, 1), (frm_implicit, 1)):
+            try:
+                self._keep_header_only(panel, keep)
+            except Exception:
+                pass
 
     # ------------------------------------------------------------------
     #  2D / 3D Window Management
     # ------------------------------------------------------------------
-    def _ensure_2d_window(self):
+    #  The plot can live in one of two places: docked in the main window's
+    #  right-hand column (the default, so you can type a formula and see the
+    #  curve without ever opening a second window) or popped out into its own
+    #  top-level window for a bigger canvas.  Both paths share the *same*
+    #  ``fig_2d`` / ``ax_2d`` objects -- only the Tk widget that hosts the
+    #  figure is re-created, so nothing about the plotted data changes.
+    # ------------------------------------------------------------------
+    def _embed_target(self, kind: str):
+        """Return the frame the embedded plot should be packed into."""
+        tab = getattr(self, "_embed_tab", "2d")
+        if kind == "3d" and tab == "3d":
+            return self.embed_3d
+        if kind == "2d" and tab == "2d":
+            return self.embed_2d
+        return None
+
+    def _ensure_2d_window(self, host: tk.Misc = "auto"):
+        # ``host`` semantics:
+        #   "auto"  -> dock into the main window's plot pane (default)
+        #   None    -> force a detached top-level window
+        #   widget  -> dock into that specific frame
+        if host == "auto":
+            host = self._embed_target("2d")
+
+        # Already showing in the right place?  Nothing to do.
         if self.window_2d is not None and self.window_2d.winfo_exists():
-            return
-        self.window_2d = tk.Toplevel(self.root)
-        self.window_2d.title(t("win_2d"))
-        self.window_2d.geometry("900x700")
-        self.window_2d.minsize(600, 400)
-        self.window_2d.configure(bg=THEME["bg"])
-        self.window_2d.protocol("WM_DELETE_WINDOW", self._on_2d_window_close)
+            if getattr(self, "_plot_2d_host", None) is host:
+                return
+            self._teardown_2d_canvas()
 
-        self.fig_2d = Figure(figsize=(9, 7), dpi=100, facecolor=THEME["bg"])
-        self.ax_2d = self.fig_2d.add_subplot(111)
-        self._setup_axes(self.ax_2d, is_3d=False)
+        embedded = host is not None
+        if not embedded:
+            host = tk.Toplevel(self.root)
+            host.title(t("win_2d"))
+            host.geometry("900x700")
+            host.minsize(600, 400)
+            host.configure(bg=THEME["bg"])
+            host.protocol("WM_DELETE_WINDOW", self._on_2d_window_close)
+        self.window_2d = host
+        self._plot_2d_host = host
+        self._plot_2d_embedded = embedded
 
-        self.canvas_2d = FigureCanvasTkAgg(self.fig_2d, master=self.window_2d)
-        self.canvas_2d.draw()
-        self.toolbar_2d = NavigationToolbar2Tk(self.canvas_2d, self.window_2d)
-        self.toolbar_2d.update()
-        self._style_toolbar(self.toolbar_2d)
-        self.canvas_2d.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
+        if self.fig_2d is None:
+            self.fig_2d = Figure(figsize=(9, 7), dpi=100, facecolor=THEME["bg"])
+            self.ax_2d = self.fig_2d.add_subplot(111)
+            self._setup_axes(self.ax_2d, is_3d=False)
+
+        self.canvas_2d = FigureCanvasTkAgg(self.fig_2d, master=host)
+        _safe_draw(self.canvas_2d)
+        if not embedded:
+            self.toolbar_2d = NavigationToolbar2Tk(self.canvas_2d, host)
+            self.toolbar_2d.update()
+            self._style_toolbar(self.toolbar_2d)
+        else:
+            self.toolbar_2d = None
+        self.canvas_2d.get_tk_widget().pack(fill=tk.BOTH, expand=True,
+                                            padx=2, pady=2)
         self.canvas_2d.mpl_connect('button_press_event', self._on_canvas_click)
 
-    def _on_2d_window_close(self):
-        if self.fig_2d is not None:
+    def _teardown_2d_canvas(self):
+        """Drop the 2D Tk canvas while keeping the matplotlib figure alive."""
+        widget = None
+        if self.canvas_2d is not None:
             try:
-                import matplotlib._pylab_helpers as _mpl_helpers
-                _mpl_helpers.Gcf.destroy_fig(self.fig_2d)
+                widget = self.canvas_2d.get_tk_widget()
+            except Exception:
+                widget = None
+        if widget is not None:
+            try:
+                widget.destroy()
             except Exception:
                 pass
-        if self.window_2d is not None:
-            self.window_2d.destroy()
-        self.window_2d = None
-        self.fig_2d = None
-        self.ax_2d = None
+        if self.toolbar_2d is not None:
+            try:
+                self.toolbar_2d.destroy()
+            except Exception:
+                pass
         self.canvas_2d = None
         self.toolbar_2d = None
+        self.window_2d = None
+        self._plot_2d_host = None
+        self._plot_2d_embedded = False
 
-    def _ensure_3d_window(self):
-        if self.window_3d is not None and self.window_3d.winfo_exists():
-            return
-        self.window_3d = tk.Toplevel(self.root)
-        self.window_3d.title(t("win_3d"))
-        self.window_3d.geometry("900x700")
-        self.window_3d.minsize(600, 400)
-        self.window_3d.configure(bg=THEME["bg"])
-        self.window_3d.protocol("WM_DELETE_WINDOW", self._on_3d_window_close)
-
-        self.fig_3d = Figure(figsize=(9, 7), dpi=100, facecolor=THEME["bg"])
-        self.ax_3d = self.fig_3d.add_subplot(111, projection='3d')
-        self._setup_axes(self.ax_3d, is_3d=True)
-
-        self.canvas_3d = FigureCanvasTkAgg(self.fig_3d, master=self.window_3d)
-        self.canvas_3d.draw()
-        self.toolbar_3d = NavigationToolbar2Tk(self.canvas_3d, self.window_3d)
-        self.toolbar_3d.update()
-        self._style_toolbar(self.toolbar_3d)
-        self.canvas_3d.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
-
-    def _on_3d_window_close(self):
-        if self.fig_3d is not None:
+    def _on_2d_window_close(self):
+        embedded = getattr(self, "_plot_2d_embedded", False)
+        host = getattr(self, "_plot_2d_host", None)
+        if not embedded and host is not None:
             try:
-                import matplotlib._pylab_helpers as _mpl_helpers
-                _mpl_helpers.Gcf.destroy_fig(self.fig_3d)
+                host.destroy()
             except Exception:
                 pass
-        if self.window_3d is not None:
-            self.window_3d.destroy()
-        self.window_3d = None
-        self.fig_3d = None
-        self.ax_3d = None
+        # If the window was popped out we dock back into the main window
+        # instead of losing the figure entirely.
+        if not embedded:
+            self._teardown_2d_canvas()
+            self._ensure_2d_window(self.embed_2d)
+            self.fig_2d.canvas.draw_idle()
+
+    def _ensure_3d_window(self, host: tk.Misc = "auto"):
+        # See ``_ensure_2d_window`` for the meaning of ``host``.
+        if host == "auto":
+            host = self._embed_target("3d")
+
+        if self.window_3d is not None and self.window_3d.winfo_exists():
+            if getattr(self, "_plot_3d_host", None) is host:
+                return
+            self._teardown_3d_canvas()
+
+        embedded = host is not None
+        if not embedded:
+            host = tk.Toplevel(self.root)
+            host.title(t("win_3d"))
+            host.geometry("900x700")
+            host.minsize(600, 400)
+            host.configure(bg=THEME["bg"])
+            host.protocol("WM_DELETE_WINDOW", self._on_3d_window_close)
+        self.window_3d = host
+        self._plot_3d_host = host
+        self._plot_3d_embedded = embedded
+
+        if self.fig_3d is None:
+            self.fig_3d = Figure(figsize=(9, 7), dpi=100, facecolor=THEME["bg"])
+            self.ax_3d = self.fig_3d.add_subplot(111, projection='3d')
+            self._setup_axes(self.ax_3d, is_3d=True)
+
+        self.canvas_3d = FigureCanvasTkAgg(self.fig_3d, master=host)
+        _safe_draw(self.canvas_3d)
+        if not embedded:
+            self.toolbar_3d = NavigationToolbar2Tk(self.canvas_3d, host)
+            self.toolbar_3d.update()
+            self._style_toolbar(self.toolbar_3d)
+        else:
+            self.toolbar_3d = None
+        self.canvas_3d.get_tk_widget().pack(fill=tk.BOTH, expand=True,
+                                            padx=2, pady=2)
+
+    def _teardown_3d_canvas(self):
+        widget = None
+        if self.canvas_3d is not None:
+            try:
+                widget = self.canvas_3d.get_tk_widget()
+            except Exception:
+                widget = None
+        if widget is not None:
+            try:
+                widget.destroy()
+            except Exception:
+                pass
+        if self.toolbar_3d is not None:
+            try:
+                self.toolbar_3d.destroy()
+            except Exception:
+                pass
         self.canvas_3d = None
         self.toolbar_3d = None
+        self.window_3d = None
+        self._plot_3d_host = None
+        self._plot_3d_embedded = False
+
+    def _on_3d_window_close(self):
+        embedded = getattr(self, "_plot_3d_embedded", False)
+        host = getattr(self, "_plot_3d_host", None)
+        if not embedded and host is not None:
+            try:
+                host.destroy()
+            except Exception:
+                pass
+        if not embedded:
+            self._teardown_3d_canvas()
+            self._ensure_3d_window(self.embed_3d)
+            self.fig_3d.canvas.draw_idle()
+
+    def _detach_plot(self, kind: str) -> None:
+        """Pop the given plot out of the main window into its own window."""
+        kind = self._current_plot_kind(kind)
+        if kind == "3d":
+            self._teardown_3d_canvas()
+            self._ensure_3d_window(None)
+        else:
+            self._teardown_2d_canvas()
+            self._ensure_2d_window(None)
+        self.status_var.set(t("status_ready"))
+
+    def _current_plot_kind(self, hint: str = "2d") -> str:
+        """Which tab (2d/3d) the plot page is currently showing."""
+        return getattr(self, "_embed_tab", hint or "2d")
+
+    def _attach_plot(self, kind: str) -> None:
+        """Dock the plot back into the main window's right-hand column."""
+        if kind == "3d":
+            self._teardown_3d_canvas()
+            self._ensure_3d_window(self.embed_3d)
+        else:
+            self._teardown_2d_canvas()
+            self._ensure_2d_window(self.embed_2d)
 
     def _ensure_fft_window(self):
         if self.window_fft is not None and self.window_fft.winfo_exists():
@@ -3442,14 +4221,21 @@ class SuperCalcApp:
             except ValueError:
                 self.param_values[param] = 1.0
 
-    def _on_parametric_toggle(self):
-        """Show or hide parametric input fields."""
-        if self._var_parametric.get():
-            for child in self._frame_param_inputs.winfo_children():
+    def _toggle_card(self, panel, enabled: bool, frame) -> None:
+        """Expand a collapsed card on demand, collapse it again when off."""
+        if enabled:
+            self._expand_card(panel)
+            for child in frame.winfo_children():
                 child.pack(fill=tk.X, pady=2)
         else:
-            for child in self._frame_param_inputs.winfo_children():
+            for child in frame.winfo_children():
                 child.pack_forget()
+            self._keep_header_only(panel, 1)
+
+    def _on_parametric_toggle(self):
+        """Show or hide parametric input fields."""
+        self._toggle_card(self.frm_param_card, self._var_parametric.get(),
+                          self._frame_param_inputs)
 
     def _on_parametric_preset(self, name: str):
         """Load a parametric preset into the input fields."""
@@ -3465,12 +4251,8 @@ class SuperCalcApp:
 
     def _on_polar_toggle(self):
         """Show or hide polar input fields."""
-        if self._var_polar.get():
-            for child in self._frame_polar_inputs.winfo_children():
-                child.pack(fill=tk.X, pady=2)
-        else:
-            for child in self._frame_polar_inputs.winfo_children():
-                child.pack_forget()
+        self._toggle_card(self.frm_polar_card, self._var_polar.get(),
+                          self._frame_polar_inputs)
 
     def _on_polar_preset(self, name: str):
         """Load a polar preset into the input fields."""
@@ -3485,12 +4267,8 @@ class SuperCalcApp:
 
     def _on_implicit_toggle(self):
         """Show or hide implicit input fields."""
-        if self._var_implicit.get():
-            for child in self._frame_implicit_inputs.winfo_children():
-                child.pack(fill=tk.X, pady=2)
-        else:
-            for child in self._frame_implicit_inputs.winfo_children():
-                child.pack_forget()
+        self._toggle_card(self.frm_implicit_card, self._var_implicit.get(),
+                          self._frame_implicit_inputs)
 
     def _on_implicit_preset(self, name: str):
         """Load an implicit preset into the input fields."""
@@ -3615,11 +4393,11 @@ class SuperCalcApp:
         if self.ax_2d is not None and self.canvas_2d is not None:
             self.ax_2d.clear()
             self._setup_axes(self.ax_2d, is_3d=False)
-            self.canvas_2d.draw()
+            _safe_draw(self.canvas_2d)
         if self.ax_3d is not None and self.canvas_3d is not None:
             self.ax_3d.clear()
             self._setup_axes(self.ax_3d, is_3d=True)
-            self.canvas_3d.draw()
+            _safe_draw(self.canvas_3d)
         if self.ax_fft_amp is not None and self.canvas_fft is not None:
             self.ax_fft_amp.clear()
             self.ax_fft_phase.clear()
@@ -3754,15 +4532,17 @@ class SuperCalcApp:
             return
 
         if not self.curves:
-            # Clear both plot windows when no curves remain
+            # Clear both plots when no curves remain.
             if self.ax_2d is not None:
                 self.ax_2d.clear()
                 self._setup_axes(self.ax_2d, is_3d=False)
-                self.canvas_2d.draw()
+                if self.canvas_2d is not None:
+                    _safe_draw(self.canvas_2d)
             if self.ax_3d is not None:
                 self.ax_3d.clear()
                 self._setup_axes(self.ax_3d, is_3d=True)
-                self.canvas_3d.draw()
+                if self.canvas_3d is not None:
+                    _safe_draw(self.canvas_3d)
             self.status_var.set(t("status_no_curves"))
             return
 
@@ -3771,24 +4551,31 @@ class SuperCalcApp:
                      (c.is_polar and c.visible) or
                      (c.is_implicit and c.visible) for c in self.curves)
         has_3d = any(c.is_3d and c.visible for c in self.curves)
-        
+
+        # Bring the docked plot forward before anything is drawn into it, so
+        # the very first curve the user plots appears in the main window
+        # rather than in a pane they would have to hunt for.
+        self._prepare_embedded_plot()
+
         if has_2d:
             self._ensure_2d_window()
             self._plot_2d()
         elif self.window_2d is not None and self.window_2d.winfo_exists():
-            # Keep window open but clear it if no 2D curves
+            # Keep the pane in place but clear it if no 2D curves remain.
             self.ax_2d.clear()
             self._setup_axes(self.ax_2d, is_3d=False)
-            self.canvas_2d.draw()
+            if self.canvas_2d is not None:
+                _safe_draw(self.canvas_2d)
             
         if has_3d:
             self._ensure_3d_window()
             self._plot_3d()
         elif self.window_3d is not None and self.window_3d.winfo_exists():
-            # Keep window open but clear it if no 3D curves
+            # Keep the pane in place but clear it if no 3D curves remain.
             self.ax_3d.clear()
             self._setup_axes(self.ax_3d, is_3d=True)
-            self.canvas_3d.draw()
+            if self.canvas_3d is not None:
+                _safe_draw(self.canvas_3d)
 
     def _plot_2d(self):
         if self.ax_2d is None:
@@ -3984,7 +4771,8 @@ class SuperCalcApp:
                            edgecolor=THEME["border_soft"], labelcolor=THEME["text"],
                            fontsize=9)
 
-        self.canvas_2d.draw()
+        if self.canvas_2d is not None:
+            _safe_draw(self.canvas_2d)
         self.status_var.set(
             t("status_plotted_2d", len(visible_2d), self.x_min, self.x_max))
 
@@ -4030,7 +4818,7 @@ class SuperCalcApp:
                                      rstride=rstride, cstride=cstride,
                                      antialiased=False)
 
-        self.canvas_3d.draw()
+        _safe_draw(self.canvas_3d)
         self.status_var.set(t("status_plotted_3d", n_pts, n_pts))
 
     def _setup_axes(self, ax: Axes, is_3d: bool = False) -> None:
@@ -4935,7 +5723,7 @@ class SuperCalcApp:
 
         self.ax_2d.legend(loc="upper right", facecolor=THEME["surface"],
                           edgecolor=THEME["border_soft"], labelcolor=THEME["text"], fontsize=9)
-        self.canvas_2d.draw()
+        _safe_draw(self.canvas_2d)
         self.status_var.set(t("status_taylor_plot", a, order))
 
     # ------------------------------------------------------------------
@@ -5015,7 +5803,7 @@ class SuperCalcApp:
 
         self.ax_2d.legend(loc="upper right", facecolor=THEME["surface"],
                           edgecolor=THEME["border_soft"], labelcolor=THEME["text"], fontsize=9)
-        self.canvas_2d.draw()
+        _safe_draw(self.canvas_2d)
         self.status_var.set(t("status_ode_plotted", len(xs)))
 
     def _on_ode_preset(self, name: str):
@@ -5120,7 +5908,7 @@ class SuperCalcApp:
 
         self.ax_2d.legend(loc="upper right", facecolor=THEME["surface"],
                           edgecolor=THEME["border_soft"], labelcolor=THEME["text"], fontsize=9)
-        self.canvas_2d.draw()
+        _safe_draw(self.canvas_2d)
         n_steps = self._var_cmp_steps.get()
         self.status_var.set(t("status_compare_plotted", 5, n_steps))
 
@@ -5205,7 +5993,7 @@ class SuperCalcApp:
         self.ax_2d.set_title(f"Direction Field: dy/dx = {expr}", color=THEME["text"])
         self.ax_2d.grid(True, alpha=0.3, color=THEME["border_soft"])
         self.ax_2d.set_facecolor(THEME["bg"])
-        self.canvas_2d.draw()
+        _safe_draw(self.canvas_2d)
         self.status_var.set(t("status_df_plotted", n_arrows, n_arrows, n_solutions))
 
     # ------------------------------------------------------------------
@@ -5266,7 +6054,7 @@ class SuperCalcApp:
         self.ax_2d.set_title(f"Contour: {expr}", color=THEME["text"])
         self.ax_2d.grid(True, alpha=0.3, color=THEME["border_soft"])
         self.ax_2d.set_facecolor(THEME["bg"])
-        self.canvas_2d.draw()
+        _safe_draw(self.canvas_2d)
         self.status_var.set(t("status_contour_plotted", n_grid, n_grid, n_levels))
 
     # ------------------------------------------------------------------
@@ -5366,7 +6154,7 @@ class SuperCalcApp:
         self.ax_2d.set_title(f"Vector Field: dx/dt={expr_p}, dy/dt={expr_q}", color=THEME["text"], fontsize=11)
         self.ax_2d.grid(True, alpha=0.3, color=THEME["border_soft"])
         self.ax_2d.set_facecolor(THEME["bg"])
-        self.canvas_2d.draw()
+        _safe_draw(self.canvas_2d)
         self.status_var.set(t("status_vf_plotted", fallback="Vector field plotted: {0}x{0} grid").format(n_grid))
 
     def _solve_vf_rk4(self, expr_p, expr_q, x0, y0, xmin, xmax, ymin, ymax, n_grid):
@@ -5992,7 +6780,7 @@ class SuperCalcApp:
         self.ax_2d.set_xlabel(t("histogram_xlabel"), color=THEME["text"])
         self.ax_2d.set_ylabel(t("histogram_ylabel"), color=THEME["text"])
 
-        self.canvas_2d.draw()
+        _safe_draw(self.canvas_2d)
         self.status_var.set(t("status_histogram", len(values), n_bins))
 
     def _on_stats_export_csv(self):
@@ -6197,7 +6985,7 @@ class SuperCalcApp:
             ax2.set_ylabel(t("label_cdf"), color=text_color, fontsize=10)
             ax2.set_xlabel("x", color=text_color, fontsize=10)
 
-            self.canvas_2d.draw()
+            _safe_draw(self.canvas_2d)
             self.status_var.set(t("status_dist_plot", dist_name))
         except Exception as e:
             messagebox.showerror(t("err_error"), str(e))
@@ -6306,7 +7094,7 @@ class SuperCalcApp:
             ax2.legend(facecolor=THEME["surface"], edgecolor=THEME["border_soft"],
                        labelcolor=text_color, fontsize=8)
 
-            self.canvas_2d.draw()
+            _safe_draw(self.canvas_2d)
             self.status_var.set(t("status_dist_compare", dist_name))
         except Exception as e:
             messagebox.showerror(t("err_error"), str(e))
@@ -6458,7 +7246,7 @@ class SuperCalcApp:
         self.ax_2d.set_xlabel("X", color=THEME["text"])
         self.ax_2d.set_ylabel("Y", color=THEME["text"])
 
-        self.canvas_2d.draw()
+        _safe_draw(self.canvas_2d)
         self.status_var.set(t("status_fit_plotted", result['equation']))
 
     def _on_reg_export_csv(self):
@@ -6617,7 +7405,7 @@ class SuperCalcApp:
         self.ax_2d.set_xlabel("X", color=THEME["text"])
         self.ax_2d.set_ylabel("Y", color=THEME["text"])
         self.ax_2d.grid(True, alpha=0.2, color=THEME["border_soft"])
-        self.canvas_2d.draw()
+        _safe_draw(self.canvas_2d)
         self.status_var.set(t("status_data_plotted", len(xs), chart_type))
 
     def _on_data_trendline(self):
@@ -6680,7 +7468,7 @@ class SuperCalcApp:
         self.ax_2d.set_xlabel("X", color=THEME["text"])
         self.ax_2d.set_ylabel("Y", color=THEME["text"])
         self.ax_2d.grid(True, alpha=0.2, color=THEME["border_soft"])
-        self.canvas_2d.draw()
+        _safe_draw(self.canvas_2d)
         self.status_var.set(t("status_trendline_fit", result['equation'], result['r_squared']))
 
     def _on_data_export_plot(self):
@@ -8177,7 +8965,7 @@ class SuperCalcApp:
             self.ax_2d.set_xlabel("x", color=THEME["text"])
             self.ax_2d.set_ylabel("y", color=THEME["text"])
             self.fig_2d.tight_layout()
-            self.canvas_2d.draw()
+            _safe_draw(self.canvas_2d)
             self.status_var.set(t("status_interp_plotted",
                                   len(xs), method_names.get(method, method)))
         except Exception as ex:
