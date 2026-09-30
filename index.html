@@ -4,8 +4,8 @@
 <link rel="icon" type="image/x-icon" href="SuperCalculator.ico">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <meta name="theme-color" content="#0a0a14" media="(prefers-color-scheme: dark)">
-    <meta name="theme-color" content="#f0f4f8" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0a1626" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f5f3ea" media="(prefers-color-scheme: light)">
     <meta name="description" content="SuperCalculator - 基于桥接模式的高性能函数计算与可视化工具，支持函数绘图、3D曲面、参数曲线、极坐标绘图、隐函数绘图、数值微积分、方程求解、极值查找与曲线拟合">
     <title>SuperCalculator - 超级函数绘图计算器</title>
     <script>
@@ -332,64 +332,106 @@
     </script>
     <style>
 /* ==========================================================================
-   SuperCalculator — "Aurora Lab" landing theme (v2)
-   Self-contained design system: tokens, layout, components, demos, motion.
-   Every variable name used by inline demo markup is preserved so existing
-   widgets pick up the new palette automatically.
+   SuperCalculator — "Blueprint" landing theme (v3)
+   Engineering-drawing design system: drafting surface, cyanotype ink,
+   hairline rules, graph paper, measured motion.
+
+   Two rules this file obeys without exception:
+
+     1. No hard-coded colours in component rules. Every colour comes from a
+        token below, so the light/dark swap is a single-block edit and the
+        ~440 inline `style=` attributes inside demo markup retint themselves.
+     2. Variable names are frozen. `--plot-*` is read at runtime by
+        SCTheme.palette() via getComputedStyle; `--glow-primary` and
+        `--glass-border` are written literally by four inline onfocus
+        handlers. Renaming any of them breaks behaviour, not just looks —
+        so the blueprint palette reuses the existing vocabulary.
+
+   Layer order, painted back to front:
+     body                drafting surface  (--paper / --grid-line)
+     body::before        graph paper, 16px minor + 80px major
+     body::after         ink vignette + paper tooth
+     .container, .header content
    ========================================================================== */
 
 :root {
-    /* --- surfaces --- */
-    --glass-bg: rgba(255, 255, 255, 0.055);
-    --glass-bg-solid: rgba(13, 16, 32, 0.94);
-    --glass-border: rgba(255, 255, 255, 0.10);
-    --glass-border-hover: rgba(255, 255, 255, 0.22);
-    --panel-bg: linear-gradient(158deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
-    --blur-strong: 18px;
-    --blur-medium: 10px;
+    /* --- drafting surface ---
+       Layout rules must never stack translucent surfaces, or each layer
+       composites onto the ones underneath and the paper turns to mud. So
+       only the floating chrome (header, mobile nav, popovers) is frosted;
+       everything else sits on an opaque sheet (--panel-bg). */
+    --glass-bg: rgba(126, 178, 214, 0.055);
+    --glass-bg-solid: rgba(10, 23, 38, 0.97);
+    --glass-border: rgba(126, 178, 214, 0.20);
+    --glass-border-hover: rgba(126, 178, 214, 0.42);
+    --panel-bg: #0e1f33;
+    --panel-bg-veil: rgba(10, 22, 38, 0.86);
+    --panel-solid: #0e1f33;
+    --blur-strong: 14px;
+    --blur-medium: 8px;
 
-    /* --- accents (kept as colours: demo JS uses them as values) --- */
-    --accent: #6366f1;
-    --accent-2: #22d3ee;
-    --accent-3: #34d399;
-    --glow-primary: rgba(99, 102, 241, 0.55);
-    --glow-accent: rgba(34, 211, 238, 0.45);
-    --glow-purple: rgba(168, 85, 247, 0.35);
-    --glow-warm: rgba(251, 146, 60, 0.35);
-    --grad-brand: linear-gradient(135deg, #6366f1 0%, #8b5cf6 45%, #22d3ee 100%);
-    --grad-text: linear-gradient(120deg, #eef2ff 0%, #c7d2fe 40%, #67e8f9 100%);
+    /* --- cyanotype ink ---
+       --accent and --accent-2 are also consumed as raw colour *values* by
+       demo JS (strokeStyle, fillStyle), so they stay saturated. The *-text
+       variants are the legible-on-paper versions used for type. */
+    --accent: #4ea3c4;
+    --accent-2: #7fd8ea;
+    --accent-3: #6fbf9a;
+    --accent-text: #8fd4e8;
+    --accent-2-text: #b3e6f2;
+    --accent-3-text: #93d6b4;
+    --on-accent: #03121d;
+    --glow-primary: rgba(78, 163, 196, 0.42);
+    --glow-accent: rgba(127, 216, 234, 0.34);
+    --glow-purple: rgba(122, 156, 214, 0.26);
+    --glow-warm: rgba(224, 178, 120, 0.24);
+    --grad-brand: linear-gradient(135deg, #7fd8ea 0%, #4ea3c4 55%, #3d7fa6 100%);
+    --grad-text: linear-gradient(120deg, #e8f2f8 0%, #9fdcec 50%, #4ea3c4 100%);
+
+    /* --- technical inks (rules, ticks, callouts) --- */
+    --rule: rgba(126, 178, 214, 0.24);
+    --rule-strong: rgba(126, 178, 214, 0.40);
+    --grid-line: rgba(126, 178, 214, 0.075);
+    --grid-line-major: rgba(126, 178, 214, 0.14);
+    --grid-glow: rgba(127, 216, 234, 0.05);
+    --vignette: radial-gradient(120% 85% at 50% 0%, transparent 42%, rgba(2, 8, 16, 0.62) 100%);
+    --paper-tooth: repeating-linear-gradient(100deg,
+        rgba(255, 255, 255, 0.014) 0 1px, transparent 1px 3px);
+    --sheen: rgba(255, 255, 255, 0.55);
 
     /* --- text --- */
-    --text-main: #eef2ff;
-    --text-muted: rgba(226, 232, 255, 0.72);
-    --text-subtle: rgba(190, 200, 235, 0.46);
+    --text-main: #e8f2f8;
+    --text-muted: rgba(206, 228, 240, 0.74);
+    --text-subtle: rgba(158, 190, 210, 0.50);
 
     /* --- page --- */
-    --bg-deep: #070912;
-    --header-bg: rgba(10, 13, 28, 0.72);
-    --mobile-nav-bg: rgba(9, 12, 25, 0.98);
-    --footer-bg: rgba(6, 8, 18, 0.72);
-    --code-bg: rgba(4, 7, 18, 0.62);
+    --bg-deep: #0a1626;
+    --header-bg: rgba(10, 22, 38, 0.80);
+    --mobile-nav-bg: rgba(8, 19, 32, 0.98);
+    --footer-bg: rgba(8, 18, 30, 0.80);
+    --code-bg: rgba(6, 16, 28, 0.72);
 
-    /* --- canvas plots --- */
-    --plot-bg: #0b0e1c;
-    --plot-panel: rgba(11, 14, 28, 0.65);
-    --plot-grid: rgba(148, 163, 214, 0.16);
-    --plot-axis: rgba(148, 163, 214, 0.32);
-    --plot-text: #dbe2ff;
-    --plot-muted: #8792b8;
-    --plot-trace: #f472b6;
-    --plot-series-1: #60a5fa;
-    --plot-series-2: #34d399;
-    --plot-series-3: #fbbf24;
-    --plot-series-4: #f472b6;
-    --plot-series-5: #a78bfa;
-    --plot-series-6: #fb923c;
+    /* --- canvas plots (names frozen: read by SCTheme.palette) --- */
+    --plot-bg: #08131f;
+    --plot-panel: rgba(11, 26, 42, 0.78);
+    --plot-grid: rgba(126, 178, 214, 0.20);
+    --plot-axis: rgba(126, 178, 214, 0.42);
+    --plot-text: #d8ecf6;
+    --plot-muted: #7fa6bd;
+    --plot-trace: #f0a58c;
+    --plot-series-1: #7fd8ea;
+    --plot-series-2: #6fbf9a;
+    --plot-series-3: #e0b278;
+    --plot-series-4: #f0a58c;
+    --plot-series-5: #9aa8e8;
+    --plot-series-6: #d9a3c8;
 
-    --radius-lg: 22px;
-    --radius-md: 14px;
-    --radius-sm: 10px;
-    --shadow-card: 0 18px 50px rgba(2, 4, 14, 0.45);
+    /* --- geometry: a drawing has square corners --- */
+    --radius-lg: 4px;
+    --radius-md: 3px;
+    --radius-sm: 2px;
+    --shadow-card: 0 10px 30px rgba(2, 7, 14, 0.55);
+    --shadow-lift: 0 16px 44px rgba(2, 7, 14, 0.68);
     --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC',
                  'PingFang SC', 'Microsoft YaHei', Roboto, Arial, sans-serif;
     --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', ui-monospace,
@@ -397,46 +439,79 @@
 }
 
 [data-theme="light"] {
-    --glass-bg: rgba(255, 255, 255, 0.72);
-    --glass-bg-solid: rgba(255, 255, 255, 0.97);
-    --glass-border: rgba(15, 23, 42, 0.10);
-    --glass-border-hover: rgba(15, 23, 42, 0.22);
-    --panel-bg: linear-gradient(158deg, rgba(255, 255, 255, 0.95), rgba(244, 247, 255, 0.85));
+    /* --- drawing sheet --- */
+    --glass-bg: rgba(29, 95, 168, 0.045);
+    --glass-bg-solid: rgba(252, 251, 246, 0.97);
+    --glass-border: rgba(29, 95, 168, 0.22);
+    --glass-border-hover: rgba(29, 95, 168, 0.45);
+    --panel-bg: #fffdf7;
+    --panel-bg-veil: rgba(255, 253, 247, 0.88);
+    --panel-solid: #fffdf7;
 
-    --accent: #4f46e5;
-    --accent-2: #0891b2;
-    --accent-3: #059669;
-    --glow-primary: rgba(79, 70, 229, 0.28);
-    --glow-accent: rgba(8, 145, 178, 0.22);
-    --glow-purple: rgba(147, 51, 234, 0.18);
-    --glow-warm: rgba(217, 119, 6, 0.20);
-    --grad-text: linear-gradient(120deg, #1e293b 0%, #4338ca 45%, #0e7490 100%);
+    /* --- blueprint ink on paper: darker, warmer, still saturated --- */
+    --accent: #1d5fa8;
+    --accent-2: #2b7fb8;
+    --accent-3: #2f7d5c;
+    --accent-text: #16487f;
+    --accent-2-text: #1b5f8c;
+    --accent-3-text: #22624a;
+    --on-accent: #ffffff;
+    --glow-primary: rgba(29, 95, 168, 0.16);
+    --glow-accent: rgba(43, 127, 184, 0.14);
+    --glow-purple: rgba(84, 96, 158, 0.12);
+    --glow-warm: rgba(176, 120, 52, 0.12);
+    --grad-text: linear-gradient(120deg, #123a6b 0%, #1d5fa8 55%, #2b7fb8 100%);
 
-    --text-main: #0f172a;
-    --text-muted: rgba(30, 41, 59, 0.74);
-    --text-subtle: rgba(51, 65, 85, 0.55);
+    --rule: rgba(29, 95, 168, 0.26);
+    --rule-strong: rgba(29, 95, 168, 0.45);
+    --grid-line: rgba(29, 95, 168, 0.085);
+    --grid-line-major: rgba(29, 95, 168, 0.15);
+    --grid-glow: rgba(29, 95, 168, 0.035);
+    --vignette: radial-gradient(120% 85% at 50% 0%, transparent 52%, rgba(120, 112, 92, 0.16) 100%);
+    --paper-tooth: repeating-linear-gradient(100deg,
+        rgba(60, 50, 30, 0.014) 0 1px, transparent 1px 3px);
+    --sheen: rgba(255, 255, 255, 0.75);
 
-    --bg-deep: #f4f6fd;
-    --header-bg: rgba(255, 255, 255, 0.78);
-    --mobile-nav-bg: rgba(255, 255, 255, 0.98);
-    --footer-bg: rgba(240, 243, 252, 0.85);
-    --code-bg: rgba(15, 23, 42, 0.05);
+    --text-main: #12315a;
+    --text-muted: rgba(28, 58, 96, 0.76);
+    --text-subtle: rgba(50, 80, 116, 0.58);
 
-    --plot-bg: #ffffff;
-    --plot-panel: rgba(255, 255, 255, 0.8);
-    --plot-grid: rgba(15, 23, 42, 0.12);
-    --plot-axis: rgba(15, 23, 42, 0.30);
-    --plot-text: #1e293b;
-    --plot-muted: #64748b;
-    --plot-trace: #db2777;
-    --plot-series-1: #2563eb;
-    --plot-series-2: #059669;
-    --plot-series-3: #b45309;
-    --plot-series-4: #db2777;
-    --plot-series-5: #7c3aed;
-    --plot-series-6: #ea580c;
+    --bg-deep: #f5f3ea;
+    --header-bg: rgba(252, 251, 246, 0.84);
+    --mobile-nav-bg: rgba(252, 251, 246, 0.98);
+    --footer-bg: rgba(244, 241, 231, 0.88);
+    --code-bg: rgba(18, 49, 90, 0.045);
 
-    --shadow-card: 0 18px 40px rgba(15, 23, 42, 0.10);
+    --plot-bg: #fbfaf5;
+    --plot-panel: rgba(255, 255, 255, 0.86);
+    --plot-grid: rgba(29, 95, 168, 0.20);
+    --plot-axis: rgba(29, 95, 168, 0.44);
+    --plot-text: #12315a;
+    --plot-muted: #5b7597;
+    --plot-trace: #b5533a;
+    --plot-series-1: #1d5fa8;
+    --plot-series-2: #2f7d5c;
+    --plot-series-3: #a9791f;
+    --plot-series-4: #b5533a;
+    --plot-series-5: #5a5fa8;
+    --plot-series-6: #a44a7d;
+
+    --shadow-card: 0 8px 24px rgba(35, 45, 65, 0.10);
+    --shadow-lift: 0 14px 36px rgba(35, 45, 65, 0.16);
+}
+
+/* Theme transition: only applied for the duration of a switch, so it never
+   taxes scrolling. `themeSwapping` is added by the toggle handler. */
+html.theme-swapping,
+html.theme-swapping *,
+html.theme-swapping *::before,
+html.theme-swapping *::after {
+    transition:
+        background-color .38s ease,
+        border-color .38s ease,
+        color .38s ease,
+        fill .38s ease,
+        stroke .38s ease !important;
 }
 
 /* ---------------------------------------------------------------- base --- */
@@ -460,47 +535,79 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Aurora mesh + faint engineering grid behind everything. */
+/* Graph paper. Two overlaid grids — a 16px minor ruling and an 80px major
+   ruling — drawn on the drafting surface itself. Both are static; only the
+   ink vignette drifts, because a moving grid behind body text is the fastest
+   way to make a page unreadable. */
 body::before {
     content: '';
     position: fixed;
-    inset: -20% -10%;
+    inset: 0;
     z-index: -2;
     pointer-events: none;
-    background:
-        radial-gradient(42% 42% at 18% 22%, var(--glow-primary) 0%, transparent 62%),
-        radial-gradient(38% 38% at 82% 18%, var(--glow-accent) 0%, transparent 62%),
-        radial-gradient(46% 46% at 62% 82%, var(--glow-purple) 0%, transparent 66%),
-        radial-gradient(34% 34% at 12% 88%, var(--glow-warm) 0%, transparent 62%);
-    opacity: 0.55;
-    filter: blur(8px);
-    animation: auroraDrift 26s ease-in-out infinite alternate;
+    background-image:
+        linear-gradient(var(--grid-line-major) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line-major) 1px, transparent 1px),
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size:
+        80px 80px,
+        80px 80px,
+        16px 16px,
+        16px 16px;
+    mask-image: radial-gradient(ellipse 105% 78% at 50% 0%, #000 38%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 105% 78% at 50% 0%, #000 38%, transparent 100%);
 }
 
+/* Ink wash + paper tooth. Drifting very slowly so the sheet feels alive
+   without anything under the text ever moving appreciably. */
 body::after {
     content: '';
     position: fixed;
-    inset: 0;
+    inset: -10%;
     z-index: -1;
     pointer-events: none;
-    background-image:
-        linear-gradient(rgba(148, 163, 184, 0.055) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(148, 163, 184, 0.055) 1px, transparent 1px);
-    background-size: 64px 64px;
-    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 100%);
-    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 100%);
+    background-image: var(--vignette), var(--paper-tooth);
+    opacity: 0.9;
+    animation: inkDrift 34s ease-in-out infinite alternate;
 }
 
-[data-theme="light"] body::after {
-    background-image:
-        linear-gradient(rgba(15, 23, 42, 0.045) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(15, 23, 42, 0.045) 1px, transparent 1px);
+@keyframes inkDrift {
+    0%   { transform: translate3d(-1.1%, -0.7%, 0) scale(1.02); }
+    50%  { transform: translate3d(1.0%, 1.1%, 0) scale(1.05); }
+    100% { transform: translate3d(-0.6%, 0.6%, 0) scale(1.03); }
 }
 
-@keyframes auroraDrift {
-    0%   { transform: translate3d(-2%, -1%, 0) scale(1.02); }
-    50%  { transform: translate3d(2%, 2%, 0) scale(1.06); }
-    100% { transform: translate3d(-1%, 1%, 0) scale(1.03); }
+/* Crosshair: a full-viewport drafting cursor. Two hairlines track the
+   pointer across the whole page; they read as the swing arms of a plotter
+   arm. Pointer-only, and switchable off via [data-crosshair="off"]. */
+#crosshair {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .3s ease;
+}
+#crosshair.on { opacity: 1; }
+#crosshair::before,
+#crosshair::after {
+    content: '';
+    position: absolute;
+    opacity: 0.28;
+}
+#crosshair::before {
+    left: 0; right: 0; height: 1px;
+    top: var(--cy, 50%);
+    background: linear-gradient(90deg, transparent, var(--accent-text), transparent);
+}
+#crosshair::after {
+    top: 0; bottom: 0; width: 1px;
+    left: var(--cx, 50%);
+    background: linear-gradient(180deg, transparent, var(--accent-text), transparent);
+}
+@media (pointer: coarse), (prefers-reduced-motion: reduce) {
+    #crosshair { display: none; }
 }
 
 a { color: inherit; }
@@ -521,26 +628,43 @@ img, svg, canvas { max-width: 100%; }
     left: 50%;
     transform: translateX(-50%);
     width: min(1240px, calc(100% - 28px));
-    height: 64px;
+    height: 62px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 0 16px;
-    border-radius: 18px;
+    padding: 0 14px;
+    border-radius: var(--radius-lg);
     background: var(--header-bg);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(var(--blur-strong)) saturate(170%);
-    -webkit-backdrop-filter: blur(var(--blur-strong)) saturate(170%);
-    box-shadow: 0 12px 40px rgba(2, 4, 14, 0.28);
+    border: 1px solid var(--rule);
+    backdrop-filter: blur(var(--blur-strong)) saturate(150%);
+    -webkit-backdrop-filter: blur(var(--blur-strong)) saturate(150%);
+    box-shadow: var(--shadow-card);
     z-index: 1000;
-    transition: background 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+    transition: background 0.35s ease, box-shadow 0.35s ease,
+                border-color 0.35s ease, height 0.35s ease;
+}
+
+/* A measured tick strip along the bottom edge of the floating bar. */
+.header::after {
+    content: '';
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    bottom: -1px;
+    height: 5px;
+    opacity: 0.5;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(
+        90deg, var(--rule-strong) 0 1px, transparent 1px 8px);
+    -webkit-mask-image: linear-gradient(90deg, #000, transparent);
+    mask-image: linear-gradient(90deg, #000, transparent);
 }
 
 .header.scrolled {
     background: var(--glass-bg-solid);
     border-color: var(--glass-border-hover);
-    box-shadow: 0 18px 50px rgba(2, 4, 14, 0.42);
+    box-shadow: var(--shadow-lift);
 }
 
 .logo {
@@ -561,9 +685,10 @@ img, svg, canvas { max-width: 100%; }
     height: 38px;
     display: grid;
     place-items: center;
-    border-radius: 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--rule-strong);
     background: var(--grad-brand);
-    box-shadow: 0 10px 26px rgba(99, 102, 241, 0.42);
+    box-shadow: 0 4px 14px var(--glow-primary);
     overflow: hidden;
 }
 
@@ -571,9 +696,21 @@ img, svg, canvas { max-width: 100%; }
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.55) 50%, transparent 65%);
+    background: linear-gradient(115deg, transparent 35%, var(--sheen) 50%, transparent 65%);
     background-size: 220% 220%;
-    animation: shimmer 4.2s ease-in-out infinite;
+    animation: shimmer 4.6s ease-in-out infinite;
+}
+
+/* Registration corners, as on a drawing sheet. */
+.logo-icon::before {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    z-index: 2;
+    pointer-events: none;
+    border: 1px solid var(--on-accent);
+    opacity: 0.35;
+    -webkit-mask-image: linear-gradient(#000, #000);
 }
 
 .logo-icon svg {
@@ -582,7 +719,7 @@ img, svg, canvas { max-width: 100%; }
     width: 22px;
     height: 22px;
     fill: none;
-    stroke: #fff;
+    stroke: var(--on-accent);
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -603,10 +740,12 @@ img, svg, canvas { max-width: 100%; }
 
 .nav-link {
     position: relative;
-    padding: 8px 11px;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 550;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
     color: var(--text-muted);
     text-decoration: none;
     white-space: nowrap;
@@ -620,10 +759,38 @@ img, svg, canvas { max-width: 100%; }
     background: var(--glass-bg);
 }
 
+/* Active navigation reads as a dimension callout: bracketed by two ticks
+   and underlined with the major rule. */
 .nav-link.active {
-    color: var(--text-main);
-    background: linear-gradient(135deg, var(--glow-primary), var(--glow-accent));
+    color: var(--accent-text);
+    background: var(--glass-bg);
 }
+.nav-link.active::before,
+.nav-link.active::after {
+    content: '';
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    width: 1px;
+    background: var(--accent);
+    opacity: 0.8;
+}
+.nav-link.active::before { left: 3px; }
+.nav-link.active::after  { right: 3px; }
+.nav-link span::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -4px;
+    height: 1px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.nav-link:hover span::after,
+.nav-link.active span::after { transform: scaleX(1); }
 
 .header-actions {
     display: flex;
@@ -636,26 +803,29 @@ img, svg, canvas { max-width: 100%; }
     align-items: center;
     gap: 7px;
     padding: 9px 16px;
-    border-radius: 11px;
+    border-radius: var(--radius-sm);
     background: var(--grad-brand);
-    color: #fff;
+    color: var(--on-accent);
     text-decoration: none;
-    font-size: 13.5px;
-    font-weight: 650;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     white-space: nowrap;
-    box-shadow: 0 10px 24px rgba(99, 102, 241, 0.35);
+    box-shadow: 0 4px 14px var(--glow-primary);
     transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-.header-cta:hover { transform: translateY(-2px); box-shadow: 0 16px 32px rgba(99, 102, 241, 0.45); }
+.header-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 26px var(--glow-primary); }
 .header-cta svg { width: 16px; height: 16px; fill: currentColor; }
 
 .btn-icon {
     display: inline-grid;
     place-items: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-sm);
     border: 1px solid var(--glass-border);
     background: var(--glass-bg);
     color: var(--text-main);
@@ -685,13 +855,13 @@ img, svg, canvas { max-width: 100%; }
     right: 14px;
     max-height: calc(100vh - 108px);
     overflow-y: auto;
-    padding: 12px;
-    border-radius: 18px;
+    padding: 10px;
+    border-radius: var(--radius-lg);
     background: var(--mobile-nav-bg);
-    border: 1px solid var(--glass-border);
+    border: 1px solid var(--rule);
     backdrop-filter: blur(var(--blur-strong));
     -webkit-backdrop-filter: blur(var(--blur-strong));
-    box-shadow: 0 24px 60px rgba(2, 4, 14, 0.45);
+    box-shadow: var(--shadow-lift);
     z-index: 999;
 }
 
@@ -704,14 +874,15 @@ img, svg, canvas { max-width: 100%; }
 
 .mobile-nav-link {
     display: block;
-    padding: 13px 16px;
-    border-radius: 12px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
     font-size: 15px;
     font-weight: 550;
     color: var(--text-muted);
     text-decoration: none;
     transition: background 0.2s ease, color 0.2s ease;
 }
+.mobile-nav-link + .mobile-nav-link { border-top: 1px solid var(--glass-border); }
 
 .mobile-nav-link:hover {
     background: var(--glass-bg);
@@ -726,10 +897,10 @@ img, svg, canvas { max-width: 100%; }
     align-items: center;
     justify-content: center;
     gap: 9px;
-    min-height: 50px;
-    padding: 14px 26px;
+    min-height: 48px;
+    padding: 13px 24px;
     border: none;
-    border-radius: 14px;
+    border-radius: var(--radius-md);
     font: inherit;
     font-size: 15px;
     font-weight: 650;
@@ -746,20 +917,22 @@ img, svg, canvas { max-width: 100%; }
 
 .btn-primary {
     background: var(--grad-brand);
-    color: #fff;
-    box-shadow: 0 14px 34px rgba(99, 102, 241, 0.38);
+    color: var(--on-accent);
+    box-shadow: 0 6px 18px var(--glow-primary);
 }
 
 .btn-primary:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 22px 54px rgba(99, 102, 241, 0.46);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 26px var(--glow-primary);
 }
 
+/* The sweep stays, but it is now a drafting sweep: a hairline travels the
+   button and leaves a ruled edge behind it. */
 .btn-primary::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.35) 50%, transparent 60%);
+    background: linear-gradient(115deg, transparent 40%, var(--sheen) 50%, transparent 60%);
     transform: translateX(-120%);
     transition: transform 0.7s ease;
 }
@@ -777,7 +950,7 @@ img, svg, canvas { max-width: 100%; }
 .btn-glass:hover {
     transform: translateY(-3px);
     border-color: var(--glass-border-hover);
-    box-shadow: 0 18px 40px rgba(2, 4, 14, 0.3);
+    box-shadow: var(--shadow-card);
 }
 
 .btn-outline {
@@ -787,9 +960,9 @@ img, svg, canvas { max-width: 100%; }
 }
 
 .btn-outline:hover {
-    transform: translateY(-3px);
+    transform: translateY(-2px);
     border-color: var(--accent);
-    box-shadow: 0 18px 40px var(--glow-primary);
+    box-shadow: 0 8px 22px var(--glow-primary);
 }
 
 .btn:active { transform: translateY(-1px) scale(0.98); }
@@ -803,6 +976,22 @@ img, svg, canvas { max-width: 100%; }
     min-height: 100vh;
     padding: 148px 24px 88px;
 }
+
+/* Dimension leaders: a pair of hairlines off the hero's left and right
+   edges with end caps, as on a measured drawing. Drawn as two absolutely
+   positioned rules so they cost nothing and never reflow. */
+.hero::before,
+.hero::after {
+    content: '';
+    position: absolute;
+    top: 22%;
+    bottom: 22%;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, var(--rule) 22%, var(--rule) 78%, transparent);
+    pointer-events: none;
+}
+.hero::before { left: max(12px, calc(50% - 620px)); }
+.hero::after  { right: max(12px, calc(50% - 620px)); }
 
 .hero-inner {
     width: 100%;
@@ -818,17 +1007,29 @@ img, svg, canvas { max-width: 100%; }
     display: inline-flex;
     align-items: center;
     gap: 9px;
-    padding: 8px 16px;
-    border-radius: 999px;
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
     background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
+    border: 1px solid var(--rule);
     backdrop-filter: blur(var(--blur-medium));
     -webkit-backdrop-filter: blur(var(--blur-medium));
-    font-size: 13px;
-    font-weight: 600;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
     color: var(--text-muted);
     margin-bottom: 24px;
     animation: rise 0.7s ease both;
+}
+
+/* The badge is a title-block stamp: a solid ink square on its left edge. */
+.hero-badge::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    flex: 0 0 auto;
+    background: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
 }
 
 .hero-badge svg {
@@ -846,7 +1047,7 @@ img, svg, canvas { max-width: 100%; }
     font-size: clamp(38px, 5.4vw, 68px);
     font-weight: 800;
     line-height: 1.06;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.01em;
     background: var(--grad-text);
     background-size: 200% auto;
     -webkit-background-clip: text;
@@ -913,24 +1114,38 @@ img, svg, canvas { max-width: 100%; }
 
 .hero-panel {
     position: relative;
-    padding: 18px;
+    padding: 16px;
     border-radius: var(--radius-lg);
     background: var(--panel-bg);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(var(--blur-strong));
-    -webkit-backdrop-filter: blur(var(--blur-strong));
+    border: 1px solid var(--rule);
     box-shadow: var(--shadow-card);
     animation: rise 0.8s ease 0.2s both;
 }
+
+/* Corner crosses, the drafting convention for "this is a placed object". */
+.hero-panel::before,
+.hero-panel::after {
+    content: '';
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    border: 1px solid var(--accent);
+    opacity: 0.75;
+    pointer-events: none;
+}
+.hero-panel::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+.hero-panel::after  { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
 
 .hero-panel-head {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 12px;
-    font-size: 12.5px;
+    margin-bottom: 10px;
+    padding-bottom: 9px;
+    font-size: 12px;
     color: var(--text-subtle);
     font-family: var(--font-mono);
+    border-bottom: 1px solid var(--glass-border);
 }
 
 .hero-dots { display: inline-flex; gap: 6px; }
@@ -948,23 +1163,23 @@ img, svg, canvas { max-width: 100%; }
     display: block;
     width: 100%;
     height: 300px;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     background: var(--plot-bg);
-    border: 1px solid var(--glass-border);
+    border: 1px solid var(--rule);
 }
 
 .hero-formula {
     margin-top: 12px;
-    padding: 12px 14px;
+    padding: 11px 13px;
     border-radius: var(--radius-sm);
     background: var(--code-bg);
     border: 1px solid var(--glass-border);
     font-family: var(--font-mono);
-    font-size: 13px;
+    font-size: 12.5px;
     color: var(--text-muted);
     display: flex;
     flex-wrap: wrap;
-    gap: 14px;
+    gap: 12px;
 }
 
 .hero-formula b { color: var(--accent-2); font-weight: 600; }
@@ -973,7 +1188,7 @@ img, svg, canvas { max-width: 100%; }
 
 .section {
     position: relative;
-    padding: 92px 0;
+    padding: 88px 0;
 }
 
 .section-header {
@@ -986,18 +1201,17 @@ img, svg, canvas { max-width: 100%; }
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 7px 15px;
+    padding: 6px 13px;
     margin-bottom: 16px;
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
     background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(var(--blur-medium));
-    -webkit-backdrop-filter: blur(var(--blur-medium));
-    font-size: 11.5px;
-    font-weight: 700;
-    letter-spacing: 0.14em;
+    border: 1px solid var(--rule);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--text-muted);
+    color: var(--accent-text);
 }
 
 .section-label svg {
@@ -1014,7 +1228,7 @@ img, svg, canvas { max-width: 100%; }
     margin: 0 0 14px;
     font-size: clamp(27px, 3.6vw, 40px);
     font-weight: 780;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.015em;
     line-height: 1.15;
     background: var(--grad-text);
     -webkit-background-clip: text;
@@ -1024,8 +1238,20 @@ img, svg, canvas { max-width: 100%; }
 
 .section-subtitle {
     margin: 0;
-    font-size: 16px;
+    font-size: 15.5px;
     color: var(--text-muted);
+}
+
+/* Rule with tick marks under every section header. */
+.section-header::after {
+    content: '';
+    display: block;
+    width: 74px;
+    height: 6px;
+    margin: 22px auto 0;
+    background-image: repeating-linear-gradient(
+        90deg, var(--rule-strong) 0 1px, transparent 1px 7px);
+    border-top: 1px solid var(--rule);
 }
 
 /* --------------------------------------------------------------- cards --- */
@@ -1038,16 +1264,14 @@ img, svg, canvas { max-width: 100%; }
 
 .glass {
     background: var(--panel-bg);
-    border: 1px solid var(--glass-border);
+    border: 1px solid var(--rule);
     border-radius: var(--radius-lg);
-    backdrop-filter: blur(var(--blur-strong));
-    -webkit-backdrop-filter: blur(var(--blur-strong));
     transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.35s ease, box-shadow 0.35s ease;
 }
 
 .glass:hover {
     border-color: var(--glass-border-hover);
-    box-shadow: var(--shadow-card), 0 0 44px var(--glow-primary);
+    box-shadow: var(--shadow-lift), 0 0 30px var(--grid-glow);
 }
 
 .card {
@@ -1056,19 +1280,36 @@ img, svg, canvas { max-width: 100%; }
     overflow: hidden;
 }
 
+/* A card is a detail view: hairline border, one ink rail down the left edge
+   that draws itself on hover, plus tick marks so it reads as a ruled box. */
 .card::before {
     content: '';
     position: absolute;
     top: 0;
+    bottom: 0;
     left: 0;
+    width: 2px;
+    background: var(--accent);
+    transform: scaleY(0);
+    transform-origin: top center;
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.card:hover::before { transform: scaleY(1); }
+
+.card::after {
+    content: '';
+    position: absolute;
+    top: 0;
     right: 0;
-    height: 2px;
-    background: var(--grad-brand);
+    width: 13px;
+    height: 13px;
+    border-top: 1px solid var(--accent);
+    border-right: 1px solid var(--accent);
     opacity: 0;
     transition: opacity 0.35s ease;
 }
-
-.card:hover::before { opacity: 1; }
+.card:hover::after { opacity: 0.7; }
 
 .card > .card-icon,
 .card > * > .card-icon { margin-bottom: 16px; }
@@ -1076,12 +1317,12 @@ img, svg, canvas { max-width: 100%; }
 .card-icon {
     display: grid;
     place-items: center;
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
-    background: linear-gradient(140deg, rgba(99, 102, 241, 0.22), rgba(34, 211, 238, 0.18));
-    border: 1px solid var(--glass-border);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    background: var(--glass-bg);
+    border: 1px solid var(--rule);
+    box-shadow: inset 0 0 0 3px var(--panel-bg);
 }
 
 .card-icon svg {
@@ -1110,13 +1351,13 @@ img, svg, canvas { max-width: 100%; }
 
 .card-text code,
 .card code {
-    padding: 2px 7px;
-    border-radius: 7px;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
     background: var(--code-bg);
     border: 1px solid var(--glass-border);
     font-family: var(--font-mono);
     font-size: 0.86em;
-    color: var(--accent-2);
+    color: var(--accent-2-text);
 }
 
 .section > .card,
@@ -1132,31 +1373,37 @@ img, svg, canvas { max-width: 100%; }
 
 .bento-item {
     position: relative;
-    padding: 26px;
+    padding: 24px;
     border-radius: var(--radius-lg);
     background: var(--panel-bg);
-    border: 1px solid var(--glass-border);
+    border: 1px solid var(--rule);
     overflow: hidden;
     transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.35s ease, box-shadow 0.35s ease;
 }
 
 .bento-item:hover {
-    transform: translateY(-4px);
+    transform: translateY(-3px);
     border-color: var(--glass-border-hover);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-lift);
 }
 
+/* The corner glow becomes a plotter cross-hatch: two quarter-arcs of
+   concentric hairlines in the top-right corner. */
 .bento-item::after {
     content: '';
     position: absolute;
-    width: 220px;
-    height: 220px;
-    right: -90px;
-    top: -110px;
+    width: 168px;
+    height: 168px;
+    right: -84px;
+    top: -84px;
     border-radius: 50%;
-    background: radial-gradient(circle, var(--glow-primary), transparent 70%);
-    opacity: 0.6;
     pointer-events: none;
+    background-image:
+        repeating-radial-gradient(circle at 50% 50%,
+            var(--rule) 0 1px, transparent 1px 9px);
+    -webkit-mask-image: linear-gradient(225deg, #000 34%, transparent 72%);
+    mask-image: linear-gradient(225deg, #000 34%, transparent 72%);
+    opacity: 0.7;
 }
 
 .bento-item h3 {
@@ -1179,10 +1426,12 @@ img, svg, canvas { max-width: 100%; }
     display: inline-block;
     margin-bottom: 12px;
     font-family: var(--font-mono);
-    font-size: 11.5px;
-    letter-spacing: 0.08em;
+    font-size: 11px;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: var(--accent-2);
+    color: var(--accent-text);
+    padding-left: 9px;
+    border-left: 2px solid var(--accent);
 }
 
 .bento-item.wide { grid-column: span 4; }
@@ -1202,32 +1451,36 @@ img, svg, canvas { max-width: 100%; }
     display: flex;
     align-items: center;
     gap: 11px;
-    padding: 14px 16px;
+    padding: 13px 15px;
     border-radius: var(--radius-md);
     background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
+    border: 1px solid var(--rule);
     text-decoration: none;
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 600;
     color: var(--text-main);
-    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    transition: transform 0.25s ease, border-color 0.25s ease,
+                box-shadow 0.25s ease, background 0.25s ease;
 }
 
 .demo-link:hover {
-    transform: translateY(-3px);
+    transform: translateY(-2px);
     border-color: var(--accent);
-    box-shadow: 0 14px 32px var(--glow-primary);
+    background: var(--panel-bg);
+    box-shadow: 0 8px 20px var(--glow-primary);
 }
 
 .demo-link i {
     display: grid;
     place-items: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    background: linear-gradient(140deg, rgba(99, 102, 241, 0.28), rgba(34, 211, 238, 0.2));
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--rule);
+    background: var(--panel-bg);
     font-style: normal;
-    font-size: 15px;
+    font-size: 14px;
+    color: var(--accent-text);
 }
 
 .demo-link small {
@@ -1249,17 +1502,19 @@ img, svg, canvas { max-width: 100%; }
 .feature-item {
     display: flex;
     gap: 13px;
-    padding: 18px;
+    padding: 17px;
     border-radius: var(--radius-md);
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+    transition: transform 0.3s ease, border-color 0.3s ease,
+                background 0.3s ease, box-shadow 0.3s ease;
 }
 
 .feature-item:hover {
-    transform: translateY(-3px);
+    transform: translateY(-2px);
     border-color: var(--glass-border-hover);
     background: var(--panel-bg);
+    box-shadow: 0 8px 20px var(--grid-glow);
 }
 
 .feature-item svg {
@@ -1331,22 +1586,22 @@ img, svg, canvas { max-width: 100%; }
     flex-direction: column;
     align-items: center;
     gap: 6px;
-    padding: 28px 20px;
+    padding: 26px 20px;
     border-radius: var(--radius-lg);
     background: var(--panel-bg);
-    border: 1px solid var(--glass-border);
+    border: 1px solid var(--rule);
     text-align: center;
     transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.35s ease, box-shadow 0.35s ease;
 }
 
 .platform-card:hover {
-    transform: translateY(-6px);
+    transform: translateY(-4px);
     border-color: var(--glass-border-hover);
-    box-shadow: var(--shadow-card), 0 0 40px var(--glow-primary);
+    box-shadow: var(--shadow-lift);
 }
 
-.platform-icon { width: 54px; height: 54px; margin-bottom: 8px; }
-.platform-icon svg { width: 100%; height: 100%; fill: none; stroke: var(--accent-2); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.platform-icon { width: 50px; height: 50px; margin-bottom: 8px; }
+.platform-icon svg { width: 100%; height: 100%; fill: none; stroke: var(--accent-text); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
 .platform-name { font-size: 16px; font-weight: 700; }
 .platform-arch { font-size: 12.5px; color: var(--text-subtle); font-family: var(--font-mono); }
 
@@ -1354,18 +1609,21 @@ img, svg, canvas { max-width: 100%; }
 
 .code-block {
     margin: 0;
-    padding: 18px;
+    padding: 16px 18px;
     border-radius: var(--radius-md);
     background: var(--code-bg);
-    border: 1px solid var(--glass-border);
+    border: 1px solid var(--rule);
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     font-family: var(--font-mono);
-    font-size: 13.5px;
-    line-height: 1.8;
+    font-size: 13px;
+    line-height: 1.75;
     color: var(--text-muted);
     white-space: pre;
     font-variant-ligatures: none;
+    /* plotting-paper ruling behind the code, so listings sit on the sheet */
+    background-image: linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 28px 100%;
 }
 
 .code-block code { font-family: inherit; color: inherit; }
@@ -1376,12 +1634,12 @@ img, svg, canvas { max-width: 100%; }
     display: inline-block;
     margin-top: 12px;
     padding: 6px 12px;
-    border-radius: 9px;
+    border-radius: var(--radius-sm);
     background: var(--code-bg);
-    border: 1px solid var(--glass-border);
+    border: 1px solid var(--rule);
     font-family: var(--font-mono);
     font-size: 12.5px;
-    color: var(--text-muted);
+    color: var(--accent-text);
 }
 
 /* --------------------------------------------- demo widgets (inputs) ---- */
@@ -1404,53 +1662,55 @@ img, svg, canvas { max-width: 100%; }
     box-shadow: 0 0 0 3px var(--glow-primary);
 }
 
+/* Every demo input gets a drafting focus ring: a hard 1px ink edge plus a
+   soft wash, rather than a rounded glassy halo. */
+.card input[type="text"],
+.card input[type="number"],
+.card select,
+.card textarea {
+    border-radius: var(--radius-sm) !important;
+}
+
 .card input[type="range"] {
     appearance: none;
     -webkit-appearance: none;
-    height: 6px;
-    border-radius: 999px;
+    height: 5px;
+    border-radius: var(--radius-sm);
     background: var(--glass-border);
     accent-color: var(--accent);
 }
 
 .card input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: var(--grad-brand);
-    border: none;
-    box-shadow: 0 4px 12px var(--glow-primary);
+    width: 16px;
+    height: 16px;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    border: 1px solid var(--on-accent);
+    box-shadow: 0 2px 8px var(--glow-primary);
     cursor: pointer;
 }
 
 .card button { font-family: inherit; }
 
-/* The glow tokens are translucent so they read well in box-shadows, but the
-   demo markup also uses them as result text. Give those usages a readable
-   tone in both themes without changing the glow behaviour. */
-:root:not([data-theme="light"]) [style*="color:var(--glow-primary)"] { color: #a5b4fc !important; }
-:root:not([data-theme="light"]) [style*="color:var(--glow-accent)"]  { color: #67e8f9 !important; }
-[data-theme="light"] [style*="color:var(--glow-primary)"] { color: #4338ca !important; }
-[data-theme="light"] [style*="color:var(--glow-accent)"]  { color: #0e7490 !important; }
-
-/* Canvas wrappers had hard-coded dark swatches in inline styles. */
-[style*="background:#181825"],
-[style*="rgba(17,17,27"] {
-    background: var(--plot-panel) !important;
-    border-color: var(--glass-border) !important;
-}
+/* NOTE — there used to be two `[style*=...]` !important hack blocks here.
+   They patched around demo markup that hard-coded swatch colours inline
+   (var(--glow-primary) used as a text colour, #181825 canvas wrappers,
+   rgba(17,17,27,...) panels). Those inline styles now reference palette
+   tokens directly, so the hacks are gone — attribute-substring selectors on
+   inline styles are fragile and they forced colours that a designer could
+   neither see nor override. If demo markup needs a colour, it takes a token. */
 
 /* --------------------------------------------------- bitwise / base UI -- */
 
 .base-btn {
-    padding: 9px 18px;
-    border-radius: 11px;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
     border: 1px solid var(--glass-border);
     background: var(--glass-bg);
     color: var(--text-muted);
     font: inherit;
-    font-size: 13.5px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     transition: color 0.25s ease, border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
@@ -1467,13 +1727,13 @@ img, svg, canvas { max-width: 100%; }
 .base-btn.active {
     background: var(--grad-brand);
     border-color: transparent;
-    color: #fff;
-    box-shadow: 0 10px 24px var(--glow-primary);
+    color: var(--on-accent);
+    box-shadow: 0 6px 18px var(--glow-primary);
 }
 
 .op-btn {
-    padding: 9px 14px;
-    border-radius: 11px;
+    padding: 8px 13px;
+    border-radius: var(--radius-sm);
     border: 1px solid var(--glass-border);
     background: var(--glass-bg);
     color: var(--text-muted);
@@ -1487,21 +1747,24 @@ img, svg, canvas { max-width: 100%; }
 }
 
 .op-btn:hover { color: var(--text-main); border-color: var(--glass-border-hover); transform: translateY(-2px); }
-.op-btn.active { background: var(--grad-brand); border-color: transparent; color: #fff; box-shadow: 0 10px 24px var(--glow-primary); }
+.op-btn.active { background: var(--grad-brand); border-color: transparent; color: var(--on-accent); box-shadow: 0 6px 18px var(--glow-primary); }
 
 .base-result-card,
 .bw-result-card {
-    padding: 14px 16px;
+    padding: 13px 15px;
     border-radius: var(--radius-md);
     background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    transition: border-color 0.25s ease, transform 0.25s ease;
+    border: 1px solid var(--rule);
+    border-left: 2px solid var(--accent);
+    transition: border-color 0.25s ease, transform 0.25s ease,
+                box-shadow 0.25s ease;
 }
 
 .base-result-card:hover,
 .bw-result-card:hover {
     border-color: var(--glass-border-hover);
     transform: translateY(-2px);
+    box-shadow: 0 8px 20px var(--glow-primary);
 }
 
 .bit-grid {
@@ -1515,10 +1778,10 @@ img, svg, canvas { max-width: 100%; }
     display: grid;
     place-items: center;
     aspect-ratio: 1;
-    border-radius: 8px;
-    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--rule);
     font-family: var(--font-mono);
-    font-size: 13.5px;
+    font-size: 13px;
     font-weight: 700;
     cursor: pointer;
     user-select: none;
@@ -1531,8 +1794,8 @@ img, svg, canvas { max-width: 100%; }
 .bit-cell.bit-1 {
     background: var(--grad-brand);
     border-color: transparent;
-    color: #fff;
-    box-shadow: 0 4px 14px var(--glow-primary);
+    color: var(--on-accent);
+    box-shadow: 0 3px 10px var(--glow-primary);
 }
 
 .bit-cell.bit-0 {
@@ -1557,11 +1820,27 @@ img, svg, canvas { max-width: 100%; }
 .footer {
     position: relative;
     margin-top: 40px;
-    padding: 64px 24px 40px;
+    padding: 62px 24px 38px;
     background: var(--footer-bg);
-    border-top: 1px solid var(--glass-border);
+    border-top: 1px solid var(--rule);
     backdrop-filter: blur(var(--blur-strong));
     -webkit-backdrop-filter: blur(var(--blur-strong));
+}
+
+/* Title-block rule across the top of the footer. */
+.footer::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 24px;
+    right: 24px;
+    height: 5px;
+    opacity: 0.55;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(
+        90deg, var(--rule-strong) 0 1px, transparent 1px 8px);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
 }
 
 .footer-content {
@@ -1590,11 +1869,12 @@ img, svg, canvas { max-width: 100%; }
 
 .footer-col h4 {
     margin: 0 0 14px;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: var(--text-subtle);
+    color: var(--accent-text);
 }
 
 .footer-links {
@@ -1615,9 +1895,10 @@ img, svg, canvas { max-width: 100%; }
 
 .footer-text {
     grid-column: 1 / -1;
-    padding-top: 26px;
+    padding-top: 24px;
     border-top: 1px solid var(--glass-border);
-    font-size: 13px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
     color: var(--text-subtle);
     text-align: center;
 }
@@ -1630,17 +1911,17 @@ img, svg, canvas { max-width: 100%; }
     bottom: 22px;
     display: grid;
     place-items: center;
-    width: 48px;
-    height: 48px;
-    border: none;
-    border-radius: 14px;
-    background: var(--grad-brand);
-    color: #fff;
+    width: 46px;
+    height: 46px;
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius-md);
+    background: var(--panel-solid);
+    color: var(--accent-text);
     cursor: pointer;
     opacity: 0;
     visibility: hidden;
     transform: translateY(10px);
-    box-shadow: 0 14px 34px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 6px 18px var(--glow-primary);
     transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
     z-index: 998;
     -webkit-tap-highlight-color: transparent;
@@ -1654,13 +1935,25 @@ img, svg, canvas { max-width: 100%; }
 
 /* --------------------------------------------------------- reveal------- */
 
+/* Reveal: elements lift and sharpen into place. --reveal-i is set per
+   element by the IntersectionObserver so siblings stagger instead of all
+   landing on the same frame. */
 .reveal {
     opacity: 0;
-    transform: translateY(26px);
-    transition: opacity 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transform: translateY(24px);
+    transition:
+        opacity 0.66s cubic-bezier(0.2, 0.8, 0.2, 1),
+        transform 0.66s cubic-bezier(0.2, 0.8, 0.2, 1),
+        filter 0.66s ease;
+    transition-delay: calc(var(--reveal-i, 0) * 55ms);
+    filter: blur(3px);
 }
 
-.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+}
 
 /* --------------------------------------------------------- responsive --- */
 
@@ -1680,15 +1973,18 @@ img, svg, canvas { max-width: 100%; }
     .nav { display: none; }
     .menu-toggle { display: inline-grid; }
     .footer-content { grid-template-columns: 1fr 1fr; }
+    /* The hero's dimension leaders would collide with the panel once the
+       layout collapses to a single column. */
+    .hero::before, .hero::after { display: none; }
 }
 
 @media (max-width: 720px) {
-    .header { top: 10px; width: calc(100% - 20px); height: 58px; padding: 0 12px; }
+    .header { top: 10px; width: calc(100% - 20px); height: 56px; padding: 0 12px; }
     .logo { font-size: 16px; }
     .logo-icon { width: 34px; height: 34px; }
     .logo-icon svg { width: 20px; height: 20px; }
-    .mobile-nav { top: 76px; left: 10px; right: 10px; }
-    .section { padding: 68px 0; }
+    .mobile-nav { top: 74px; left: 10px; right: 10px; }
+    .section { padding: 64px 0; }
     .container { padding: 0 18px; }
     .hero { padding: 116px 18px 64px; }
     .hero-actions .btn { width: 100%; }
@@ -1703,6 +1999,9 @@ img, svg, canvas { max-width: 100%; }
     .platform-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .footer-content { grid-template-columns: 1fr; gap: 26px; }
     #heroCanvas { height: 240px; }
+    /* 80px majors read as noise on a phone; drop to the minor ruling only. */
+    body::before { background-size: 48px 48px, 48px 48px, 12px 12px, 12px 12px; }
+    .section-header::after { width: 58px; }
 }
 
 @media (max-width: 420px) {
@@ -1732,38 +2031,133 @@ img, svg, canvas { max-width: 100%; }
     .reveal { opacity: 1; transform: none; }
 }
 
-/* ------------------------------------------------------- liquid glass --- */
-/* Shared-context WebGL refraction layer, ported from liquid-glass-js
-   (github.com/dashersw/liquid-glass-js, MIT).  Surfaces opt in through
-   the .lg-glass class; html.lg-liquid is only added after the first
-   successful frame, so the CSS glass above stays as the safe fallback. */
+/* -------------------------------------------------------------- motion --- */
+/* ==========================================================================
+   Blueprint motion
+   --------------------------------------------------------------------------
+   Everything here is either (a) driven by a CSS variable the scroll handler
+   writes, or (b) a short one-shot animation. Nothing animates a property
+   that triggers layout — only transform, opacity and filter — so the page
+   stays smooth while the demos are drawing.
+   ========================================================================== */
 
-#lgCanvas {
+/* 1. Scroll progress: a hairline of ink drawn across the very top of the
+      page as you read down it.
+
+      Driven with `width` rather than `transform: scaleX()` on purpose: a
+      scaleX bar reports a 0-width box to getBoundingClientRect, which makes
+      it invisible to layout assertions and viewport measurements. `width` on
+      a fixed, zero-height-effect 2px bar is cheap and honest. */
+#scroll-progress {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
-    display: none;
+    height: 2px;
+    width: calc(var(--scroll-progress, 0) * 100%);
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    z-index: 1200;
     pointer-events: none;
-    z-index: -1;
 }
 
-html.lg-liquid #lgCanvas { display: block; }
+/* 2. Section framing: each section draws its own measured rule that fills
+      from the centre outwards once it has been seen. */
+.section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: min(560px, 62vw);
+    height: 1px;
+    background: var(--rule);
+    transform: translateX(-50%) scaleX(0);
+    transform-origin: center;
+    transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.section.seen::before { transform: translateX(-50%) scaleX(1); }
 
-/* Keep the aurora and grid behind the glass layer. */
-html.lg-liquid body::before { z-index: -3; }
-html.lg-liquid body::after { z-index: -2; }
+/* 3. Chips and tags get a quiet tick pattern that slides on hover. */
+.chip, .bento-tag, .section-label {
+    background-repeat: repeat;
+    transition: color 0.25s ease, border-color 0.25s ease,
+                background-color 0.25s ease, transform 0.25s ease;
+}
+.chip:hover, .bento-tag:hover { transform: translateX(2px); }
 
-/* Let the WebGL shader supply the surface; keep borders and hover lift. */
-html.lg-liquid .lg-glass {
-    background: transparent !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+/* 4. The hero's live-preview canvas gets a sweeping scan line, so the one
+      genuinely live element on the page reads as live. */
+.hero-panel { overflow: hidden; }
+.hero-panel .scan-line {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    height: 1px;
+    top: 16px;
+    background: linear-gradient(90deg, transparent, var(--accent-2), transparent);
+    opacity: 0.5;
+    pointer-events: none;
+    animation: scanSweep 5.2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+@keyframes scanSweep {
+    0%   { transform: translateY(0);      opacity: 0; }
+    12%  { opacity: 0.55; }
+    50%  { transform: translateY(146px);  opacity: 0.55; }
+    88%  { opacity: 0.5; }
+    100% { transform: translateY(292px);  opacity: 0; }
+}
+
+/* 5. Ink-in: stat numbers and code blocks fade up a hair later than their
+      container, so content settles rather than snapping. */
+.hero-stat, .code-block, .syntax-example {
+    animation: inkIn 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes inkIn {
+    from { opacity: 0; transform: translateY(10px); filter: blur(2px); }
+    to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+}
+
+/* 6. Interactive cards get corner crosshairs on hover — the "you are
+      inspecting this object" cue, drawn with two tiny border-only boxes. */
+.card, .bento-item, .platform-card, .base-result-card, .bw-result-card {
+    position: relative;
+}
+
+/* 7. Theme switch flourish: a brief ink wipe across the viewport. */
+html.theme-wipe::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    pointer-events: none;
+    background: linear-gradient(105deg,
+        transparent 0%, var(--accent) 45%, var(--accent-2) 55%, transparent 100%);
+    opacity: 0.10;
+    animation: themeWipe 0.55s ease-out forwards;
+}
+@keyframes themeWipe {
+    from { opacity: 0.16; transform: translateX(-8%); }
+    to   { opacity: 0;    transform: translateX(8%); }
+}
+
+/* 8. Nav link ink underline is defined above; the mobile menu gets a sweep. */
+.mobile-nav.open .mobile-nav-link {
+    animation: menuIn 0.34s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: calc(var(--mi, 0) * 28ms);
+}
+@keyframes menuIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #scroll-progress { display: none; }
+    .hero-panel .scan-line { display: none; }
+    .section::before { transform: translateX(-50%) scaleX(1); }
+    .reveal { filter: none; }
 }
     </style>
 </head>
 <body>
+    <div id="scroll-progress" aria-hidden="true"></div>
     <header class="header" id="header">
         <a href="#" class="logo" aria-label="SuperCalculator 首页">
             <div class="logo-icon">
@@ -1871,6 +2265,7 @@ html.lg-liquid .lg-glass {
                     <span>live&nbsp;preview&nbsp;·&nbsp;f(x) = sin(x)·e^(−x/6)</span>
                 </div>
                 <canvas id="heroCanvas" width="640" height="300" aria-label="函数图像预览"></canvas>
+                <div class="scan-line" aria-hidden="true"></div>
                 <div class="hero-formula">
                     <span><b>∫</b>&nbsp;数值积分</span>
                     <span><b>d/dx</b>&nbsp;微分</span>
@@ -2700,19 +3095,19 @@ html.lg-liquid .lg-glass {
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                             <div class="base-result-card" id="resBin">
                                 <div style="font-size:12px;color:var(--text-subtle);margin-bottom:4px;font-weight:600;">二进制 (2)</div>
-                                <div style="font-size:16px;color:var(--glow-accent);font-family:monospace;word-break:break-all;" id="resBinVal">—</div>
+                                <div style="font-size:16px;color:var(--accent-2-text);font-family:monospace;word-break:break-all;" id="resBinVal">—</div>
                             </div>
                             <div class="base-result-card" id="resOct">
                                 <div style="font-size:12px;color:var(--text-subtle);margin-bottom:4px;font-weight:600;">八进制 (8)</div>
-                                <div style="font-size:16px;color:var(--glow-accent);font-family:monospace;word-break:break-all;" id="resOctVal">—</div>
+                                <div style="font-size:16px;color:var(--accent-2-text);font-family:monospace;word-break:break-all;" id="resOctVal">—</div>
                             </div>
                             <div class="base-result-card" id="resDec">
                                 <div style="font-size:12px;color:var(--text-subtle);margin-bottom:4px;font-weight:600;">十进制 (10)</div>
-                                <div style="font-size:16px;color:var(--glow-primary);font-family:monospace;word-break:break-all;" id="resDecVal">—</div>
+                                <div style="font-size:16px;color:var(--accent-text);font-family:monospace;word-break:break-all;" id="resDecVal">—</div>
                             </div>
                             <div class="base-result-card" id="resHex">
                                 <div style="font-size:12px;color:var(--text-subtle);margin-bottom:4px;font-weight:600;">十六进制 (16)</div>
-                                <div style="font-size:16px;color:var(--glow-accent);font-family:monospace;word-break:break-all;" id="resHexVal">—</div>
+                                <div style="font-size:16px;color:var(--accent-2-text);font-family:monospace;word-break:break-all;" id="resHexVal">—</div>
                             </div>
                         </div>
                         <div id="baseError" style="display:none;margin-top:12px;padding:12px 16px;border-radius:10px;background:rgba(255,80,80,0.12);border:1px solid rgba(255,80,80,0.3);color:#ff6b6b;font-size:14px;"></div>
@@ -2783,19 +3178,19 @@ html.lg-liquid .lg-glass {
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
                             <div class="bw-result-card">
                                 <div style="font-size:12px;color:var(--text-subtle);margin-bottom:4px;font-weight:600;">二进制</div>
-                                <div style="font-size:15px;color:var(--glow-accent);font-family:monospace;word-break:break-all;" id="bwResBin">—</div>
+                                <div style="font-size:15px;color:var(--accent-2-text);font-family:monospace;word-break:break-all;" id="bwResBin">—</div>
                             </div>
                             <div class="bw-result-card">
                                 <div style="font-size:12px;color:var(--text-subtle);margin-bottom:4px;font-weight:600;">八进制</div>
-                                <div style="font-size:15px;color:var(--glow-accent);font-family:monospace;word-break:break-all;" id="bwResOct">—</div>
+                                <div style="font-size:15px;color:var(--accent-2-text);font-family:monospace;word-break:break-all;" id="bwResOct">—</div>
                             </div>
                             <div class="bw-result-card">
                                 <div style="font-size:12px;color:var(--text-subtle);margin-bottom:4px;font-weight:600;">十进制</div>
-                                <div style="font-size:15px;color:var(--glow-primary);font-family:monospace;word-break:break-all;" id="bwResDec">—</div>
+                                <div style="font-size:15px;color:var(--accent-text);font-family:monospace;word-break:break-all;" id="bwResDec">—</div>
                             </div>
                             <div class="bw-result-card">
                                 <div style="font-size:12px;color:var(--text-subtle);margin-bottom:4px;font-weight:600;">十六进制</div>
-                                <div style="font-size:15px;color:var(--glow-accent);font-family:monospace;word-break:break-all;" id="bwResHex">—</div>
+                                <div style="font-size:15px;color:var(--accent-2-text);font-family:monospace;word-break:break-all;" id="bwResHex">—</div>
                             </div>
                         </div>
                         <div id="bwError" style="display:none;margin-top:12px;padding:12px 16px;border-radius:10px;background:rgba(255,80,80,0.12);border:1px solid rgba(255,80,80,0.3);color:#ff6b6b;font-size:14px;"></div>
@@ -2834,9 +3229,9 @@ html.lg-liquid .lg-glass {
                             style="width:100%;padding:12px 16px;border-radius:12px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:16px;font-family:monospace;outline:none;box-sizing:border-box;" />
                     </div>
                     <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                        <button onclick="calDow()" style="flex:1;min-width:120px;padding:12px 16px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;">查询星期</button>
-                        <button onclick="calDiff()" style="flex:1;min-width:120px;padding:12px 16px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;">日期差</button>
-                        <button onclick="calAdd()" style="flex:1;min-width:120px;padding:12px 16px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;">加减天数</button>
+                        <button onclick="calDow()" style="flex:1;min-width:120px;padding:12px 16px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;">查询星期</button>
+                        <button onclick="calDiff()" style="flex:1;min-width:120px;padding:12px 16px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;">日期差</button>
+                        <button onclick="calAdd()" style="flex:1;min-width:120px;padding:12px 16px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;">加减天数</button>
                     </div>
                     <div id="calResult" style="padding:14px 18px;border-radius:12px;background:var(--glass-bg);border:1px solid var(--glass-border);color:var(--text-main);font-size:15px;font-family:monospace;min-height:24px;"></div>
                 </div>
@@ -2927,7 +3322,7 @@ html.lg-liquid .lg-glass {
                             </div>
                         </div>
                     </div>
-                    <div id="probResults" style="display:none;padding:16px;border-radius:12px;background:var(--glass-bg);border:1px solid var(--glass-border);font-family:monospace;font-size:15px;color:var(--glow-accent);line-height:1.8;word-break:break-all;"></div>
+                    <div id="probResults" style="display:none;padding:16px;border-radius:12px;background:var(--glass-bg);border:1px solid var(--glass-border);font-family:monospace;font-size:15px;color:var(--accent-2-text);line-height:1.8;word-break:break-all;"></div>
                 </div>
             </div>
         </section>
@@ -3046,7 +3441,7 @@ html.lg-liquid .lg-glass {
                             </div>
                         </div>
                     </div>
-                    <div id="finResults" style="padding:16px;border-radius:12px;background:var(--glass-bg);border:1px solid var(--glass-border);font-family:monospace;font-size:15px;color:var(--glow-accent);line-height:1.8;word-break:break-all;"></div>
+                    <div id="finResults" style="padding:16px;border-radius:12px;background:var(--glass-bg);border:1px solid var(--glass-border);font-family:monospace;font-size:15px;color:var(--accent-2-text);line-height:1.8;word-break:break-all;"></div>
                 </div>
             </div>
         </section>
@@ -3086,9 +3481,9 @@ html.lg-liquid .lg-glass {
                         <option value="-y+sin(x)">Damped oscillation (-y+sin(x))</option>
                         <option value="x^2-y">Parabolic (x²-y)</option>
                     </select>
-                    <button onclick="odeComparePlot()" style="flex:1;min-width:120px;padding:12px 16px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;">对比绘图</button>
+                    <button onclick="odeComparePlot()" style="flex:1;min-width:120px;padding:12px 16px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;">对比绘图</button>
                 </div>
-                <div style="position:relative;width:100%;height:350px;border-radius:12px;overflow:hidden;border:1px solid var(--glass-border);background:#181825;">
+                <div style="position:relative;width:100%;height:350px;border-radius:12px;overflow:hidden;border:1px solid var(--glass-border);background:var(--plot-panel);">
                     <canvas id="odeCompareCanvas" style="width:100%;height:100%;"></canvas>
                 </div>
                 <div id="odeCompareLegend" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;justify-content:center;"></div>
@@ -3335,7 +3730,7 @@ html.lg-liquid .lg-glass {
                         <option value="natural_spline">Natural Spline</option>
                         <option value="akima">Akima Spline</option>
                     </select>
-                    <button onclick="interpWebPlot()" style="flex:1;min-width:100px;padding:12px 16px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;">Plot</button>
+                    <button onclick="interpWebPlot()" style="flex:1;min-width:100px;padding:12px 16px;border-radius:12px;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;">Plot</button>
                     <button onclick="interpWebClear()" style="padding:12px 16px;border-radius:12px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-muted);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;">Clear</button>
                 </div>
                 <div style="margin-bottom:12px;">
@@ -3345,15 +3740,15 @@ html.lg-liquid .lg-glass {
                 <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
                     <label style="font-size:13px;color:var(--text-muted);font-weight:600;">Evaluate at x =</label>
                     <input type="number" id="interpWebEvalX" value="2.5" step="0.1" style="width:90px;padding:10px 12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-main);font-size:14px;font-family:'JetBrains Mono',monospace;" />
-                    <button onclick="interpWebCalc()" style="padding:10px 18px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;">Calculate</button>
-                    <span id="interpWebResult" style="font-size:14px;color:var(--glow-accent);font-family:'JetBrains Mono',monospace;font-weight:600;"></span>
+                    <button onclick="interpWebCalc()" style="padding:10px 18px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);font-size:14px;font-weight:600;cursor:pointer;">Calculate</button>
+                    <span id="interpWebResult" style="font-size:14px;color:var(--accent-2-text);font-family:'JetBrains Mono',monospace;font-weight:600;"></span>
                 </div>
-                <div style="position:relative;width:100%;height:300px;border-radius:12px;overflow:hidden;border:1px solid var(--glass-border);background:#181825;">
+                <div style="position:relative;width:100%;height:300px;border-radius:12px;overflow:hidden;border:1px solid var(--glass-border);background:var(--plot-panel);">
                     <canvas id="interpWebCanvas" style="width:100%;height:100%;"></canvas>
                 </div>
                 <p id="interpWebStatus" style="margin-top:8px;font-size:12px;color:var(--text-subtle);"></p>
                 <div style="margin-top:12px;">
-                    <button onclick="interpWebExportCSV()" style="padding:10px 18px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.3s;">Export CSV</button>
+                    <button onclick="interpWebExportCSV()" style="padding:10px 18px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.3s;">Export CSV</button>
                 </div>
             </div>
         </section>
@@ -3695,7 +4090,7 @@ html.lg-liquid .lg-glass {
                         <button class="chip" onclick="setVolPreset('cylinder')" style="font-size:12px;">圆柱 (h=1,r=1)</button>
                         <button class="chip" onclick="setVolPreset('torus')" style="font-size:12px;">圆环 (R=2,r=0.5)</button>
                     </div>
-                    <div id="volResults" style="padding:16px;border-radius:12px;background:var(--glass-bg);border:1px solid var(--glass-border);font-family:monospace;font-size:15px;color:var(--glow-accent);line-height:1.8;word-break:break-all;"></div>
+                    <div id="volResults" style="padding:16px;border-radius:12px;background:var(--glass-bg);border:1px solid var(--glass-border);font-family:monospace;font-size:15px;color:var(--accent-2-text);line-height:1.8;word-break:break-all;"></div>
                 </div>
             </div>
         </section>
@@ -3720,7 +4115,7 @@ html.lg-liquid .lg-glass {
                         </div>
                         <div style="flex:1;min-width:100px;">
                             <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">网格密度</label>
-                            <input type="range" id="dfGridSize" min="8" max="30" value="18" style="width:100%;margin-top:8px;accent-color:var(--glow-primary);" oninput="debouncedPlotDF()">
+                            <input type="range" id="dfGridSize" min="8" max="30" value="18" style="width:100%;margin-top:8px;accent-color:var(--accent-text);" oninput="debouncedPlotDF()">
                         </div>
                     </div>
                     <div style="display:flex;gap:12px;flex-wrap:wrap;">
@@ -3732,7 +4127,7 @@ html.lg-liquid .lg-glass {
                             <button class="base-btn" style="width:100%;padding:12px 20px;" onclick="plotDirectionField()">Plot</button>
                         </div>
                     </div>
-                    <div style="position:relative;width:100%;border-radius:12px;overflow:hidden;border:1px solid var(--glass-border);background:rgba(17,17,27,0.5);">
+                    <div style="position:relative;width:100%;border-radius:12px;overflow:hidden;border:1px solid var(--glass-border);background:var(--plot-panel);">
                         <canvas id="dfCanvas" style="width:100%;height:320px;display:block;"></canvas>
                     </div>
                 </div>
@@ -3763,7 +4158,7 @@ html.lg-liquid .lg-glass {
                         </div>
                         <div style="flex:1;min-width:100px;">
                             <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">网格密度</label>
-                            <input type="range" id="vfGridSize" min="8" max="30" value="14" style="width:100%;margin-top:8px;accent-color:var(--glow-primary);" oninput="debouncedPlotVF()">
+                            <input type="range" id="vfGridSize" min="8" max="30" value="14" style="width:100%;margin-top:8px;accent-color:var(--accent-text);" oninput="debouncedPlotVF()">
                         </div>
                     </div>
                     <div style="display:flex;gap:12px;flex-wrap:wrap;">
@@ -3775,7 +4170,7 @@ html.lg-liquid .lg-glass {
                             <button class="base-btn" style="width:100%;padding:12px 20px;" onclick="plotVectorField()">Plot</button>
                         </div>
                     </div>
-                    <div style="position:relative;width:100%;border-radius:12px;overflow:hidden;border:1px solid var(--glass-border);background:rgba(17,17,27,0.5);">
+                    <div style="position:relative;width:100%;border-radius:12px;overflow:hidden;border:1px solid var(--glass-border);background:var(--plot-panel);">
                         <canvas id="vfCanvas" style="width:100%;height:360px;display:block;"></canvas>
                     </div>
                 </div>
@@ -3802,11 +4197,11 @@ html.lg-liquid .lg-glass {
                         </div>
                         <div style="flex:1;min-width:100px;">
                             <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">分辨率</label>
-                            <input type="range" id="contourGridSize" min="15" max="60" value="35" style="width:100%;margin-top:8px;accent-color:var(--glow-primary);" oninput="debouncedPlotContour()">
+                            <input type="range" id="contourGridSize" min="15" max="60" value="35" style="width:100%;margin-top:8px;accent-color:var(--accent-text);" oninput="debouncedPlotContour()">
                         </div>
                         <div style="flex:1;min-width:100px;">
                             <label style="display:block;font-size:12px;color:var(--text-subtle);margin-bottom:4px;">等高线数</label>
-                            <input type="range" id="contourLevels" min="3" max="25" value="12" style="width:100%;margin-top:8px;accent-color:var(--glow-primary);" oninput="debouncedPlotContour()">
+                            <input type="range" id="contourLevels" min="3" max="25" value="12" style="width:100%;margin-top:8px;accent-color:var(--accent-text);" oninput="debouncedPlotContour()">
                         </div>
                     </div>
                     <div style="display:flex;gap:12px;flex-wrap:wrap;">
@@ -3814,7 +4209,7 @@ html.lg-liquid .lg-glass {
                             <button class="base-btn" style="width:100%;padding:12px 20px;" onclick="plotContour()">Plot</button>
                         </div>
                     </div>
-                    <div style="position:relative;width:100%;border-radius:12px;overflow:hidden;border:1px solid var(--glass-border);background:rgba(17,17,27,0.5);">
+                    <div style="position:relative;width:100%;border-radius:12px;overflow:hidden;border:1px solid var(--glass-border);background:var(--plot-panel);">
                         <canvas id="contourCanvas" style="width:100%;height:360px;display:block;"></canvas>
                     </div>
                 </div>
@@ -3871,7 +4266,7 @@ html.lg-liquid .lg-glass {
                         <button class="base-btn" style="padding:6px 12px;font-size:12px;" onclick="setLaplacePreset('1','1','1/x','1')">1 ↔ 1/s</button>
                     </div>
                     <!-- Result -->
-                    <div id="laplaceResult" style="padding:16px;border-radius:10px;background:rgba(17,17,27,0.5);border:1px solid var(--glass-border);font-family:monospace;font-size:15px;color:var(--text-main);white-space:pre-wrap;min-height:40px;"></div>
+                    <div id="laplaceResult" style="padding:16px;border-radius:10px;background:var(--plot-panel);border:1px solid var(--glass-border);font-family:monospace;font-size:15px;color:var(--text-main);white-space:pre-wrap;min-height:40px;"></div>
                 </div>
             </div>
         </section>
@@ -3963,7 +4358,7 @@ html.lg-liquid .lg-glass {
                     <label style="font-size:13px;color:var(--text-subtle);">Sequence B (comma-separated / 序列 B，逗号分隔)</label>
                     <input type="text" id="convSeqB" value="4, 5, 6"
                         style="padding:12px 16px;border:1px solid var(--border);border-radius:12px;background:var(--glass-bg);color:var(--text-main);font-size:15px;font-family:monospace;">
-                    <button class="base-btn" onclick="computeConvolution()" style="background:var(--accent);color:#fff;border:none;">Compute Convolution / 计算卷积</button>
+                    <button class="base-btn" onclick="computeConvolution()" style="background:var(--accent);color:var(--on-accent);border:none;">Compute Convolution / 计算卷积</button>
                     <div id="convResult" style="font-size:14px;color:var(--text-main);font-family:monospace;min-height:20px;white-space:pre-wrap;padding:12px;background:var(--glass-bg);border-radius:12px;"></div>
                 </div>
             </div>
@@ -4010,10 +4405,10 @@ html.lg-liquid .lg-glass {
                         </div>
                     </div>
                     <div id="dataResults" style="display:none;">
-                        <canvas id="dataCanvas" style="width:100%;height:280px;border-radius:12px;background:rgba(17,17,27,0.5);border:1px solid var(--glass-border);"></canvas>
-                        <div id="dataTrendInfo" style="margin-top:12px;padding:12px 16px;border-radius:10px;background:var(--glass-bg);border:1px solid var(--glass-border);font-family:monospace;font-size:13px;color:var(--glow-accent);line-height:1.6;display:none;"></div>
+                        <canvas id="dataCanvas" style="width:100%;height:280px;border-radius:12px;background:var(--plot-panel);border:1px solid var(--glass-border);"></canvas>
+                        <div id="dataTrendInfo" style="margin-top:12px;padding:12px 16px;border-radius:10px;background:var(--glass-bg);border:1px solid var(--glass-border);font-family:monospace;font-size:13px;color:var(--accent-2-text);line-height:1.6;display:none;"></div>
                         <div style="margin-top:12px;display:none;" id="dataExportRow">
-                            <button onclick="exportDataCSV()" style="padding:10px 18px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.3s;">Export CSV</button>
+                            <button onclick="exportDataCSV()" style="padding:10px 18px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.3s;">Export CSV</button>
                         </div>
                     </div>
                 </div>
@@ -4279,7 +4674,7 @@ html.lg-liquid .lg-glass {
                     <a href="docs/usage_cn.md" class="footer-link">使用教程</a>
                 </div>
             </div>
-            <p class="footer-text">© 2026 SuperCalculator · 使用 C + Python + Java 构建 · Aurora Lab 主题</p>
+            <p class="footer-text">© 2026 SuperCalculator · 使用 C + Python + Java 构建 · Blueprint 主题</p>
         </div>
     </footer>
 
@@ -4315,7 +4710,17 @@ html.lg-liquid .lg-glass {
             themeToggle.addEventListener('click', function() {
                 isDarkMode = !isDarkMode;
                 var theme = isDarkMode ? 'dark' : 'light';
+                // Animate only for the duration of the swap: a permanent
+                // transition on * would tax every scroll and hover.
+                document.documentElement.classList.add('theme-swapping');
                 document.documentElement.setAttribute('data-theme', theme);
+                document.documentElement.classList.add('theme-wipe');
+                window.setTimeout(function() {
+                    document.documentElement.classList.remove('theme-swapping');
+                }, 420);
+                window.setTimeout(function() {
+                    document.documentElement.classList.remove('theme-wipe');
+                }, 600);
                 try {
                     localStorage.setItem('theme', theme);
                 } catch (e) {
@@ -4356,6 +4761,9 @@ html.lg-liquid .lg-glass {
 
             var mobileLinks = document.querySelectorAll('.mobile-nav-link');
             for (var i = 0; i < mobileLinks.length; i++) {
+                // Stagger the menu sweep so the list unrolls rather than
+                // appearing all at once.
+                mobileLinks[i].style.setProperty('--mi', i);
                 mobileLinks[i].addEventListener('click', function() {
                     closeMobileMenu();
                 });
@@ -4393,6 +4801,14 @@ html.lg-liquid .lg-glass {
                         } else {
                             scrollTopBtn.classList.remove('visible');
                         }
+
+                        // Reading progress, written as a CSS variable so the
+                        // compositor animates the bar rather than the JS.
+                        var doc = document.documentElement;
+                        var max = doc.scrollHeight - window.innerHeight;
+                        var pct = max > 0 ? Math.min(1, window.scrollY / max) : 0;
+                        doc.style.setProperty('--scroll-progress', pct.toFixed(4));
+
                         scrollTicking = false;
                     });
                     scrollTicking = true;
@@ -4400,12 +4816,71 @@ html.lg-liquid .lg-glass {
             }
 
             window.addEventListener('scroll', onScroll, { passive: true });
+            onScroll();
+
+            // Crosshair: two hairlines track the pointer across the whole
+            // drafting sheet. One rAF-throttled listener, pointer-only.
+            (function () {
+                if (!window.matchMedia || !window.matchMedia('(pointer: fine)').matches) return;
+                if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+                var cross = document.createElement('div');
+                cross.id = 'crosshair';
+                document.body.appendChild(cross);
+                var pending = false, px = 0, py = 0;
+                document.addEventListener('pointermove', function (e) {
+                    px = e.clientX; py = e.clientY;
+                    if (pending) return;
+                    pending = true;
+                    window.requestAnimationFrame(function () {
+                        cross.style.setProperty('--cx', px + 'px');
+                        cross.style.setProperty('--cy', py + 'px');
+                        cross.classList.add('on');
+                        pending = false;
+                    });
+                }, { passive: true });
+                document.addEventListener('pointerleave', function () {
+                    cross.classList.remove('on');
+                });
+            })();
 
             scrollTopBtn.addEventListener('click', function() {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             });
 
             var revealElements = document.querySelectorAll('.reveal');
+
+            // Stagger siblings: each element waits 55ms longer than the one
+            // before it *within its own parent*, so a row of cards ripples
+            // in instead of all four landing on the same frame.
+            for (var s = 0; s < revealElements.length; s++) {
+                var sib = revealElements[s].parentNode
+                    ? revealElements[s].parentNode.querySelectorAll(':scope > .reveal')
+                    : null;
+                var idx = 0;
+                if (sib) {
+                    for (var k = 0; k < sib.length; k++) {
+                        if (sib[k] === revealElements[s]) { idx = k; break; }
+                    }
+                }
+                revealElements[s].style.setProperty('--reveal-i', Math.min(idx, 6));
+            }
+
+            // Sections draw their measured rule once they have been seen.
+            if ('IntersectionObserver' in window) {
+                var sectionObserver = new IntersectionObserver(function(entries) {
+                    for (var i = 0; i < entries.length; i++) {
+                        if (entries[i].isIntersecting) {
+                            entries[i].target.classList.add('seen');
+                            sectionObserver.unobserve(entries[i].target);
+                        }
+                    }
+                }, { rootMargin: '0px 0px -120px 0px', threshold: 0 });
+
+                var sections = document.querySelectorAll('.section');
+                for (var t = 0; t < sections.length; t++) {
+                    sectionObserver.observe(sections[t]);
+                }
+            }
 
             // Use Intersection Observer for better performance than scroll events
             if ('IntersectionObserver' in window) {
@@ -4862,8 +5337,8 @@ html.lg-liquid .lg-glass {
                 var c = comb(n, r);
                 var p = perm(n, r);
                 res.style.display = 'block';
-                res.innerHTML = '<div style="margin-bottom:8px;"><span style="color:var(--text-muted);">' + (isZh ? '组合数' : 'Combination') + ' C(' + n + ',' + r + ') = </span><span style="color:var(--glow-primary);font-size:18px;">' + fmtNum(c) + '</span></div>' +
-                    '<div><span style="color:var(--text-muted);">' + (isZh ? '排列数' : 'Permutation') + ' P(' + n + ',' + r + ') = </span><span style="color:var(--glow-primary);font-size:18px;">' + fmtNum(p) + '</span></div>';
+                res.innerHTML = '<div style="margin-bottom:8px;"><span style="color:var(--text-muted);">' + (isZh ? '组合数' : 'Combination') + ' C(' + n + ',' + r + ') = </span><span style="color:var(--accent-text);font-size:18px;">' + fmtNum(c) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '排列数' : 'Permutation') + ' P(' + n + ',' + r + ') = </span><span style="color:var(--accent-text);font-size:18px;">' + fmtNum(p) + '</span></div>';
             };
 
             window.computeProbEvent = function() {
@@ -4882,10 +5357,10 @@ html.lg-liquid .lg-glass {
                 var cond = pb > 0 ? pab / pb : NaN;
                 res.style.display = 'block';
                 res.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
-                    '<div><span style="color:var(--text-muted);">P(A∪B) = </span><span style="color:var(--glow-primary);">' + fmtNum(union) + '</span></div>' +
-                    '<div><span style="color:var(--text-muted);">P(A∩B) = </span><span style="color:var(--glow-primary);">' + fmtNum(pab) + '</span></div>' +
-                    '<div><span style="color:var(--text-muted);">P(A\') = </span><span style="color:var(--glow-primary);">' + fmtNum(compA) + '</span></div>' +
-                    '<div><span style="color:var(--text-muted);">P(B\') = </span><span style="color:var(--glow-primary);">' + fmtNum(1 - pb) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">P(A∪B) = </span><span style="color:var(--accent-text);">' + fmtNum(union) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">P(A∩B) = </span><span style="color:var(--accent-text);">' + fmtNum(pab) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">P(A\') = </span><span style="color:var(--accent-text);">' + fmtNum(compA) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">P(B\') = </span><span style="color:var(--accent-text);">' + fmtNum(1 - pb) + '</span></div>' +
                     '</div>';
             };
 
@@ -4904,7 +5379,7 @@ html.lg-liquid .lg-glass {
                 if (pB === 0) { res.style.display = 'block'; res.textContent = isZh ? 'P(B) 不能为零' : 'P(B) cannot be zero'; return; }
                 var pAB = (pba * pa) / pB;
                 res.style.display = 'block';
-                res.innerHTML = '<div style="margin-bottom:8px;"><span style="color:var(--text-muted);">' + (isZh ? '后验概率' : 'Posterior') + ' P(A|B) = </span><span style="color:var(--glow-primary);font-size:20px;">' + fmtNum(pAB) + '</span></div>' +
+                res.innerHTML = '<div style="margin-bottom:8px;"><span style="color:var(--text-muted);">' + (isZh ? '后验概率' : 'Posterior') + ' P(A|B) = </span><span style="color:var(--accent-text);font-size:20px;">' + fmtNum(pAB) + '</span></div>' +
                     '<div style="color:var(--text-subtle);font-size:13px;">P(B|A)=' + fmtNum(pba) + ', P(A)=' + fmtNum(pa) + ', P(B)=' + fmtNum(pB) + '</div>';
             };
 
@@ -4922,7 +5397,7 @@ html.lg-liquid .lg-glass {
                 var mean = n * p;
                 var variance = n * p * (1 - p);
                 res.style.display = 'block';
-                res.innerHTML = '<div style="margin-bottom:8px;"><span style="color:var(--text-muted);">P(X=' + k + ') = </span><span style="color:var(--glow-primary);font-size:18px;">' + fmtNum(pmf) + '</span></div>' +
+                res.innerHTML = '<div style="margin-bottom:8px;"><span style="color:var(--text-muted);">P(X=' + k + ') = </span><span style="color:var(--accent-text);font-size:18px;">' + fmtNum(pmf) + '</span></div>' +
                     '<div style="color:var(--text-subtle);font-size:13px;">Binomial(' + n + ', p=' + p + ')  E[X]=' + fmtNum(mean) + '  Var=' + fmtNum(variance) + '</div>';
             };
 
@@ -4978,9 +5453,9 @@ html.lg-liquid .lg-glass {
                 var total = pmt * months;
                 var interest = total - p;
                 res.innerHTML = '<div>' +
-                    '<div><span style="color:var(--text-muted);">' + (isZh ? '月供' : 'Monthly Payment') + ' = </span><span style="color:var(--glow-primary);font-size:18px;">' + fmtMoney(pmt) + '</span></div>' +
-                    '<div><span style="color:var(--text-muted);">' + (isZh ? '还款总额' : 'Total Payment') + ' = </span><span style="color:var(--glow-primary);">' + fmtMoney(total) + '</span></div>' +
-                    '<div><span style="color:var(--text-muted);">' + (isZh ? '总利息' : 'Total Interest') + ' = </span><span style="color:var(--glow-primary);">' + fmtMoney(interest) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '月供' : 'Monthly Payment') + ' = </span><span style="color:var(--accent-text);font-size:18px;">' + fmtMoney(pmt) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '还款总额' : 'Total Payment') + ' = </span><span style="color:var(--accent-text);">' + fmtMoney(total) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '总利息' : 'Total Interest') + ' = </span><span style="color:var(--accent-text);">' + fmtMoney(interest) + '</span></div>' +
                     '</div>';
             };
 
@@ -5000,8 +5475,8 @@ html.lg-liquid .lg-glass {
                 var fv = pv * Math.pow(1 + r / n, n * years);
                 var pvBack = fv / Math.pow(1 + r / n, n * years);
                 res.innerHTML = '<div>' +
-                    '<div><span style="color:var(--text-muted);">' + (isZh ? '终值 (FV)' : 'Future Value (FV)') + ' = </span><span style="color:var(--glow-primary);font-size:18px;">' + fmt(fv) + '</span></div>' +
-                    '<div><span style="color:var(--text-muted);">' + (isZh ? '现值 (PV)' : 'Present Value (PV)') + ' = </span><span style="color:var(--glow-primary);">' + fmt(pvBack) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '终值 (FV)' : 'Future Value (FV)') + ' = </span><span style="color:var(--accent-text);font-size:18px;">' + fmt(fv) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '现值 (PV)' : 'Present Value (PV)') + ' = </span><span style="color:var(--accent-text);">' + fmt(pvBack) + '</span></div>' +
                     '</div>';
             };
 
@@ -5040,8 +5515,8 @@ html.lg-liquid .lg-glass {
                 }
                 if (isNaN(irrVal) && Math.abs(pv) < 0.01) irrVal = rGuess * 100;
                 res.innerHTML = '<div>' +
-                    '<div><span style="color:var(--text-muted);">NPV = </span><span style="color:var(--glow-primary);font-size:18px;">' + fmt(npv) + '</span></div>' +
-                    '<div><span style="color:var(--text-muted);">IRR = </span><span style="color:var(--glow-primary);">' + (isNaN(irrVal) ? '—' : fmt(irrVal) + '%') + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">NPV = </span><span style="color:var(--accent-text);font-size:18px;">' + fmt(npv) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">IRR = </span><span style="color:var(--accent-text);">' + (isNaN(irrVal) ? '—' : fmt(irrVal) + '%') + '</span></div>' +
                     '</div>';
             };
 
@@ -5066,8 +5541,8 @@ html.lg-liquid .lg-glass {
                 var pvFace = face / Math.pow(1 + y, n);
                 var price = pvCoupons + pvFace;
                 res.innerHTML = '<div>' +
-                    '<div><span style="color:var(--text-muted);">' + (isZh ? '债券价格' : 'Bond Price') + ' = </span><span style="color:var(--glow-primary);font-size:18px;">' + fmt(price) + '</span></div>' +
-                    '<div><span style="color:var(--text-muted);">' + (isZh ? '溢价/折价' : 'Premium/Discount') + ' = </span><span style="color:var(--glow-primary);">' + fmt(price - face) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '债券价格' : 'Bond Price') + ' = </span><span style="color:var(--accent-text);font-size:18px;">' + fmt(price) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '溢价/折价' : 'Premium/Discount') + ' = </span><span style="color:var(--accent-text);">' + fmt(price - face) + '</span></div>' +
                     '</div>';
             };
 
@@ -5091,9 +5566,9 @@ html.lg-liquid .lg-glass {
                 var contributions = current + monthly * n;
                 var interest = fv - contributions;
                 res.innerHTML = '<div>' +
-                    '<div><span style="color:var(--text-muted);">' + (isZh ? '终值' : 'Future Value') + ' = </span><span style="color:var(--glow-primary);font-size:18px;">' + fmtMoney(fv) + '</span></div>' +
-                    '<div><span style="color:var(--text-muted);">' + (isZh ? '总投入' : 'Total Contributions') + ' = </span><span style="color:var(--glow-primary);">' + fmtMoney(contributions) + '</span></div>' +
-                    '<div><span style="color:var(--text-muted);">' + (isZh ? '总收益' : 'Total Interest') + ' = </span><span style="color:var(--glow-primary);">' + fmtMoney(interest) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '终值' : 'Future Value') + ' = </span><span style="color:var(--accent-text);font-size:18px;">' + fmtMoney(fv) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '总投入' : 'Total Contributions') + ' = </span><span style="color:var(--accent-text);">' + fmtMoney(contributions) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '总收益' : 'Total Interest') + ' = </span><span style="color:var(--accent-text);">' + fmtMoney(interest) + '</span></div>' +
                     '</div>';
             };
 
@@ -5186,9 +5661,9 @@ html.lg-liquid .lg-glass {
                               volMode === 'washer' ? 'V = π∫[a,b] ([f(x)]²-[g(x)]²) dx' :
                               'V = 2π∫[a,b] x·f(x) dx';
                 res.innerHTML = '<div>' +
-                    '<div><span style="color:var(--text-muted);">' + methodName + ': </span><span style="color:var(--glow-accent);font-size:18px;">' + formula + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + methodName + ': </span><span style="color:var(--accent-2-text);font-size:18px;">' + formula + '</span></div>' +
                     '<div><span style="color:var(--text-muted);">' + (isZh ? '积分区间' : 'Interval') + ' [' + a + ', ' + b + ']</span></div>' +
-                    '<div><span style="color:var(--text-muted);">' + (isZh ? '计算结果' : 'Result') + ' = </span><span style="color:var(--glow-primary);font-size:20px;">' + vol.toFixed(6) + '</span></div>' +
+                    '<div><span style="color:var(--text-muted);">' + (isZh ? '计算结果' : 'Result') + ' = </span><span style="color:var(--accent-text);font-size:20px;">' + vol.toFixed(6) + '</span></div>' +
                     '<div><span style="color:var(--text-subtle);font-size:12px;">f(x) = ' + fxExpr + (volMode === 'washer' ? ', g(x) = ' + gxExpr : '') + '</span></div>' +
                     '</div>';
             };
@@ -6515,645 +6990,6 @@ html.lg-liquid .lg-glass {
                 try { if (typeof jobs[i] === 'function') jobs[i](); } catch (e) { /* demo not on page */ }
             }
         };
-    </script>
-
-    <script>
-        /* ------------------------------------------------------------------
-         *  Liquid Glass layer — shared-context port of the shaders from
-         *  https://github.com/dashersw/liquid-glass-js
-         *
-         *  MIT License, Copyright (c) 2025 Armagan Amcalar
-         *  Permission is hereby granted, free of charge, to any person
-         *  obtaining a copy of this software and associated documentation
-         *  files (the "Software"), to deal in the Software without
-         *  restriction, including without limitation the rights to use,
-         *  copy, modify, merge, publish, distribute, sublicense, and/or
-         *  sell copies of the Software, and to permit persons to whom the
-         *  Software is furnished to do so, subject to the following
-         *  conditions: the above copyright notice and this permission
-         *  notice shall be included in all copies or substantial portions
-         *  of the Software.  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT
-         *  WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
-         *
-         *  A single fixed WebGL canvas draws refractive, tinted glass behind
-         *  every registered surface (.lg-glass).  Only surfaces intersecting
-         *  the viewport are rendered, so hundreds of cards stay cheap while
-         *  one shared context sidesteps the browser's WebGL context cap.
-         *  The refraction texture is generated procedurally from the page's
-         *  aurora tokens, keeping the page fully offline.
-         * ------------------------------------------------------------------ */
-        (function () {
-            'use strict';
-
-            var docEl = document.documentElement;
-            var raf = window.requestAnimationFrame
-                ? function (cb) { return window.requestAnimationFrame(cb); }
-                : function (cb) { return window.setTimeout(cb, 16); };
-            var nowFn = window.performance && window.performance.now
-                ? function () { return window.performance.now(); }
-                : function () { return Date.now(); };
-
-            /* Bail out when WebGL is unavailable so the CSS glass stays. */
-            try {
-                var probe = document.createElement('canvas');
-                var probeGL = probe.getContext('webgl') || probe.getContext('experimental-webgl');
-                if (!probeGL) return;
-                var loseCtx = probeGL.getExtension('WEBGL_lose_context');
-                if (loseCtx) loseCtx.loseContext();
-            } catch (e) { return; }
-
-            var canvas = document.createElement('canvas');
-            canvas.id = 'lgCanvas';
-            canvas.setAttribute('aria-hidden', 'true');
-            document.body.appendChild(canvas);
-
-            var gl = null;
-            try {
-                gl = canvas.getContext('webgl', {
-                    alpha: true,
-                    depth: false,
-                    stencil: false,
-                    antialias: false,
-                    premultipliedAlpha: false,
-                    preserveDrawingBuffer: true
-                });
-            } catch (e) { gl = null; }
-            if (!gl) {
-                canvas.parentNode.removeChild(canvas);
-                return;
-            }
-
-            var VS = [
-                'attribute vec2 a_position;',
-                'attribute vec2 a_texcoord;',
-                'varying vec2 v_texcoord;',
-                'void main() {',
-                '    gl_Position = vec4(a_position, 0.0, 1.0);',
-                '    v_texcoord = a_texcoord;',
-                '}'
-            ].join('\n');
-
-            /* Shape-aware refraction, multi-layer glass and tinted blur from
-               liquid-glass-js, trimmed to a single 9x9 gaussian pass and
-               made theme-aware. */
-            var FS = [
-                'precision mediump float;',
-                'uniform sampler2D u_image;',
-                'uniform vec2 u_resolution;',
-                'uniform vec2 u_textureSize;',
-                'uniform vec2 u_panelCenter;',
-                'uniform float u_borderRadius;',
-                'uniform float u_shape;',
-                'uniform float u_blurRadius;',
-                'uniform float u_edgeIntensity;',
-                'uniform float u_rimIntensity;',
-                'uniform float u_baseIntensity;',
-                'uniform float u_edgeDistance;',
-                'uniform float u_rimDistance;',
-                'uniform float u_baseDistance;',
-                'uniform float u_cornerBoost;',
-                'uniform float u_rippleEffect;',
-                'uniform float u_tintOpacity;',
-                'uniform float u_specular;',
-                'uniform float u_alpha;',
-                'uniform vec3 u_tintTop;',
-                'uniform vec3 u_tintBottom;',
-                'varying vec2 v_texcoord;',
-                '',
-                'float roundedRectDistance(vec2 coord, vec2 size, float radius) {',
-                '    vec2 center = size * 0.5;',
-                '    vec2 pixelCoord = coord * size;',
-                '    vec2 toCorner = abs(pixelCoord - center) - (center - radius);',
-                '    float outsideCorner = length(max(toCorner, 0.0));',
-                '    float insideCorner = min(max(toCorner.x, toCorner.y), 0.0);',
-                '    return outsideCorner + insideCorner - radius;',
-                '}',
-                '',
-                'float circleDistance(vec2 coord, vec2 size, float radius) {',
-                '    vec2 pixelCoord = coord * size;',
-                '    return length(pixelCoord - size * 0.5) - radius;',
-                '}',
-                '',
-                'float pillDistance(vec2 coord, vec2 size, float radius) {',
-                '    vec2 pixelCoord = coord * size;',
-                '    vec2 capsuleStart = vec2(radius, size.y * 0.5);',
-                '    vec2 capsuleEnd = vec2(size.x - radius, size.y * 0.5);',
-                '    vec2 axis = capsuleEnd - capsuleStart;',
-                '    float len2 = dot(axis, axis);',
-                '    if (len2 > 0.0001) {',
-                '        float t = clamp(dot(pixelCoord - capsuleStart, axis) / len2, 0.0, 1.0);',
-                '        return length(pixelCoord - (capsuleStart + t * axis)) - radius;',
-                '    }',
-                '    return circleDistance(coord, size, radius);',
-                '}',
-                '',
-                'float shapeDistance(vec2 coord) {',
-                '    if (u_shape > 1.5) return circleDistance(coord, u_resolution, u_borderRadius);',
-                '    if (u_shape > 0.5) return pillDistance(coord, u_resolution, u_borderRadius);',
-                '    return roundedRectDistance(coord, u_resolution, u_borderRadius);',
-                '}',
-                '',
-                'void main() {',
-                '    vec2 coord = v_texcoord;',
-                '    vec2 center = vec2(0.5, 0.5);',
-                '    float nd = max(-shapeDistance(coord), 0.0);',
-                '',
-                '    vec2 shapeNormal;',
-                '    if (u_shape > 1.5) {',
-                '        shapeNormal = normalize(coord - center);',
-                '    } else if (u_shape > 0.5) {',
-                '        vec2 pixelCoord = coord * u_resolution;',
-                '        vec2 capsuleStart = vec2(u_borderRadius, u_resolution.y * 0.5);',
-                '        vec2 capsuleEnd = vec2(u_resolution.x - u_borderRadius, u_resolution.y * 0.5);',
-                '        vec2 axis = capsuleEnd - capsuleStart;',
-                '        float len2 = dot(axis, axis);',
-                '        if (len2 > 0.0001) {',
-                '            float t = clamp(dot(pixelCoord - capsuleStart, axis) / len2, 0.0, 1.0);',
-                '            vec2 dir = pixelCoord - (capsuleStart + t * axis);',
-                '            shapeNormal = length(dir) > 0.0 ? normalize(dir) : vec2(0.0, 1.0);',
-                '        } else {',
-                '            shapeNormal = normalize(coord - center);',
-                '        }',
-                '    } else {',
-                '        shapeNormal = normalize(coord - center);',
-                '    }',
-                '',
-                '    float minRes = min(u_resolution.x, u_resolution.y);',
-                '    float baseI = 1.0 - exp(-nd * u_baseDistance);',
-                '    float edgeI = exp(-nd * u_edgeDistance);',
-                '    float rimI = exp(-nd * u_rimDistance);',
-                '',
-                '    vec2 refraction = shapeNormal * (edgeI * u_edgeIntensity + rimI * u_rimIntensity + baseI * u_baseIntensity * 0.4);',
-                '',
-                '    float cornerProximity = max(min(coord.x, 1.0 - coord.x), min(coord.y, 1.0 - coord.y));',
-                '    refraction += shapeNormal * (exp(-cornerProximity * minRes * 0.3) * u_cornerBoost);',
-                '',
-                '    float distFromEdge = nd / minRes;',
-                '    vec2 perpendicular = vec2(-shapeNormal.y, shapeNormal.x);',
-                '    refraction += perpendicular * (sin(distFromEdge * 25.0) * u_rippleEffect * rimI);',
-                '',
-                '    vec2 pagePixel = u_panelCenter + (coord - 0.5) * u_resolution;',
-                '    vec2 texCoord = pagePixel / u_textureSize + refraction;',
-                '',
-                '    vec3 color = vec3(0.0);',
-                '    vec2 texel = 1.0 / u_textureSize;',
-                '    float sigma = max(u_blurRadius, 0.0001) / 2.0;',
-                '    float totalWeight = 0.0;',
-                '    for (float i = -4.0; i <= 4.0; i += 1.0) {',
-                '        for (float j = -4.0; j <= 4.0; j += 1.0) {',
-                '            float d = length(vec2(i, j));',
-                '            if (d > 4.0) continue;',
-                '            float w = exp(-(d * d) / (2.0 * sigma * sigma));',
-                '            color += texture2D(u_image, texCoord + vec2(i, j) * texel * sigma).rgb * w;',
-                '            totalWeight += w;',
-                '        }',
-                '    }',
-                '    color /= totalWeight;',
-                '',
-                '    vec3 tint = mix(u_tintTop, u_tintBottom, coord.y);',
-                '    color = mix(color, tint, u_tintOpacity);',
-                '',
-                '    float edgeLight = exp(-nd * 0.45);',
-                '    float rimLight = pow(max(shapeNormal.y, 0.0), 2.0) * exp(-nd * 0.6);',
-                '    color += vec3(1.0) * (edgeLight * u_specular * 0.20 + rimLight * u_specular * 0.5);',
-                '',
-                '    float mask = 1.0 - smoothstep(-1.0, 1.0, shapeDistance(coord));',
-                '    gl_FragColor = vec4(color, mask * u_alpha);',
-                '}'
-            ].join('\n');
-
-            function compileShader(type, source) {
-                var shader = gl.createShader(type);
-                gl.shaderSource(shader, source);
-                gl.compileShader(shader);
-                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                    gl.deleteShader(shader);
-                    return null;
-                }
-                return shader;
-            }
-
-            var vs = compileShader(gl.VERTEX_SHADER, VS);
-            var fs = compileShader(gl.FRAGMENT_SHADER, FS);
-            var program = (vs && fs) ? gl.createProgram() : null;
-            if (program) {
-                gl.attachShader(program, vs);
-                gl.attachShader(program, fs);
-                gl.linkProgram(program);
-                if (!gl.getProgramParameter(program, gl.LINK_STATUS)) program = null;
-            }
-            if (!program) {
-                canvas.parentNode.removeChild(canvas);
-                return;
-            }
-            gl.useProgram(program);
-            gl.disable(gl.DEPTH_TEST);
-            gl.disable(gl.CULL_FACE);
-            gl.enable(gl.BLEND);
-            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
-            var positionBuffer = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
-            var positionLoc = gl.getAttribLocation(program, 'a_position');
-            gl.enableVertexAttribArray(positionLoc);
-            gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
-
-            var texcoordBuffer = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0]), gl.STATIC_DRAW);
-            var texcoordLoc = gl.getAttribLocation(program, 'a_texcoord');
-            gl.enableVertexAttribArray(texcoordLoc);
-            gl.vertexAttribPointer(texcoordLoc, 2, gl.FLOAT, false, 0, 0);
-
-            function U(name) { return gl.getUniformLocation(program, name); }
-            var UNIFORMS = {
-                image: U('u_image'),
-                resolution: U('u_resolution'),
-                textureSize: U('u_textureSize'),
-                panelCenter: U('u_panelCenter'),
-                borderRadius: U('u_borderRadius'),
-                shape: U('u_shape'),
-                blurRadius: U('u_blurRadius'),
-                edgeIntensity: U('u_edgeIntensity'),
-                rimIntensity: U('u_rimIntensity'),
-                baseIntensity: U('u_baseIntensity'),
-                edgeDistance: U('u_edgeDistance'),
-                rimDistance: U('u_rimDistance'),
-                baseDistance: U('u_baseDistance'),
-                cornerBoost: U('u_cornerBoost'),
-                rippleEffect: U('u_rippleEffect'),
-                tintOpacity: U('u_tintOpacity'),
-                specular: U('u_specular'),
-                alpha: U('u_alpha'),
-                tintTop: U('u_tintTop'),
-                tintBottom: U('u_tintBottom')
-            };
-
-            /* ---------------- procedural aurora backdrop ---------------- */
-
-            var texture = gl.createTexture();
-            var texCanvas = document.createElement('canvas');
-            var TEX_SCALE = 0.5;
-            var lastTexW = 0;
-            var lastTexH = 0;
-
-            function cssVar(name, fallback) {
-                return window.SCTheme ? window.SCTheme.cssVar(name, fallback) : fallback;
-            }
-
-            var themeLight = false;
-            var themeTint = { top: [0.16, 0.19, 0.36], bottom: [0.05, 0.07, 0.15] };
-
-            function readTheme() {
-                themeLight = docEl.getAttribute('data-theme') === 'light';
-                if (themeLight) {
-                    themeTint.top = [1.0, 1.0, 1.0];
-                    themeTint.bottom = [0.85, 0.89, 0.99];
-                } else {
-                    themeTint.top = [0.16, 0.19, 0.36];
-                    themeTint.bottom = [0.05, 0.07, 0.15];
-                }
-            }
-
-            function buildTexture() {
-                var w = Math.max(2, Math.round(window.innerWidth * TEX_SCALE));
-                var h = Math.max(2, Math.round(window.innerHeight * TEX_SCALE));
-                lastTexW = w;
-                lastTexH = h;
-                texCanvas.width = w;
-                texCanvas.height = h;
-                var ctx = texCanvas.getContext('2d');
-                ctx.setTransform(1, 0, 0, 1, 0, 0);
-                ctx.globalAlpha = 1;
-                ctx.globalCompositeOperation = 'source-over';
-                ctx.fillStyle = cssVar('--bg-deep', themeLight ? '#f4f6fd' : '#070912');
-                ctx.fillRect(0, 0, w, h);
-
-                var blobs = [
-                    ['--glow-primary', 0.18, 0.24, 0.50, 0.95],
-                    ['--glow-accent', 0.84, 0.16, 0.44, 0.85],
-                    ['--glow-purple', 0.62, 0.84, 0.54, 0.95],
-                    ['--glow-warm', 0.10, 0.90, 0.40, 0.75]
-                ];
-                var soft = ('filter' in ctx);
-                if (soft) ctx.filter = 'blur(' + Math.max(6, Math.round(Math.min(w, h) * 0.05)) + 'px)';
-                for (var i = 0; i < blobs.length; i++) {
-                    var b = blobs[i];
-                    var cx = b[1] * w;
-                    var cy = b[2] * h;
-                    var r = b[3] * Math.max(w, h);
-                    var gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-                    gradient.addColorStop(0, cssVar(b[0], 'rgba(0,0,0,0)'));
-                    gradient.addColorStop(1, 'rgba(0,0,0,0)');
-                    ctx.globalAlpha = b[4];
-                    ctx.fillStyle = gradient;
-                    ctx.beginPath();
-                    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                ctx.globalAlpha = 1;
-                if (soft) ctx.filter = 'none';
-
-                gl.bindTexture(gl.TEXTURE_2D, texture);
-                gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texCanvas);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-            }
-
-            /* ---------------- glass panel registry ---------------- */
-
-            var DEFAULTS = {
-                edge: 0.020, rim: 0.075, base: 0.010,
-                edgeDist: 0.14, rimDist: 0.75, baseDist: 0.10,
-                corner: 0.030, ripple: 0.10
-            };
-            var REGISTRY = [
-                { sel: '.glass', blur: 14, tint: 0.34, spec: 0.70 },
-                { sel: '.bento-item', blur: 14, tint: 0.34, spec: 0.70 },
-                { sel: '.platform-card', blur: 14, tint: 0.34, spec: 0.70 },
-                { sel: '.hero-panel', blur: 16, tint: 0.38, spec: 0.75 },
-                { sel: '.demo-link', blur: 9, tint: 0.42, spec: 0.65 },
-                { sel: '.feature-item', blur: 9, tint: 0.40, spec: 0.65 },
-                { sel: '.chip', blur: 8, tint: 0.45, spec: 0.65 },
-                { sel: '.section-label', blur: 8, tint: 0.45, spec: 0.65 },
-                { sel: '.btn-glass', blur: 8, tint: 0.50, spec: 0.85 },
-                { sel: '.hero-badge', blur: 8, tint: 0.45, spec: 0.65 },
-                { sel: '.code-block', blur: 12, tint: 0.58, spec: 0.40 },
-                { sel: '.syntax-example', blur: 8, tint: 0.50, spec: 0.55 },
-                { sel: '.base-result-card', blur: 8, tint: 0.45, spec: 0.60 },
-                { sel: '.bw-result-card', blur: 8, tint: 0.45, spec: 0.60 }
-            ];
-            var panels = [];
-
-            function registerPanel(el, cfg) {
-                if (!el || el.__lgPanel) return;
-                var panel = { el: el, cfg: cfg, rawRadius: -1, animUntil: 0 };
-                el.__lgPanel = panel;
-                el.classList.add('lg-glass');
-                panels.push(panel);
-            }
-
-            function collectPanels() {
-                var firstNew = panels.length;
-                for (var i = 0; i < REGISTRY.length; i++) {
-                    var cfg = REGISTRY[i];
-                    var nodes;
-                    try { nodes = document.querySelectorAll(cfg.sel); } catch (e) { continue; }
-                    for (var j = 0; j < nodes.length; j++) registerPanel(nodes[j], cfg);
-                }
-                var now = nowFn();
-                for (var k = firstNew; k < panels.length; k++) {
-                    try {
-                        var op = parseFloat(window.getComputedStyle(panels[k].el).opacity);
-                        if (isFinite(op) && op < 0.85) panels[k].animUntil = now + 1500;
-                    } catch (e2) { /* element went away */ }
-                }
-            }
-
-            function panelRawRadius(panel) {
-                if (panel.rawRadius === -1) {
-                    var raw = 0;
-                    try {
-                        var cs = window.getComputedStyle(panel.el);
-                        var rv = cs.borderTopLeftRadius || '0';
-                        raw = parseFloat(rv);
-                        if (!isFinite(raw)) raw = 0;
-                        if (rv.indexOf('%') >= 0) raw = -2;
-                    } catch (e) { raw = 0; }
-                    panel.rawRadius = raw;
-                }
-                return panel.rawRadius;
-            }
-
-            /* ---------------- renderer ---------------- */
-
-            var PX = 1;
-            var quality = 1;
-            var started = false;
-            var scheduled = false;
-            var activeUntil = 0;
-            var needCollect = false;
-            var costAcc = 0;
-            var costFrames = 0;
-
-            function computePX() {
-                return Math.min(window.devicePixelRatio || 1, 1.5) * quality;
-            }
-
-            function resizeBacking() {
-                PX = computePX();
-                var cw = Math.max(2, Math.round(window.innerWidth * PX));
-                var ch = Math.max(2, Math.round(window.innerHeight * PX));
-                if (canvas.width !== cw || canvas.height !== ch) {
-                    canvas.width = cw;
-                    canvas.height = ch;
-                    canvas.style.width = window.innerWidth + 'px';
-                    canvas.style.height = window.innerHeight + 'px';
-                }
-            }
-
-            function panelAnimating(now) {
-                for (var i = 0; i < panels.length; i++) {
-                    if (panels[i].animUntil > now) return true;
-                }
-                return false;
-            }
-
-            function drawPanel(panel, rect, now) {
-                var cfg = panel.cfg;
-                var cx = (rect.left + rect.width * 0.5) * PX;
-                var cy = (rect.top + rect.height * 0.5) * PX;
-                var w = Math.max(2, Math.round(rect.width * PX));
-                var h = Math.max(2, Math.round(rect.height * PX));
-                var raw = panelRawRadius(panel);
-                var half = Math.min(w, h) * 0.5;
-                var radius = raw === -2 ? half : Math.min(raw * PX, half);
-                var shape = 0;
-                if (radius >= half - 1.5) {
-                    shape = Math.abs(w - h) <= Math.max(6, half * 0.2) ? 2 : 1;
-                }
-                var alpha = 1;
-                if (panel.animUntil > now) {
-                    try {
-                        var op = parseFloat(window.getComputedStyle(panel.el).opacity);
-                        if (isFinite(op)) alpha = Math.max(0, Math.min(1, op));
-                    } catch (e) { /* keep 1 */ }
-                }
-                var x0 = Math.round(rect.left * PX);
-                var y0 = Math.round(rect.top * PX);
-
-                gl.viewport(x0, canvas.height - y0 - h, w, h);
-                gl.uniform2f(UNIFORMS.resolution, w, h);
-                gl.uniform2f(UNIFORMS.textureSize, canvas.width, canvas.height);
-                gl.uniform2f(UNIFORMS.panelCenter, cx, cy);
-                gl.uniform1f(UNIFORMS.borderRadius, radius);
-                gl.uniform1f(UNIFORMS.shape, shape);
-                gl.uniform1f(UNIFORMS.blurRadius, cfg.blur * PX);
-                gl.uniform1f(UNIFORMS.edgeIntensity, cfg.edge !== undefined ? cfg.edge : DEFAULTS.edge);
-                gl.uniform1f(UNIFORMS.rimIntensity, cfg.rim !== undefined ? cfg.rim : DEFAULTS.rim);
-                gl.uniform1f(UNIFORMS.baseIntensity, cfg.base !== undefined ? cfg.base : DEFAULTS.base);
-                gl.uniform1f(UNIFORMS.edgeDistance, cfg.edgeDist !== undefined ? cfg.edgeDist : DEFAULTS.edgeDist);
-                gl.uniform1f(UNIFORMS.rimDistance, cfg.rimDist !== undefined ? cfg.rimDist : DEFAULTS.rimDist);
-                gl.uniform1f(UNIFORMS.baseDistance, cfg.baseDist !== undefined ? cfg.baseDist : DEFAULTS.baseDist);
-                gl.uniform1f(UNIFORMS.cornerBoost, cfg.corner !== undefined ? cfg.corner : DEFAULTS.corner);
-                gl.uniform1f(UNIFORMS.rippleEffect, cfg.ripple !== undefined ? cfg.ripple : DEFAULTS.ripple);
-                gl.uniform1f(UNIFORMS.tintOpacity, cfg.tint);
-                gl.uniform1f(UNIFORMS.specular, cfg.spec);
-                gl.uniform1f(UNIFORMS.alpha, alpha);
-                gl.uniform3fv(UNIFORMS.tintTop, themeTint.top);
-                gl.uniform3fv(UNIFORMS.tintBottom, themeTint.bottom);
-                gl.drawArrays(gl.TRIANGLES, 0, 6);
-            }
-
-            function renderFrame() {
-                if (!started || gl.isContextLost()) return;
-                if (needCollect) {
-                    needCollect = false;
-                    collectPanels();
-                }
-                resizeBacking();
-                var now = nowFn();
-                gl.viewport(0, 0, canvas.width, canvas.height);
-                gl.clearColor(0, 0, 0, 0);
-                gl.clear(gl.COLOR_BUFFER_BIT);
-
-                var vw = window.innerWidth;
-                var vh = window.innerHeight;
-                for (var i = panels.length - 1; i >= 0; i--) {
-                    var panel = panels[i];
-                    var el = panel.el;
-                    if (!el || !el.parentNode) {
-                        if (el) el.__lgPanel = null;
-                        panels.splice(i, 1);
-                        continue;
-                    }
-                    if (el.classList.contains('reveal') && !el.classList.contains('visible')) continue;
-                    var rect = el.getBoundingClientRect();
-                    if (rect.width < 6 || rect.height < 6) continue;
-                    if (rect.bottom < -24 || rect.top > vh + 24 || rect.right < -24 || rect.left > vw + 24) continue;
-                    drawPanel(panel, rect, now);
-                }
-            }
-
-            function kick(ms) {
-                activeUntil = Math.max(activeUntil, nowFn() + (ms || 300));
-                if (!scheduled) {
-                    scheduled = true;
-                    raf(tick);
-                }
-            }
-
-            function tick() {
-                scheduled = false;
-                if (!started) return;
-                var t0 = nowFn();
-                renderFrame();
-                costAcc += nowFn() - t0;
-                costFrames++;
-                var now = nowFn();
-                if (now < activeUntil || panelAnimating(now)) {
-                    scheduled = true;
-                    raf(tick);
-                    return;
-                }
-                if (costFrames >= 8) {
-                    if (costAcc / costFrames > 20 && quality > 0.6) {
-                        quality *= 0.7;
-                        activeUntil = now + 600;
-                        scheduled = true;
-                        raf(tick);
-                    }
-                    costAcc = 0;
-                    costFrames = 0;
-                }
-            }
-
-            function start() {
-                if (started || gl.isContextLost()) return;
-                resizeBacking();
-                buildTexture();
-                started = true;
-                renderFrame();
-                docEl.classList.add('lg-liquid');
-                kick(800);
-            }
-
-            /* ---------------- lifecycle ---------------- */
-
-            window.addEventListener('scroll', function () { if (started) kick(240); }, { passive: true });
-            window.addEventListener('resize', function () {
-                if (!started) return;
-                var w = Math.max(2, Math.round(window.innerWidth * TEX_SCALE));
-                var h = Math.max(2, Math.round(window.innerHeight * TEX_SCALE));
-                if (Math.abs(w - lastTexW) > 8 || Math.abs(h - lastTexH) > 8) buildTexture();
-                kick(600);
-            }, { passive: true });
-            window.addEventListener('orientationchange', function () { if (started) kick(800); }, { passive: true });
-            document.addEventListener('pointerover', function () { if (started) kick(450); }, { passive: true });
-            document.addEventListener('pointerout', function () { if (started) kick(450); }, { passive: true });
-            document.addEventListener('focusin', function () { if (started) kick(300); }, true);
-
-            var observer = new MutationObserver(function (records) {
-                if (!started) return;
-                var bump = false;
-                for (var i = 0; i < records.length; i++) {
-                    var record = records[i];
-                    if (record.type === 'attributes' && record.target && record.target.__lgPanel) {
-                        if (record.attributeName === 'class') {
-                            record.target.__lgPanel.animUntil = nowFn() + 900;
-                        }
-                        bump = true;
-                    } else {
-                        if (record.type === 'childList' &&
-                            ((record.addedNodes && record.addedNodes.length) ||
-                             (record.removedNodes && record.removedNodes.length))) {
-                            needCollect = true;
-                        }
-                        bump = true;
-                    }
-                }
-                if (bump) kick(400);
-            });
-            observer.observe(document.body, {
-                subtree: true,
-                childList: true,
-                attributes: true,
-                attributeFilter: ['class', 'style']
-            });
-
-            var themeObserver = new MutationObserver(function () {
-                if (!started) return;
-                readTheme();
-                buildTexture();
-                kick(700);
-            });
-            themeObserver.observe(docEl, { attributes: true, attributeFilter: ['data-theme'] });
-
-            canvas.addEventListener('webglcontextlost', function (e) {
-                e.preventDefault();
-                started = false;
-                docEl.classList.remove('lg-liquid');
-            }, false);
-
-            if (document.fonts && document.fonts.ready && document.fonts.ready.then) {
-                document.fonts.ready.then(function () { if (started) kick(500); });
-            }
-
-            try {
-                collectPanels();
-                readTheme();
-                start();
-                window.addEventListener('load', function () { if (started) kick(800); });
-            } catch (e) {
-                started = false;
-                docEl.classList.remove('lg-liquid');
-                if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
-            }
-        })();
     </script>
 </body>
 </html>

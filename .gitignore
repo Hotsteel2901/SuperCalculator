@@ -29,3 +29,6 @@ android/build/
 android/app/build/
 android/app/.cxx/
 android/local.properties
+
+# Local theme backups (not part of the shipped site)
+index.html.*-bak
