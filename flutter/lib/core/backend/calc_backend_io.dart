@@ -51,12 +51,24 @@ typedef _LastErrorNative = Pointer<Utf8> Function(Pointer<Void>);
 typedef _LastError = Pointer<Utf8> Function(Pointer<Void>);
 
 class FfiCalcBackend implements CalcBackend {
-  FfiCalcBackend._({required DynamicLibrary library, required Pointer<Void> context})
-      : _context = context,
-        _evaluate = library.lookupFunction<_EvaluateNative, _Evaluate>('sc_evaluate'),
-        _evaluateArray = library.lookupFunction<_EvaluateArrayNative, _EvaluateArray>('sc_evaluate_array'),
-        _destroy = library.lookupFunction<_ContextDestroyNative, _ContextDestroy>('sc_context_destroy'),
-        _lastError = library.lookupFunction<_LastErrorNative, _LastError>('sc_last_error');
+  FfiCalcBackend._({
+    required DynamicLibrary library,
+    required Pointer<Void> context,
+  }) : _context = context,
+       _evaluate = library.lookupFunction<_EvaluateNative, _Evaluate>(
+         'sc_evaluate',
+       ),
+       _evaluateArray = library
+           .lookupFunction<_EvaluateArrayNative, _EvaluateArray>(
+             'sc_evaluate_array',
+           ),
+       _destroy = library
+           .lookupFunction<_ContextDestroyNative, _ContextDestroy>(
+             'sc_context_destroy',
+           ),
+       _lastError = library.lookupFunction<_LastErrorNative, _LastError>(
+         'sc_last_error',
+       );
 
   final Pointer<Void> _context;
   final _Evaluate _evaluate;
@@ -67,13 +79,18 @@ class FfiCalcBackend implements CalcBackend {
 
   static FfiCalcBackend open() {
     final library = DynamicLibrary.open(_libraryName());
-    final abiVersion = library.lookupFunction<_AbiVersionNative, _AbiVersion>('sc_abi_version')();
+    final abiVersion = library.lookupFunction<_AbiVersionNative, _AbiVersion>(
+      'sc_abi_version',
+    )();
     if (abiVersion != 1) {
       throw StateError('Unsupported SuperCalculator native ABI: $abiVersion');
     }
-    final create = library.lookupFunction<_ContextCreateNative, _ContextCreate>('sc_context_create');
+    final create = library.lookupFunction<_ContextCreateNative, _ContextCreate>(
+      'sc_context_create',
+    );
     final context = create();
-    if (context == nullptr) throw StateError('Could not create native calculation context.');
+    if (context == nullptr)
+      throw StateError('Could not create native calculation context.');
     return FfiCalcBackend._(library: library, context: context);
   }
 
@@ -82,7 +99,11 @@ class FfiCalcBackend implements CalcBackend {
 
   @override
   Future<CalcEvaluation> evaluate(String expression, double x) async {
-    if (_disposed) return const CalcEvaluation.failure(backend: 'Native FFI', message: 'Backend is closed.');
+    if (_disposed)
+      return const CalcEvaluation.failure(
+        backend: 'Native FFI',
+        message: 'Backend is closed.',
+      );
     final expressionPointer = expression.toNativeUtf8();
     final output = calloc<Double>();
     try {
@@ -98,16 +119,28 @@ class FfiCalcBackend implements CalcBackend {
   }
 
   @override
-  Future<List<double?>> evaluateArray(String expression, List<double> xs) async {
+  Future<List<double?>> evaluateArray(
+    String expression,
+    List<double> xs,
+  ) async {
     if (_disposed || xs.isEmpty) return <double?>[];
     final expressionPointer = expression.toNativeUtf8();
     final input = calloc<Double>(xs.length);
     final output = calloc<Double>(xs.length);
     try {
       input.asTypedList(xs.length).setAll(0, xs);
-      final status = _evaluateArray(_context, expressionPointer, input, xs.length, output);
+      final status = _evaluateArray(
+        _context,
+        expressionPointer,
+        input,
+        xs.length,
+        output,
+      );
       if (status != 0) return List<double?>.filled(xs.length, null);
-      return output.asTypedList(xs.length).map<double?>((value) => value.isFinite ? value : null).toList();
+      return output
+          .asTypedList(xs.length)
+          .map<double?>((value) => value.isFinite ? value : null)
+          .toList();
     } finally {
       calloc.free(input);
       calloc.free(output);
@@ -117,7 +150,9 @@ class FfiCalcBackend implements CalcBackend {
 
   String _readLastError() {
     final pointer = _lastError(_context);
-    return pointer == nullptr ? 'Native calculation failed.' : pointer.toDartString();
+    return pointer == nullptr
+        ? 'Native calculation failed.'
+        : pointer.toDartString();
   }
 
   @override

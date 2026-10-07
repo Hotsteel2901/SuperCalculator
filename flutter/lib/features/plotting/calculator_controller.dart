@@ -4,7 +4,9 @@ import '../../core/backend/calc_backend.dart';
 import '../../core/backend/providers.dart';
 
 final calculatorControllerProvider =
-    NotifierProvider<CalculatorController, CalculatorState>(CalculatorController.new);
+    NotifierProvider<CalculatorController, CalculatorState>(
+      CalculatorController.new,
+    );
 
 class CalculatorState {
   const CalculatorState({
@@ -18,13 +20,13 @@ class CalculatorState {
   });
 
   const CalculatorState.initial()
-      : expression = 'sin(x)',
-        xText = '0',
-        backend = 'Dart fallback',
-        value = null,
-        error = null,
-        isCalculating = false,
-        points = const <PlotPoint>[];
+    : expression = 'sin(x)',
+      xText = '0',
+      backend = 'Dart fallback',
+      value = null,
+      error = null,
+      isCalculating = false,
+      points = const <PlotPoint>[];
 
   final String expression;
   final String xText;
@@ -85,7 +87,10 @@ class CalculatorController extends Notifier<CalculatorState> {
     }
     final expression = state.expression.trim();
     if (expression.isEmpty) {
-      state = state.copyWith(error: 'Expression cannot be empty.', clearValue: true);
+      state = state.copyWith(
+        error: 'Expression cannot be empty.',
+        clearValue: true,
+      );
       return;
     }
 

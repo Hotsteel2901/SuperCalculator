@@ -24,19 +24,19 @@ class SuperCalcDesignTokens extends ThemeExtension<SuperCalcDesignTokens> {
   });
 
   const SuperCalcDesignTokens.defaults()
-      : compactBreakpoint = 600,
-        mediumBreakpoint = 840,
-        expandedBreakpoint = 1200,
-        pagePadding = 24,
-        cardGap = 16,
-        controlGap = 12,
-        plotMinHeight = 360,
-        cornerSmall = 12,
-        cornerMedium = 20,
-        cornerLarge = 28,
-        controlMinHeight = 48,
-        fastMotion = const Duration(milliseconds: 120),
-        standardMotion = const Duration(milliseconds: 260);
+    : compactBreakpoint = 600,
+      mediumBreakpoint = 840,
+      expandedBreakpoint = 1200,
+      pagePadding = 24,
+      cardGap = 16,
+      controlGap = 12,
+      plotMinHeight = 360,
+      cornerSmall = 12,
+      cornerMedium = 20,
+      cornerLarge = 28,
+      controlMinHeight = 48,
+      fastMotion = const Duration(milliseconds: 120),
+      standardMotion = const Duration(milliseconds: 260);
 
   final double compactBreakpoint;
   final double mediumBreakpoint;

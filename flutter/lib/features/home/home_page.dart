@@ -38,7 +38,8 @@ class HomePage extends StatelessWidget {
                     children: <Widget>[
                       Text(
                         l10n.welcomeTitle,
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(
                               color: scheme.onPrimaryContainer,
                               fontWeight: FontWeight.w700,
                             ),
@@ -46,9 +47,8 @@ class HomePage extends StatelessWidget {
                       SizedBox(height: tokens.controlGap),
                       Text(
                         l10n.welcomeBody,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: scheme.onPrimaryContainer,
-                            ),
+                        style: Theme.of(context).textTheme.bodyLarge
+                            ?.copyWith(color: scheme.onPrimaryContainer),
                       ),
                       SizedBox(height: tokens.cardGap),
                       FilledButton.icon(
@@ -61,16 +61,28 @@ class HomePage extends StatelessWidget {
                 ),
               ),
               SizedBox(height: tokens.cardGap),
-              Text(l10n.migrationStatus, style: Theme.of(context).textTheme.titleLarge),
+              Text(
+                l10n.migrationStatus,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
               SizedBox(height: tokens.controlGap),
               Wrap(
                 spacing: tokens.cardGap,
                 runSpacing: tokens.cardGap,
                 children: <Widget>[
-                  _StatusChip(label: 'Material 3', icon: Icons.palette_outlined),
+                  _StatusChip(
+                    label: 'Material 3',
+                    icon: Icons.palette_outlined,
+                  ),
                   _StatusChip(label: 'C FFI', icon: Icons.memory_outlined),
-                  _StatusChip(label: 'Riverpod', icon: Icons.account_tree_outlined),
-                  _StatusChip(label: 'WebAssembly', icon: Icons.language_outlined),
+                  _StatusChip(
+                    label: 'Riverpod',
+                    icon: Icons.account_tree_outlined,
+                  ),
+                  _StatusChip(
+                    label: 'WebAssembly',
+                    icon: Icons.language_outlined,
+                  ),
                 ],
               ),
               SizedBox(height: tokens.pagePadding),
@@ -131,9 +143,10 @@ class _FeatureGrid extends StatelessWidget {
         final columns = constraints.maxWidth >= tokens.expandedBreakpoint
             ? 3
             : constraints.maxWidth >= tokens.mediumBreakpoint
-                ? 2
-                : 1;
-        final width = (constraints.maxWidth - (columns - 1) * tokens.cardGap) / columns;
+            ? 2
+            : 1;
+        final width =
+            (constraints.maxWidth - (columns - 1) * tokens.cardGap) / columns;
         return Wrap(
           spacing: tokens.cardGap,
           runSpacing: tokens.cardGap,
@@ -149,7 +162,10 @@ class _FeatureGrid extends StatelessWidget {
                         padding: EdgeInsets.all(tokens.pagePadding),
                         child: Row(
                           children: <Widget>[
-                            Icon(item.icon, color: Theme.of(context).colorScheme.primary),
+                            Icon(
+                              item.icon,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
                             SizedBox(width: tokens.controlGap),
                             Expanded(child: Text(item.label)),
                             const Icon(Icons.arrow_forward),

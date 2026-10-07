@@ -16,14 +16,54 @@ class AppShell extends StatelessWidget {
     final tokens = SuperCalcDesignTokens.of(context);
     final destinations = <_Destination>[
       _Destination('/home', Icons.home_outlined, Icons.home, l10n.home),
-      _Destination('/plotting', Icons.show_chart_outlined, Icons.show_chart, l10n.plotting),
-      _Destination('/calculus', Icons.functions_outlined, Icons.functions, l10n.calculus),
-      _Destination('/equations', Icons.account_tree_outlined, Icons.account_tree, l10n.equations),
-      _Destination('/ode', Icons.device_hub_outlined, Icons.device_hub, l10n.ode),
-      _Destination('/signals', Icons.graphic_eq_outlined, Icons.graphic_eq, l10n.signals),
-      _Destination('/data-analysis', Icons.insights_outlined, Icons.insights, l10n.dataAnalysis),
-      _Destination('/statistics', Icons.bar_chart_outlined, Icons.bar_chart, l10n.statistics),
-      _Destination('/linear-algebra', Icons.grid_4x4_outlined, Icons.grid_4x4, l10n.linearAlgebra),
+      _Destination(
+        '/plotting',
+        Icons.show_chart_outlined,
+        Icons.show_chart,
+        l10n.plotting,
+      ),
+      _Destination(
+        '/calculus',
+        Icons.functions_outlined,
+        Icons.functions,
+        l10n.calculus,
+      ),
+      _Destination(
+        '/equations',
+        Icons.account_tree_outlined,
+        Icons.account_tree,
+        l10n.equations,
+      ),
+      _Destination(
+        '/ode',
+        Icons.device_hub_outlined,
+        Icons.device_hub,
+        l10n.ode,
+      ),
+      _Destination(
+        '/signals',
+        Icons.graphic_eq_outlined,
+        Icons.graphic_eq,
+        l10n.signals,
+      ),
+      _Destination(
+        '/data-analysis',
+        Icons.insights_outlined,
+        Icons.insights,
+        l10n.dataAnalysis,
+      ),
+      _Destination(
+        '/statistics',
+        Icons.bar_chart_outlined,
+        Icons.bar_chart,
+        l10n.statistics,
+      ),
+      _Destination(
+        '/linear-algebra',
+        Icons.grid_4x4_outlined,
+        Icons.grid_4x4,
+        l10n.linearAlgebra,
+      ),
       _Destination('/tools', Icons.build_outlined, Icons.build, l10n.tools),
     ];
     final compactDestinations = <_Destination>[

@@ -31,7 +31,9 @@ class FunctionPlotPainter extends CustomPainter {
 
     const xMin = -10.0;
     const xMax = 10.0;
-    final finite = points.where((point) => point.y.isFinite).toList(growable: false);
+    final finite = points
+        .where((point) => point.y.isFinite)
+        .toList(growable: false);
     if (finite.isEmpty) {
       _drawGrid(canvas, size, gridPaint, axisPaint, xMin, xMax, -5, 5);
       return;
@@ -58,7 +60,8 @@ class FunctionPlotPainter extends CustomPainter {
         continue;
       }
       final mapped = _map(point, size, xMin, xMax, yMin, yMax);
-      if (previous == null || (point.y - previous!.y).abs() > (yMax - yMin) * 1.5) {
+      if (previous == null ||
+          (point.y - previous!.y).abs() > (yMax - yMin) * 1.5) {
         path.moveTo(mapped.dx, mapped.dy);
       } else {
         path.lineTo(mapped.dx, mapped.dy);
@@ -96,7 +99,14 @@ class FunctionPlotPainter extends CustomPainter {
     }
   }
 
-  Offset _map(PlotPoint point, Size size, double xMin, double xMax, double yMin, double yMax) {
+  Offset _map(
+    PlotPoint point,
+    Size size,
+    double xMin,
+    double xMax,
+    double yMin,
+    double yMax,
+  ) {
     return Offset(
       (point.x - xMin) / (xMax - xMin) * size.width,
       (yMax - point.y) / (yMax - yMin) * size.height,

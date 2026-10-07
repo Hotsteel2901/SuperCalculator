@@ -1,86 +1,330 @@
-// GENERATED-LIKE COMPATIBILITY STUB
-//
-// The canonical source is lib/l10n/app_*.arb. Running `flutter gen-l10n`
-// replaces this file with the Flutter-generated implementation. Keeping this
-// small checked-in implementation makes the scaffold usable before the SDK is
-// installed in a contributor environment.
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart' as intl;
 
-class AppLocalizations {
-  const AppLocalizations(this.locale);
+import 'app_localizations_en.dart';
+import 'app_localizations_zh.dart';
 
-  final Locale locale;
+// ignore_for_file: type=lint
+
+/// Callers can lookup localized strings with an instance of AppLocalizations
+/// returned by `AppLocalizations.of(context)`.
+///
+/// Applications need to include `AppLocalizations.delegate()` in their app's
+/// `localizationDelegates` list, and the locales they support in the app's
+/// `supportedLocales` list. For example:
+///
+/// ```dart
+/// import 'generated/app_localizations.dart';
+///
+/// return MaterialApp(
+///   localizationsDelegates: AppLocalizations.localizationsDelegates,
+///   supportedLocales: AppLocalizations.supportedLocales,
+///   home: MyApplicationHome(),
+/// );
+/// ```
+///
+/// ## Update pubspec.yaml
+///
+/// Please make sure to update your pubspec.yaml to include the following
+/// packages:
+///
+/// ```yaml
+/// dependencies:
+///   # Internationalization support.
+///   flutter_localizations:
+///     sdk: flutter
+///   intl: any # Use the pinned version from flutter_localizations
+///
+///   # Rest of dependencies
+/// ```
+///
+/// ## iOS Applications
+///
+/// iOS applications define key application metadata, including supported
+/// locales, in an Info.plist file that is built into the application bundle.
+/// To configure the locales supported by your app, you’ll need to edit this
+/// file.
+///
+/// First, open your project’s ios/Runner.xcworkspace Xcode workspace file.
+/// Then, in the Project Navigator, open the Info.plist file under the Runner
+/// project’s Runner folder.
+///
+/// Next, select the Information Property List item, select Add Item from the
+/// Editor menu, then select Localizations from the pop-up menu.
+///
+/// Select and expand the newly-created Localizations item then, for each
+/// locale your application supports, add a new item and select the locale
+/// you wish to add from the pop-up menu in the Value field. This list should
+/// be consistent with the languages listed in the AppLocalizations.supportedLocales
+/// property.
+abstract class AppLocalizations {
+  AppLocalizations(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+
+  final String localeName;
+
+  static AppLocalizations of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
+  }
 
   static const LocalizationsDelegate<AppLocalizations> delegate =
       _AppLocalizationsDelegate();
 
+  /// A list of this localizations delegate along with the default localizations
+  /// delegates.
+  ///
+  /// Returns a list of localizations delegates containing this delegate along with
+  /// GlobalMaterialLocalizations.delegate, GlobalCupertinoLocalizations.delegate,
+  /// and GlobalWidgetsLocalizations.delegate.
+  ///
+  /// Additional delegates can be added by appending to this list in
+  /// MaterialApp. This list does not have to be used at all if a custom list
+  /// of delegates is preferred or required.
   static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
       <LocalizationsDelegate<dynamic>>[
-    delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
+
+  /// A list of this localizations delegate's supported locales.
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('zh'),
   ];
 
-  static const List<Locale> supportedLocales = <Locale>[Locale('en'), Locale('zh')];
+  /// No description provided for @appTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SuperCalculator - Next Era'**
+  String get appTitle;
 
-  static AppLocalizations of(BuildContext context) {
-    final value = Localizations.of<AppLocalizations>(context, AppLocalizations);
-    assert(value != null, 'AppLocalizations is not available in this context.');
-    return value!;
-  }
+  /// No description provided for @home.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get home;
 
-  bool get isChinese => locale.languageCode.toLowerCase() == 'zh';
+  /// No description provided for @plotting.
+  ///
+  /// In en, this message translates to:
+  /// **'Plotting'**
+  String get plotting;
 
-  String get appTitle => 'SuperCalculator - Next Era';
-  String get home => isChinese ? '首页' : 'Home';
-  String get plotting => isChinese ? '绘图' : 'Plotting';
-  String get calculus => isChinese ? '微积分' : 'Calculus';
-  String get equations => isChinese ? '方程' : 'Equations';
-  String get ode => isChinese ? '微分方程' : 'ODE';
-  String get signals => isChinese ? '信号处理' : 'Signals';
-  String get dataAnalysis => isChinese ? '数据分析' : 'Data';
-  String get statistics => isChinese ? '统计概率' : 'Statistics';
-  String get linearAlgebra => isChinese ? '线性代数' : 'Linear algebra';
-  String get tools => isChinese ? '工具' : 'Tools';
-  String get settings => isChinese ? '设置' : 'Settings';
-  String get about => isChinese ? '关于' : 'About';
-  String get welcomeTitle => isChinese ? '更清晰地探索数学' : 'A clearer way to explore mathematics';
-  String get welcomeBody => isChinese
-      ? '采用 Material 3 Expressive 的跨平台科学计算器，共享原生计算核心。'
-      : 'A Material 3 Expressive scientific calculator with a shared native computation core.';
-  String get openPlotter => isChinese ? '打开绘图器' : 'Open plotter';
-  String get migrationStatus => isChinese ? 'Flutter 迁移进行中' : 'Flutter migration in progress';
-  String get expression => isChinese ? '表达式' : 'Expression';
-  String get argumentX => isChinese ? 'x 值' : 'x value';
-  String get evaluate => isChinese ? '计算' : 'Evaluate';
-  String get clear => isChinese ? '清空' : 'Clear';
-  String get quickExamples => isChinese ? '快速示例' : 'Quick examples';
-  String get result => isChinese ? '结果' : 'Result';
-  String get plotPreview => isChinese ? '绘图预览' : 'Plot preview';
-  String get backend => isChinese ? '计算后端' : 'Backend';
-  String get nativeFfi => isChinese ? '原生 FFI' : 'Native FFI';
-  String get wasm => 'WebAssembly';
-  String get dartFallback => isChinese ? 'Dart 回退' : 'Dart fallback';
-  String get ready => isChinese ? '就绪' : 'Ready';
-  String get computing => isChinese ? '计算中…' : 'Computing…';
-  String get invalidExpression => isChinese ? '无法计算此表达式。' : 'Could not evaluate this expression.';
-  String get noResult => isChinese ? '输入表达式后点击计算。' : 'Enter an expression and evaluate it.';
-  String get featureComingSoon => isChinese
-      ? '此功能已经加入迁移矩阵，将按阶段逐步接入。'
-      : 'This feature is included in the migration matrix and is being connected incrementally.';
-  String get aboutBody => isChinese
-      ? 'SuperCalculator - Next Era 使用一个 Flutter 应用替代旧 Tkinter 和 Java UI，同时保留 C 计算核心。'
-      : 'SuperCalculator - Next Era replaces the legacy Tkinter and Java UI with one Flutter application while preserving the C computation core.';
-  String get version => '0.1.0';
-  String versionLabel(String version) => isChinese ? '版本 $version' : 'Version $version';
-  String plotPoints(int count) => isChinese ? '已采样 $count 个点' : '$count sampled points';
-  String accessibilityPlotSummary(String expression, int count) => isChinese
-      ? '表达式 $expression 的函数图，共有 $count 个有效采样点。'
-      : 'Function plot for $expression, with $count finite samples.';
+  /// No description provided for @calculus.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculus'**
+  String get calculus;
+
+  /// No description provided for @equations.
+  ///
+  /// In en, this message translates to:
+  /// **'Equations'**
+  String get equations;
+
+  /// No description provided for @ode.
+  ///
+  /// In en, this message translates to:
+  /// **'ODE'**
+  String get ode;
+
+  /// No description provided for @signals.
+  ///
+  /// In en, this message translates to:
+  /// **'Signals'**
+  String get signals;
+
+  /// No description provided for @dataAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'Data'**
+  String get dataAnalysis;
+
+  /// No description provided for @statistics.
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics'**
+  String get statistics;
+
+  /// No description provided for @linearAlgebra.
+  ///
+  /// In en, this message translates to:
+  /// **'Linear algebra'**
+  String get linearAlgebra;
+
+  /// No description provided for @tools.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools'**
+  String get tools;
+
+  /// No description provided for @settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings;
+
+  /// No description provided for @about.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get about;
+
+  /// No description provided for @welcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A clearer way to explore mathematics'**
+  String get welcomeTitle;
+
+  /// No description provided for @welcomeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A Material 3 Expressive scientific calculator with a shared native computation core.'**
+  String get welcomeBody;
+
+  /// No description provided for @openPlotter.
+  ///
+  /// In en, this message translates to:
+  /// **'Open plotter'**
+  String get openPlotter;
+
+  /// No description provided for @migrationStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Flutter migration in progress'**
+  String get migrationStatus;
+
+  /// No description provided for @expression.
+  ///
+  /// In en, this message translates to:
+  /// **'Expression'**
+  String get expression;
+
+  /// No description provided for @argumentX.
+  ///
+  /// In en, this message translates to:
+  /// **'x value'**
+  String get argumentX;
+
+  /// No description provided for @evaluate.
+  ///
+  /// In en, this message translates to:
+  /// **'Evaluate'**
+  String get evaluate;
+
+  /// No description provided for @clear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clear;
+
+  /// No description provided for @quickExamples.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick examples'**
+  String get quickExamples;
+
+  /// No description provided for @result.
+  ///
+  /// In en, this message translates to:
+  /// **'Result'**
+  String get result;
+
+  /// No description provided for @plotPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Plot preview'**
+  String get plotPreview;
+
+  /// No description provided for @backend.
+  ///
+  /// In en, this message translates to:
+  /// **'Backend'**
+  String get backend;
+
+  /// No description provided for @nativeFfi.
+  ///
+  /// In en, this message translates to:
+  /// **'Native FFI'**
+  String get nativeFfi;
+
+  /// No description provided for @wasm.
+  ///
+  /// In en, this message translates to:
+  /// **'WebAssembly'**
+  String get wasm;
+
+  /// No description provided for @dartFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Dart fallback'**
+  String get dartFallback;
+
+  /// No description provided for @ready.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get ready;
+
+  /// No description provided for @computing.
+  ///
+  /// In en, this message translates to:
+  /// **'Computing…'**
+  String get computing;
+
+  /// No description provided for @invalidExpression.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not evaluate this expression.'**
+  String get invalidExpression;
+
+  /// No description provided for @noResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an expression and evaluate it.'**
+  String get noResult;
+
+  /// No description provided for @featureComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'This feature is included in the migration matrix and is being connected incrementally.'**
+  String get featureComingSoon;
+
+  /// No description provided for @aboutBody.
+  ///
+  /// In en, this message translates to:
+  /// **'SuperCalculator - Next Era replaces the legacy Tkinter and Java UI with one Flutter application while preserving the C computation core.'**
+  String get aboutBody;
+
+  /// The application version shown on the About page
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String versionLabel(Object version);
+
+  /// No description provided for @version.
+  ///
+  /// In en, this message translates to:
+  /// **'0.1.0'**
+  String get version;
+
+  /// Number of points currently rendered in the plot preview
+  ///
+  /// In en, this message translates to:
+  /// **'{count} sampled points'**
+  String plotPoints(Object count);
+
+  /// Screen reader summary for the plot preview
+  ///
+  /// In en, this message translates to:
+  /// **'Function plot for {expression}, with {count} finite samples.'**
+  String accessibilityPlotSummary(Object count, Object expression);
 }
 
 class _AppLocalizationsDelegate
@@ -88,15 +332,31 @@ class _AppLocalizationsDelegate
   const _AppLocalizationsDelegate();
 
   @override
-  bool isSupported(Locale locale) =>
-      AppLocalizations.supportedLocales.any((item) => item.languageCode == locale.languageCode);
+  Future<AppLocalizations> load(Locale locale) {
+    return SynchronousFuture<AppLocalizations>(lookupAppLocalizations(locale));
+  }
 
   @override
-  Future<AppLocalizations> load(Locale locale) =>
-      SynchronousFuture<AppLocalizations>(AppLocalizations(_resolve(locale)));
+  bool isSupported(Locale locale) =>
+      <String>['en', 'zh'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
+}
 
-  Locale _resolve(Locale locale) => locale.languageCode == 'zh' ? const Locale('zh') : const Locale('en');
+AppLocalizations lookupAppLocalizations(Locale locale) {
+  // Lookup logic when only language code is specified.
+  switch (locale.languageCode) {
+    case 'en':
+      return AppLocalizationsEn();
+    case 'zh':
+      return AppLocalizationsZh();
+  }
+
+  throw FlutterError(
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
 }

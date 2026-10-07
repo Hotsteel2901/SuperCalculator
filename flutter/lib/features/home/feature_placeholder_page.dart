@@ -4,7 +4,11 @@ import '../../app/theme/design_tokens.dart';
 import '../../l10n/generated/app_localizations.dart';
 
 class FeaturePlaceholderPage extends StatelessWidget {
-  const FeaturePlaceholderPage({required this.title, required this.icon, super.key});
+  const FeaturePlaceholderPage({
+    required this.title,
+    required this.icon,
+    super.key,
+  });
 
   final String title;
   final IconData icon;
@@ -33,7 +37,10 @@ class FeaturePlaceholderPage extends StatelessWidget {
                       children: <Widget>[
                         Icon(icon, size: 48, color: scheme.primary),
                         SizedBox(height: tokens.cardGap),
-                        Text(title, style: Theme.of(context).textTheme.headlineSmall),
+                        Text(
+                          title,
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
                         SizedBox(height: tokens.controlGap),
                         Text(
                           l10n.featureComingSoon,

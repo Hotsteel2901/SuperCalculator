@@ -53,7 +53,10 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      Text(l10n.expression, style: Theme.of(context).textTheme.titleMedium),
+                      Text(
+                        l10n.expression,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
                       SizedBox(height: tokens.controlGap),
                       TextField(
                         controller: _expressionController,
@@ -71,13 +74,20 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                             child: TextField(
                               controller: _xController,
                               onChanged: controller.setX,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              decoration: InputDecoration(labelText: l10n.argumentX),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              decoration: InputDecoration(
+                                labelText: l10n.argumentX,
+                              ),
                             ),
                           ),
                           SizedBox(width: tokens.controlGap),
                           FilledButton.icon(
-                            onPressed: state.isCalculating ? null : controller.evaluate,
+                            onPressed: state.isCalculating
+                                ? null
+                                : controller.evaluate,
                             icon: const Icon(Icons.calculate_outlined),
                             label: Text(l10n.evaluate),
                           ),
@@ -90,7 +100,10 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                         ],
                       ),
                       SizedBox(height: tokens.controlGap),
-                      Text(l10n.quickExamples, style: Theme.of(context).textTheme.labelLarge),
+                      Text(
+                        l10n.quickExamples,
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
                       SizedBox(height: tokens.controlGap),
                       Wrap(
                         spacing: tokens.controlGap,
@@ -115,27 +128,40 @@ class _PlotPageState extends ConsumerState<PlotPage> {
               Semantics(
                 liveRegion: true,
                 child: Card(
-                  color: state.error == null ? scheme.secondaryContainer : scheme.errorContainer,
+                  color: state.error == null
+                      ? scheme.secondaryContainer
+                      : scheme.errorContainer,
                   child: Padding(
                     padding: EdgeInsets.all(tokens.pagePadding),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Icon(
-                          state.error == null ? Icons.check_circle_outline : Icons.error_outline,
-                          color: state.error == null ? scheme.onSecondaryContainer : scheme.onErrorContainer,
+                          state.error == null
+                              ? Icons.check_circle_outline
+                              : Icons.error_outline,
+                          color: state.error == null
+                              ? scheme.onSecondaryContainer
+                              : scheme.onErrorContainer,
                         ),
                         SizedBox(width: tokens.controlGap),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
-                              Text(l10n.result, style: Theme.of(context).textTheme.titleMedium),
+                              Text(
+                                l10n.result,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
                               SizedBox(height: tokens.controlGap / 2),
                               Text(
                                 state.isCalculating
                                     ? l10n.computing
-                                    : state.error ?? state.value?.toStringAsPrecision(10) ?? l10n.noResult,
+                                    : state.error ??
+                                          state.value?.toStringAsPrecision(
+                                            10,
+                                          ) ??
+                                          l10n.noResult,
                                 style: Theme.of(context).textTheme.bodyLarge,
                               ),
                               SizedBox(height: tokens.controlGap / 2),
@@ -155,14 +181,23 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      Text(l10n.plotPreview, style: Theme.of(context).textTheme.titleMedium),
+                      Text(
+                        l10n.plotPreview,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
                       SizedBox(height: tokens.controlGap),
                       Semantics(
-                        label: l10n.accessibilityPlotSummary(state.expression, state.points.length),
+                        label: l10n.accessibilityPlotSummary(
+                          state.expression,
+                          state.points.length,
+                        ),
                         child: SizedBox(
                           height: tokens.plotMinHeight,
                           child: CustomPaint(
-                            painter: FunctionPlotPainter(points: state.points, scheme: scheme),
+                            painter: FunctionPlotPainter(
+                              points: state.points,
+                              scheme: scheme,
+                            ),
                             child: const SizedBox.expand(),
                           ),
                         ),

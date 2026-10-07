@@ -8,8 +8,8 @@ class CalcEvaluation {
   });
 
   const CalcEvaluation.failure({required this.backend, required String message})
-      : value = null,
-        error = message;
+    : value = null,
+      error = message;
 
   final double? value;
   final String backend;
@@ -59,7 +59,10 @@ class DartCalcBackend implements CalcBackend {
   }
 
   @override
-  Future<List<double?>> evaluateArray(String expression, List<double> xs) async {
+  Future<List<double?>> evaluateArray(
+    String expression,
+    List<double> xs,
+  ) async {
     final values = <double?>[];
     for (final x in xs) {
       final result = await evaluate(expression, x);
@@ -110,11 +113,13 @@ class _ExpressionParser {
         value *= _parsePower();
       } else if (_match('/')) {
         final divisor = _parsePower();
-        if (divisor.abs() < 1e-15) throw const FormatException('Division by zero.');
+        if (divisor.abs() < 1e-15)
+          throw const FormatException('Division by zero.');
         value /= divisor;
       } else if (_match('%') || _matchWord('mod')) {
         final divisor = _parsePower();
-        if (divisor.abs() < 1e-15) throw const FormatException('Modulo by zero.');
+        if (divisor.abs() < 1e-15)
+          throw const FormatException('Modulo by zero.');
         value %= divisor;
       } else {
         return value;
@@ -144,7 +149,9 @@ class _ExpressionParser {
       _skipSpaces();
       if (!_match('!')) return value;
       if (value < 0 || value.floorToDouble() != value || value > 170) {
-        throw const FormatException('Factorial requires an integer from 0 to 170.');
+        throw const FormatException(
+          'Factorial requires an integer from 0 to 170.',
+        );
       }
       var result = 1.0;
       for (var index = 2; index <= value.toInt(); index++) {
@@ -168,7 +175,9 @@ class _ExpressionParser {
 
     final identifier = _parseIdentifier();
     if (identifier == null) {
-      throw FormatException('Expected a number, variable, or function at position $position.');
+      throw FormatException(
+        'Expected a number, variable, or function at position $position.',
+      );
     }
     if (identifier == 'x') return x;
     if (identifier == 'pi') return math.pi;
@@ -200,9 +209,12 @@ class _ExpressionParser {
       position++;
       while (position < source.length && _isDigit(source[position])) position++;
     }
-    if (position < source.length && (source[position] == 'e' || source[position] == 'E')) {
+    if (position < source.length &&
+        (source[position] == 'e' || source[position] == 'E')) {
       position++;
-      if (position < source.length && (source[position] == '+' || source[position] == '-')) position++;
+      if (position < source.length &&
+          (source[position] == '+' || source[position] == '-'))
+        position++;
       while (position < source.length && _isDigit(source[position])) position++;
     }
     return double.parse(source.substring(start, position));
@@ -210,9 +222,11 @@ class _ExpressionParser {
 
   String? _parseIdentifier() {
     _skipSpaces();
-    if (position >= source.length || !_isIdentifierStart(source[position])) return null;
+    if (position >= source.length || !_isIdentifierStart(source[position]))
+      return null;
     final start = position++;
-    while (position < source.length && _isIdentifierPart(source[position])) position++;
+    while (position < source.length && _isIdentifierPart(source[position]))
+      position++;
     return source.substring(start, position).toLowerCase();
   }
 
@@ -240,17 +254,21 @@ class _ExpressionParser {
 
   void _expect(String character) {
     _skipSpaces();
-    if (!_match(character)) throw FormatException('Expected "$character" at position $position.');
+    if (!_match(character))
+      throw FormatException('Expected "$character" at position $position.');
   }
 
   void _skipSpaces() {
-    while (position < source.length && source[position].trim().isEmpty) position++;
+    while (position < source.length && source[position].trim().isEmpty)
+      position++;
   }
 
-  bool _isDigit(String character) => character.codeUnitAt(0) >= 48 && character.codeUnitAt(0) <= 57;
+  bool _isDigit(String character) =>
+      character.codeUnitAt(0) >= 48 && character.codeUnitAt(0) <= 57;
   bool _isIdentifierStart(String character) =>
       (character.codeUnitAt(0) >= 65 && character.codeUnitAt(0) <= 90) ||
       (character.codeUnitAt(0) >= 97 && character.codeUnitAt(0) <= 122) ||
       character == '_';
-  bool _isIdentifierPart(String character) => _isIdentifierStart(character) || _isDigit(character);
+  bool _isIdentifierPart(String character) =>
+      _isIdentifierStart(character) || _isDigit(character);
 }
