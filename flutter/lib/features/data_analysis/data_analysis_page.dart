@@ -264,7 +264,9 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
         rSquared = regression.rSquared;
         equation = regression.equation;
       }
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _busy = false;
         _points = points;
@@ -285,13 +287,14 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
               );
       });
     } on FormatException catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _busy = false;
           _error = error.message;
         });
+      }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _busy = false;
           _error = nextEraText(
@@ -300,6 +303,7 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
             '无法拟合该模型。',
           );
         });
+      }
     }
   }
 
@@ -308,7 +312,9 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
     final ys = <double>[];
     for (final line in _data.text.split(RegExp(r'[\r\n]+'))) {
       final cells = line.trim().split(RegExp(r'[,;\t ]+'));
-      if (cells.length < 2) continue;
+      if (cells.length < 2) {
+        continue;
+      }
       final x = double.tryParse(cells[0]);
       final y = double.tryParse(cells[1]);
       if (x != null && y != null) {
@@ -318,7 +324,7 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
     }
     final x = double.tryParse(_interpolationX.text);
     if (xs.length < 2 || x == null) {
-      if (mounted)
+      if (mounted) {
         setState(
           () => _error = nextEraText(
             context,
@@ -326,6 +332,7 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
             '请输入有效点和插值 x。',
           ),
         );
+      }
       return;
     }
     setState(() {
@@ -337,7 +344,9 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
       final value = await ref
           .read(calcBackendProvider)
           .interpolate(_interpolationMethod, xs, ys, x);
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _busy = false;
         _result = value == null
@@ -348,11 +357,12 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
             : null;
       });
     } on FormatException catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _busy = false;
           _error = error.message;
         });
+      }
     }
   }
 }

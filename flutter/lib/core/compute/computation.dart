@@ -1145,7 +1145,9 @@ class DartComputation {
         final x =
             xMin + (xMax - xMin) * column / math.max(1, columns - 1).toDouble();
         final slope = compiled.evaluate(x: x, y: y);
-        if (!slope.isFinite) continue;
+        if (!slope.isFinite) {
+          continue;
+        }
         final scale = 1 / math.sqrt(1 + slope * slope);
         vectors.add(PlotFieldVector(x: x, y: y, dx: scale, dy: slope * scale));
       }
@@ -1174,7 +1176,9 @@ class DartComputation {
         final dx = xFunction.evaluate(x: x, y: y);
         final dy = yFunction.evaluate(x: x, y: y);
         final magnitude = math.sqrt(dx * dx + dy * dy);
-        if (!magnitude.isFinite || magnitude == 0) continue;
+        if (!magnitude.isFinite || magnitude == 0) {
+          continue;
+        }
         vectors.add(
           PlotFieldVector(x: x, y: y, dx: dx / magnitude, dy: dy / magnitude),
         );
@@ -1596,15 +1600,21 @@ class DartComputation {
       final y = point[1];
       switch (model) {
         case 'exponential':
-          if (y <= 0) continue;
+          if (y <= 0) {
+            continue;
+          }
           transformedX.add(x);
           transformedY.add(math.log(y));
         case 'power':
-          if (x <= 0 || y <= 0) continue;
+          if (x <= 0 || y <= 0) {
+            continue;
+          }
           transformedX.add(math.log(x));
           transformedY.add(math.log(y));
         case 'logarithmic':
-          if (x <= 0) continue;
+          if (x <= 0) {
+            continue;
+          }
           transformedX.add(math.log(x));
           transformedY.add(y);
         default:
@@ -1674,7 +1684,9 @@ class DartComputation {
     var residual = 0.0;
     for (final point in points) {
       final predicted = predict(point[0]);
-      if (!predicted.isFinite) continue;
+      if (!predicted.isFinite) {
+        continue;
+      }
       total += (point[1] - mean) * (point[1] - mean);
       residual += (point[1] - predicted) * (point[1] - predicted);
     }
@@ -1774,7 +1786,9 @@ class DartComputation {
       for (var i = 0; i < points.length; i++) {
         var term = points[i][1];
         for (var j = 0; j < points.length; j++) {
-          if (i == j) continue;
+          if (i == j) {
+            continue;
+          }
           final denominator = points[i][0] - points[j][0];
           if (denominator == 0) return null;
           term *= (x - points[j][0]) / denominator;
@@ -1960,8 +1974,9 @@ class DartComputation {
     double probability,
     Map<String, double> parameters,
   ) {
-    if (!probability.isFinite || probability < 0 || probability > 1)
+    if (!probability.isFinite || probability < 0 || probability > 1) {
       return null;
+    }
     final normalized = name.toLowerCase();
     if (normalized == 'binomial' || normalized == 'poisson') {
       var low = 0;
@@ -1990,10 +2005,12 @@ class DartComputation {
       }
       return low.toDouble();
     }
-    if (probability == 0)
+    if (probability == 0) {
       return normalized == 'normal' ? double.negativeInfinity : 0;
-    if (probability == 1)
-      return normalized == 'normal' ? double.infinity : double.infinity;
+    }
+    if (probability == 1) {
+      return double.infinity;
+    }
     var low =
         normalized == 'normal' || normalized == 't' || normalized == 'student-t'
         ? -12.0
@@ -2045,8 +2062,9 @@ class DartComputation {
   }
 
   static double npv(double rate, List<double> cashFlows) {
-    if (rate <= -1)
+    if (rate <= -1) {
       throw const FormatException('Discount rate must be greater than -100%.');
+    }
     var result = 0.0;
     for (var index = 0; index < cashFlows.length; index++) {
       result += cashFlows[index] / math.pow(1 + rate, index).toDouble();
@@ -2351,7 +2369,9 @@ class DartComputation {
         if (values[row][column].abs() > values[pivot][column].abs())
           pivot = row;
       }
-      if (values[pivot][column].abs() < 1e-14) continue;
+      if (values[pivot][column].abs() < 1e-14) {
+        continue;
+      }
       final swap = values[pivot];
       values[pivot] = values[pivotRow];
       values[pivotRow] = swap;
@@ -2360,7 +2380,9 @@ class DartComputation {
         values[pivotRow][j] /= divisor;
       }
       for (var row = 0; row < matrix.rowCount; row++) {
-        if (row == pivotRow) continue;
+        if (row == pivotRow) {
+          continue;
+        }
         final factor = values[row][column];
         for (var j = 0; j < matrix.columnCount; j++) {
           values[row][j] -= factor * values[pivotRow][j];
@@ -2401,7 +2423,9 @@ class DartComputation {
     final entries = <SparseEntry>[];
     for (final token in input.split(';')) {
       final cells = token.trim().split(RegExp(r'[,\\s]+'));
-      if (token.trim().isEmpty) continue;
+      if (token.trim().isEmpty) {
+        continue;
+      }
       if (cells.length != 3) {
         throw const FormatException('Sparse entries use row,column,value.');
       }
@@ -2608,7 +2632,9 @@ class DartComputation {
         matrix[column][j] /= divisor;
       }
       for (var row = 0; row < rows; row++) {
-        if (row == column) continue;
+        if (row == column) {
+        continue;
+      }
         final factor = matrix[row][column];
         for (var j = column; j <= rows; j++) {
           matrix[row][j] -= factor * matrix[column][j];

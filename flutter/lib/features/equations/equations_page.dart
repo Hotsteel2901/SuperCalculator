@@ -286,7 +286,9 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
             minimum,
             maximum,
           );
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _busy = false;
         _result = roots.isEmpty
@@ -296,11 +298,12 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
                   .join(', ');
       });
     } on FormatException catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _busy = false;
           _error = error.message;
         });
+      }
     }
   }
 
@@ -320,7 +323,9 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
       final solution = await ref
           .read(calcBackendProvider)
           .solveSystem2d(_expression.text, _secondExpression.text, x: x, y: y);
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _busy = false;
         _result = solution == null
@@ -335,11 +340,12 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
             : null;
       });
     } on FormatException catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _busy = false;
           _error = error.message;
         });
+      }
     }
   }
 
@@ -358,7 +364,9 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
       final value = await ref
           .read(calcBackendProvider)
           .tangentAndNormal(_expression.text, x);
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _busy = false;
         final normal = value?['normalSlope'];
@@ -376,11 +384,12 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
             : null;
       });
     } on FormatException catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _busy = false;
           _error = error.message;
         });
+      }
     }
   }
 

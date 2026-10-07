@@ -409,8 +409,9 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
     final n = BigInt.tryParse(_integer.text.trim());
     final m = BigInt.tryParse(_integer2.text.trim());
     final modulus = BigInt.tryParse(_modulus.text.trim());
-    if (n == null || m == null || modulus == null)
+    if (n == null || m == null || modulus == null) {
       return _showError('Enter integer inputs.');
+    }
     await _runBusy(() async {
       _integerResult = switch (_integerOperation) {
         'factor' => DartComputation.formatFactors(
@@ -429,14 +430,17 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
 
   Future<void> _calculateDistribution() async {
     final x = double.tryParse(_distributionX.text.trim());
-    if (x == null) return _showError('Enter x or a probability.');
+    if (x == null) {
+      return _showError('Enter x or a probability.');
+    }
     final values = _distributionParameter.text
         .split(RegExp(r'[,;\\s]+'))
         .where((value) => value.isNotEmpty)
         .map(double.tryParse)
         .toList();
-    if (values.any((value) => value == null))
+    if (values.any((value) => value == null)) {
       return _showError('Parameters must be numeric.');
+    }
     final parameters = switch (_distribution) {
       'normal' => <String, double>{
         'mu': values.isNotEmpty ? values[0]! : 0,
@@ -465,8 +469,9 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
     final principal = double.tryParse(_financePrincipal.text);
     final rate = double.tryParse(_financeRate.text);
     final periods = int.tryParse(_financePeriods.text);
-    if (principal == null || rate == null || periods == null)
+    if (principal == null || rate == null || periods == null) {
       return _showError('Enter valid finance inputs.');
+    }
     await _runBusy(() async {
       final payment = DartComputation.loanPayment(
         principal: principal,
@@ -483,20 +488,23 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
     final definitions = <String, String>{};
     for (final item in _customDefinitions.text.split(RegExp(r'[;\\n]+'))) {
       final pair = item.split('=');
-      if (pair.length == 2 && pair[0].trim().isNotEmpty)
+      if (pair.length == 2 && pair[0].trim().isNotEmpty) {
         definitions[pair[0].trim()] = pair[1].trim();
+      }
     }
-    if (definitions.isEmpty)
+    if (definitions.isEmpty) {
       return _showError('Add at least one definition such as f=x^2+1.');
+    }
     await _runBusy(() async {
       final value = DartComputation.evaluateCustom(
         _customExpression.text,
         definitions,
       );
-      if (!value.isFinite)
+      if (!value.isFinite) {
         throw const FormatException(
           'Custom function returned a non-finite value.',
         );
+      }
       _customResult = value.toStringAsPrecision(12);
     });
   }
