@@ -164,7 +164,9 @@ class _LinearAlgebraPageState extends ConsumerState<LinearAlgebraPage> {
         _setResult('${await backend.matrixRank(_left.text)}');
       } else if (_operation == 'eigenvalues') {
         final values = await backend.eigenvalues2x2(_left.text);
-        _setResult(values.map((value) => value.toStringAsPrecision(12)).join(', '));
+        _setResult(
+          values.map((value) => value.toStringAsPrecision(12)).join(', '),
+        );
       } else {
         final matrix = await backend.multiplyMatrices(_left.text, _right.text);
         _setResult(matrix.format());

@@ -96,7 +96,10 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                             ? nextEraText(context, 'x(t)', 'x(t)')
                             : state.mode == 'polar'
                             ? nextEraText(context, 'r(t)', 'r(t)')
-                            : state.mode == 'implicit' || state.mode == 'surface' || state.mode == 'contour' || state.mode == 'direction'
+                            : state.mode == 'implicit' ||
+                                  state.mode == 'surface' ||
+                                  state.mode == 'contour' ||
+                                  state.mode == 'direction'
                             ? nextEraText(context, 'f(x,y)', 'f(x,y)')
                             : state.mode == 'vector'
                             ? nextEraText(context, 'P(x,y)', 'P(x,y)')
@@ -119,7 +122,8 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                         ),
                         style: const TextStyle(fontFamily: 'monospace'),
                       ),
-                      if (state.mode == 'parametric' || state.mode == 'vector') ...<Widget>[
+                      if (state.mode == 'parametric' ||
+                          state.mode == 'vector') ...<Widget>[
                         SizedBox(height: tokens.controlGap),
                         TextField(
                           controller: _secondaryController,

@@ -471,8 +471,10 @@ class DartComputation {
     double x = 0,
     double y = 0,
   }) {
-    return ExpressionEngine.compileWithFunctions(expression, definitions)
-        .evaluate(x: x, y: y);
+    return ExpressionEngine.compileWithFunctions(
+      expression,
+      definitions,
+    ).evaluate(x: x, y: y);
   }
 
   // ---------- Complex arithmetic ----------
@@ -485,16 +487,22 @@ class DartComputation {
       throw const FormatException('Zero cannot be raised to this power.');
     }
     final logarithm = complexLog(value);
-    return complexExp(ComplexValue(
-      exponent.real * logarithm.real - exponent.imaginary * logarithm.imaginary,
-      exponent.real * logarithm.imaginary + exponent.imaginary * logarithm.real,
-    ));
+    return complexExp(
+      ComplexValue(
+        exponent.real * logarithm.real -
+            exponent.imaginary * logarithm.imaginary,
+        exponent.real * logarithm.imaginary +
+            exponent.imaginary * logarithm.real,
+      ),
+    );
   }
 
   static ComplexValue complexExp(ComplexValue value) {
     final scale = math.exp(value.real);
-    return ComplexValue(scale * math.cos(value.imaginary),
-        scale * math.sin(value.imaginary));
+    return ComplexValue(
+      scale * math.cos(value.imaginary),
+      scale * math.sin(value.imaginary),
+    );
   }
 
   static ComplexValue complexLog(ComplexValue value) {
@@ -546,9 +554,11 @@ class DartComputation {
     if (value < BigInt.from(2)) return false;
     if (value == BigInt.from(2)) return true;
     if (value.isEven) return false;
-    for (var divisor = BigInt.from(3);
-        divisor * divisor <= value;
-        divisor += BigInt.two) {
+    for (
+      var divisor = BigInt.from(3);
+      divisor * divisor <= value;
+      divisor += BigInt.two
+    ) {
       if (value % divisor == BigInt.zero) return false;
     }
     return true;
@@ -568,13 +578,16 @@ class DartComputation {
       }
       divisor = divisor == BigInt.two ? BigInt.from(3) : divisor + BigInt.two;
     }
-    if (remaining > BigInt.one) factors[remaining] = (factors[remaining] ?? 0) + 1;
+    if (remaining > BigInt.one)
+      factors[remaining] = (factors[remaining] ?? 0) + 1;
     return factors;
   }
 
   static BigInt modPow(BigInt base, BigInt exponent, BigInt modulus) {
     if (modulus <= BigInt.zero || exponent < BigInt.zero) {
-      throw const FormatException('Modulus must be positive and exponent non-negative.');
+      throw const FormatException(
+        'Modulus must be positive and exponent non-negative.',
+      );
     }
     var result = BigInt.one % modulus;
     var factor = base % modulus;
@@ -600,7 +613,9 @@ class DartComputation {
 
   static BigInt fibonacci(int index) {
     if (index < 0 || index > 100000) {
-      throw const FormatException('Fibonacci index must be between 0 and 100000.');
+      throw const FormatException(
+        'Fibonacci index must be between 0 and 100000.',
+      );
     }
     var a = BigInt.zero;
     var b = BigInt.one;
@@ -1072,7 +1087,12 @@ class DartComputation {
     final slope = derivative(expression, x, step: step);
     if (!y.isFinite || slope == null || !slope.isFinite) return null;
     final normalSlope = slope.abs() < 1e-14 ? double.infinity : -1 / slope;
-    return <String, double>{'x': x, 'y': y, 'slope': slope, 'normalSlope': normalSlope};
+    return <String, double>{
+      'x': x,
+      'y': y,
+      'slope': slope,
+      'normalSlope': normalSlope,
+    };
   }
 
   static List<PlotPointValue> sampleSurface(
@@ -1117,7 +1137,8 @@ class DartComputation {
     for (var row = 0; row < rows; row++) {
       final y = yMin + (yMax - yMin) * row / math.max(1, rows - 1).toDouble();
       for (var column = 0; column < columns; column++) {
-        final x = xMin + (xMax - xMin) * column / math.max(1, columns - 1).toDouble();
+        final x =
+            xMin + (xMax - xMin) * column / math.max(1, columns - 1).toDouble();
         final slope = compiled.evaluate(x: x, y: y);
         if (!slope.isFinite) continue;
         final scale = 1 / math.sqrt(1 + slope * slope);
@@ -1143,17 +1164,15 @@ class DartComputation {
     for (var row = 0; row < rows; row++) {
       final y = yMin + (yMax - yMin) * row / math.max(1, rows - 1).toDouble();
       for (var column = 0; column < columns; column++) {
-        final x = xMin + (xMax - xMin) * column / math.max(1, columns - 1).toDouble();
+        final x =
+            xMin + (xMax - xMin) * column / math.max(1, columns - 1).toDouble();
         final dx = xFunction.evaluate(x: x, y: y);
         final dy = yFunction.evaluate(x: x, y: y);
         final magnitude = math.sqrt(dx * dx + dy * dy);
         if (!magnitude.isFinite || magnitude == 0) continue;
-        vectors.add(PlotFieldVector(
-          x: x,
-          y: y,
-          dx: dx / magnitude,
-          dy: dy / magnitude,
-        ));
+        vectors.add(
+          PlotFieldVector(x: x, y: y, dx: dx / magnitude, dy: dy / magnitude),
+        );
       }
     }
     return vectors;
@@ -1351,7 +1370,8 @@ class DartComputation {
 
   static List<double> convolution(List<double> left, List<double> right) {
     if (left.isEmpty || right.isEmpty) return const <double>[];
-    if (left.any((value) => !value.isFinite) || right.any((value) => !value.isFinite)) {
+    if (left.any((value) => !value.isFinite) ||
+        right.any((value) => !value.isFinite)) {
       throw const FormatException('Convolution inputs must be finite.');
     }
     final result = List<double>.filled(left.length + right.length - 1, 0);
@@ -1516,8 +1536,8 @@ class DartComputation {
         ys: <double>[],
       );
     }
-    final mean = points.fold<double>(0, (sum, point) => sum + point[1]) /
-        points.length;
+    final mean =
+        points.fold<double>(0, (sum, point) => sum + point[1]) / points.length;
     var total = 0.0;
     var residual = 0.0;
     for (final point in points) {
@@ -1537,9 +1557,9 @@ class DartComputation {
       coefficients: coefficients,
       rSquared: total == 0 ? (residual == 0 ? 1 : 0) : 1 - residual / total,
       xs: fitXs,
-      ys: fitXs.map((value) => _evaluatePolynomial(coefficients, value)).toList(
-        growable: false,
-      ),
+      ys: fitXs
+          .map((value) => _evaluatePolynomial(coefficients, value))
+          .toList(growable: false),
     );
   }
 
@@ -1614,13 +1634,15 @@ class DartComputation {
         case 'exponential':
           return math.exp(linear.intercept + linear.slope * x);
         case 'power':
-          return math.exp(linear.intercept) * math.pow(x, linear.slope).toDouble();
+          return math.exp(linear.intercept) *
+              math.pow(x, linear.slope).toDouble();
         case 'logarithmic':
           return linear.intercept + linear.slope * math.log(x);
         default:
           return double.nan;
       }
     }
+
     switch (model) {
       case 'exponential':
         parameters = <String, double>{
@@ -1641,8 +1663,8 @@ class DartComputation {
         parameters = const <String, double>{};
         equation = '';
     }
-    final mean = points.fold<double>(0, (sum, point) => sum + point[1]) /
-        points.length;
+    final mean =
+        points.fold<double>(0, (sum, point) => sum + point[1]) / points.length;
     var total = 0.0;
     var residual = 0.0;
     for (final point in points) {
@@ -1652,7 +1674,9 @@ class DartComputation {
       residual += (point[1] - predicted) * (point[1] - predicted);
     }
     points.sort((a, b) => a[0].compareTo(b[0]));
-    final validPoints = points.where((point) => predict(point[0]).isFinite).toList();
+    final validPoints = points
+        .where((point) => predict(point[0]).isFinite)
+        .toList();
     return CalcModelRegression(
       model: model,
       parameters: parameters,
@@ -1706,7 +1730,8 @@ class DartComputation {
         lower[i] = h0 / 6;
         diagonal[i] = (h0 + h1) / 3;
         upper[i] = h1 / 6;
-        rhs[i] = (points[i + 1][1] - points[i][1]) / h1 -
+        rhs[i] =
+            (points[i + 1][1] - points[i][1]) / h1 -
             (points[i][1] - points[i - 1][1]) / h0;
       }
       for (var i = 1; i < n; i++) {
@@ -1727,10 +1752,12 @@ class DartComputation {
       if (h == 0) return null;
       final a = (right[0] - x) / h;
       final b = (x - left[0]) / h;
-      return a * left[1] + b * right[1] +
+      return a * left[1] +
+          b * right[1] +
           ((a * a * a - a) * second[index] +
                   (b * b * b - b) * second[rightIndex]) *
-              h * h /
+              h *
+              h /
               6;
     }
     // Lagrange and Newton share the same barycentric evaluation for a stable
@@ -1763,8 +1790,7 @@ class DartComputation {
                 (right[0] - points[index - 1][0]);
       final rightSlope = index + 2 >= points.length
           ? (right[1] - left[1]) / h
-          : (points[index + 2][1] - left[1]) /
-                (points[index + 2][0] - left[0]);
+          : (points[index + 2][1] - left[1]) / (points[index + 2][0] - left[0]);
       final t = (x - left[0]) / h;
       return (2 * t * t * t - 3 * t * t + 1) * left[1] +
           (t * t * t - 2 * t * t + t) * h * leftSlope +
@@ -1806,40 +1832,55 @@ class DartComputation {
       case 'student-t':
         final degrees = parameters['nu'] ?? parameters['df'] ?? 1;
         if (degrees <= 0) return null;
-        return math.exp(_logGamma((degrees + 1) / 2) -
-            _logGamma(degrees / 2) -
-            .5 * math.log(degrees * math.pi) -
-            (degrees + 1) / 2 * math.log(1 + x * x / degrees));
+        return math.exp(
+          _logGamma((degrees + 1) / 2) -
+              _logGamma(degrees / 2) -
+              .5 * math.log(degrees * math.pi) -
+              (degrees + 1) / 2 * math.log(1 + x * x / degrees),
+        );
       case 'chi2':
       case 'chi-squared':
         final degrees = parameters['k'] ?? parameters['df'] ?? 1;
         if (degrees <= 0 || x < 0) return 0;
-        return math.exp((degrees / 2 - 1) * math.log(x == 0 ? 1e-300 : x) -
-            x / 2 - _logGamma(degrees / 2)) / 2;
+        return math.exp(
+              (degrees / 2 - 1) * math.log(x == 0 ? 1e-300 : x) -
+                  x / 2 -
+                  _logGamma(degrees / 2),
+            ) /
+            2;
       case 'f':
         final d1 = parameters['d1'] ?? 1;
         final d2 = parameters['d2'] ?? 1;
         if (d1 <= 0 || d2 <= 0 || x <= 0) return x == 0 ? 0 : null;
         final a = d1 / 2;
         final b = d2 / 2;
-        return math.exp(a * math.log(d1 / d2) + (a - 1) * math.log(x) -
-            (a + b) * math.log(1 + d1 * x / d2) -
-            _logBeta(a, b));
+        return math.exp(
+          a * math.log(d1 / d2) +
+              (a - 1) * math.log(x) -
+              (a + b) * math.log(1 + d1 * x / d2) -
+              _logBeta(a, b),
+        );
       case 'binomial':
         final n = (parameters['n'] ?? 1).round();
         final p = parameters['p'] ?? .5;
         final k = x.round();
         if (n < 0 || p < 0 || p > 1 || k < 0 || k > n || x != k) return 0;
-        return math.exp(_logCombination(n, k) +
-            (p == 0 ? (k == 0 ? 0 : double.negativeInfinity) : k * math.log(p)) +
-            (p == 1 ? (n == k ? 0 : double.negativeInfinity) :
-                (n - k) * math.log(1 - p)));
+        return math.exp(
+          _logCombination(n, k) +
+              (p == 0
+                  ? (k == 0 ? 0 : double.negativeInfinity)
+                  : k * math.log(p)) +
+              (p == 1
+                  ? (n == k ? 0 : double.negativeInfinity)
+                  : (n - k) * math.log(1 - p)),
+        );
       case 'poisson':
         final lambda = parameters['lambda'] ?? parameters['lam'] ?? 1;
         final k = x.round();
         if (lambda < 0 || k < 0 || x != k) return 0;
-        return math.exp(-lambda + k * math.log(lambda == 0 ? 1 : lambda) -
-            _logGamma(k + 1));
+        return math.exp(
+          -lambda + k * math.log(lambda == 0 ? 1 : lambda) - _logGamma(k + 1),
+        );
       default:
         return null;
     }
@@ -1855,18 +1896,25 @@ class DartComputation {
       case 'normal':
         final sigma = parameters['sigma'] ?? 1;
         if (sigma <= 0) return null;
-        return .5 * (1 + _erf((x - (parameters['mu'] ?? 0)) / sigma / math.sqrt(2)));
+        return .5 *
+            (1 + _erf((x - (parameters['mu'] ?? 0)) / sigma / math.sqrt(2)));
       case 't':
       case 'student-t':
         final degrees = parameters['nu'] ?? parameters['df'] ?? 1;
         if (degrees <= 0) return null;
         if (x == 0) return .5;
-        final beta = _regularizedBeta(degrees / (degrees + x * x), degrees / 2, .5);
+        final beta = _regularizedBeta(
+          degrees / (degrees + x * x),
+          degrees / 2,
+          .5,
+        );
         return x > 0 ? 1 - beta / 2 : beta / 2;
       case 'chi2':
       case 'chi-squared':
         final degrees = parameters['k'] ?? parameters['df'] ?? 1;
-        return degrees > 0 && x >= 0 ? _regularizedGamma(degrees / 2, x / 2) : 0;
+        return degrees > 0 && x >= 0
+            ? _regularizedGamma(degrees / 2, x / 2)
+            : 0;
       case 'f':
         final d1 = parameters['d1'] ?? 1;
         final d2 = parameters['d2'] ?? 1;
@@ -1903,20 +1951,29 @@ class DartComputation {
     double probability,
     Map<String, double> parameters,
   ) {
-    if (!probability.isFinite || probability < 0 || probability > 1) return null;
+    if (!probability.isFinite || probability < 0 || probability > 1)
+      return null;
     final normalized = name.toLowerCase();
     if (normalized == 'binomial' || normalized == 'poisson') {
       var low = 0;
       var high = normalized == 'binomial'
           ? (parameters['n'] ?? 1).round()
-          : math.max(1, ((parameters['lambda'] ?? parameters['lam'] ?? 1) * 8).round()).toInt();
-      while ((distributionCdf(name, high.toDouble(), parameters) ?? 0) < probability &&
+          : math
+                .max(
+                  1,
+                  ((parameters['lambda'] ?? parameters['lam'] ?? 1) * 8)
+                      .round(),
+                )
+                .toInt();
+      while ((distributionCdf(name, high.toDouble(), parameters) ?? 0) <
+              probability &&
           high < 1000000) {
         high *= 2;
       }
       while (low < high) {
         final middle = (low + high) ~/ 2;
-        if ((distributionCdf(name, middle.toDouble(), parameters) ?? 0) >= probability) {
+        if ((distributionCdf(name, middle.toDouble(), parameters) ?? 0) >=
+            probability) {
           high = middle;
         } else {
           low = middle + 1;
@@ -1924,9 +1981,14 @@ class DartComputation {
       }
       return low.toDouble();
     }
-    if (probability == 0) return normalized == 'normal' ? double.negativeInfinity : 0;
-    if (probability == 1) return normalized == 'normal' ? double.infinity : double.infinity;
-    var low = normalized == 'normal' || normalized == 't' || normalized == 'student-t' ? -12.0 : 0.0;
+    if (probability == 0)
+      return normalized == 'normal' ? double.negativeInfinity : 0;
+    if (probability == 1)
+      return normalized == 'normal' ? double.infinity : double.infinity;
+    var low =
+        normalized == 'normal' || normalized == 't' || normalized == 'student-t'
+        ? -12.0
+        : 0.0;
     var high = 12.0;
     for (var iteration = 0; iteration < 100; iteration++) {
       final middle = (low + high) / 2;
@@ -1965,14 +2027,17 @@ class DartComputation {
     if (principal < 0 || compoundsPerYear < 1 || years < 0) {
       throw const FormatException('Compound-interest inputs are invalid.');
     }
-    return (principal * math.pow(
-      1 + annualRate / compoundsPerYear,
-      compoundsPerYear * years,
-    )).toDouble();
+    return (principal *
+            math.pow(
+              1 + annualRate / compoundsPerYear,
+              compoundsPerYear * years,
+            ))
+        .toDouble();
   }
 
   static double npv(double rate, List<double> cashFlows) {
-    if (rate <= -1) throw const FormatException('Discount rate must be greater than -100%.');
+    if (rate <= -1)
+      throw const FormatException('Discount rate must be greater than -100%.');
     var result = 0.0;
     for (var index = 0; index < cashFlows.length; index++) {
       result += cashFlows[index] / math.pow(1 + rate, index).toDouble();
@@ -2026,11 +2091,15 @@ class DartComputation {
     final coupon = faceValue * couponRate;
     if (marketRate == 0) return faceValue + coupon * periods;
     return (coupon * (1 - math.pow(1 + marketRate, -periods)) / marketRate +
-        faceValue * math.pow(1 + marketRate, -periods)).toDouble();
+            faceValue * math.pow(1 + marketRate, -periods))
+        .toDouble();
   }
 
   static String formatFactors(Map<BigInt, int> factors) => factors.entries
-      .map((entry) => entry.value == 1 ? '${entry.key}' : '${entry.key}^${entry.value}')
+      .map(
+        (entry) =>
+            entry.value == 1 ? '${entry.key}' : '${entry.key}^${entry.value}',
+      )
       .join(' × ');
 
   static String convertBase(String input, int fromBase, int toBase) {
@@ -2236,31 +2305,42 @@ class DartComputation {
     );
   }
 
-  static CalcMatrix matrixAdd(CalcMatrix left, CalcMatrix right, {bool subtract = false}) {
-    if (left.rowCount != right.rowCount || left.columnCount != right.columnCount) {
+  static CalcMatrix matrixAdd(
+    CalcMatrix left,
+    CalcMatrix right, {
+    bool subtract = false,
+  }) {
+    if (left.rowCount != right.rowCount ||
+        left.columnCount != right.columnCount) {
       throw const FormatException('Matrix dimensions do not match.');
     }
-    return CalcMatrix(List<List<double>>.generate(
-      left.rowCount,
-      (row) => List<double>.generate(
-        left.columnCount,
-        (column) => left.rows[row][column] +
-            (subtract ? -right.rows[row][column] : right.rows[row][column]),
+    return CalcMatrix(
+      List<List<double>>.generate(
+        left.rowCount,
+        (row) => List<double>.generate(
+          left.columnCount,
+          (column) =>
+              left.rows[row][column] +
+              (subtract ? -right.rows[row][column] : right.rows[row][column]),
+          growable: false,
+        ),
         growable: false,
       ),
-      growable: false,
-    ));
+    );
   }
 
   static CalcMatrix matrixRref(CalcMatrix matrix) {
     final values = matrix.rows.map((row) => row.toList()).toList();
     var pivotRow = 0;
-    for (var column = 0;
-        column < matrix.columnCount && pivotRow < matrix.rowCount;
-        column++) {
+    for (
+      var column = 0;
+      column < matrix.columnCount && pivotRow < matrix.rowCount;
+      column++
+    ) {
       var pivot = pivotRow;
       for (var row = pivotRow + 1; row < matrix.rowCount; row++) {
-        if (values[row][column].abs() > values[pivot][column].abs()) pivot = row;
+        if (values[row][column].abs() > values[pivot][column].abs())
+          pivot = row;
       }
       if (values[pivot][column].abs() < 1e-14) continue;
       final swap = values[pivot];
@@ -2279,19 +2359,23 @@ class DartComputation {
       }
       pivotRow++;
     }
-    return CalcMatrix(values.map((row) => row.toList(growable: false)).toList(
-      growable: false,
-    ));
+    return CalcMatrix(
+      values.map((row) => row.toList(growable: false)).toList(growable: false),
+    );
   }
 
   static int matrixRank(CalcMatrix matrix) {
     final rref = matrixRref(matrix);
-    return rref.rows.where((row) => row.any((value) => value.abs() > 1e-10)).length;
+    return rref.rows
+        .where((row) => row.any((value) => value.abs() > 1e-10))
+        .length;
   }
 
   static List<double> eigenvalues2x2(CalcMatrix matrix) {
     if (matrix.rowCount != 2 || matrix.columnCount != 2) {
-      throw const FormatException('This eigenvalue helper requires a 2×2 matrix.');
+      throw const FormatException(
+        'This eigenvalue helper requires a 2×2 matrix.',
+      );
     }
     final trace = matrix.rows[0][0] + matrix.rows[1][1];
     final determinant = matrixDeterminant(matrix);
@@ -2301,11 +2385,7 @@ class DartComputation {
     return <double>[(trace + root) / 2, (trace - root) / 2];
   }
 
-  static SparseMatrix parseSparseMatrix(
-    int rows,
-    int columns,
-    String input,
-  ) {
+  static SparseMatrix parseSparseMatrix(int rows, int columns, String input) {
     if (rows < 1 || columns < 1) {
       throw const FormatException('Sparse matrix dimensions must be positive.');
     }
@@ -2319,8 +2399,13 @@ class DartComputation {
       final row = int.tryParse(cells[0]);
       final column = int.tryParse(cells[1]);
       final value = double.tryParse(cells[2]);
-      if (row == null || column == null || value == null ||
-          row < 0 || row >= rows || column < 0 || column >= columns) {
+      if (row == null ||
+          column == null ||
+          value == null ||
+          row < 0 ||
+          row >= rows ||
+          column < 0 ||
+          column >= columns) {
         throw const FormatException('Sparse entry is outside the matrix.');
       }
       entries.add(SparseEntry(row, column, value));
@@ -2347,11 +2432,12 @@ class DartComputation {
   }) {
     if (matrix.rows != matrix.columns || rhs.length != matrix.rows) return null;
     final x = List<double>.filled(matrix.rows, 0);
-    List<double> subtract(List<double> a, List<double> b) => List<double>.generate(
-      a.length,
-      (index) => a[index] - b[index],
-      growable: false,
-    );
+    List<double> subtract(List<double> a, List<double> b) =>
+        List<double>.generate(
+          a.length,
+          (index) => a[index] - b[index],
+          growable: false,
+        );
     double dot(List<double> a, List<double> b) {
       var result = 0.0;
       for (var index = 0; index < a.length; index++) {
@@ -2359,6 +2445,7 @@ class DartComputation {
       }
       return result;
     }
+
     var residual = subtract(rhs, sparseMatVec(matrix, x));
     var direction = List<double>.from(residual);
     var residualNorm = dot(residual, residual);
@@ -2542,7 +2629,8 @@ class DartComputation {
       1.5056327351493116e-7,
     ];
     if (z < .5) {
-      return math.log(math.pi) - math.log(math.sin(math.pi * z)) -
+      return math.log(math.pi) -
+          math.log(math.sin(math.pi * z)) -
           _logGamma(1 - z);
     }
     var value = .99999999999980993;
@@ -2551,7 +2639,9 @@ class DartComputation {
       value += coefficients[index] / (shifted + index + 1);
     }
     final t = shifted + coefficients.length - .5;
-    return .5 * math.log(2 * math.pi) + (shifted + .5) * math.log(t) - t +
+    return .5 * math.log(2 * math.pi) +
+        (shifted + .5) * math.log(t) -
+        t +
         math.log(value);
   }
 
@@ -2582,7 +2672,8 @@ class DartComputation {
         sum += term;
         if (term.abs() < sum.abs() * 1e-14) break;
       }
-      return sum * math.exp(-value + shape * math.log(value) - _logGamma(shape));
+      return sum *
+          math.exp(-value + shape * math.log(value) - _logGamma(shape));
     }
     var b = value + 1 - shape;
     var c = 1 / 1e-300;
@@ -2600,14 +2691,17 @@ class DartComputation {
       h *= delta;
       if ((delta - 1).abs() < 1e-14) break;
     }
-    final upper = math.exp(-value + shape * math.log(value) - _logGamma(shape)) * h;
+    final upper =
+        math.exp(-value + shape * math.log(value) - _logGamma(shape)) * h;
     return (1 - upper).clamp(0, 1).toDouble();
   }
 
   static double _regularizedBeta(double x, double a, double b) {
     if (x <= 0) return 0;
     if (x >= 1) return 1;
-    final factor = math.exp(a * math.log(x) + b * math.log(1 - x) - _logBeta(a, b));
+    final factor = math.exp(
+      a * math.log(x) + b * math.log(1 - x) - _logBeta(a, b),
+    );
     final fraction = x < (a + 1) / (a + b + 2)
         ? factor * _betaFraction(x, a, b) / a
         : 1 - factor * _betaFraction(1 - x, b, a) / b;
@@ -2632,8 +2726,7 @@ class DartComputation {
       if (c.abs() < 1e-300) c = 1e-300;
       d = 1 / d;
       h *= d * c;
-      aa = -(a + index) * (qab + index) * x /
-          ((a + m2) * (qap + m2));
+      aa = -(a + index) * (qab + index) * x / ((a + m2) * (qap + m2));
       d = 1 + aa * d;
       if (d.abs() < 1e-300) d = 1e-300;
       c = 1 + aa / c;

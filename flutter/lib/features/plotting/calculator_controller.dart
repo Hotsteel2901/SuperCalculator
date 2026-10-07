@@ -225,13 +225,18 @@ class CalculatorController extends Notifier<CalculatorState> {
       if (mode == 'surface') {
         // Isometric projection keeps the Web/desktop preview lightweight while
         // preserving the full z=f(x,y) sample set for a future 3D renderer.
-        return samples.map((sample) {
-          final projectedX = sample.x + sample.y * .35;
-          final projectedY = sample.value - sample.y * .25;
-          return PlotPoint(projectedX, projectedY);
-        }).toList(growable: false);
+        return samples
+            .map((sample) {
+              final projectedX = sample.x + sample.y * .35;
+              final projectedY = sample.value - sample.y * .25;
+              return PlotPoint(projectedX, projectedY);
+            })
+            .toList(growable: false);
       }
-      final finite = samples.map((sample) => sample.value).where((value) => value.isFinite).toList();
+      final finite = samples
+          .map((sample) => sample.value)
+          .where((value) => value.isFinite)
+          .toList();
       if (finite.isEmpty) return const <PlotPoint>[];
       final level = finite.reduce((a, b) => a + b) / finite.length;
       return samples
@@ -240,23 +245,48 @@ class CalculatorController extends Notifier<CalculatorState> {
           .toList(growable: false);
     }
     if (mode == 'direction') {
-      final vectors = DartComputation.sampleDirectionField(expression, -10, 10, -10, 10, rows: 20, columns: 20);
+      final vectors = DartComputation.sampleDirectionField(
+        expression,
+        -10,
+        10,
+        -10,
+        10,
+        rows: 20,
+        columns: 20,
+      );
       final points = <PlotPoint>[];
       for (final vector in vectors) {
         points
-          ..add(PlotPoint(vector.x - vector.dx * .35, vector.y - vector.dy * .35))
-          ..add(PlotPoint(vector.x + vector.dx * .35, vector.y + vector.dy * .35))
+          ..add(
+            PlotPoint(vector.x - vector.dx * .35, vector.y - vector.dy * .35),
+          )
+          ..add(
+            PlotPoint(vector.x + vector.dx * .35, vector.y + vector.dy * .35),
+          )
           ..add(const PlotPoint(double.nan, double.nan));
       }
       return points;
     }
     if (mode == 'vector') {
-      final vectors = DartComputation.sampleVectorField(expression, secondary, -10, 10, -10, 10, rows: 20, columns: 20);
+      final vectors = DartComputation.sampleVectorField(
+        expression,
+        secondary,
+        -10,
+        10,
+        -10,
+        10,
+        rows: 20,
+        columns: 20,
+      );
       final points = <PlotPoint>[];
       for (final vector in vectors) {
         points
-          ..add(PlotPoint(vector.x - vector.dx * .35, vector.y - vector.dy * .35))
-          ..add(PlotPoint(vector.x + vector.dx * .35, vector.y + vector.dy * .35))
+          ..add(
+            PlotPoint(vector.x - vector.dx * .35, vector.y - vector.dy * .35),
+          )
+          ..add(
+            PlotPoint(vector.x + vector.dx * .35, vector.y + vector.dy * .35),
+          )
           ..add(const PlotPoint(double.nan, double.nan));
       }
       return points;

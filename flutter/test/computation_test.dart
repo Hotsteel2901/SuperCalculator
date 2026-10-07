@@ -132,22 +132,39 @@ void main() {
       }),
       closeTo(15, 1e-12),
     );
-    expect(DartComputation.formatFactors(DartComputation.factorInteger(BigInt.from(360))), '2^3 × 3^2 × 5');
-    expect(DartComputation.gcd(BigInt.from(48), BigInt.from(18)), BigInt.from(6));
-    expect(DartComputation.modPow(BigInt.from(2), BigInt.from(10), BigInt.from(1000)), BigInt.from(24));
+    expect(
+      DartComputation.formatFactors(
+        DartComputation.factorInteger(BigInt.from(360)),
+      ),
+      '2^3 × 3^2 × 5',
+    );
+    expect(
+      DartComputation.gcd(BigInt.from(48), BigInt.from(18)),
+      BigInt.from(6),
+    );
+    expect(
+      DartComputation.modPow(
+        BigInt.from(2),
+        BigInt.from(10),
+        BigInt.from(1000),
+      ),
+      BigInt.from(24),
+    );
     expect(DartComputation.eulerTotient(BigInt.from(9)), BigInt.from(6));
   });
 
   test('distribution, regression, interpolation and convolution vectors', () {
-    final normal = DartComputation.distribution(
-      'normal',
-      0,
-      <String, double>{'mu': 0, 'sigma': 1},
-    );
+    final normal = DartComputation.distribution('normal', 0, <String, double>{
+      'mu': 0,
+      'sigma': 1,
+    });
     expect(normal.pdf, closeTo(0.3989422804, 1e-8));
     expect(normal.cdf, closeTo(.5, 1e-8));
     expect(
-      DartComputation.distributionCdf('binomial', 10, <String, double>{'n': 20, 'p': .5}),
+      DartComputation.distributionCdf('binomial', 10, <String, double>{
+        'n': 20,
+        'p': .5,
+      }),
       closeTo(.5880985, 1e-6),
     );
     final polynomial = DartComputation.polynomialRegression(
@@ -156,17 +173,37 @@ void main() {
       degree: 2,
     );
     expect(polynomial.evaluate(4), closeTo(25, 1e-8));
-    expect(DartComputation.interpolate('linear', <double>[0, 1], <double>[0, 2], .25), closeTo(.5, 1e-12));
-    expect(DartComputation.convolution(<double>[1, 2], <double>[3, 4]), <double>[3, 10, 8]);
+    expect(
+      DartComputation.interpolate(
+        'linear',
+        <double>[0, 1],
+        <double>[0, 2],
+        .25,
+      ),
+      closeTo(.5, 1e-12),
+    );
+    expect(
+      DartComputation.convolution(<double>[1, 2], <double>[3, 4]),
+      <double>[3, 10, 8],
+    );
   });
 
   test('matrix extensions and financial vectors validate boundaries', () {
     final matrix = DartComputation.parseMatrix('1,2;3,4');
     expect(DartComputation.matrixAdd(matrix, matrix).rows[0], <double>[2, 4]);
     expect(DartComputation.matrixRank(matrix), 2);
-    expect(DartComputation.eigenvalues2x2(matrix).first, closeTo(5.3722813, 1e-6));
-    expect(DartComputation.loanPayment(principal: 1200, annualRate: 0, periods: 12), closeTo(100, 1e-12));
-    expect(DartComputation.npv(.1, <double>[-100, 60, 60]), closeTo(4.13223, 1e-5));
+    expect(
+      DartComputation.eigenvalues2x2(matrix).first,
+      closeTo(5.3722813, 1e-6),
+    );
+    expect(
+      DartComputation.loanPayment(principal: 1200, annualRate: 0, periods: 12),
+      closeTo(100, 1e-12),
+    );
+    expect(
+      DartComputation.npv(.1, <double>[-100, 60, 60]),
+      closeTo(4.13223, 1e-5),
+    );
   });
 
   test('base and unit conversion validate user input', () {

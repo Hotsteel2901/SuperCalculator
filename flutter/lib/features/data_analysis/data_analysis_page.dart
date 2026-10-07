@@ -67,47 +67,93 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
                   style: const TextStyle(fontFamily: 'monospace'),
                 ),
                 const SizedBox(height: 12),
-                FormRow(children: <Widget>[
-                  DropdownButtonFormField<String>(
-                    initialValue: _model,
-                    decoration: InputDecoration(labelText: nextEraText(context, 'Fit model', '拟合模型')),
-                    items: <String>['linear', 'polynomial', 'exponential', 'power', 'logarithmic']
-                        .map((value) => DropdownMenuItem(value: value, child: Text(value)))
-                        .toList(growable: false),
-                    onChanged: (value) => setState(() => _model = value ?? 'linear'),
-                  ),
-                  TextField(
-                    controller: _degree,
-                    decoration: InputDecoration(labelText: nextEraText(context, 'Degree', '次数')),
-                    keyboardType: TextInputType.number,
-                  ),
-                  FilledButton.icon(
-                    onPressed: _busy ? null : _fitLine,
-                    icon: const Icon(Icons.auto_graph),
-                    label: Text(nextEraText(context, 'Fit', '拟合')),
-                  ),
-                ]),
+                FormRow(
+                  children: <Widget>[
+                    DropdownButtonFormField<String>(
+                      initialValue: _model,
+                      decoration: InputDecoration(
+                        labelText: nextEraText(context, 'Fit model', '拟合模型'),
+                      ),
+                      items:
+                          <String>[
+                                'linear',
+                                'polynomial',
+                                'exponential',
+                                'power',
+                                'logarithmic',
+                              ]
+                              .map(
+                                (value) => DropdownMenuItem(
+                                  value: value,
+                                  child: Text(value),
+                                ),
+                              )
+                              .toList(growable: false),
+                      onChanged: (value) =>
+                          setState(() => _model = value ?? 'linear'),
+                    ),
+                    TextField(
+                      controller: _degree,
+                      decoration: InputDecoration(
+                        labelText: nextEraText(context, 'Degree', '次数'),
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                    FilledButton.icon(
+                      onPressed: _busy ? null : _fitLine,
+                      icon: const Icon(Icons.auto_graph),
+                      label: Text(nextEraText(context, 'Fit', '拟合')),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 12),
-                FormRow(children: <Widget>[
-                  DropdownButtonFormField<String>(
-                    initialValue: _interpolationMethod,
-                    decoration: InputDecoration(labelText: nextEraText(context, 'Interpolation', '插值')),
-                    items: <String>['nearest', 'linear', 'lagrange', 'newton', 'cubic-spline', 'hermite']
-                        .map((value) => DropdownMenuItem(value: value, child: Text(value)))
-                        .toList(growable: false),
-                    onChanged: (value) => setState(() => _interpolationMethod = value ?? 'linear'),
-                  ),
-                  TextField(
-                    controller: _interpolationX,
-                    decoration: InputDecoration(labelText: nextEraText(context, 'x to interpolate', '插值 x')),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _busy ? null : _interpolate,
-                    icon: const Icon(Icons.linear_scale),
-                    label: Text(nextEraText(context, 'Interpolate', '插值计算')),
-                  ),
-                ]),
+                FormRow(
+                  children: <Widget>[
+                    DropdownButtonFormField<String>(
+                      initialValue: _interpolationMethod,
+                      decoration: InputDecoration(
+                        labelText: nextEraText(context, 'Interpolation', '插值'),
+                      ),
+                      items:
+                          <String>[
+                                'nearest',
+                                'linear',
+                                'lagrange',
+                                'newton',
+                                'cubic-spline',
+                                'hermite',
+                              ]
+                              .map(
+                                (value) => DropdownMenuItem(
+                                  value: value,
+                                  child: Text(value),
+                                ),
+                              )
+                              .toList(growable: false),
+                      onChanged: (value) => setState(
+                        () => _interpolationMethod = value ?? 'linear',
+                      ),
+                    ),
+                    TextField(
+                      controller: _interpolationX,
+                      decoration: InputDecoration(
+                        labelText: nextEraText(
+                          context,
+                          'x to interpolate',
+                          '插值 x',
+                        ),
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : _interpolate,
+                      icon: const Icon(Icons.linear_scale),
+                      label: Text(nextEraText(context, 'Interpolate', '插值计算')),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -186,7 +232,9 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
     });
     try {
       final backend = ref.read(calcBackendProvider);
-      final points = xs.asMap().entries
+      final points = xs
+          .asMap()
+          .entries
           .map((entry) => PlotPoint(entry.value, ys[entry.key]))
           .toList(growable: false);
       List<double> fitXs;
@@ -220,7 +268,9 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
       setState(() {
         _busy = false;
         _points = points;
-        _fit = fitXs.asMap().entries
+        _fit = fitXs
+            .asMap()
+            .entries
             .map((entry) => PlotPoint(entry.value, fitYs[entry.key]))
             .toList(growable: false);
         _result = rSquared.isFinite
@@ -228,12 +278,28 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
             : null;
         _error = rSquared.isFinite
             ? null
-            : nextEraText(context, 'The model could not be fitted.', '无法拟合该模型。');
+            : nextEraText(
+                context,
+                'The model could not be fitted.',
+                '无法拟合该模型。',
+              );
       });
     } on FormatException catch (error) {
-      if (mounted) setState(() { _busy = false; _error = error.message; });
+      if (mounted)
+        setState(() {
+          _busy = false;
+          _error = error.message;
+        });
     } catch (_) {
-      if (mounted) setState(() { _busy = false; _error = nextEraText(context, 'The model could not be fitted.', '无法拟合该模型。'); });
+      if (mounted)
+        setState(() {
+          _busy = false;
+          _error = nextEraText(
+            context,
+            'The model could not be fitted.',
+            '无法拟合该模型。',
+          );
+        });
     }
   }
 
@@ -252,20 +318,41 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
     }
     final x = double.tryParse(_interpolationX.text);
     if (xs.length < 2 || x == null) {
-      if (mounted) setState(() => _error = nextEraText(context, 'Enter valid points and an interpolation x.', '请输入有效点和插值 x。'));
+      if (mounted)
+        setState(
+          () => _error = nextEraText(
+            context,
+            'Enter valid points and an interpolation x.',
+            '请输入有效点和插值 x。',
+          ),
+        );
       return;
     }
-    setState(() { _busy = true; _error = null; _result = null; });
+    setState(() {
+      _busy = true;
+      _error = null;
+      _result = null;
+    });
     try {
-      final value = await ref.read(calcBackendProvider).interpolate(_interpolationMethod, xs, ys, x);
+      final value = await ref
+          .read(calcBackendProvider)
+          .interpolate(_interpolationMethod, xs, ys, x);
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _result = value == null ? null : 'f($x) = ${value.toStringAsPrecision(12)}';
-        _error = value == null ? nextEraText(context, 'Interpolation failed.', '插值失败。') : null;
+        _result = value == null
+            ? null
+            : 'f($x) = ${value.toStringAsPrecision(12)}';
+        _error = value == null
+            ? nextEraText(context, 'Interpolation failed.', '插值失败。')
+            : null;
       });
     } on FormatException catch (error) {
-      if (mounted) setState(() { _busy = false; _error = error.message; });
+      if (mounted)
+        setState(() {
+          _busy = false;
+          _error = error.message;
+        });
     }
   }
 }

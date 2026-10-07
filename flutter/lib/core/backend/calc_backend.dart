@@ -396,14 +396,13 @@ class DartCalcBackend implements CalcBackend {
     double end, {
     int samples = 512,
     double tolerance = 1e-8,
-  }) =>
-      ComputationDispatcher.scanRoots(
-        expression,
-        start,
-        end,
-        samples: samples,
-        tolerance: tolerance,
-      );
+  }) => ComputationDispatcher.scanRoots(
+    expression,
+    start,
+    end,
+    samples: samples,
+    tolerance: tolerance,
+  );
 
   @override
   Future<List<double>> intersections(
@@ -413,15 +412,14 @@ class DartCalcBackend implements CalcBackend {
     double end, {
     int samples = 512,
     double tolerance = 1e-8,
-  }) =>
-      ComputationDispatcher.intersections(
-        expressionF,
-        expressionG,
-        start,
-        end,
-        samples: samples,
-        tolerance: tolerance,
-      );
+  }) => ComputationDispatcher.intersections(
+    expressionF,
+    expressionG,
+    start,
+    end,
+    samples: samples,
+    tolerance: tolerance,
+  );
 
   @override
   Future<Map<String, double>?> solveSystem2d(
@@ -431,23 +429,21 @@ class DartCalcBackend implements CalcBackend {
     double y = 0,
     double tolerance = 1e-10,
     int maxIterations = 100,
-  }) =>
-      ComputationDispatcher.solveSystem2d(
-        expressionF,
-        expressionG,
-        x: x,
-        y: y,
-        tolerance: tolerance,
-        maxIterations: maxIterations,
-      );
+  }) => ComputationDispatcher.solveSystem2d(
+    expressionF,
+    expressionG,
+    x: x,
+    y: y,
+    tolerance: tolerance,
+    maxIterations: maxIterations,
+  );
 
   @override
   Future<Map<String, double>?> tangentAndNormal(
     String expression,
     double x, {
     double? step,
-  }) =>
-      ComputationDispatcher.tangentAndNormal(expression, x, step: step);
+  }) => ComputationDispatcher.tangentAndNormal(expression, x, step: step);
 
   @override
   Future<CalcEvaluation> solve(
@@ -531,8 +527,7 @@ class DartCalcBackend implements CalcBackend {
     String model,
     List<double> xs,
     List<double> ys,
-  ) async =>
-      ComputationDispatcher.nonlinearRegression(model, xs, ys);
+  ) async => ComputationDispatcher.nonlinearRegression(model, xs, ys);
 
   @override
   Future<double?> interpolate(
@@ -540,16 +535,14 @@ class DartCalcBackend implements CalcBackend {
     List<double> xs,
     List<double> ys,
     double x,
-  ) async =>
-      ComputationDispatcher.interpolate(method, xs, ys, x);
+  ) async => ComputationDispatcher.interpolate(method, xs, ys, x);
 
   @override
   Future<CalcDistributionResult> distribution(
     String name,
     double x,
     Map<String, double> parameters,
-  ) async =>
-      ComputationDispatcher.distribution(name, x, parameters);
+  ) async => ComputationDispatcher.distribution(name, x, parameters);
 
   @override
   Future<ComplexValue> complexOperation(
@@ -584,12 +577,11 @@ class DartCalcBackend implements CalcBackend {
     String left,
     String right, {
     bool subtract = false,
-  }) async =>
-      DartComputation.matrixAdd(
-        DartComputation.parseMatrix(left),
-        DartComputation.parseMatrix(right),
-        subtract: subtract,
-      );
+  }) async => DartComputation.matrixAdd(
+    DartComputation.parseMatrix(left),
+    DartComputation.parseMatrix(right),
+    subtract: subtract,
+  );
 
   @override
   Future<CalcMatrix> rrefMatrix(String input) async =>
@@ -607,8 +599,7 @@ class DartCalcBackend implements CalcBackend {
   Future<List<double>> convolution(
     List<double> left,
     List<double> right,
-  ) async =>
-      DartComputation.convolution(left, right);
+  ) async => DartComputation.convolution(left, right);
 
   @override
   Future<CalcMatrix> multiplyMatrices(String left, String right) async {

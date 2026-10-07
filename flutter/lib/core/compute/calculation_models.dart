@@ -170,7 +170,8 @@ class ComplexValue {
   );
 
   ComplexValue operator /(ComplexValue other) {
-    final denominator = other.real * other.real + other.imaginary * other.imaginary;
+    final denominator =
+        other.real * other.real + other.imaginary * other.imaginary;
     if (denominator == 0 || !denominator.isFinite) {
       throw const FormatException('Cannot divide by zero complex value.');
     }
@@ -218,9 +219,17 @@ class CalcPolynomialRegression {
     for (var index = coefficients.length - 1; index >= 0; index--) {
       final coefficient = coefficients[index];
       if (coefficient.abs() < 1e-12) continue;
-      final sign = coefficient < 0 ? '-' : terms.isEmpty ? '' : '+';
+      final sign = coefficient < 0
+          ? '-'
+          : terms.isEmpty
+          ? ''
+          : '+';
       final magnitude = coefficient.abs().toStringAsPrecision(7);
-      final power = index == 0 ? '' : index == 1 ? 'x' : 'x^$index';
+      final power = index == 0
+          ? ''
+          : index == 1
+          ? 'x'
+          : 'x^$index';
       terms.add('$sign$magnitude$power');
     }
     return terms.isEmpty ? 'y = 0' : 'y = ${terms.join(' ')}';
