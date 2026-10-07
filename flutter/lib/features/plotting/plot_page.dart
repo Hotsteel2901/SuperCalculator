@@ -54,6 +54,10 @@ class _PlotPageState extends ConsumerState<PlotPage> {
       ),
       'polar': nextEraText(context, 'Polar r(t)', '极坐标 r(t)'),
       'implicit': nextEraText(context, 'Implicit f(x,y)=0', '隐式曲线 f(x,y)=0'),
+      'surface': nextEraText(context, '3D surface z=f(x,y)', '三维曲面 z=f(x,y)'),
+      'contour': nextEraText(context, 'Contour level set', '等高线'),
+      'direction': nextEraText(context, 'Direction field', '方向场'),
+      'vector': nextEraText(context, 'Vector field P,Q', '向量场 P,Q'),
     };
 
     return CustomScrollView(
@@ -92,8 +96,10 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                             ? nextEraText(context, 'x(t)', 'x(t)')
                             : state.mode == 'polar'
                             ? nextEraText(context, 'r(t)', 'r(t)')
-                            : state.mode == 'implicit'
+                            : state.mode == 'implicit' || state.mode == 'surface' || state.mode == 'contour' || state.mode == 'direction'
                             ? nextEraText(context, 'f(x,y)', 'f(x,y)')
+                            : state.mode == 'vector'
+                            ? nextEraText(context, 'P(x,y)', 'P(x,y)')
                             : l10n.expression,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
@@ -113,7 +119,7 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                         ),
                         style: const TextStyle(fontFamily: 'monospace'),
                       ),
-                      if (state.mode == 'parametric') ...<Widget>[
+                      if (state.mode == 'parametric' || state.mode == 'vector') ...<Widget>[
                         SizedBox(height: tokens.controlGap),
                         TextField(
                           controller: _secondaryController,

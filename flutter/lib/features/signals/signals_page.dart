@@ -20,6 +20,7 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
   final _start = TextEditingController(text: '0');
   final _end = TextEditingController(text: '1');
   final _samples = TextEditingController(text: '1024');
+  final _kernel = TextEditingController(text: '1, 0.5, 0.25');
   List<PlotPoint> _spectrum = const <PlotPoint>[];
   String? _result;
   String? _error;
@@ -31,6 +32,7 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
     _start.dispose();
     _end.dispose();
     _samples.dispose();
+    _kernel.dispose();
     super.dispose();
   }
 
@@ -82,6 +84,29 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
             ),
           ),
           const SizedBox(height: 16),
+          FeatureCard(
+            title: nextEraText(context, 'Discrete convolution', '离散卷积'),
+            icon: Icons.merge_type,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                TextField(
+                  controller: _kernel,
+                  decoration: InputDecoration(
+                    labelText: nextEraText(context, 'Kernel values', '卷积核'),
+                    helperText: nextEraText(context, 'Comma or space separated.', '使用逗号或空格分隔。'),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _busy ? null : _convolve,
+                  icon: const Icon(Icons.filter_alt_outlined),
+                  label: Text(nextEraText(context, 'Convolve sampled signal', '卷积采样信号')),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
           ResultCard(
             value:
                 _result ??
@@ -127,6 +152,40 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
       decoration: InputDecoration(labelText: label),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
     );
+  }
+
+  Future<void> _convolve() async {
+    final kernel = _kernel.text
+        .split(RegExp(r'[,;\\s]+'))
+        .where((value) => value.isNotEmpty)
+        .map(double.tryParse)
+        .toList();
+    if (kernel.any((value) => value == null)) {
+      setState(() => _error = nextEraText(context, 'Kernel values must be numeric.', '卷积核必须是数字。'));
+      return;
+    }
+    final start = parseMathNumber(_start.text);
+    final end = parseMathNumber(_end.text);
+    final samples = int.tryParse(_samples.text.trim());
+    if (start == null || end == null || samples == null || end <= start) {
+      setState(() => _error = nextEraText(context, 'Enter a valid signal interval first.', '请先输入有效信号区间。'));
+      return;
+    }
+    setState(() { _busy = true; _error = null; _result = null; });
+    try {
+      final xs = List<double>.generate(samples.clamp(2, 4096).toInt(), (index) => start + (end - start) * index / (samples - 1));
+      final values = await ref.read(calcBackendProvider).evaluateArray(_expression.text, xs);
+      final signal = values.whereType<double>().toList(growable: false);
+      final result = await ref.read(calcBackendProvider).convolution(signal, kernel.whereType<double>().toList(growable: false));
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _result = nextEraText(context, 'Convolution length: ${result.length}', '卷积长度：${result.length}');
+        _error = null;
+      });
+    } on FormatException catch (error) {
+      if (mounted) setState(() { _busy = false; _error = error.message; });
+    }
   }
 
   Future<void> _analyze() async {

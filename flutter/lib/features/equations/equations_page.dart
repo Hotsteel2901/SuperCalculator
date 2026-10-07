@@ -14,7 +14,9 @@ class EquationsPage extends ConsumerStatefulWidget {
 
 class _EquationsPageState extends ConsumerState<EquationsPage> {
   final _expression = TextEditingController(text: 'x^2 - 2');
+  final _secondExpression = TextEditingController(text: 'x');
   final _guess = TextEditingController(text: '1');
+  final _systemY = TextEditingController(text: '1');
   final _minimum = TextEditingController(text: '-10');
   final _maximum = TextEditingController(text: '10');
   String? _result;
@@ -24,7 +26,9 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
   @override
   void dispose() {
     _expression.dispose();
+    _secondExpression.dispose();
     _guess.dispose();
+    _systemY.dispose();
     _minimum.dispose();
     _maximum.dispose();
     super.dispose();
@@ -53,6 +57,15 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
                   controller: _expression,
                   decoration: InputDecoration(
                     labelText: nextEraText(context, 'f(x) = 0', 'f(x) = 0'),
+                  ),
+                  style: const TextStyle(fontFamily: 'monospace'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _secondExpression,
+                  decoration: InputDecoration(
+                    labelText: nextEraText(context, 'g(x) or g(x,y)', 'g(x) 或 g(x,y)'),
+                    helperText: nextEraText(context, 'Used for intersections and 2D systems.', '用于曲线交点和二维方程组。'),
                   ),
                   style: const TextStyle(fontFamily: 'monospace'),
                 ),
@@ -90,6 +103,15 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
                         decimal: true,
                       ),
                     ),
+                    TextField(
+                      controller: _systemY,
+                      decoration: InputDecoration(
+                        labelText: nextEraText(context, 'System y₀', '方程组 y₀'),
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
                   ],
                 ),
                 Wrap(
@@ -105,6 +127,21 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
                       onPressed: _busy ? null : _scanRoots,
                       icon: const Icon(Icons.search),
                       label: Text(nextEraText(context, 'Scan roots', '扫描全部根')),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : _findIntersections,
+                      icon: const Icon(Icons.merge_type),
+                      label: Text(nextEraText(context, 'Intersections', '曲线交点')),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : _solveSystem,
+                      icon: const Icon(Icons.grid_3x3),
+                      label: Text(nextEraText(context, 'Solve 2D system', '求解二维方程组')),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : _tangent,
+                      icon: const Icon(Icons.show_chart),
+                      label: Text(nextEraText(context, 'Tangent / normal', '切线 / 法线')),
                     ),
                   ],
                 ),
@@ -212,6 +249,82 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
           ? nextEraText(context, 'No sign-changing roots found.', '未找到变号根。')
           : roots.map((root) => root.toStringAsPrecision(10)).join(', ');
     });
+  }
+
+  Future<void> _findIntersections() async {
+    final minimum = parseMathNumber(_minimum.text);
+    final maximum = parseMathNumber(_maximum.text);
+    if (minimum == null || maximum == null || minimum >= maximum) {
+      _invalidInput();
+      return;
+    }
+    setState(() { _busy = true; _error = null; _result = null; });
+    try {
+      final roots = await ref.read(calcBackendProvider).intersections(
+        _expression.text,
+        _secondExpression.text,
+        minimum,
+        maximum,
+      );
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _result = roots.isEmpty
+            ? nextEraText(context, 'No intersections found.', '未找到交点。')
+            : roots.map((root) => 'x = ${root.toStringAsPrecision(10)}').join(', ');
+      });
+    } on FormatException catch (error) {
+      if (mounted) setState(() { _busy = false; _error = error.message; });
+    }
+  }
+
+  Future<void> _solveSystem() async {
+    final x = parseMathNumber(_guess.text);
+    final y = parseMathNumber(_systemY.text);
+    if (x == null || y == null) { _invalidInput(); return; }
+    setState(() { _busy = true; _error = null; _result = null; });
+    try {
+      final solution = await ref.read(calcBackendProvider).solveSystem2d(
+        _expression.text,
+        _secondExpression.text,
+        x: x,
+        y: y,
+      );
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _result = solution == null
+            ? null
+            : 'x = ${solution['x']!.toStringAsPrecision(12)}, y = ${solution['y']!.toStringAsPrecision(12)}';
+        _error = solution == null
+            ? nextEraText(context, 'The 2D system did not converge.', '二维方程组未收敛。')
+            : null;
+      });
+    } on FormatException catch (error) {
+      if (mounted) setState(() { _busy = false; _error = error.message; });
+    }
+  }
+
+  Future<void> _tangent() async {
+    final x = parseMathNumber(_guess.text);
+    if (x == null) { _invalidInput(); return; }
+    setState(() { _busy = true; _error = null; _result = null; });
+    try {
+      final value = await ref.read(calcBackendProvider).tangentAndNormal(_expression.text, x);
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        final normal = value?['normalSlope'];
+        _result = value == null
+            ? null
+            : 'point = (${x.toStringAsPrecision(10)}, ${value['y']!.toStringAsPrecision(10)})\n'
+                'tangent slope = ${value['slope']!.toStringAsPrecision(10)}\n'
+                'normal slope = ${normal!.isFinite ? normal.toStringAsPrecision(10) : "vertical"}';
+        _error = value == null ? nextEraText(context, 'The tangent could not be evaluated.', '无法计算切线。') : null;
+      });
+    } on FormatException catch (error) {
+      if (mounted) setState(() { _busy = false; _error = error.message; });
+    }
   }
 
   void _invalidInput() {

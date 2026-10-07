@@ -67,6 +67,12 @@ class AppShell extends StatelessWidget {
       ),
       _Destination('/tools', Icons.build_outlined, Icons.build, l10n.tools),
       _Destination(
+        '/advanced-tools',
+        Icons.science_outlined,
+        Icons.science,
+        nextEraText(context, 'Advanced', '高级'),
+      ),
+      _Destination(
         '/history',
         Icons.history_outlined,
         Icons.history,

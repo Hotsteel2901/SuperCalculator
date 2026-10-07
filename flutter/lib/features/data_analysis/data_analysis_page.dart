@@ -15,6 +15,10 @@ class DataAnalysisPage extends ConsumerStatefulWidget {
 
 class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
   final _data = TextEditingController(text: '0,1\n1,2.1\n2,3.9\n3,6.2\n4,8.1');
+  final _degree = TextEditingController(text: '2');
+  final _interpolationX = TextEditingController(text: '2.5');
+  String _model = 'linear';
+  String _interpolationMethod = 'linear';
   List<PlotPoint> _points = const <PlotPoint>[];
   List<PlotPoint> _fit = const <PlotPoint>[];
   String? _result;
@@ -24,6 +28,8 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
   @override
   void dispose() {
     _data.dispose();
+    _degree.dispose();
+    _interpolationX.dispose();
     super.dispose();
   }
 
@@ -61,13 +67,47 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
                   style: const TextStyle(fontFamily: 'monospace'),
                 ),
                 const SizedBox(height: 12),
-                FilledButton.icon(
-                  onPressed: _busy ? null : _fitLine,
-                  icon: const Icon(Icons.auto_graph),
-                  label: Text(
-                    nextEraText(context, 'Fit linear model', '拟合线性模型'),
+                FormRow(children: <Widget>[
+                  DropdownButtonFormField<String>(
+                    initialValue: _model,
+                    decoration: InputDecoration(labelText: nextEraText(context, 'Fit model', '拟合模型')),
+                    items: <String>['linear', 'polynomial', 'exponential', 'power', 'logarithmic']
+                        .map((value) => DropdownMenuItem(value: value, child: Text(value)))
+                        .toList(growable: false),
+                    onChanged: (value) => setState(() => _model = value ?? 'linear'),
                   ),
-                ),
+                  TextField(
+                    controller: _degree,
+                    decoration: InputDecoration(labelText: nextEraText(context, 'Degree', '次数')),
+                    keyboardType: TextInputType.number,
+                  ),
+                  FilledButton.icon(
+                    onPressed: _busy ? null : _fitLine,
+                    icon: const Icon(Icons.auto_graph),
+                    label: Text(nextEraText(context, 'Fit', '拟合')),
+                  ),
+                ]),
+                const SizedBox(height: 12),
+                FormRow(children: <Widget>[
+                  DropdownButtonFormField<String>(
+                    initialValue: _interpolationMethod,
+                    decoration: InputDecoration(labelText: nextEraText(context, 'Interpolation', '插值')),
+                    items: <String>['nearest', 'linear', 'lagrange', 'newton', 'cubic-spline', 'hermite']
+                        .map((value) => DropdownMenuItem(value: value, child: Text(value)))
+                        .toList(growable: false),
+                    onChanged: (value) => setState(() => _interpolationMethod = value ?? 'linear'),
+                  ),
+                  TextField(
+                    controller: _interpolationX,
+                    decoration: InputDecoration(labelText: nextEraText(context, 'x to interpolate', '插值 x')),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _busy ? null : _interpolate,
+                    icon: const Icon(Icons.linear_scale),
+                    label: Text(nextEraText(context, 'Interpolate', '插值计算')),
+                  ),
+                ]),
               ],
             ),
           ),
@@ -144,34 +184,88 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
       _points = const <PlotPoint>[];
       _fit = const <PlotPoint>[];
     });
-    final regression = await ref
-        .read(calcBackendProvider)
-        .linearRegression(xs, ys);
-    if (!mounted) {
+    try {
+      final backend = ref.read(calcBackendProvider);
+      final points = xs.asMap().entries
+          .map((entry) => PlotPoint(entry.value, ys[entry.key]))
+          .toList(growable: false);
+      List<double> fitXs;
+      List<double> fitYs;
+      double rSquared;
+      String equation;
+      if (_model == 'linear') {
+        final regression = await backend.linearRegression(xs, ys);
+        fitXs = regression.xs;
+        fitYs = regression.ys;
+        rSquared = regression.rSquared;
+        equation = regression.equation;
+      } else if (_model == 'polynomial') {
+        final regression = await backend.polynomialRegression(
+          xs,
+          ys,
+          degree: (int.tryParse(_degree.text) ?? 2).clamp(1, 12).toInt(),
+        );
+        fitXs = regression.xs;
+        fitYs = regression.ys;
+        rSquared = regression.rSquared;
+        equation = regression.equation;
+      } else {
+        final regression = await backend.nonlinearRegression(_model, xs, ys);
+        fitXs = regression.xs;
+        fitYs = regression.ys;
+        rSquared = regression.rSquared;
+        equation = regression.equation;
+      }
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _points = points;
+        _fit = fitXs.asMap().entries
+            .map((entry) => PlotPoint(entry.value, fitYs[entry.key]))
+            .toList(growable: false);
+        _result = rSquared.isFinite
+            ? '$equation    R² = ${rSquared.toStringAsPrecision(8)}'
+            : null;
+        _error = rSquared.isFinite
+            ? null
+            : nextEraText(context, 'The model could not be fitted.', '无法拟合该模型。');
+      });
+    } on FormatException catch (error) {
+      if (mounted) setState(() { _busy = false; _error = error.message; });
+    } catch (_) {
+      if (mounted) setState(() { _busy = false; _error = nextEraText(context, 'The model could not be fitted.', '无法拟合该模型。'); });
+    }
+  }
+
+  Future<void> _interpolate() async {
+    final xs = <double>[];
+    final ys = <double>[];
+    for (final line in _data.text.split(RegExp(r'[\r\n]+'))) {
+      final cells = line.trim().split(RegExp(r'[,;\t ]+'));
+      if (cells.length < 2) continue;
+      final x = double.tryParse(cells[0]);
+      final y = double.tryParse(cells[1]);
+      if (x != null && y != null) {
+        xs.add(x);
+        ys.add(y);
+      }
+    }
+    final x = double.tryParse(_interpolationX.text);
+    if (xs.length < 2 || x == null) {
+      if (mounted) setState(() => _error = nextEraText(context, 'Enter valid points and an interpolation x.', '请输入有效点和插值 x。'));
       return;
     }
-    final points = <PlotPoint>[];
-    for (var i = 0; i < xs.length; i++) {
-      points.add(PlotPoint(xs[i], ys[i]));
+    setState(() { _busy = true; _error = null; _result = null; });
+    try {
+      final value = await ref.read(calcBackendProvider).interpolate(_interpolationMethod, xs, ys, x);
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _result = value == null ? null : 'f($x) = ${value.toStringAsPrecision(12)}';
+        _error = value == null ? nextEraText(context, 'Interpolation failed.', '插值失败。') : null;
+      });
+    } on FormatException catch (error) {
+      if (mounted) setState(() { _busy = false; _error = error.message; });
     }
-    final fit = <PlotPoint>[];
-    for (var i = 0; i < regression.xs.length; i++) {
-      fit.add(PlotPoint(regression.xs[i], regression.ys[i]));
-    }
-    setState(() {
-      _busy = false;
-      _points = points;
-      _fit = fit;
-      _result = regression.rSquared.isFinite
-          ? '${regression.equation}    R² = ${regression.rSquared.toStringAsPrecision(8)}'
-          : null;
-      _error = regression.rSquared.isFinite
-          ? null
-          : nextEraText(
-              context,
-              'The x values must not all be equal.',
-              'x 值不能全部相同。',
-            );
-    });
   }
 }

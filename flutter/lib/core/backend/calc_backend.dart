@@ -72,6 +72,38 @@ abstract interface class CalcBackend {
     double tolerance = 1e-8,
   });
 
+  Future<List<double>> scanRoots(
+    String expression,
+    double start,
+    double end, {
+    int samples = 512,
+    double tolerance = 1e-8,
+  });
+
+  Future<List<double>> intersections(
+    String expressionF,
+    String expressionG,
+    double start,
+    double end, {
+    int samples = 512,
+    double tolerance = 1e-8,
+  });
+
+  Future<Map<String, double>?> solveSystem2d(
+    String expressionF,
+    String expressionG, {
+    double x = 0,
+    double y = 0,
+    double tolerance = 1e-10,
+    int maxIterations = 100,
+  });
+
+  Future<Map<String, double>?> tangentAndNormal(
+    String expression,
+    double x, {
+    double? step,
+  });
+
   Future<CalcEvaluation> solve(
     String expression, {
     double guess = 0,
@@ -100,7 +132,52 @@ abstract interface class CalcBackend {
 
   Future<CalcRegression> linearRegression(List<double> xs, List<double> ys);
 
+  Future<CalcPolynomialRegression> polynomialRegression(
+    List<double> xs,
+    List<double> ys, {
+    int degree = 2,
+  });
+
+  Future<CalcModelRegression> nonlinearRegression(
+    String model,
+    List<double> xs,
+    List<double> ys,
+  );
+
+  Future<double?> interpolate(
+    String method,
+    List<double> xs,
+    List<double> ys,
+    double x,
+  );
+
+  Future<CalcDistributionResult> distribution(
+    String name,
+    double x,
+    Map<String, double> parameters,
+  );
+
+  Future<ComplexValue> complexOperation(
+    String operation,
+    ComplexValue left, [
+    ComplexValue? right,
+  ]);
+
   Future<CalcMatrix> parseMatrix(String input);
+
+  Future<CalcMatrix> addMatrices(
+    String left,
+    String right, {
+    bool subtract = false,
+  });
+
+  Future<CalcMatrix> rrefMatrix(String input);
+
+  Future<int> matrixRank(String input);
+
+  Future<List<double>> eigenvalues2x2(String input);
+
+  Future<List<double>> convolution(List<double> left, List<double> right);
 
   Future<CalcMatrix> multiplyMatrices(String left, String right);
 
@@ -313,6 +390,66 @@ class DartCalcBackend implements CalcBackend {
   }
 
   @override
+  Future<List<double>> scanRoots(
+    String expression,
+    double start,
+    double end, {
+    int samples = 512,
+    double tolerance = 1e-8,
+  }) =>
+      ComputationDispatcher.scanRoots(
+        expression,
+        start,
+        end,
+        samples: samples,
+        tolerance: tolerance,
+      );
+
+  @override
+  Future<List<double>> intersections(
+    String expressionF,
+    String expressionG,
+    double start,
+    double end, {
+    int samples = 512,
+    double tolerance = 1e-8,
+  }) =>
+      ComputationDispatcher.intersections(
+        expressionF,
+        expressionG,
+        start,
+        end,
+        samples: samples,
+        tolerance: tolerance,
+      );
+
+  @override
+  Future<Map<String, double>?> solveSystem2d(
+    String expressionF,
+    String expressionG, {
+    double x = 0,
+    double y = 0,
+    double tolerance = 1e-10,
+    int maxIterations = 100,
+  }) =>
+      ComputationDispatcher.solveSystem2d(
+        expressionF,
+        expressionG,
+        x: x,
+        y: y,
+        tolerance: tolerance,
+        maxIterations: maxIterations,
+      );
+
+  @override
+  Future<Map<String, double>?> tangentAndNormal(
+    String expression,
+    double x, {
+    double? step,
+  }) =>
+      ComputationDispatcher.tangentAndNormal(expression, x, step: step);
+
+  @override
   Future<CalcEvaluation> solve(
     String expression, {
     double guess = 0,
@@ -382,8 +519,96 @@ class DartCalcBackend implements CalcBackend {
       ComputationDispatcher.linearRegression(xs, ys);
 
   @override
+  Future<CalcPolynomialRegression> polynomialRegression(
+    List<double> xs,
+    List<double> ys, {
+    int degree = 2,
+  }) async =>
+      ComputationDispatcher.polynomialRegression(xs, ys, degree: degree);
+
+  @override
+  Future<CalcModelRegression> nonlinearRegression(
+    String model,
+    List<double> xs,
+    List<double> ys,
+  ) async =>
+      ComputationDispatcher.nonlinearRegression(model, xs, ys);
+
+  @override
+  Future<double?> interpolate(
+    String method,
+    List<double> xs,
+    List<double> ys,
+    double x,
+  ) async =>
+      ComputationDispatcher.interpolate(method, xs, ys, x);
+
+  @override
+  Future<CalcDistributionResult> distribution(
+    String name,
+    double x,
+    Map<String, double> parameters,
+  ) async =>
+      ComputationDispatcher.distribution(name, x, parameters);
+
+  @override
+  Future<ComplexValue> complexOperation(
+    String operation,
+    ComplexValue left, [
+    ComplexValue? right,
+  ]) async {
+    final other = right ?? const ComplexValue(0, 0);
+    return switch (operation) {
+      'add' => left + other,
+      'subtract' => left - other,
+      'multiply' => left * other,
+      'divide' => left / other,
+      'power' => DartComputation.complexPower(left, other),
+      'sin' => DartComputation.complexSin(left),
+      'cos' => DartComputation.complexCos(left),
+      'tan' => DartComputation.complexTan(left),
+      'exp' => DartComputation.complexExp(left),
+      'log' => DartComputation.complexLog(left),
+      'sqrt' => DartComputation.complexSqrt(left),
+      'conjugate' => left.conjugate(),
+      _ => throw const FormatException('Unknown complex operation.'),
+    };
+  }
+
+  @override
   Future<CalcMatrix> parseMatrix(String input) async =>
       DartComputation.parseMatrix(input);
+
+  @override
+  Future<CalcMatrix> addMatrices(
+    String left,
+    String right, {
+    bool subtract = false,
+  }) async =>
+      DartComputation.matrixAdd(
+        DartComputation.parseMatrix(left),
+        DartComputation.parseMatrix(right),
+        subtract: subtract,
+      );
+
+  @override
+  Future<CalcMatrix> rrefMatrix(String input) async =>
+      DartComputation.matrixRref(DartComputation.parseMatrix(input));
+
+  @override
+  Future<int> matrixRank(String input) async =>
+      DartComputation.matrixRank(DartComputation.parseMatrix(input));
+
+  @override
+  Future<List<double>> eigenvalues2x2(String input) async =>
+      DartComputation.eigenvalues2x2(DartComputation.parseMatrix(input));
+
+  @override
+  Future<List<double>> convolution(
+    List<double> left,
+    List<double> right,
+  ) async =>
+      DartComputation.convolution(left, right);
 
   @override
   Future<CalcMatrix> multiplyMatrices(String left, String right) async {

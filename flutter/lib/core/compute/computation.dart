@@ -17,6 +17,18 @@ class ExpressionEngine {
     return CompiledExpression._(source, root);
   }
 
+  /// Compiles an expression with user-defined one-argument functions.
+  /// Definitions use the same syntax as the main expression, for example
+  /// `{ "f": "x^2 + 1", "g": "sin(x)" }`.
+  static CompiledExpression compileWithFunctions(
+    String source,
+    Map<String, String> definitions,
+  ) {
+    final parser = _ExpressionCompiler(source, definitions: definitions);
+    final root = parser.parse();
+    return CompiledExpression._(source, root);
+  }
+
   static double evaluate(String source, {double x = 0, double y = 0}) {
     return compile(source).evaluate(x: x, y: y);
   }
@@ -132,6 +144,20 @@ class _FactorialNode extends _ExpressionNode {
   }
 }
 
+class _CustomFunctionNode extends _ExpressionNode {
+  const _CustomFunctionNode(this.name, this.argument, this.body);
+
+  final String name;
+  final _ExpressionNode argument;
+  final _ExpressionNode body;
+
+  @override
+  double evaluate(double x, double y) {
+    final value = argument.evaluate(x, y);
+    return value.isFinite ? body.evaluate(value, y) : double.nan;
+  }
+}
+
 class _FunctionNode extends _ExpressionNode {
   const _FunctionNode(this.name, this.argument);
 
@@ -182,9 +208,15 @@ class _FunctionNode extends _ExpressionNode {
 }
 
 class _ExpressionCompiler {
-  _ExpressionCompiler(this.source);
+  _ExpressionCompiler(
+    this.source, {
+    this.definitions = const <String, String>{},
+    Set<String>? compilingDefinitions,
+  }) : _compilingDefinitions = <String>{...?compilingDefinitions};
 
   final String source;
+  final Map<String, String> definitions;
+  final Set<String> _compilingDefinitions;
   int position = 0;
 
   _ExpressionNode parse() {
@@ -290,6 +322,22 @@ class _ExpressionCompiler {
     _expect('(');
     final argument = _parseAdditive();
     _expect(')');
+    final customBody = definitions[identifier];
+    if (customBody != null) {
+      if (!_compilingDefinitions.add(identifier)) {
+        throw FormatException('Recursive custom function $identifier.');
+      }
+      try {
+        final body = _ExpressionCompiler(
+          customBody,
+          definitions: definitions,
+          compilingDefinitions: _compilingDefinitions,
+        ).parse();
+        return _CustomFunctionNode(identifier, argument, body);
+      } finally {
+        _compilingDefinitions.remove(identifier);
+      }
+    }
     const functions = <String>{
       'sin',
       'cos',
@@ -415,6 +463,172 @@ class DartComputation {
 
   static List<double?> evaluateArray(String expression, List<double> xs) {
     return ExpressionEngine.compile(expression).sample(xs);
+  }
+
+  static double evaluateCustom(
+    String expression,
+    Map<String, String> definitions, {
+    double x = 0,
+    double y = 0,
+  }) {
+    return ExpressionEngine.compileWithFunctions(expression, definitions)
+        .evaluate(x: x, y: y);
+  }
+
+  // ---------- Complex arithmetic ----------
+
+  static ComplexValue complexPower(ComplexValue value, ComplexValue exponent) {
+    if (value.real == 0 && value.imaginary == 0) {
+      if (exponent.real > 0 && exponent.imaginary == 0) {
+        return const ComplexValue(0, 0);
+      }
+      throw const FormatException('Zero cannot be raised to this power.');
+    }
+    final logarithm = complexLog(value);
+    return complexExp(ComplexValue(
+      exponent.real * logarithm.real - exponent.imaginary * logarithm.imaginary,
+      exponent.real * logarithm.imaginary + exponent.imaginary * logarithm.real,
+    ));
+  }
+
+  static ComplexValue complexExp(ComplexValue value) {
+    final scale = math.exp(value.real);
+    return ComplexValue(scale * math.cos(value.imaginary),
+        scale * math.sin(value.imaginary));
+  }
+
+  static ComplexValue complexLog(ComplexValue value) {
+    if (value.real == 0 && value.imaginary == 0) {
+      throw const FormatException('Logarithm of zero is undefined.');
+    }
+    return ComplexValue(math.log(value.magnitude), value.phase);
+  }
+
+  static ComplexValue complexSqrt(ComplexValue value) {
+    final magnitude = value.magnitude;
+    final real = math.sqrt((magnitude + value.real) / 2);
+    final imaginary = math.sqrt(math.max(0, (magnitude - value.real) / 2));
+    return ComplexValue(real, value.imaginary < 0 ? -imaginary : imaginary);
+  }
+
+  static ComplexValue complexSin(ComplexValue value) => ComplexValue(
+    math.sin(value.real) * math.cosh(value.imaginary),
+    math.cos(value.real) * math.sinh(value.imaginary),
+  );
+
+  static ComplexValue complexCos(ComplexValue value) => ComplexValue(
+    math.cos(value.real) * math.cosh(value.imaginary),
+    -math.sin(value.real) * math.sinh(value.imaginary),
+  );
+
+  static ComplexValue complexTan(ComplexValue value) =>
+      complexSin(value) / complexCos(value);
+
+  // ---------- Integer and bitwise tools ----------
+
+  static BigInt gcd(BigInt a, BigInt b) {
+    var left = a.abs();
+    var right = b.abs();
+    while (right != BigInt.zero) {
+      final remainder = left % right;
+      left = right;
+      right = remainder;
+    }
+    return left;
+  }
+
+  static BigInt lcm(BigInt a, BigInt b) {
+    if (a == BigInt.zero || b == BigInt.zero) return BigInt.zero;
+    return (a ~/ gcd(a, b) * b).abs();
+  }
+
+  static bool isPrime(BigInt value) {
+    if (value < BigInt.from(2)) return false;
+    if (value == BigInt.from(2)) return true;
+    if (value.isEven) return false;
+    for (var divisor = BigInt.from(3);
+        divisor * divisor <= value;
+        divisor += BigInt.two) {
+      if (value % divisor == BigInt.zero) return false;
+    }
+    return true;
+  }
+
+  static Map<BigInt, int> factorInteger(BigInt value) {
+    if (value == BigInt.zero) {
+      throw const FormatException('Zero has no finite prime factorization.');
+    }
+    var remaining = value.abs();
+    final factors = <BigInt, int>{};
+    var divisor = BigInt.two;
+    while (divisor * divisor <= remaining) {
+      while (remaining % divisor == BigInt.zero) {
+        factors[divisor] = (factors[divisor] ?? 0) + 1;
+        remaining ~/= divisor;
+      }
+      divisor = divisor == BigInt.two ? BigInt.from(3) : divisor + BigInt.two;
+    }
+    if (remaining > BigInt.one) factors[remaining] = (factors[remaining] ?? 0) + 1;
+    return factors;
+  }
+
+  static BigInt modPow(BigInt base, BigInt exponent, BigInt modulus) {
+    if (modulus <= BigInt.zero || exponent < BigInt.zero) {
+      throw const FormatException('Modulus must be positive and exponent non-negative.');
+    }
+    var result = BigInt.one % modulus;
+    var factor = base % modulus;
+    var power = exponent;
+    while (power > BigInt.zero) {
+      if (power.isOdd) result = result * factor % modulus;
+      factor = factor * factor % modulus;
+      power >>= 1;
+    }
+    return result;
+  }
+
+  static BigInt eulerTotient(BigInt value) {
+    if (value <= BigInt.zero) {
+      throw const FormatException('Totient requires a positive integer.');
+    }
+    var result = value;
+    for (final prime in factorInteger(value).keys) {
+      result = result ~/ prime * (prime - BigInt.one);
+    }
+    return result;
+  }
+
+  static BigInt fibonacci(int index) {
+    if (index < 0 || index > 100000) {
+      throw const FormatException('Fibonacci index must be between 0 and 100000.');
+    }
+    var a = BigInt.zero;
+    var b = BigInt.one;
+    for (var i = 0; i < index; i++) {
+      final next = a + b;
+      a = b;
+      b = next;
+    }
+    return a;
+  }
+
+  static int bitwise(String operation, int left, int right, int width) {
+    if (![8, 16, 32].contains(width)) {
+      throw const FormatException('Bit width must be 8, 16 or 32.');
+    }
+    final mask = width == 32 ? 0xffffffff : (1 << width) - 1;
+    final a = left & mask;
+    final b = right & mask;
+    final value = switch (operation) {
+      'and' => a & b,
+      'or' => a | b,
+      'xor' => a ^ b,
+      'not' => ~a,
+      'shl' => a << (right & (width - 1)),
+      'shr' => a >> (right & (width - 1)),
+      _ => throw const FormatException('Unknown bitwise operation.'),
+    };
+    return value & mask;
   }
 
   static double? derivative(
@@ -832,6 +1046,119 @@ class DartComputation {
     });
   }
 
+  static List<double> findIntersections(
+    String expressionF,
+    String expressionG,
+    double start,
+    double end, {
+    int samples = 512,
+    double tolerance = 1e-8,
+  }) {
+    return scanRoots(
+      '($expressionF)-($expressionG)',
+      start,
+      end,
+      samples: samples,
+      tolerance: tolerance,
+    );
+  }
+
+  static Map<String, double>? tangentAndNormal(
+    String expression,
+    double x, {
+    double? step,
+  }) {
+    final y = evaluate(expression, x);
+    final slope = derivative(expression, x, step: step);
+    if (!y.isFinite || slope == null || !slope.isFinite) return null;
+    final normalSlope = slope.abs() < 1e-14 ? double.infinity : -1 / slope;
+    return <String, double>{'x': x, 'y': y, 'slope': slope, 'normalSlope': normalSlope};
+  }
+
+  static List<PlotPointValue> sampleSurface(
+    String expression,
+    double xMin,
+    double xMax,
+    double yMin,
+    double yMax, {
+    int rows = 40,
+    int columns = 40,
+  }) {
+    if (rows < 2 || columns < 2 || xMin >= xMax || yMin >= yMax) {
+      return const <PlotPointValue>[];
+    }
+    final compiled = ExpressionEngine.compile(expression);
+    final points = <PlotPointValue>[];
+    for (var row = 0; row < rows; row++) {
+      final y = yMin + (yMax - yMin) * row / (rows - 1);
+      for (var column = 0; column < columns; column++) {
+        final x = xMin + (xMax - xMin) * column / (columns - 1);
+        final z = compiled.evaluate(x: x, y: y);
+        if (z.isFinite) points.add(PlotPointValue(x: x, y: y, value: z));
+      }
+    }
+    return points;
+  }
+
+  static List<PlotFieldVector> sampleDirectionField(
+    String expression,
+    double xMin,
+    double xMax,
+    double yMin,
+    double yMax, {
+    int rows = 20,
+    int columns = 20,
+  }) {
+    if (rows < 1 || columns < 1 || xMin >= xMax || yMin >= yMax) {
+      return const <PlotFieldVector>[];
+    }
+    final compiled = ExpressionEngine.compile(expression);
+    final vectors = <PlotFieldVector>[];
+    for (var row = 0; row < rows; row++) {
+      final y = yMin + (yMax - yMin) * row / math.max(1, rows - 1).toDouble();
+      for (var column = 0; column < columns; column++) {
+        final x = xMin + (xMax - xMin) * column / math.max(1, columns - 1).toDouble();
+        final slope = compiled.evaluate(x: x, y: y);
+        if (!slope.isFinite) continue;
+        final scale = 1 / math.sqrt(1 + slope * slope);
+        vectors.add(PlotFieldVector(x: x, y: y, dx: scale, dy: slope * scale));
+      }
+    }
+    return vectors;
+  }
+
+  static List<PlotFieldVector> sampleVectorField(
+    String expressionX,
+    String expressionY,
+    double xMin,
+    double xMax,
+    double yMin,
+    double yMax, {
+    int rows = 20,
+    int columns = 20,
+  }) {
+    final xFunction = ExpressionEngine.compile(expressionX);
+    final yFunction = ExpressionEngine.compile(expressionY);
+    final vectors = <PlotFieldVector>[];
+    for (var row = 0; row < rows; row++) {
+      final y = yMin + (yMax - yMin) * row / math.max(1, rows - 1).toDouble();
+      for (var column = 0; column < columns; column++) {
+        final x = xMin + (xMax - xMin) * column / math.max(1, columns - 1).toDouble();
+        final dx = xFunction.evaluate(x: x, y: y);
+        final dy = yFunction.evaluate(x: x, y: y);
+        final magnitude = math.sqrt(dx * dx + dy * dy);
+        if (!magnitude.isFinite || magnitude == 0) continue;
+        vectors.add(PlotFieldVector(
+          x: x,
+          y: y,
+          dx: dx / magnitude,
+          dy: dy / magnitude,
+        ));
+      }
+    }
+    return vectors;
+  }
+
   static double? _integrateFunction(
     double Function(double) function,
     double start,
@@ -1022,6 +1349,20 @@ class DartComputation {
     );
   }
 
+  static List<double> convolution(List<double> left, List<double> right) {
+    if (left.isEmpty || right.isEmpty) return const <double>[];
+    if (left.any((value) => !value.isFinite) || right.any((value) => !value.isFinite)) {
+      throw const FormatException('Convolution inputs must be finite.');
+    }
+    final result = List<double>.filled(left.length + right.length - 1, 0);
+    for (var i = 0; i < left.length; i++) {
+      for (var j = 0; j < right.length; j++) {
+        result[i + j] += left[i] * right[j];
+      }
+    }
+    return result;
+  }
+
   static CalcStatistics statistics(Iterable<double> source) {
     final values = source.where((value) => value.isFinite).toList()..sort();
     if (values.isEmpty) {
@@ -1127,6 +1468,570 @@ class DartComputation {
       ys: fitYs,
     );
   }
+
+  // ---------- Regression and interpolation ----------
+
+  static CalcPolynomialRegression polynomialRegression(
+    List<double> xs,
+    List<double> ys, {
+    int degree = 2,
+  }) {
+    final points = <List<double>>[];
+    for (var index = 0; index < xs.length && index < ys.length; index++) {
+      if (xs[index].isFinite && ys[index].isFinite) {
+        points.add(<double>[xs[index], ys[index]]);
+      }
+    }
+    if (degree < 1 || degree > 12 || points.length <= degree) {
+      return const CalcPolynomialRegression(
+        coefficients: <double>[],
+        rSquared: double.nan,
+        xs: <double>[],
+        ys: <double>[],
+      );
+    }
+    final size = degree + 1;
+    final normal = List<List<double>>.generate(
+      size,
+      (_) => List<double>.filled(size + 1, 0),
+    );
+    for (final point in points) {
+      final powers = List<double>.filled(2 * degree + 1, 1);
+      for (var power = 1; power < powers.length; power++) {
+        powers[power] = powers[power - 1] * point[0];
+      }
+      for (var row = 0; row < size; row++) {
+        for (var column = 0; column < size; column++) {
+          normal[row][column] += powers[row + column];
+        }
+        normal[row][size] += powers[row] * point[1];
+      }
+    }
+    final coefficients = _solveAugmented(normal);
+    if (coefficients == null) {
+      return const CalcPolynomialRegression(
+        coefficients: <double>[],
+        rSquared: double.nan,
+        xs: <double>[],
+        ys: <double>[],
+      );
+    }
+    final mean = points.fold<double>(0, (sum, point) => sum + point[1]) /
+        points.length;
+    var total = 0.0;
+    var residual = 0.0;
+    for (final point in points) {
+      final predicted = _evaluatePolynomial(coefficients, point[0]);
+      total += (point[1] - mean) * (point[1] - mean);
+      residual += (point[1] - predicted) * (point[1] - predicted);
+    }
+    points.sort((a, b) => a[0].compareTo(b[0]));
+    final minX = points.first[0];
+    final maxX = points.last[0];
+    final fitXs = List<double>.generate(
+      120,
+      (index) => minX + (maxX - minX) * index / 119,
+      growable: false,
+    );
+    return CalcPolynomialRegression(
+      coefficients: coefficients,
+      rSquared: total == 0 ? (residual == 0 ? 1 : 0) : 1 - residual / total,
+      xs: fitXs,
+      ys: fitXs.map((value) => _evaluatePolynomial(coefficients, value)).toList(
+        growable: false,
+      ),
+    );
+  }
+
+  static CalcModelRegression nonlinearRegression(
+    String model,
+    List<double> xs,
+    List<double> ys,
+  ) {
+    final points = <List<double>>[];
+    for (var index = 0; index < xs.length && index < ys.length; index++) {
+      if (xs[index].isFinite && ys[index].isFinite) {
+        points.add(<double>[xs[index], ys[index]]);
+      }
+    }
+    if (points.length < 2) {
+      return const CalcModelRegression(
+        model: 'invalid',
+        parameters: <String, double>{},
+        rSquared: double.nan,
+        xs: <double>[],
+        ys: <double>[],
+        equation: '',
+      );
+    }
+    final transformedX = <double>[];
+    final transformedY = <double>[];
+    for (final point in points) {
+      final x = point[0];
+      final y = point[1];
+      switch (model) {
+        case 'exponential':
+          if (y <= 0) continue;
+          transformedX.add(x);
+          transformedY.add(math.log(y));
+        case 'power':
+          if (x <= 0 || y <= 0) continue;
+          transformedX.add(math.log(x));
+          transformedY.add(math.log(y));
+        case 'logarithmic':
+          if (x <= 0) continue;
+          transformedX.add(math.log(x));
+          transformedY.add(y);
+        default:
+          throw const FormatException('Unknown regression model.');
+      }
+    }
+    if (transformedX.length < 2) {
+      return const CalcModelRegression(
+        model: 'invalid',
+        parameters: <String, double>{},
+        rSquared: double.nan,
+        xs: <double>[],
+        ys: <double>[],
+        equation: '',
+      );
+    }
+    final linear = linearRegression(transformedX, transformedY);
+    if (!linear.rSquared.isFinite) {
+      return const CalcModelRegression(
+        model: 'invalid',
+        parameters: <String, double>{},
+        rSquared: double.nan,
+        xs: <double>[],
+        ys: <double>[],
+        equation: '',
+      );
+    }
+    late final Map<String, double> parameters;
+    late final String equation;
+    double predict(double x) {
+      switch (model) {
+        case 'exponential':
+          return math.exp(linear.intercept + linear.slope * x);
+        case 'power':
+          return math.exp(linear.intercept) * math.pow(x, linear.slope).toDouble();
+        case 'logarithmic':
+          return linear.intercept + linear.slope * math.log(x);
+        default:
+          return double.nan;
+      }
+    }
+    switch (model) {
+      case 'exponential':
+        parameters = <String, double>{
+          'a': math.exp(linear.intercept),
+          'b': linear.slope,
+        };
+        equation = 'y = a·e^(b·x)';
+      case 'power':
+        parameters = <String, double>{
+          'a': math.exp(linear.intercept),
+          'b': linear.slope,
+        };
+        equation = 'y = a·x^b';
+      case 'logarithmic':
+        parameters = <String, double>{'a': linear.intercept, 'b': linear.slope};
+        equation = 'y = a + b·ln(x)';
+      default:
+        parameters = const <String, double>{};
+        equation = '';
+    }
+    final mean = points.fold<double>(0, (sum, point) => sum + point[1]) /
+        points.length;
+    var total = 0.0;
+    var residual = 0.0;
+    for (final point in points) {
+      final predicted = predict(point[0]);
+      if (!predicted.isFinite) continue;
+      total += (point[1] - mean) * (point[1] - mean);
+      residual += (point[1] - predicted) * (point[1] - predicted);
+    }
+    points.sort((a, b) => a[0].compareTo(b[0]));
+    final validPoints = points.where((point) => predict(point[0]).isFinite).toList();
+    return CalcModelRegression(
+      model: model,
+      parameters: parameters,
+      rSquared: total == 0 ? (residual == 0 ? 1 : 0) : 1 - residual / total,
+      xs: validPoints.map((point) => point[0]).toList(growable: false),
+      ys: validPoints.map((point) => predict(point[0])).toList(growable: false),
+      equation: equation,
+    );
+  }
+
+  static double? interpolate(
+    String method,
+    List<double> xs,
+    List<double> ys,
+    double x,
+  ) {
+    final points = <List<double>>[];
+    for (var index = 0; index < xs.length && index < ys.length; index++) {
+      if (xs[index].isFinite && ys[index].isFinite) {
+        points.add(<double>[xs[index], ys[index]]);
+      }
+    }
+    if (points.isEmpty || !x.isFinite) return null;
+    points.sort((a, b) => a[0].compareTo(b[0]));
+    if (method == 'nearest') {
+      points.sort((a, b) => (a[0] - x).abs().compareTo((b[0] - x).abs()));
+      return points.first[1];
+    }
+    if (method == 'linear') {
+      if (x <= points.first[0]) return points.first[1];
+      if (x >= points.last[0]) return points.last[1];
+      for (var index = 1; index < points.length; index++) {
+        if (x <= points[index][0]) {
+          final left = points[index - 1];
+          final right = points[index];
+          final fraction = (x - left[0]) / (right[0] - left[0]);
+          return left[1] + fraction * (right[1] - left[1]);
+        }
+      }
+    }
+    if (method == 'cubic-spline' && points.length >= 3) {
+      // Natural cubic spline, solved once for the second derivatives.
+      final n = points.length;
+      final lower = List<double>.filled(n, 0);
+      final diagonal = List<double>.filled(n, 1);
+      final upper = List<double>.filled(n, 0);
+      final rhs = List<double>.filled(n, 0);
+      for (var i = 1; i < n - 1; i++) {
+        final h0 = points[i][0] - points[i - 1][0];
+        final h1 = points[i + 1][0] - points[i][0];
+        lower[i] = h0 / 6;
+        diagonal[i] = (h0 + h1) / 3;
+        upper[i] = h1 / 6;
+        rhs[i] = (points[i + 1][1] - points[i][1]) / h1 -
+            (points[i][1] - points[i - 1][1]) / h0;
+      }
+      for (var i = 1; i < n; i++) {
+        final factor = lower[i] / diagonal[i - 1];
+        diagonal[i] -= factor * upper[i - 1];
+        rhs[i] -= factor * rhs[i - 1];
+      }
+      final second = List<double>.filled(n, 0);
+      for (var i = n - 2; i >= 0; i--) {
+        second[i] = (rhs[i] - upper[i] * second[i + 1]) / diagonal[i];
+      }
+      var index = 0;
+      while (index < n - 2 && x > points[index + 1][0]) index++;
+      final left = points[index];
+      final rightIndex = math.min(index + 1, n - 1).toInt();
+      final right = points[rightIndex];
+      final h = right[0] - left[0];
+      if (h == 0) return null;
+      final a = (right[0] - x) / h;
+      final b = (x - left[0]) / h;
+      return a * left[1] + b * right[1] +
+          ((a * a * a - a) * second[index] +
+                  (b * b * b - b) * second[rightIndex]) *
+              h * h /
+              6;
+    }
+    // Lagrange and Newton share the same barycentric evaluation for a stable
+    // polynomial result; both names are retained as explicit user choices.
+    if (method == 'lagrange' || method == 'newton' || method == 'polynomial') {
+      var result = 0.0;
+      for (var i = 0; i < points.length; i++) {
+        var term = points[i][1];
+        for (var j = 0; j < points.length; j++) {
+          if (i == j) continue;
+          final denominator = points[i][0] - points[j][0];
+          if (denominator == 0) return null;
+          term *= (x - points[j][0]) / denominator;
+        }
+        result += term;
+      }
+      return result;
+    }
+    if (method == 'hermite' && points.length >= 2) {
+      // Piecewise cubic Hermite with finite-difference slopes.
+      var index = 0;
+      while (index < points.length - 2 && x > points[index + 1][0]) index++;
+      final left = points[index];
+      final right = points[index + 1];
+      final h = right[0] - left[0];
+      if (h == 0) return null;
+      final leftSlope = index == 0
+          ? (right[1] - left[1]) / h
+          : (right[1] - points[index - 1][1]) /
+                (right[0] - points[index - 1][0]);
+      final rightSlope = index + 2 >= points.length
+          ? (right[1] - left[1]) / h
+          : (points[index + 2][1] - left[1]) /
+                (points[index + 2][0] - left[0]);
+      final t = (x - left[0]) / h;
+      return (2 * t * t * t - 3 * t * t + 1) * left[1] +
+          (t * t * t - 2 * t * t + t) * h * leftSlope +
+          (-2 * t * t * t + 3 * t * t) * right[1] +
+          (t * t * t - t * t) * h * rightSlope;
+    }
+    return null;
+  }
+
+  // ---------- Probability distributions ----------
+
+  static CalcDistributionResult distribution(
+    String name,
+    double x,
+    Map<String, double> parameters,
+  ) {
+    return CalcDistributionResult(
+      name: name,
+      x: x,
+      pdf: distributionPdf(name, x, parameters),
+      cdf: distributionCdf(name, x, parameters),
+      ppf: distributionPpf(name, x, parameters),
+    );
+  }
+
+  static double? distributionPdf(
+    String name,
+    double x,
+    Map<String, double> parameters,
+  ) {
+    final normalized = name.toLowerCase();
+    switch (normalized) {
+      case 'normal':
+        final sigma = parameters['sigma'] ?? 1;
+        if (sigma <= 0) return null;
+        final z = (x - (parameters['mu'] ?? 0)) / sigma;
+        return math.exp(-z * z / 2) / (sigma * math.sqrt(2 * math.pi));
+      case 't':
+      case 'student-t':
+        final degrees = parameters['nu'] ?? parameters['df'] ?? 1;
+        if (degrees <= 0) return null;
+        return math.exp(_logGamma((degrees + 1) / 2) -
+            _logGamma(degrees / 2) -
+            .5 * math.log(degrees * math.pi) -
+            (degrees + 1) / 2 * math.log(1 + x * x / degrees));
+      case 'chi2':
+      case 'chi-squared':
+        final degrees = parameters['k'] ?? parameters['df'] ?? 1;
+        if (degrees <= 0 || x < 0) return 0;
+        return math.exp((degrees / 2 - 1) * math.log(x == 0 ? 1e-300 : x) -
+            x / 2 - _logGamma(degrees / 2)) / 2;
+      case 'f':
+        final d1 = parameters['d1'] ?? 1;
+        final d2 = parameters['d2'] ?? 1;
+        if (d1 <= 0 || d2 <= 0 || x <= 0) return x == 0 ? 0 : null;
+        final a = d1 / 2;
+        final b = d2 / 2;
+        return math.exp(a * math.log(d1 / d2) + (a - 1) * math.log(x) -
+            (a + b) * math.log(1 + d1 * x / d2) -
+            _logBeta(a, b));
+      case 'binomial':
+        final n = (parameters['n'] ?? 1).round();
+        final p = parameters['p'] ?? .5;
+        final k = x.round();
+        if (n < 0 || p < 0 || p > 1 || k < 0 || k > n || x != k) return 0;
+        return math.exp(_logCombination(n, k) +
+            (p == 0 ? (k == 0 ? 0 : double.negativeInfinity) : k * math.log(p)) +
+            (p == 1 ? (n == k ? 0 : double.negativeInfinity) :
+                (n - k) * math.log(1 - p)));
+      case 'poisson':
+        final lambda = parameters['lambda'] ?? parameters['lam'] ?? 1;
+        final k = x.round();
+        if (lambda < 0 || k < 0 || x != k) return 0;
+        return math.exp(-lambda + k * math.log(lambda == 0 ? 1 : lambda) -
+            _logGamma(k + 1));
+      default:
+        return null;
+    }
+  }
+
+  static double? distributionCdf(
+    String name,
+    double x,
+    Map<String, double> parameters,
+  ) {
+    final normalized = name.toLowerCase();
+    switch (normalized) {
+      case 'normal':
+        final sigma = parameters['sigma'] ?? 1;
+        if (sigma <= 0) return null;
+        return .5 * (1 + _erf((x - (parameters['mu'] ?? 0)) / sigma / math.sqrt(2)));
+      case 't':
+      case 'student-t':
+        final degrees = parameters['nu'] ?? parameters['df'] ?? 1;
+        if (degrees <= 0) return null;
+        if (x == 0) return .5;
+        final beta = _regularizedBeta(degrees / (degrees + x * x), degrees / 2, .5);
+        return x > 0 ? 1 - beta / 2 : beta / 2;
+      case 'chi2':
+      case 'chi-squared':
+        final degrees = parameters['k'] ?? parameters['df'] ?? 1;
+        return degrees > 0 && x >= 0 ? _regularizedGamma(degrees / 2, x / 2) : 0;
+      case 'f':
+        final d1 = parameters['d1'] ?? 1;
+        final d2 = parameters['d2'] ?? 1;
+        if (d1 <= 0 || d2 <= 0 || x < 0) return 0;
+        return _regularizedBeta(d1 * x / (d1 * x + d2), d1 / 2, d2 / 2);
+      case 'binomial':
+        final n = (parameters['n'] ?? 1).round();
+        final p = parameters['p'] ?? .5;
+        if (n < 0 || p < 0 || p > 1) return null;
+        final end = math.min(n, x.floor());
+        if (end < 0) return 0;
+        var sum = 0.0;
+        for (var k = 0; k <= end; k++) {
+          sum += distributionPdf('binomial', k.toDouble(), parameters) ?? 0;
+        }
+        return sum.clamp(0, 1).toDouble();
+      case 'poisson':
+        final lambda = parameters['lambda'] ?? parameters['lam'] ?? 1;
+        if (lambda < 0) return null;
+        final end = x.floor();
+        if (end < 0) return 0;
+        var sum = 0.0;
+        for (var k = 0; k <= end; k++) {
+          sum += distributionPdf('poisson', k.toDouble(), parameters) ?? 0;
+        }
+        return sum.clamp(0, 1).toDouble();
+      default:
+        return null;
+    }
+  }
+
+  static double? distributionPpf(
+    String name,
+    double probability,
+    Map<String, double> parameters,
+  ) {
+    if (!probability.isFinite || probability < 0 || probability > 1) return null;
+    final normalized = name.toLowerCase();
+    if (normalized == 'binomial' || normalized == 'poisson') {
+      var low = 0;
+      var high = normalized == 'binomial'
+          ? (parameters['n'] ?? 1).round()
+          : math.max(1, ((parameters['lambda'] ?? parameters['lam'] ?? 1) * 8).round()).toInt();
+      while ((distributionCdf(name, high.toDouble(), parameters) ?? 0) < probability &&
+          high < 1000000) {
+        high *= 2;
+      }
+      while (low < high) {
+        final middle = (low + high) ~/ 2;
+        if ((distributionCdf(name, middle.toDouble(), parameters) ?? 0) >= probability) {
+          high = middle;
+        } else {
+          low = middle + 1;
+        }
+      }
+      return low.toDouble();
+    }
+    if (probability == 0) return normalized == 'normal' ? double.negativeInfinity : 0;
+    if (probability == 1) return normalized == 'normal' ? double.infinity : double.infinity;
+    var low = normalized == 'normal' || normalized == 't' || normalized == 'student-t' ? -12.0 : 0.0;
+    var high = 12.0;
+    for (var iteration = 0; iteration < 100; iteration++) {
+      final middle = (low + high) / 2;
+      final value = distributionCdf(name, middle, parameters);
+      if (value == null) return null;
+      if (value < probability) {
+        low = middle;
+      } else {
+        high = middle;
+      }
+    }
+    return (low + high) / 2;
+  }
+
+  // ---------- Finance ----------
+
+  static double loanPayment({
+    required double principal,
+    required double annualRate,
+    required int periods,
+  }) {
+    if (principal < 0 || annualRate < 0 || periods < 1) {
+      throw const FormatException('Principal, rate and periods are invalid.');
+    }
+    final rate = annualRate / 12;
+    if (rate == 0) return principal / periods;
+    return (principal * rate / (1 - math.pow(1 + rate, -periods))).toDouble();
+  }
+
+  static double compoundInterest({
+    required double principal,
+    required double annualRate,
+    required int compoundsPerYear,
+    required double years,
+  }) {
+    if (principal < 0 || compoundsPerYear < 1 || years < 0) {
+      throw const FormatException('Compound-interest inputs are invalid.');
+    }
+    return (principal * math.pow(
+      1 + annualRate / compoundsPerYear,
+      compoundsPerYear * years,
+    )).toDouble();
+  }
+
+  static double npv(double rate, List<double> cashFlows) {
+    if (rate <= -1) throw const FormatException('Discount rate must be greater than -100%.');
+    var result = 0.0;
+    for (var index = 0; index < cashFlows.length; index++) {
+      result += cashFlows[index] / math.pow(1 + rate, index).toDouble();
+    }
+    return result;
+  }
+
+  static double? irr(List<double> cashFlows) {
+    if (cashFlows.length < 2) return null;
+    var low = -0.9999;
+    var high = 10.0;
+    var fLow = npv(low, cashFlows);
+    var fHigh = npv(high, cashFlows);
+    if (fLow.sign == fHigh.sign) return null;
+    for (var iteration = 0; iteration < 200; iteration++) {
+      final middle = (low + high) / 2;
+      final fMiddle = npv(middle, cashFlows);
+      if (fMiddle.abs() < 1e-10) return middle;
+      if (fLow.sign == fMiddle.sign) {
+        low = middle;
+        fLow = fMiddle;
+      } else {
+        high = middle;
+        fHigh = fMiddle;
+      }
+    }
+    return (low + high) / 2;
+  }
+
+  static double straightLineDepreciation(
+    double cost,
+    double salvage,
+    int years,
+    int year,
+  ) {
+    if (years < 1 || year < 1 || year > years || cost < salvage) {
+      throw const FormatException('Depreciation inputs are invalid.');
+    }
+    return math.max(0, (cost - salvage) / years);
+  }
+
+  static double bondPrice({
+    required double faceValue,
+    required double couponRate,
+    required double marketRate,
+    required int periods,
+  }) {
+    if (periods < 1 || faceValue < 0) {
+      throw const FormatException('Bond inputs are invalid.');
+    }
+    final coupon = faceValue * couponRate;
+    if (marketRate == 0) return faceValue + coupon * periods;
+    return (coupon * (1 - math.pow(1 + marketRate, -periods)) / marketRate +
+        faceValue * math.pow(1 + marketRate, -periods)).toDouble();
+  }
+
+  static String formatFactors(Map<BigInt, int> factors) => factors.entries
+      .map((entry) => entry.value == 1 ? '${entry.key}' : '${entry.key}^${entry.value}')
+      .join(' × ');
 
   static String convertBase(String input, int fromBase, int toBase) {
     if (fromBase < 2 || fromBase > 36 || toBase < 2 || toBase > 36) {
@@ -1331,6 +2236,152 @@ class DartComputation {
     );
   }
 
+  static CalcMatrix matrixAdd(CalcMatrix left, CalcMatrix right, {bool subtract = false}) {
+    if (left.rowCount != right.rowCount || left.columnCount != right.columnCount) {
+      throw const FormatException('Matrix dimensions do not match.');
+    }
+    return CalcMatrix(List<List<double>>.generate(
+      left.rowCount,
+      (row) => List<double>.generate(
+        left.columnCount,
+        (column) => left.rows[row][column] +
+            (subtract ? -right.rows[row][column] : right.rows[row][column]),
+        growable: false,
+      ),
+      growable: false,
+    ));
+  }
+
+  static CalcMatrix matrixRref(CalcMatrix matrix) {
+    final values = matrix.rows.map((row) => row.toList()).toList();
+    var pivotRow = 0;
+    for (var column = 0;
+        column < matrix.columnCount && pivotRow < matrix.rowCount;
+        column++) {
+      var pivot = pivotRow;
+      for (var row = pivotRow + 1; row < matrix.rowCount; row++) {
+        if (values[row][column].abs() > values[pivot][column].abs()) pivot = row;
+      }
+      if (values[pivot][column].abs() < 1e-14) continue;
+      final swap = values[pivot];
+      values[pivot] = values[pivotRow];
+      values[pivotRow] = swap;
+      final divisor = values[pivotRow][column];
+      for (var j = 0; j < matrix.columnCount; j++) {
+        values[pivotRow][j] /= divisor;
+      }
+      for (var row = 0; row < matrix.rowCount; row++) {
+        if (row == pivotRow) continue;
+        final factor = values[row][column];
+        for (var j = 0; j < matrix.columnCount; j++) {
+          values[row][j] -= factor * values[pivotRow][j];
+        }
+      }
+      pivotRow++;
+    }
+    return CalcMatrix(values.map((row) => row.toList(growable: false)).toList(
+      growable: false,
+    ));
+  }
+
+  static int matrixRank(CalcMatrix matrix) {
+    final rref = matrixRref(matrix);
+    return rref.rows.where((row) => row.any((value) => value.abs() > 1e-10)).length;
+  }
+
+  static List<double> eigenvalues2x2(CalcMatrix matrix) {
+    if (matrix.rowCount != 2 || matrix.columnCount != 2) {
+      throw const FormatException('This eigenvalue helper requires a 2×2 matrix.');
+    }
+    final trace = matrix.rows[0][0] + matrix.rows[1][1];
+    final determinant = matrixDeterminant(matrix);
+    final discriminant = trace * trace - 4 * determinant;
+    if (discriminant < 0) return const <double>[];
+    final root = math.sqrt(discriminant);
+    return <double>[(trace + root) / 2, (trace - root) / 2];
+  }
+
+  static SparseMatrix parseSparseMatrix(
+    int rows,
+    int columns,
+    String input,
+  ) {
+    if (rows < 1 || columns < 1) {
+      throw const FormatException('Sparse matrix dimensions must be positive.');
+    }
+    final entries = <SparseEntry>[];
+    for (final token in input.split(';')) {
+      final cells = token.trim().split(RegExp(r'[,\\s]+'));
+      if (token.trim().isEmpty) continue;
+      if (cells.length != 3) {
+        throw const FormatException('Sparse entries use row,column,value.');
+      }
+      final row = int.tryParse(cells[0]);
+      final column = int.tryParse(cells[1]);
+      final value = double.tryParse(cells[2]);
+      if (row == null || column == null || value == null ||
+          row < 0 || row >= rows || column < 0 || column >= columns) {
+        throw const FormatException('Sparse entry is outside the matrix.');
+      }
+      entries.add(SparseEntry(row, column, value));
+    }
+    return SparseMatrix(rows: rows, columns: columns, entries: entries);
+  }
+
+  static List<double> sparseMatVec(SparseMatrix matrix, List<double> vector) {
+    if (vector.length != matrix.columns) {
+      throw const FormatException('Vector dimension does not match matrix.');
+    }
+    final result = List<double>.filled(matrix.rows, 0);
+    for (final entry in matrix.entries) {
+      result[entry.row] += entry.value * vector[entry.column];
+    }
+    return result;
+  }
+
+  static List<double>? conjugateGradient(
+    SparseMatrix matrix,
+    List<double> rhs, {
+    int maxIterations = 1000,
+    double tolerance = 1e-10,
+  }) {
+    if (matrix.rows != matrix.columns || rhs.length != matrix.rows) return null;
+    final x = List<double>.filled(matrix.rows, 0);
+    List<double> subtract(List<double> a, List<double> b) => List<double>.generate(
+      a.length,
+      (index) => a[index] - b[index],
+      growable: false,
+    );
+    double dot(List<double> a, List<double> b) {
+      var result = 0.0;
+      for (var index = 0; index < a.length; index++) {
+        result += a[index] * b[index];
+      }
+      return result;
+    }
+    var residual = subtract(rhs, sparseMatVec(matrix, x));
+    var direction = List<double>.from(residual);
+    var residualNorm = dot(residual, residual);
+    for (var iteration = 0; iteration < maxIterations; iteration++) {
+      final product = sparseMatVec(matrix, direction);
+      final denominator = dot(direction, product);
+      if (denominator.abs() < 1e-20) return null;
+      final alpha = residualNorm / denominator;
+      for (var index = 0; index < x.length; index++) {
+        x[index] += alpha * direction[index];
+        residual[index] -= alpha * product[index];
+      }
+      final nextNorm = dot(residual, residual);
+      if (math.sqrt(nextNorm) <= tolerance) return x;
+      final beta = nextNorm / residualNorm;
+      for (var index = 0; index < direction.length; index++) {
+        direction[index] = residual[index] + beta * direction[index];
+      }
+      residualNorm = nextNorm;
+    }
+    return null;
+  }
+
   static int _nextPowerOfTwo(int value) {
     var result = 1;
     while (result < value && result < 1 << 15) {
@@ -1441,6 +2492,162 @@ class DartComputation {
     }
     return leftResult + rightResult;
   }
+
+  static List<double>? _solveAugmented(List<List<double>> matrix) {
+    final rows = matrix.length;
+    if (rows == 0 || matrix.any((row) => row.length != rows + 1)) return null;
+    for (var column = 0; column < rows; column++) {
+      var pivot = column;
+      for (var row = column + 1; row < rows; row++) {
+        if (matrix[row][column].abs() > matrix[pivot][column].abs()) {
+          pivot = row;
+        }
+      }
+      if (matrix[pivot][column].abs() < 1e-14) return null;
+      final swap = matrix[pivot];
+      matrix[pivot] = matrix[column];
+      matrix[column] = swap;
+      final divisor = matrix[column][column];
+      for (var j = column; j <= rows; j++) {
+        matrix[column][j] /= divisor;
+      }
+      for (var row = 0; row < rows; row++) {
+        if (row == column) continue;
+        final factor = matrix[row][column];
+        for (var j = column; j <= rows; j++) {
+          matrix[row][j] -= factor * matrix[column][j];
+        }
+      }
+    }
+    return List<double>.generate(rows, (index) => matrix[index][rows]);
+  }
+
+  static double _evaluatePolynomial(List<double> coefficients, double x) {
+    var result = 0.0;
+    for (var index = coefficients.length - 1; index >= 0; index--) {
+      result = result * x + coefficients[index];
+    }
+    return result;
+  }
+
+  static double _logGamma(double z) {
+    const coefficients = <double>[
+      676.5203681218851,
+      -1259.1392167224028,
+      771.32342877765313,
+      -176.61502916214059,
+      12.507343278686905,
+      -0.13857109526572012,
+      9.9843695780195716e-6,
+      1.5056327351493116e-7,
+    ];
+    if (z < .5) {
+      return math.log(math.pi) - math.log(math.sin(math.pi * z)) -
+          _logGamma(1 - z);
+    }
+    var value = .99999999999980993;
+    final shifted = z - 1;
+    for (var index = 0; index < coefficients.length; index++) {
+      value += coefficients[index] / (shifted + index + 1);
+    }
+    final t = shifted + coefficients.length - .5;
+    return .5 * math.log(2 * math.pi) + (shifted + .5) * math.log(t) - t +
+        math.log(value);
+  }
+
+  static double _logBeta(double a, double b) =>
+      _logGamma(a) + _logGamma(b) - _logGamma(a + b);
+
+  static double _erf(double x) {
+    // Abramowitz and Stegun 7.1.26; maximum error is below 1.5e-7.
+    final sign = x < 0 ? -1 : 1;
+    final value = x.abs();
+    final t = 1 / (1 + .3275911 * value);
+    final polynomial =
+        (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t -
+                    .284496736) *
+                t +
+            .254829592) *
+        t;
+    return sign * (1 - polynomial * math.exp(-value * value));
+  }
+
+  static double _regularizedGamma(double shape, double value) {
+    if (value <= 0) return 0;
+    if (value < shape + 1) {
+      var sum = 1 / shape;
+      var term = sum;
+      for (var index = 1; index < 1000; index++) {
+        term *= value / (shape + index);
+        sum += term;
+        if (term.abs() < sum.abs() * 1e-14) break;
+      }
+      return sum * math.exp(-value + shape * math.log(value) - _logGamma(shape));
+    }
+    var b = value + 1 - shape;
+    var c = 1 / 1e-300;
+    var d = 1 / b;
+    var h = d;
+    for (var index = 1; index < 1000; index++) {
+      final an = -index * (index - shape);
+      b += 2;
+      d = an * d + b;
+      if (d.abs() < 1e-300) d = 1e-300;
+      c = b + an / c;
+      if (c.abs() < 1e-300) c = 1e-300;
+      d = 1 / d;
+      final delta = d * c;
+      h *= delta;
+      if ((delta - 1).abs() < 1e-14) break;
+    }
+    final upper = math.exp(-value + shape * math.log(value) - _logGamma(shape)) * h;
+    return (1 - upper).clamp(0, 1).toDouble();
+  }
+
+  static double _regularizedBeta(double x, double a, double b) {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    final factor = math.exp(a * math.log(x) + b * math.log(1 - x) - _logBeta(a, b));
+    final fraction = x < (a + 1) / (a + b + 2)
+        ? factor * _betaFraction(x, a, b) / a
+        : 1 - factor * _betaFraction(1 - x, b, a) / b;
+    return fraction.clamp(0, 1).toDouble();
+  }
+
+  static double _betaFraction(double x, double a, double b) {
+    var qab = a + b;
+    var qap = a + 1;
+    var qam = a - 1;
+    var c = 1.0;
+    var d = 1 - qab * x / qap;
+    if (d.abs() < 1e-300) d = 1e-300;
+    d = 1 / d;
+    var h = d;
+    for (var index = 1; index <= 200; index++) {
+      final m2 = 2 * index;
+      var aa = index * (b - index) * x / ((qam + m2) * (a + m2));
+      d = 1 + aa * d;
+      if (d.abs() < 1e-300) d = 1e-300;
+      c = 1 + aa / c;
+      if (c.abs() < 1e-300) c = 1e-300;
+      d = 1 / d;
+      h *= d * c;
+      aa = -(a + index) * (qab + index) * x /
+          ((a + m2) * (qap + m2));
+      d = 1 + aa * d;
+      if (d.abs() < 1e-300) d = 1e-300;
+      c = 1 + aa / c;
+      if (c.abs() < 1e-300) c = 1e-300;
+      d = 1 / d;
+      final delta = d * c;
+      h *= delta;
+      if ((delta - 1).abs() < 3e-14) break;
+    }
+    return h;
+  }
+
+  static double _logCombination(int n, int k) =>
+      _logGamma(n + 1) - _logGamma(k + 1) - _logGamma(n - k + 1);
 
   static double _median(List<double> values) {
     if (values.isEmpty) {

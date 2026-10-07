@@ -141,6 +141,11 @@ class _FeatureGrid extends StatelessWidget {
       _FeatureCardData(l10n.linearAlgebra, Icons.grid_4x4, '/linear-algebra'),
       _FeatureCardData(l10n.tools, Icons.build, '/tools'),
       _FeatureCardData(
+        nextEraText(context, 'Advanced tools', '高级工具'),
+        Icons.science,
+        '/advanced-tools',
+      ),
+      _FeatureCardData(
         nextEraText(context, 'History', '历史'),
         Icons.history,
         '/history',

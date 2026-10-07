@@ -9,6 +9,12 @@
     {"id": "scalar.modulo", "expression": "17 mod 5", "x": 0, "expected": 2},
     {"id": "scalar.variable-y", "expression": "x + y", "x": 2, "y": 3, "expected": 5, "nativeOnly": true},
     {"id": "error.divide-by-zero", "expression": "1 / 0", "x": 0, "expectedError": true},
-    {"id": "plot.discontinuity", "expression": "1 / x", "xs": [-1, 0, 1], "finite": [true, false, true]}
+    {"id": "plot.discontinuity", "expression": "1 / x", "xs": [-1, 0, 1], "finite": [true, false, true]},
+    {"id": "calculus.limit-sinc", "operation": "limit", "expression": "sin(x) / x", "point": 0, "expected": 1},
+    {"id": "calculus.area-parabola", "operation": "areaBetweenCurves", "f": "x", "g": "0", "a": 0, "b": 1, "expected": 0.5},
+    {"id": "equations.system-diagonal-circle", "operation": "solveSystem2d", "f": "x^2 + y^2 - 1", "g": "x - y", "x0": 0.7, "y0": 0.7, "expectedX": 0.7071067811865475, "expectedY": 0.7071067811865475},
+    {"id": "complex.square-one-plus-i", "operation": "power", "real": 1, "imaginary": 1, "exponentReal": 2, "exponentImaginary": 0, "expectedReal": 0, "expectedImaginary": 2},
+    {"id": "probability.normal-zero", "operation": "normal", "x": 0, "mu": 0, "sigma": 1, "pdf": 0.3989422804014327, "cdf": 0.5},
+    {"id": "linear-algebra.det-2x2", "operation": "determinant", "matrix": "1,2;3,4", "expected": -2}
   ]
 }

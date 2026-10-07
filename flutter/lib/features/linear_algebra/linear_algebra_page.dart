@@ -33,7 +33,12 @@ class _LinearAlgebraPageState extends ConsumerState<LinearAlgebraPage> {
       'determinant': nextEraText(context, 'Determinant A', 'det(A)'),
       'inverse': nextEraText(context, 'Inverse A', 'A 的逆矩阵'),
       'transpose': nextEraText(context, 'Transpose A', 'A 的转置'),
+      'add': nextEraText(context, 'A + B', 'A + B'),
+      'subtract': nextEraText(context, 'A − B', 'A − B'),
       'multiply': nextEraText(context, 'A × B', 'A × B'),
+      'rref': nextEraText(context, 'RREF A', 'A 的最简阶梯形'),
+      'rank': nextEraText(context, 'Rank A', 'A 的秩'),
+      'eigenvalues': nextEraText(context, 'Eigenvalues A (2×2)', 'A 的特征值（2×2）'),
     };
     return FeaturePageFrame(
       title: AppLocalizations.of(context).linearAlgebra,
@@ -145,6 +150,21 @@ class _LinearAlgebraPageState extends ConsumerState<LinearAlgebraPage> {
       } else if (_operation == 'transpose') {
         final matrix = await backend.parseMatrix(_left.text);
         _setResult(matrix.transpose.format());
+      } else if (_operation == 'add' || _operation == 'subtract') {
+        final matrix = await backend.addMatrices(
+          _left.text,
+          _right.text,
+          subtract: _operation == 'subtract',
+        );
+        _setResult(matrix.format());
+      } else if (_operation == 'rref') {
+        final matrix = await backend.rrefMatrix(_left.text);
+        _setResult(matrix.format());
+      } else if (_operation == 'rank') {
+        _setResult('${await backend.matrixRank(_left.text)}');
+      } else if (_operation == 'eigenvalues') {
+        final values = await backend.eigenvalues2x2(_left.text);
+        _setResult(values.map((value) => value.toStringAsPrecision(12)).join(', '));
       } else {
         final matrix = await backend.multiplyMatrices(_left.text, _right.text);
         _setResult(matrix.format());

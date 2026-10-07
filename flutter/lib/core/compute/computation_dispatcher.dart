@@ -157,7 +157,238 @@ class ComputationDispatcher {
     List<double> xs,
     List<double> ys,
   ) => compute(_regressionTask, _RegressionTask(xs: xs, ys: ys));
+
+  static Future<CalcPolynomialRegression> polynomialRegression(
+    List<double> xs,
+    List<double> ys, {
+    int degree = 2,
+  }) => compute(
+    _polynomialRegressionTask,
+    _PolynomialRegressionTask(xs: xs, ys: ys, degree: degree),
+  );
+
+  static Future<CalcModelRegression> nonlinearRegression(
+    String model,
+    List<double> xs,
+    List<double> ys,
+  ) => compute(
+    _nonlinearRegressionTask,
+    _NonlinearRegressionTask(model: model, xs: xs, ys: ys),
+  );
+
+  static Future<double?> interpolate(
+    String method,
+    List<double> xs,
+    List<double> ys,
+    double x,
+  ) => compute(
+    _interpolateTask,
+    _InterpolateTask(method: method, xs: xs, ys: ys, x: x),
+  );
+
+  static Future<CalcDistributionResult> distribution(
+    String name,
+    double x,
+    Map<String, double> parameters,
+  ) => compute(
+    _distributionTask,
+    _DistributionTask(name: name, x: x, parameters: parameters),
+  );
+
+  static Future<List<double>> convolution(
+    List<double> left,
+    List<double> right,
+  ) => compute(_convolutionTask, _ConvolutionTask(left: left, right: right));
+
+  static Future<List<double>> scanRoots(
+    String expression,
+    double start,
+    double end, {
+    int samples = 512,
+    double tolerance = 1e-8,
+  }) => compute(
+    _scanRootsTask,
+    _ScanRootsTask(expression: expression, start: start, end: end, samples: samples, tolerance: tolerance),
+  );
+
+  static Future<List<double>> intersections(
+    String expressionF,
+    String expressionG,
+    double start,
+    double end, {
+    int samples = 512,
+    double tolerance = 1e-8,
+  }) => compute(
+    _intersectionsTask,
+    _IntersectionsTask(expressionF: expressionF, expressionG: expressionG, start: start, end: end, samples: samples, tolerance: tolerance),
+  );
+
+  static Future<Map<String, double>?> solveSystem2d(
+    String expressionF,
+    String expressionG, {
+    double x = 0,
+    double y = 0,
+    double tolerance = 1e-10,
+    int maxIterations = 100,
+  }) => compute(
+    _systemTask,
+    _SystemTask(expressionF: expressionF, expressionG: expressionG, x: x, y: y, tolerance: tolerance, maxIterations: maxIterations),
+  );
+
+  static Future<Map<String, double>?> tangentAndNormal(
+    String expression,
+    double x, {
+    double? step,
+  }) => compute(
+    _tangentTask,
+    _TangentTask(expression: expression, x: x, step: step),
+  );
 }
+
+class _ScanRootsTask {
+  const _ScanRootsTask({required this.expression, required this.start, required this.end, required this.samples, required this.tolerance});
+
+  final String expression;
+  final double start;
+  final double end;
+  final int samples;
+  final double tolerance;
+}
+
+List<double> _scanRootsTask(_ScanRootsTask task) => DartComputation.scanRoots(
+  task.expression,
+  task.start,
+  task.end,
+  samples: task.samples,
+  tolerance: task.tolerance,
+);
+
+class _IntersectionsTask {
+  const _IntersectionsTask({required this.expressionF, required this.expressionG, required this.start, required this.end, required this.samples, required this.tolerance});
+
+  final String expressionF;
+  final String expressionG;
+  final double start;
+  final double end;
+  final int samples;
+  final double tolerance;
+}
+
+List<double> _intersectionsTask(_IntersectionsTask task) => DartComputation.findIntersections(
+  task.expressionF,
+  task.expressionG,
+  task.start,
+  task.end,
+  samples: task.samples,
+  tolerance: task.tolerance,
+);
+
+class _SystemTask {
+  const _SystemTask({required this.expressionF, required this.expressionG, required this.x, required this.y, required this.tolerance, required this.maxIterations});
+
+  final String expressionF;
+  final String expressionG;
+  final double x;
+  final double y;
+  final double tolerance;
+  final int maxIterations;
+}
+
+Map<String, double>? _systemTask(_SystemTask task) => DartComputation.solveSystem2d(
+  task.expressionF,
+  task.expressionG,
+  x: task.x,
+  y: task.y,
+  tolerance: task.tolerance,
+  maxIterations: task.maxIterations,
+);
+
+class _TangentTask {
+  const _TangentTask({required this.expression, required this.x, required this.step});
+
+  final String expression;
+  final double x;
+  final double? step;
+}
+
+Map<String, double>? _tangentTask(_TangentTask task) =>
+    DartComputation.tangentAndNormal(task.expression, task.x, step: task.step);
+
+class _ConvolutionTask {
+  const _ConvolutionTask({required this.left, required this.right});
+
+  final List<double> left;
+  final List<double> right;
+}
+
+List<double> _convolutionTask(_ConvolutionTask task) =>
+    DartComputation.convolution(task.left, task.right);
+
+class _PolynomialRegressionTask {
+  const _PolynomialRegressionTask({
+    required this.xs,
+    required this.ys,
+    required this.degree,
+  });
+
+  final List<double> xs;
+  final List<double> ys;
+  final int degree;
+}
+
+CalcPolynomialRegression _polynomialRegressionTask(_PolynomialRegressionTask task) =>
+    DartComputation.polynomialRegression(task.xs, task.ys, degree: task.degree);
+
+class _NonlinearRegressionTask {
+  const _NonlinearRegressionTask({
+    required this.model,
+    required this.xs,
+    required this.ys,
+  });
+
+  final String model;
+  final List<double> xs;
+  final List<double> ys;
+}
+
+CalcModelRegression _nonlinearRegressionTask(_NonlinearRegressionTask task) =>
+    DartComputation.nonlinearRegression(task.model, task.xs, task.ys);
+
+class _InterpolateTask {
+  const _InterpolateTask({
+    required this.method,
+    required this.xs,
+    required this.ys,
+    required this.x,
+  });
+
+  final String method;
+  final List<double> xs;
+  final List<double> ys;
+  final double x;
+}
+
+double? _interpolateTask(_InterpolateTask task) => DartComputation.interpolate(
+  task.method,
+  task.xs,
+  task.ys,
+  task.x,
+);
+
+class _DistributionTask {
+  const _DistributionTask({
+    required this.name,
+    required this.x,
+    required this.parameters,
+  });
+
+  final String name;
+  final double x;
+  final Map<String, double> parameters;
+}
+
+CalcDistributionResult _distributionTask(_DistributionTask task) =>
+    DartComputation.distribution(task.name, task.x, task.parameters);
 
 class CalcEvaluationValue {
   const CalcEvaluationValue({required this.value, this.error});

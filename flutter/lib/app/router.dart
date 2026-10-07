@@ -11,6 +11,7 @@ import '../features/ode/ode_page.dart';
 import '../features/plotting/plot_page.dart';
 import '../features/signals/signals_page.dart';
 import '../features/statistics/statistics_page.dart';
+import '../features/tools/advanced_tools_page.dart';
 import '../features/tools/tools_page.dart';
 import 'shell/app_shell.dart';
 
@@ -38,6 +39,10 @@ final GoRouter appRouter = GoRouter(
           builder: (_, _) => const LinearAlgebraPage(),
         ),
         GoRoute(path: '/tools', builder: (_, _) => const ToolsPage()),
+        GoRoute(
+          path: '/advanced-tools',
+          builder: (_, _) => const AdvancedToolsPage(),
+        ),
         GoRoute(path: '/history', builder: (_, _) => const HistoryPage()),
       ],
     ),
