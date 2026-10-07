@@ -241,10 +241,8 @@ class DartCalcBackend implements CalcBackend {
       ComputationDispatcher.statistics(values);
 
   @override
-  Future<CalcRegression> linearRegression(
-    List<double> xs,
-    List<double> ys,
-  ) => ComputationDispatcher.linearRegression(xs, ys);
+  Future<CalcRegression> linearRegression(List<double> xs, List<double> ys) =>
+      ComputationDispatcher.linearRegression(xs, ys);
 
   @override
   Future<CalcMatrix> parseMatrix(String input) async =>

@@ -20,10 +20,11 @@ void main() {
   });
 
   test('heavy fallback work crosses the computation dispatcher', () async {
-    final values = await ComputationDispatcher.evaluateArray(
-      'x^2',
-      <double>[0, 1, 2],
-    );
+    final values = await ComputationDispatcher.evaluateArray('x^2', <double>[
+      0,
+      1,
+      2,
+    ]);
     final integral = await ComputationDispatcher.integrate('x^2', 0, 1);
 
     expect(values, <double?>[0, 1, 4]);

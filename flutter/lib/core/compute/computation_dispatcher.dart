@@ -15,19 +15,14 @@ class ComputationDispatcher {
   static Future<List<double?>> evaluateArray(
     String expression,
     List<double> xs,
-  ) => compute(
-    _evaluateArrayTask,
-    _ArrayTask(expression: expression, xs: xs),
-  );
+  ) => compute(_evaluateArrayTask, _ArrayTask(expression: expression, xs: xs));
 
   static Future<CalcEvaluationValue> evaluate(
     String expression,
     double x, {
     double y = 0,
-  }) => compute(
-    _evaluateTask,
-    _EvaluateTask(expression: expression, x: x, y: y),
-  );
+  }) =>
+      compute(_evaluateTask, _EvaluateTask(expression: expression, x: x, y: y));
 
   static Future<double?> derivative(
     String expression,
@@ -36,12 +31,7 @@ class ComputationDispatcher {
     bool second = false,
   }) => compute(
     _derivativeTask,
-    _DerivativeTask(
-      expression: expression,
-      x: x,
-      step: step,
-      second: second,
-    ),
+    _DerivativeTask(expression: expression, x: x, step: step, second: second),
   );
 
   static Future<double?> integrate(
@@ -51,12 +41,7 @@ class ComputationDispatcher {
     double tolerance = 1e-8,
   }) => compute(
     _integrateTask,
-    _IntegrateTask(
-      expression: expression,
-      a: a,
-      b: b,
-      tolerance: tolerance,
-    ),
+    _IntegrateTask(expression: expression, a: a, b: b, tolerance: tolerance),
   );
 
   static Future<double?> solve(
@@ -86,13 +71,7 @@ class ComputationDispatcher {
     int steps = 200,
   }) => compute(
     _odeTask,
-    _OdeTask(
-      expression: expression,
-      x0: x0,
-      y0: y0,
-      xEnd: xEnd,
-      steps: steps,
-    ),
+    _OdeTask(expression: expression, x0: x0, y0: y0, xEnd: xEnd, steps: steps),
   );
 
   static Future<CalcSpectrum> spectrum(
@@ -105,10 +84,8 @@ class ComputationDispatcher {
     _SpectrumTask(expression: expression, a: a, b: b, samples: samples),
   );
 
-  static Future<CalcStatistics> statistics(List<double> values) => compute(
-    _statisticsTask,
-    values,
-  );
+  static Future<CalcStatistics> statistics(List<double> values) =>
+      compute(_statisticsTask, values);
 
   static Future<CalcRegression> linearRegression(
     List<double> xs,
@@ -150,11 +127,15 @@ CalcEvaluationValue _evaluateTask(_EvaluateTask task) {
     final value = DartComputation.evaluate(task.expression, task.x, task.y);
     return value.isFinite
         ? CalcEvaluationValue(value: value)
-        : const CalcEvaluationValue(error: 'The expression produced a non-finite value.');
+        : const CalcEvaluationValue(
+            error: 'The expression produced a non-finite value.',
+          );
   } on FormatException catch (error) {
     return CalcEvaluationValue(error: error.message);
   } catch (_) {
-    return const CalcEvaluationValue(error: 'The expression could not be evaluated.');
+    return const CalcEvaluationValue(
+      error: 'The expression could not be evaluated.',
+    );
   }
 }
 
