@@ -1,0 +1,41 @@
+name: supercalculator_next_era
+description: SuperCalculator - Next Era, a cross-platform scientific calculator.
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.13.5 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  ffi: ^2.1.3
+  flutter_riverpod: ^3.0.3
+  go_router: ^16.2.4
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: ^2.7.1
+  freezed: ^3.2.3
+  json_serializable: ^6.11.3
+
+flutter:
+  uses-material-design: true
+  generate: true
+  assets:
+    - assets/presets/
+
+  # Fonts will be added after the license inventory is completed. Until then
+  # the Material typography fallback is used consistently on every platform.
+
+  # Keep this project on the stable Flutter channel. CI verifies the exact
+  # SDK before running pub get.

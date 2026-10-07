@@ -1,0 +1,57 @@
+name: Flutter Next Era checks
+
+on:
+  pull_request:
+    paths:
+      - 'flutter/**'
+      - 'native/calc_core/**'
+      - 'calc_core.c'
+      - 'tool/**'
+      - '.github/workflows/flutter-next-era.yml'
+  push:
+    branches: [master]
+    paths:
+      - 'flutter/**'
+      - 'native/calc_core/**'
+      - 'calc_core.c'
+      - 'tool/**'
+      - '.github/workflows/flutter-next-era.yml'
+  workflow_dispatch:
+
+jobs:
+  flutter:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.6'
+          channel: stable
+          cache: true
+      - run: flutter --version
+      - run: dart --version
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed lib test integration_test
+      - run: flutter analyze
+      - run: flutter test
+      - run: flutter build web --release
+
+  native:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build C ABI smoke test
+        run: |
+          gcc -std=c11 -Wall -Wextra -Wpedantic -O2 -fPIC \
+            -DSUPERCALC_CORE_BUILD -shared -I native/calc_core/include \
+            calc_core.c native/calc_core/src/supercalc_core.c -lm \
+            -o /tmp/libsupercalc_core.so
+          gcc -std=c11 -Wall -Wextra -Wpedantic -O2 -I native/calc_core/include \
+            native/calc_core/tests/smoke_test.c -L/tmp -Wl,-rpath,/tmp \
+            -lsupercalc_core -o /tmp/supercalc_core_smoke
+          /tmp/supercalc_core_smoke

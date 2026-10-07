@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "tolerance": 1e-10,
+  "vectors": [
+    {"id": "scalar.square-plus-one", "expression": "x^2 + 1", "x": 3, "expected": 10},
+    {"id": "scalar.sin-pi-over-two", "expression": "sin(pi / 2)", "x": 0, "expected": 1},
+    {"id": "scalar.sqrt", "expression": "sqrt(x)", "x": 9, "expected": 3},
+    {"id": "scalar.factorial", "expression": "5!", "x": 0, "expected": 120},
+    {"id": "scalar.modulo", "expression": "17 mod 5", "x": 0, "expected": 2},
+    {"id": "scalar.variable-y", "expression": "x + y", "x": 2, "y": 3, "expected": 5, "nativeOnly": true},
+    {"id": "error.divide-by-zero", "expression": "1 / 0", "x": 0, "expectedError": true},
+    {"id": "plot.discontinuity", "expression": "1 / x", "xs": [-1, 0, 1], "finite": [true, false, true]}
+  ]
+}

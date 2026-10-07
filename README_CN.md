@@ -1,6 +1,14 @@
-# Super Function Graphing Calculator
+# SuperCalculator - Next Era
 
-> 超级函数绘图计算器 — 基于桥接模式(Bridge Pattern)，融合 C 与 Python 优势的高性能函数计算与可视化工具
+> 项目正在迁移到统一的 Flutter 应用，采用 Material 3 Expressive，并通过版本化 FFI/Wasm 边界继续复用 C 计算核心。
+>
+> 增量迁移期间仍保留旧 Python Tkinter/Matplotlib 界面以便回滚，但它不是最终生产 UI。
+
+**迁移状态：** M0/M1 基础设施已建立。请查看 [`docs/migration/m0-baseline.md`](docs/migration/m0-baseline.md)、
+[`docs/migration/feature-manifest.json`](docs/migration/feature-manifest.json)、
+[`docs/architecture.md`](docs/architecture.md) 和 [`docs/ffi.md`](docs/ffi.md)。
+
+当前旧实现采用桥接模式：C 负责计算，Python 负责旧 GUI，`ctypes` 负责桥接。
 
 [![Build Windows EXE](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-windows-exe.yml/badge.svg)](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-windows-exe.yml)
 

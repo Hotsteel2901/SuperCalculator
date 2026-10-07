@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "source": "legacy-supercalculator",
+  "advertisedCount": 21,
+  "verifiedCount": 25,
+  "presets": [
+    {"label": "sin(x)", "expression": "sin(x)"},
+    {"label": "cos(x)", "expression": "cos(x)"},
+    {"label": "tan(x)", "expression": "tan(x)"},
+    {"label": "x^2 (square)", "expression": "x^2"},
+    {"label": "x^3 (cube)", "expression": "x^3"},
+    {"label": "sqrt(x)", "expression": "sqrt(x)"},
+    {"label": "ln(x)", "expression": "ln(x)"},
+    {"label": "log10(x)", "expression": "log(x)"},
+    {"label": "exp(x)", "expression": "exp(x)"},
+    {"label": "1/x", "expression": "1/x"},
+    {"label": "abs(x)", "expression": "abs(x)"},
+    {"label": "sin(x) + cos(x)", "expression": "sin(x)+cos(x)"},
+    {"label": "x*sin(x)", "expression": "x*sin(x)"},
+    {"label": "exp(-x)*sin(2*pi*x)", "expression": "exp(-x)*sin(2*pi*x)"},
+    {"label": "x^2/2 - cos(x)", "expression": "x^2/2-cos(x)"},
+    {"label": "x! (factorial)", "expression": "x!"},
+    {"label": "3D: x^2+y^2", "expression": "x^2+y^2"},
+    {"label": "3D: sin(x)*cos(y)", "expression": "sin(x)*cos(y)"},
+    {"label": "3D: sin(sqrt(x^2+y^2))", "expression": "sin(sqrt(x^2+y^2))"},
+    {"label": "FFT: sin(2*pi*x) + 0.5*sin(6*pi*x)", "expression": "sin(2*pi*x)+0.5*sin(6*pi*x)"},
+    {"label": "FFT: sin(5*x) + cos(10*x)", "expression": "sin(5*x)+cos(10*x)"},
+    {"label": "floor(x) (staircase)", "expression": "floor(x)"},
+    {"label": "ceil(x) (staircase)", "expression": "ceil(x)"},
+    {"label": "x mod 1 (sawtooth)", "expression": "x mod 1"},
+    {"label": "sin(x) mod 1", "expression": "sin(x) mod 1"}
+  ]
+}

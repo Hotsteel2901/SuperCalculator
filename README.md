@@ -1,7 +1,17 @@
-# Super Function Graphing Calculator
+# SuperCalculator - Next Era
 
-> A high-performance function graphing calculator using the **Bridge Pattern**:
-C for computation, Python for the GUI, and `ctypes` as the bridge.
+> The project is migrating to a single Flutter application using Material 3 Expressive,
+> while retaining the C computation core through a versioned FFI/Wasm boundary.
+>
+> The legacy Python Tkinter/Matplotlib UI remains runnable during the incremental
+> migration, but it is not the target production UI.
+
+**Migration status:** M0/M1 scaffolded. See [`docs/migration/m0-baseline.md`](docs/migration/m0-baseline.md),
+[`docs/migration/feature-manifest.json`](docs/migration/feature-manifest.json),
+[`docs/architecture.md`](docs/architecture.md), and [`docs/ffi.md`](docs/ffi.md).
+
+The current legacy implementation uses the Bridge Pattern:
+C for computation, Python for the legacy GUI, and `ctypes` as the bridge.
 
 [![Build Windows EXE](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-windows-exe.yml/badge.svg)](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-windows-exe.yml)
 
