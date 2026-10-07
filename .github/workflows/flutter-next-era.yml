@@ -50,19 +50,25 @@ jobs:
           if git diff --quiet -- flutter; then
             exit 0
           fi
+          branch="${{ github.head_ref }}"
+          git stash push --include-untracked -m 'temporary Flutter formatter changes'
+          git fetch origin "$branch"
+          if ! rebase_output=$(git rebase "origin/$branch" 2>&1); then
+            clean_output="$(printf '%s' "$rebase_output" | tr '\n' ' ' | cut -c1-3500)"
+            echo "::error title=formatter rebase failed::$clean_output"
+            exit 1
+          fi
+          if ! stash_output=$(git stash pop 2>&1); then
+            clean_output="$(printf '%s' "$stash_output" | tr '\n' ' ' | cut -c1-3500)"
+            echo "::error title=formatter stash failed::$clean_output"
+            exit 1
+          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add flutter/lib flutter/test flutter/integration_test
           if ! commit_output=$(git commit -m 'style: format Flutter sources' 2>&1); then
             clean_output="$(printf '%s' "$commit_output" | tr '\n' ' ' | cut -c1-3500)"
             echo "::error title=formatter commit failed::$clean_output"
-            exit 1
-          fi
-          branch="${{ github.head_ref }}"
-          git fetch origin "$branch"
-          if ! rebase_output=$(git rebase "origin/$branch" 2>&1); then
-            clean_output="$(printf '%s' "$rebase_output" | tr '\n' ' ' | cut -c1-3500)"
-            echo "::error title=formatter rebase failed::$clean_output"
             exit 1
           fi
           if ! push_output=$(git push origin "HEAD:$branch" 2>&1); then
