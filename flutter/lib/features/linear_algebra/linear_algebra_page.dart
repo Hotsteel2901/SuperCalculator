@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/backend/providers.dart';
-import '../../core/compute/calculation_models.dart';
 import '../../core/ui/feature_widgets.dart';
 import '../../l10n/generated/app_localizations.dart';
 

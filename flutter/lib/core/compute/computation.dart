@@ -14,7 +14,7 @@ class ExpressionEngine {
   static CompiledExpression compile(String source) {
     final parser = _ExpressionCompiler(source);
     final root = parser.parse();
-    return CompiledExpression(source, root);
+    return CompiledExpression._(source, root);
   }
 
   static double evaluate(String source, {double x = 0, double y = 0}) {
@@ -23,7 +23,7 @@ class ExpressionEngine {
 }
 
 class CompiledExpression {
-  const CompiledExpression(this.source, this._root);
+  const CompiledExpression._(this.source, this._root);
 
   final String source;
   final _ExpressionNode _root;
@@ -169,11 +169,12 @@ class _FunctionNode extends _ExpressionNode {
       case 'atan':
         return math.atan(value);
       case 'sinh':
-        return math.sinh(value);
+        return (math.exp(value) - math.exp(-value)) / 2;
       case 'cosh':
-        return math.cosh(value);
+        return (math.exp(value) + math.exp(-value)) / 2;
       case 'tanh':
-        return math.tanh(value);
+        final positive = math.exp(2 * value);
+        return (positive - 1) / (positive + 1);
       default:
         return double.nan;
     }
@@ -635,9 +636,9 @@ class DartComputation {
     final sum = values.fold<double>(0, (total, value) => total + value);
     final mean = sum / values.length;
     final variance = values.length < 2
-        ? 0
+        ? 0.0
         : values.fold<double>(
-                0,
+                0.0,
                 (total, value) => total + (value - mean) * (value - mean),
               ) /
               (values.length - 1);
