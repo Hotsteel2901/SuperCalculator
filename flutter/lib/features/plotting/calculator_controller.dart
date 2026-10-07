@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/backend/calc_backend.dart';
 import '../../core/backend/providers.dart';
 import '../../core/plot/plot_point.dart';
 

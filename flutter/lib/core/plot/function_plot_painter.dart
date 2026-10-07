@@ -63,7 +63,7 @@ class FunctionPlotPainter extends CustomPainter {
       }
       final mapped = _map(point, size, xMin, xMax, yMin, yMax);
       if (previous == null ||
-          (point.y - previous!.y).abs() > (yMax - yMin) * 1.5) {
+          (point.y - previous.y).abs() > (yMax - yMin) * 1.5) {
         path.moveTo(mapped.dx, mapped.dy);
       } else {
         path.lineTo(mapped.dx, mapped.dy);

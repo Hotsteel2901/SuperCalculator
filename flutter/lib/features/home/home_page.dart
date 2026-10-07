@@ -70,16 +70,19 @@ class HomePage extends StatelessWidget {
                 spacing: tokens.cardGap,
                 runSpacing: tokens.cardGap,
                 children: <Widget>[
-                  _StatusChip(
+                  const _StatusChip(
                     label: 'Material 3',
                     icon: Icons.palette_outlined,
                   ),
-                  _StatusChip(label: 'C FFI', icon: Icons.memory_outlined),
-                  _StatusChip(
+                  const _StatusChip(
+                    label: 'C FFI',
+                    icon: Icons.memory_outlined,
+                  ),
+                  const _StatusChip(
                     label: 'Riverpod',
                     icon: Icons.account_tree_outlined,
                   ),
-                  _StatusChip(
+                  const _StatusChip(
                     label: 'WebAssembly',
                     icon: Icons.language_outlined,
                   ),
