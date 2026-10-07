@@ -76,8 +76,14 @@ class _ToolsPageState extends State<ToolsPage> {
                 const SizedBox(height: 12),
                 FormRow(
                   children: <Widget>[
-                    _baseField(_baseFrom, nextEraText(context, 'From base', '源进制')),
-                    _baseField(_baseTo, nextEraText(context, 'To base', '目标进制')),
+                    _baseField(
+                      _baseFrom,
+                      nextEraText(context, 'From base', '源进制'),
+                    ),
+                    _baseField(
+                      _baseTo,
+                      nextEraText(context, 'To base', '目标进制'),
+                    ),
                     FilledButton.icon(
                       onPressed: _convertBase,
                       icon: const Icon(Icons.transform),
@@ -88,9 +94,8 @@ class _ToolsPageState extends State<ToolsPage> {
                 if (_baseResult != null)
                   SelectableText(
                     _baseResult!,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontFamily: 'monospace',
-                    ),
+                    style: Theme.of(context).textTheme.titleLarge
+                        ?.copyWith(fontFamily: 'monospace'),
                   ),
               ],
             ),
@@ -192,10 +197,7 @@ class _ToolsPageState extends State<ToolsPage> {
       decoration: InputDecoration(labelText: label),
       items: units
           .map(
-            (unit) => DropdownMenuItem<String>(
-              value: unit,
-              child: Text(unit),
-            ),
+            (unit) => DropdownMenuItem<String>(value: unit, child: Text(unit)),
           )
           .toList(growable: false),
       onChanged: (next) {

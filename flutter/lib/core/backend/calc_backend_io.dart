@@ -381,12 +381,7 @@ class FfiCalcBackend implements CalcBackend {
     required double b,
     int samples = 1024,
   }) async =>
-      DartComputation.spectrum(
-        expression,
-        a: a,
-        b: b,
-        samples: samples,
-      );
+      DartComputation.spectrum(expression, a: a, b: b, samples: samples);
 
   @override
   Future<CalcStatistics> statistics(List<double> values) async =>
@@ -396,8 +391,7 @@ class FfiCalcBackend implements CalcBackend {
   Future<CalcRegression> linearRegression(
     List<double> xs,
     List<double> ys,
-  ) async =>
-      DartComputation.linearRegression(xs, ys);
+  ) async => DartComputation.linearRegression(xs, ys);
 
   @override
   Future<CalcMatrix> parseMatrix(String input) async =>
@@ -439,10 +433,7 @@ class FfiCalcBackend implements CalcBackend {
     if (status == 0 && value.isFinite) {
       return CalcEvaluation(value: value, backend: name);
     }
-    return CalcEvaluation.failure(
-      backend: name,
-      message: _readLastError(),
-    );
+    return CalcEvaluation.failure(backend: name, message: _readLastError());
   }
 
   CalcEvaluation _closedResult() => const CalcEvaluation.failure(

@@ -90,7 +90,11 @@ class CalculatorController extends Notifier<CalculatorState> {
   }
 
   void setMode(String value) {
-    state = state.copyWith(mode: value, clearError: true, points: const <PlotPoint>[]);
+    state = state.copyWith(
+      mode: value,
+      clearError: true,
+      points: const <PlotPoint>[],
+    );
   }
 
   Future<void> evaluate() async {
@@ -131,16 +135,22 @@ class CalculatorController extends Notifier<CalculatorState> {
           points: points,
         );
         if (result.value != null) {
-          ref.read(calculationHistoryProvider.notifier).add(
-            expression: expression,
-            result: result.value!.toStringAsPrecision(12),
-            backend: result.backend,
-          );
+          ref
+              .read(calculationHistoryProvider.notifier)
+              .add(
+                expression: expression,
+                result: result.value!.toStringAsPrecision(12),
+                backend: result.backend,
+              );
         }
         return;
       }
 
-      final points = _sampleSpecialMode(state.mode, expression, state.secondaryExpression);
+      final points = _sampleSpecialMode(
+        state.mode,
+        expression,
+        state.secondaryExpression,
+      );
       state = state.copyWith(
         backend: 'Dart sampling',
         isCalculating: false,

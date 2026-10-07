@@ -14,7 +14,9 @@ class SignalsPage extends ConsumerStatefulWidget {
 }
 
 class _SignalsPageState extends ConsumerState<SignalsPage> {
-  final _expression = TextEditingController(text: 'sin(2*pi*5*x) + 0.5*sin(2*pi*12*x)');
+  final _expression = TextEditingController(
+    text: 'sin(2*pi*5*x) + 0.5*sin(2*pi*12*x)',
+  );
   final _start = TextEditingController(text: '0');
   final _end = TextEditingController(text: '1');
   final _samples = TextEditingController(text: '1024');
@@ -81,7 +83,9 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
           ),
           const SizedBox(height: 16),
           ResultCard(
-            value: _result ?? nextEraText(context, 'No spectrum computed yet.', '尚未计算频谱。'),
+            value:
+                _result ??
+                nextEraText(context, 'No spectrum computed yet.', '尚未计算频谱。'),
             error: _error,
           ),
           if (_busy) ...<Widget>[
@@ -131,7 +135,11 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
     final samples = int.tryParse(_samples.text.trim());
     if (start == null || end == null || samples == null || end <= start) {
       setState(() {
-        _error = nextEraText(context, 'Enter a valid interval and sample count.', '请输入有效区间和采样数。');
+        _error = nextEraText(
+          context,
+          'Enter a valid interval and sample count.',
+          '请输入有效区间和采样数。',
+        );
       });
       return;
     }
@@ -141,12 +149,14 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
       _result = null;
       _spectrum = const <PlotPoint>[];
     });
-    final spectrum = await ref.read(calcBackendProvider).spectrum(
-      _expression.text,
-      a: start,
-      b: end,
-      samples: samples.clamp(2, 32768).toInt(),
-    );
+    final spectrum = await ref
+        .read(calcBackendProvider)
+        .spectrum(
+          _expression.text,
+          a: start,
+          b: end,
+          samples: samples.clamp(2, 32768).toInt(),
+        );
     if (!mounted) {
       return;
     }
@@ -168,7 +178,11 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
               '主频：${spectrum.frequencies[dominant].toStringAsPrecision(8)} Hz',
             );
       _error = points.isEmpty
-          ? nextEraText(context, 'The signal could not be evaluated.', '无法计算该信号。')
+          ? nextEraText(
+              context,
+              'The signal could not be evaluated.',
+              '无法计算该信号。',
+            )
           : null;
     });
   }

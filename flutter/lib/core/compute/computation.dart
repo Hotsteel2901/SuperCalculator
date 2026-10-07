@@ -490,8 +490,9 @@ class DartComputation {
       final h = 1e-6 * (x.abs() + 1);
       final fp = function.evaluate(x: x + h);
       final fm = function.evaluate(x: x - h);
-      final derivative =
-          fp.isFinite && fm.isFinite ? (fp - fm) / (2 * h) : double.nan;
+      final derivative = fp.isFinite && fm.isFinite
+          ? (fp - fm) / (2 * h)
+          : double.nan;
       var next = double.nan;
       if (derivative.isFinite && derivative.abs() > 1e-14 && fx.isFinite) {
         next = x - fx / derivative;
@@ -534,7 +535,11 @@ class DartComputation {
     int steps = 200,
   }) {
     if (steps < 1 || !x0.isFinite || !xEnd.isFinite || !y0.isFinite) {
-      return const CalcOdeSolution(xs: <double>[], ys: <double?>[], method: 'RK4');
+      return const CalcOdeSolution(
+        xs: <double>[],
+        ys: <double?>[],
+        method: 'RK4',
+      );
     }
     final function = ExpressionEngine.compile(expression);
     final xs = <double>[x0];
@@ -543,8 +548,7 @@ class DartComputation {
     var x = x0;
     var y = y0;
     for (var i = 0; i < steps; i++) {
-      double slope(double atX, double atY) =>
-          function.evaluate(x: atX, y: atY);
+      double slope(double atX, double atY) => function.evaluate(x: atX, y: atY);
       final k1 = slope(x, y);
       final k2 = slope(x + h / 2, y + h * k1 / 2);
       final k3 = slope(x + h / 2, y + h * k2 / 2);
@@ -595,7 +599,9 @@ class DartComputation {
     final phases = <double>[];
     for (var i = 0; i < count; i++) {
       frequencies.add(i / (b - a));
-      var amplitude = math.sqrt(real[i] * real[i] + imaginary[i] * imaginary[i]);
+      var amplitude = math.sqrt(
+        real[i] * real[i] + imaginary[i] * imaginary[i],
+      );
       amplitude *= 2 / size;
       if (i == 0 || (size.isEven && i == size ~/ 2)) amplitude /= 2;
       amplitudes.add(amplitude);
@@ -631,10 +637,10 @@ class DartComputation {
     final variance = values.length < 2
         ? 0
         : values.fold<double>(
-              0,
-              (total, value) => total + (value - mean) * (value - mean),
-            ) /
-            (values.length - 1);
+                0,
+                (total, value) => total + (value - mean) * (value - mean),
+              ) /
+              (values.length - 1);
     final frequencies = <double, int>{};
     for (final value in values) {
       frequencies[value] = (frequencies[value] ?? 0) + 1;
@@ -654,17 +660,12 @@ class DartComputation {
       variance: variance,
       standardDeviation: math.sqrt(variance),
       q1: _median(values.sublist(0, values.length ~/ 2)),
-      q3: _median(
-        values.sublist((values.length + 1) ~/ 2),
-      ),
+      q3: _median(values.sublist((values.length + 1) ~/ 2)),
       mode: mode,
     );
   }
 
-  static CalcRegression linearRegression(
-    List<double> xs,
-    List<double> ys,
-  ) {
+  static CalcRegression linearRegression(List<double> xs, List<double> ys) {
     final points = <List<double>>[];
     for (var i = 0; i < xs.length && i < ys.length; i++) {
       if (xs[i].isFinite && ys[i].isFinite) {
@@ -680,10 +681,10 @@ class DartComputation {
         ys: <double>[],
       );
     }
-    final meanX = points.fold<double>(0, (sum, point) => sum + point[0]) /
-        points.length;
-    final meanY = points.fold<double>(0, (sum, point) => sum + point[1]) /
-        points.length;
+    final meanX =
+        points.fold<double>(0, (sum, point) => sum + point[0]) / points.length;
+    final meanY =
+        points.fold<double>(0, (sum, point) => sum + point[1]) / points.length;
     var xx = 0.0;
     var xy = 0.0;
     var total = 0.0;
@@ -746,14 +747,40 @@ class DartComputation {
     double value,
   ) {
     const factors = <String, Map<String, double>>{
-      'Length': <String, double>{'m': 1, 'km': 1000, 'cm': .01, 'mm': .001, 'in': .0254, 'ft': .3048},
-      'Weight': <String, double>{'kg': 1, 'g': .001, 'lb': .45359237, 'oz': .028349523125},
+      'Length': <String, double>{
+        'm': 1,
+        'km': 1000,
+        'cm': .01,
+        'mm': .001,
+        'in': .0254,
+        'ft': .3048,
+      },
+      'Weight': <String, double>{
+        'kg': 1,
+        'g': .001,
+        'lb': .45359237,
+        'oz': .028349523125,
+      },
       'Time': <String, double>{'s': 1, 'min': 60, 'h': 3600, 'day': 86400},
-      'Data': <String, double>{'B': 1, 'KB': 1024, 'MB': 1048576, 'GB': 1073741824},
-      'Speed': <String, double>{'m/s': 1, 'km/h': .2777777777777778, 'mph': .44704},
+      'Data': <String, double>{
+        'B': 1,
+        'KB': 1024,
+        'MB': 1048576,
+        'GB': 1073741824,
+      },
+      'Speed': <String, double>{
+        'm/s': 1,
+        'km/h': .2777777777777778,
+        'mph': .44704,
+      },
       'Angle': <String, double>{'rad': 1, 'deg': .017453292519943295},
       'Area': <String, double>{'m²': 1, 'km²': 1000000, 'ft²': .09290304},
-      'Volume': <String, double>{'L': 1, 'mL': .001, 'm³': 1000, 'gal': 3.785411784},
+      'Volume': <String, double>{
+        'L': 1,
+        'mL': .001,
+        'm³': 1000,
+        'gal': 3.785411784,
+      },
     };
     if (category == 'Temperature') {
       final celsius = switch (from) {
@@ -804,17 +831,13 @@ class DartComputation {
     return CalcMatrix(
       List<List<double>>.generate(
         left.rowCount,
-        (row) => List<double>.generate(
-          right.columnCount,
-          (column) {
-            var sum = 0.0;
-            for (var i = 0; i < left.columnCount; i++) {
-              sum += left.rows[row][i] * right.rows[i][column];
-            }
-            return sum;
-          },
-          growable: false,
-        ),
+        (row) => List<double>.generate(right.columnCount, (column) {
+          var sum = 0.0;
+          for (var i = 0; i < left.columnCount; i++) {
+            sum += left.rows[row][i] * right.rows[i][column];
+          }
+          return sum;
+        }, growable: false),
         growable: false,
       ),
     );
@@ -861,7 +884,10 @@ class DartComputation {
     final size = matrix.rowCount;
     final augmented = List<List<double>>.generate(
       size,
-      (row) => <double>[...matrix.rows[row], ...List<double>.generate(size, (column) => row == column ? 1 : 0)],
+      (row) => <double>[
+        ...matrix.rows[row],
+        ...List<double>.generate(size, (column) => row == column ? 1 : 0),
+      ],
     );
     for (var column = 0; column < size; column++) {
       var pivot = column;
@@ -944,7 +970,8 @@ class DartComputation {
           real[odd] = evenReal - productReal;
           imaginary[odd] = evenImaginary - productImaginary;
           final nextReal = currentReal * wReal - currentImaginary * wImaginary;
-          currentImaginary = currentReal * wImaginary + currentImaginary * wReal;
+          currentImaginary =
+              currentReal * wImaginary + currentImaginary * wReal;
           currentReal = nextReal;
         }
       }

@@ -65,7 +65,8 @@ class CalculationHistoryController extends Notifier<List<HistoryEntry>> {
     return rows.join('\n');
   }
 
-  String exportJson() => jsonEncode(state.map((entry) => entry.toJson()).toList());
+  String exportJson() =>
+      jsonEncode(state.map((entry) => entry.toJson()).toList());
 
   String _escape(String value) => '"${value.replaceAll('"', '""')}"';
 }

@@ -68,7 +68,9 @@ class FeaturePageFrame extends StatelessWidget {
                 ),
         ),
         SliverPadding(
-          padding: EdgeInsets.all(MediaQuery.sizeOf(context).width < 600 ? 16 : 24),
+          padding: EdgeInsets.all(
+            MediaQuery.sizeOf(context).width < 600 ? 16 : 24,
+          ),
           sliver: SliverToBoxAdapter(child: child),
         ),
       ],
@@ -211,9 +213,12 @@ class LineSeriesPainter extends CustomPainter {
       Offset.zero & size,
       Paint()..color = scheme.surfaceContainerLowest,
     );
-    final points = series.expand((item) => item).where((item) {
-      return item.x.isFinite && item.y.isFinite;
-    }).toList(growable: false);
+    final points = series
+        .expand((item) => item)
+        .where((item) {
+          return item.x.isFinite && item.y.isFinite;
+        })
+        .toList(growable: false);
     if (points.isEmpty || size.width <= 1 || size.height <= 1) {
       return;
     }

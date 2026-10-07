@@ -66,10 +66,7 @@ abstract interface class CalcBackend {
 
   Future<CalcStatistics> statistics(List<double> values);
 
-  Future<CalcRegression> linearRegression(
-    List<double> xs,
-    List<double> ys,
-  );
+  Future<CalcRegression> linearRegression(List<double> xs, List<double> ys);
 
   Future<CalcMatrix> parseMatrix(String input);
 
@@ -230,12 +227,7 @@ class DartCalcBackend implements CalcBackend {
     required double b,
     int samples = 1024,
   }) async {
-    return DartComputation.spectrum(
-      expression,
-      a: a,
-      b: b,
-      samples: samples,
-    );
+    return DartComputation.spectrum(expression, a: a, b: b, samples: samples);
   }
 
   @override
@@ -246,8 +238,7 @@ class DartCalcBackend implements CalcBackend {
   Future<CalcRegression> linearRegression(
     List<double> xs,
     List<double> ys,
-  ) async =>
-      DartComputation.linearRegression(xs, ys);
+  ) async => DartComputation.linearRegression(xs, ys);
 
   @override
   Future<CalcMatrix> parseMatrix(String input) async =>

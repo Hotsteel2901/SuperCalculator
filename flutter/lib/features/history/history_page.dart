@@ -38,7 +38,9 @@ class HistoryPage extends ConsumerWidget {
                               entry.expression,
                               style: const TextStyle(fontFamily: 'monospace'),
                             ),
-                            subtitle: Text('${entry.backend} · ${entry.createdAt}'),
+                            subtitle: Text(
+                              '${entry.backend} · ${entry.createdAt}',
+                            ),
                             trailing: Text(
                               entry.result,
                               style: const TextStyle(fontFamily: 'monospace'),

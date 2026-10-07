@@ -47,7 +47,11 @@ class _PlotPageState extends ConsumerState<PlotPage> {
     final scheme = Theme.of(context).colorScheme;
     final modes = <String, String>{
       'function': nextEraText(context, 'Function y=f(x)', '函数 y=f(x)'),
-      'parametric': nextEraText(context, 'Parametric x(t), y(t)', '参数曲线 x(t), y(t)'),
+      'parametric': nextEraText(
+        context,
+        'Parametric x(t), y(t)',
+        '参数曲线 x(t), y(t)',
+      ),
       'polar': nextEraText(context, 'Polar r(t)', '极坐标 r(t)'),
       'implicit': nextEraText(context, 'Implicit f(x,y)=0', '隐式曲线 f(x,y)=0'),
     };

@@ -63,7 +63,9 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
                 FilledButton.icon(
                   onPressed: _busy ? null : _calculate,
                   icon: const Icon(Icons.calculate_outlined),
-                  label: Text(nextEraText(context, 'Calculate statistics', '计算统计量')),
+                  label: Text(
+                    nextEraText(context, 'Calculate statistics', '计算统计量'),
+                  ),
                 ),
               ],
             ),
@@ -74,7 +76,8 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
             ResultCard(value: '', error: _error),
             const SizedBox(height: 16),
           ],
-          if (statistics != null) FeatureCard(child: _table(context, statistics)),
+          if (statistics != null)
+            FeatureCard(child: _table(context, statistics)),
         ],
       ),
     );
@@ -82,18 +85,9 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
 
   Widget _table(BuildContext context, CalcStatistics statistics) {
     final values = <List<String>>[
-      <String>[
-        nextEraText(context, 'Count', '数量'),
-        '${statistics.count}',
-      ],
-      <String>[
-        nextEraText(context, 'Sum', '总和'),
-        _format(statistics.sum),
-      ],
-      <String>[
-        nextEraText(context, 'Mean', '平均值'),
-        _format(statistics.mean),
-      ],
+      <String>[nextEraText(context, 'Count', '数量'), '${statistics.count}'],
+      <String>[nextEraText(context, 'Sum', '总和'), _format(statistics.sum)],
+      <String>[nextEraText(context, 'Mean', '平均值'), _format(statistics.mean)],
       <String>[
         nextEraText(context, 'Median', '中位数'),
         _format(statistics.median),
@@ -102,10 +96,7 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
         nextEraText(context, 'Minimum / maximum', '最小值 / 最大值'),
         '${_format(statistics.minimum)} / ${_format(statistics.maximum)}',
       ],
-      <String>[
-        nextEraText(context, 'Range', '极差'),
-        _format(statistics.range),
-      ],
+      <String>[nextEraText(context, 'Range', '极差'), _format(statistics.range)],
       <String>[
         nextEraText(context, 'Variance', '方差'),
         _format(statistics.variance),
@@ -149,7 +140,11 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
         .toList(growable: false);
     if (values.isEmpty) {
       setState(() {
-        _error = nextEraText(context, 'No valid numbers were found.', '没有找到有效数字。');
+        _error = nextEraText(
+          context,
+          'No valid numbers were found.',
+          '没有找到有效数字。',
+        );
         _statistics = null;
       });
       return;

@@ -62,7 +62,11 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
                     TextField(
                       controller: _guess,
                       decoration: InputDecoration(
-                        labelText: nextEraText(context, 'Initial guess', '初始猜测'),
+                        labelText: nextEraText(
+                          context,
+                          'Initial guess',
+                          '初始猜测',
+                        ),
                       ),
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
@@ -109,7 +113,9 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
           ),
           const SizedBox(height: 16),
           ResultCard(
-            value: _result ?? nextEraText(context, 'No root computed yet.', '尚未计算根。'),
+            value:
+                _result ??
+                nextEraText(context, 'No root computed yet.', '尚未计算根。'),
             error: _error,
           ),
           if (_busy) ...<Widget>[
@@ -134,12 +140,14 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
       _error = null;
       _result = null;
     });
-    final result = await ref.read(calcBackendProvider).solve(
-      _expression.text,
-      guess: guess,
-      minimum: minimum,
-      maximum: maximum,
-    );
+    final result = await ref
+        .read(calcBackendProvider)
+        .solve(
+          _expression.text,
+          guess: guess,
+          minimum: minimum,
+          maximum: maximum,
+        );
     if (!mounted) {
       return;
     }

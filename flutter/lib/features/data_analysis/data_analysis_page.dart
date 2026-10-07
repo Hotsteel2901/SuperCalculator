@@ -14,9 +14,7 @@ class DataAnalysisPage extends ConsumerStatefulWidget {
 }
 
 class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
-  final _data = TextEditingController(
-    text: '0,1\n1,2.1\n2,3.9\n3,6.2\n4,8.1',
-  );
+  final _data = TextEditingController(text: '0,1\n1,2.1\n2,3.9\n3,6.2\n4,8.1');
   List<PlotPoint> _points = const <PlotPoint>[];
   List<PlotPoint> _fit = const <PlotPoint>[];
   String? _result;
@@ -66,14 +64,22 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
                 FilledButton.icon(
                   onPressed: _busy ? null : _fitLine,
                   icon: const Icon(Icons.auto_graph),
-                  label: Text(nextEraText(context, 'Fit linear model', '拟合线性模型')),
+                  label: Text(
+                    nextEraText(context, 'Fit linear model', '拟合线性模型'),
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 16),
           ResultCard(
-            value: _result ?? nextEraText(context, 'Enter data to fit a model.', '输入数据后进行拟合。'),
+            value:
+                _result ??
+                nextEraText(
+                  context,
+                  'Enter data to fit a model.',
+                  '输入数据后进行拟合。',
+                ),
             error: _error,
           ),
           if (_busy) ...<Widget>[
@@ -83,7 +89,11 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
           if (_points.isNotEmpty) ...<Widget>[
             const SizedBox(height: 16),
             FeatureCard(
-              title: nextEraText(context, 'Observed and fitted data', '观测值与拟合值'),
+              title: nextEraText(
+                context,
+                'Observed and fitted data',
+                '观测值与拟合值',
+              ),
               icon: Icons.scatter_plot,
               child: SizedBox(
                 height: 360,
@@ -119,7 +129,11 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
     }
     if (xs.length < 2) {
       setState(() {
-        _error = nextEraText(context, 'At least two valid points are required.', '至少需要两个有效数据点。');
+        _error = nextEraText(
+          context,
+          'At least two valid points are required.',
+          '至少需要两个有效数据点。',
+        );
       });
       return;
     }
@@ -130,7 +144,9 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
       _points = const <PlotPoint>[];
       _fit = const <PlotPoint>[];
     });
-    final regression = await ref.read(calcBackendProvider).linearRegression(xs, ys);
+    final regression = await ref
+        .read(calcBackendProvider)
+        .linearRegression(xs, ys);
     if (!mounted) {
       return;
     }
@@ -151,7 +167,11 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
           : null;
       _error = regression.rSquared.isFinite
           ? null
-          : nextEraText(context, 'The x values must not all be equal.', 'x 值不能全部相同。');
+          : nextEraText(
+              context,
+              'The x values must not all be equal.',
+              'x 值不能全部相同。',
+            );
     });
   }
 }

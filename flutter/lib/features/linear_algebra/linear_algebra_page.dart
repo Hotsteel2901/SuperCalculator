@@ -152,19 +152,23 @@ class _LinearAlgebraPageState extends ConsumerState<LinearAlgebraPage> {
       }
     } on FormatException catch (error) {
       if (!mounted) {
-      return;
-    }
+        return;
+      }
       setState(() {
         _busy = false;
         _error = error.message;
       });
     } catch (_) {
       if (!mounted) {
-      return;
-    }
+        return;
+      }
       setState(() {
         _busy = false;
-        _error = nextEraText(context, 'The matrix operation failed.', '矩阵运算失败。');
+        _error = nextEraText(
+          context,
+          'The matrix operation failed.',
+          '矩阵运算失败。',
+        );
       });
     }
   }

@@ -77,14 +77,22 @@ class _OdePageState extends ConsumerState<OdePage> {
                 FilledButton.icon(
                   onPressed: _busy ? null : _solve,
                   icon: const Icon(Icons.play_arrow),
-                  label: Text(nextEraText(context, 'Solve with RK4', '使用 RK4 求解')),
+                  label: Text(
+                    nextEraText(context, 'Solve with RK4', '使用 RK4 求解'),
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 16),
           ResultCard(
-            value: _result ?? nextEraText(context, 'Run the solver to see the curve.', '运行求解器查看曲线。'),
+            value:
+                _result ??
+                nextEraText(
+                  context,
+                  'Run the solver to see the curve.',
+                  '运行求解器查看曲线。',
+                ),
             error: _error,
           ),
           if (_busy) ...<Widget>[
@@ -136,9 +144,17 @@ class _OdePageState extends ConsumerState<OdePage> {
     final y0 = parseMathNumber(_y0.text);
     final xEnd = parseMathNumber(_xEnd.text);
     final steps = int.tryParse(_steps.text.trim());
-    if (x0 == null || y0 == null || xEnd == null || steps == null || steps < 1) {
+    if (x0 == null ||
+        y0 == null ||
+        xEnd == null ||
+        steps == null ||
+        steps < 1) {
       setState(() {
-        _error = nextEraText(context, 'Enter valid initial values.', '请输入有效初值。');
+        _error = nextEraText(
+          context,
+          'Enter valid initial values.',
+          '请输入有效初值。',
+        );
       });
       return;
     }
@@ -148,13 +164,15 @@ class _OdePageState extends ConsumerState<OdePage> {
       _result = null;
       _points = const <PlotPoint>[];
     });
-    final solution = await ref.read(calcBackendProvider).solveOde(
-      _expression.text,
-      x0: x0,
-      y0: y0,
-      xEnd: xEnd,
-      steps: steps.clamp(1, 10000).toInt(),
-    );
+    final solution = await ref
+        .read(calcBackendProvider)
+        .solveOde(
+          _expression.text,
+          x0: x0,
+          y0: y0,
+          xEnd: xEnd,
+          steps: steps.clamp(1, 10000).toInt(),
+        );
     if (!mounted) {
       return;
     }
@@ -176,7 +194,11 @@ class _OdePageState extends ConsumerState<OdePage> {
               '${solution.method}：${points.length} 个点',
             );
       _error = points.isEmpty
-          ? nextEraText(context, 'The ODE could not be evaluated.', '无法计算该微分方程。')
+          ? nextEraText(
+              context,
+              'The ODE could not be evaluated.',
+              '无法计算该微分方程。',
+            )
           : null;
     });
   }

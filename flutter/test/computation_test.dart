@@ -65,7 +65,10 @@ void main() {
     expect(statistics.median, closeTo(2, 1e-12));
     expect(statistics.mode, 2);
     expect(DartComputation.matrixDeterminant(matrix), closeTo(-2, 1e-12));
-    expect(DartComputation.matrixInverse(matrix).rows[0][0], closeTo(-2, 1e-12));
+    expect(
+      DartComputation.matrixInverse(matrix).rows[0][0],
+      closeTo(-2, 1e-12),
+    );
   });
 
   test('base and unit conversion validate user input', () {

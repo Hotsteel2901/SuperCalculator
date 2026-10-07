@@ -103,12 +103,16 @@ class _CalculusPageState extends ConsumerState<CalculusPage> {
                     OutlinedButton.icon(
                       onPressed: _busy ? null : () => _run('second'),
                       icon: const Icon(Icons.show_chart),
-                      label: Text(nextEraText(context, 'Second derivative', '二阶导数')),
+                      label: Text(
+                        nextEraText(context, 'Second derivative', '二阶导数'),
+                      ),
                     ),
                     OutlinedButton.icon(
                       onPressed: _busy ? null : () => _run('integral'),
                       icon: const Icon(Icons.area_chart),
-                      label: Text(nextEraText(context, 'Adaptive integral', '自适应积分')),
+                      label: Text(
+                        nextEraText(context, 'Adaptive integral', '自适应积分'),
+                      ),
                     ),
                   ],
                 ),
@@ -117,7 +121,9 @@ class _CalculusPageState extends ConsumerState<CalculusPage> {
           ),
           const SizedBox(height: 16),
           ResultCard(
-            value: _result ?? nextEraText(context, 'Choose an operation.', '请选择一个运算。'),
+            value:
+                _result ??
+                nextEraText(context, 'Choose an operation.', '请选择一个运算。'),
             error: _error,
           ),
           if (_busy) ...<Widget>[
