@@ -128,12 +128,14 @@ CalcEvaluationValue _evaluateTask(_EvaluateTask task) {
     return value.isFinite
         ? CalcEvaluationValue(value: value)
         : const CalcEvaluationValue(
+            value: null,
             error: 'The expression produced a non-finite value.',
           );
   } on FormatException catch (error) {
-    return CalcEvaluationValue(error: error.message);
+    return CalcEvaluationValue(value: null, error: error.message);
   } catch (_) {
     return const CalcEvaluationValue(
+      value: null,
       error: 'The expression could not be evaluated.',
     );
   }
