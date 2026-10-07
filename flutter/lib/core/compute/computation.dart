@@ -2076,7 +2076,7 @@ class DartComputation {
     if (years < 1 || year < 1 || year > years || cost < salvage) {
       throw const FormatException('Depreciation inputs are invalid.');
     }
-    return math.max(0, (cost - salvage) / years);
+    return math.max(0, (cost - salvage) / years).toDouble();
   }
 
   static double bondPrice({

@@ -83,7 +83,15 @@ jobs:
           fi
 
       - name: Run Flutter analyzer
-        run: flutter analyze
+        run: |
+          set +e
+          flutter analyze 2>&1 | tee /tmp/flutter-analyzer.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            summary=$(python3 -c 'import pathlib; print(pathlib.Path("/tmp/flutter-analyzer.log").read_text().replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A"))')
+            echo "::error title=Flutter analyzer::$summary"
+          fi
+          exit "$status"
       - run: flutter test
       - run: flutter build web --release
 
