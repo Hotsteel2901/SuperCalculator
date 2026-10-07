@@ -91,6 +91,20 @@ jobs:
           status=$?
           echo "$status" > "$RUNNER_TEMP/flutter-analyze.status"
           exit 0
+      - name: Save analyzer diagnostics for debugging
+        if: steps.analyze.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$(cat "$RUNNER_TEMP/flutter-analyze.status")" != 0 ]; then
+            mkdir -p .ci
+            cp "$RUNNER_TEMP/flutter-analyze.json" .ci/flutter-analyze.json
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .ci/flutter-analyze.json
+            git commit -m "ci: capture Flutter analyzer diagnostics [skip ci]" || true
+            git push origin "HEAD:${GITHUB_HEAD_REF}"
+          fi
       - name: Report analyzer diagnostics
         if: steps.analyze.outcome == 'success'
         run: |
