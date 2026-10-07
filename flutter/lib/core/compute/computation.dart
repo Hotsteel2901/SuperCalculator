@@ -2633,8 +2633,8 @@ class DartComputation {
       }
       for (var row = 0; row < rows; row++) {
         if (row == column) {
-        continue;
-      }
+          continue;
+        }
         final factor = matrix[row][column];
         for (var j = column; j <= rows; j++) {
           matrix[row][j] -= factor * matrix[column][j];
