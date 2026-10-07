@@ -31,10 +31,7 @@ final GoRouter appRouter = GoRouter(
           path: '/data-analysis',
           builder: (_, _) => const DataAnalysisPage(),
         ),
-        GoRoute(
-          path: '/statistics',
-          builder: (_, _) => const StatisticsPage(),
-        ),
+        GoRoute(path: '/statistics', builder: (_, _) => const StatisticsPage()),
         GoRoute(
           path: '/linear-algebra',
           builder: (_, _) => const LinearAlgebraPage(),
