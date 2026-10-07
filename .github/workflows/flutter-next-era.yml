@@ -99,6 +99,7 @@ jobs:
           import pathlib
           import sys
           path = pathlib.Path(sys.argv[1])
+          emitted = 0
           for line in path.read_text().splitlines():
               try:
                   item = json.loads(line)
@@ -113,6 +114,11 @@ jobs:
               print(
                   f"::error file={file},line={start.get('line', 1)},col={start.get('column', 1)}::{message}"
               )
+              emitted += 1
+          if emitted == 0:
+              for line in path.read_text().splitlines()[-100:]:
+                  if line.strip():
+                      print(f"::error::{line[:900]}")
           PY
           test "$(cat "$RUNNER_TEMP/flutter-analyze.status")" = 0
       - run: flutter test
