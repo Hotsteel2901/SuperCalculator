@@ -83,7 +83,16 @@ jobs:
           fi
 
       - name: Run Flutter analyzer
-        run: flutter analyze
+        id: analyze
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          flutter analyze 2>&1 | tee "$RUNNER_TEMP/flutter-analyze.log"
+      - name: Report analyzer diagnostics
+        if: steps.analyze.outcome == 'failure'
+        run: |
+          grep -Ei 'error|warning|info|^  ' "$RUNNER_TEMP/flutter-analyze.log" | tail -n 120 || true
+          exit 1
       - run: flutter test
       - run: flutter build web --release
 
