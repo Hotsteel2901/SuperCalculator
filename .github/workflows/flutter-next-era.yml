@@ -58,7 +58,14 @@ jobs:
             echo "::error title=formatter commit failed::$clean_output"
             exit 1
           fi
-          if ! push_output=$(git push origin "HEAD:${{ github.head_ref }}" 2>&1); then
+          branch="${{ github.head_ref }}"
+          git fetch origin "$branch"
+          if ! rebase_output=$(git rebase "origin/$branch" 2>&1); then
+            clean_output="$(printf '%s' "$rebase_output" | tr '\n' ' ' | cut -c1-3500)"
+            echo "::error title=formatter rebase failed::$clean_output"
+            exit 1
+          fi
+          if ! push_output=$(git push origin "HEAD:$branch" 2>&1); then
             clean_output="$(printf '%s' "$push_output" | tr '\n' ' ' | cut -c1-3500)"
             echo "::error title=formatter push failed::$clean_output"
             exit 1
