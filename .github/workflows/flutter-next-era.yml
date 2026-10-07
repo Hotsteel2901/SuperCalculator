@@ -18,6 +18,9 @@ on:
       - '.github/workflows/flutter-next-era.yml'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   flutter:
     runs-on: ubuntu-latest
@@ -35,8 +38,20 @@ jobs:
       - run: dart --version
       - run: flutter pub get
       - run: flutter gen-l10n
-      - name: Check formatting
-        run: dart format --output=none --set-exit-if-changed lib test integration_test
+      - name: Apply Dart formatting
+        run: dart format lib test integration_test
+      - name: Commit formatting changes
+        if: github.event_name == 'pull_request'
+        working-directory: .
+        run: |
+          if git diff --quiet -- flutter; then
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add flutter/lib flutter/test flutter/integration_test
+          git commit -m 'style: format Flutter sources'
+          git push origin "HEAD:${{ github.head_ref }}"
       - run: flutter analyze
       - run: flutter test
       - run: flutter build web --release
