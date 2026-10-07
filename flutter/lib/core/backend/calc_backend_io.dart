@@ -53,8 +53,8 @@ typedef _LastError = Pointer<Utf8> Function(Pointer<Void>);
 class FfiCalcBackend implements CalcBackend {
   FfiCalcBackend._({
     required DynamicLibrary library,
-    required Pointer<Void> context,
-  }) : _context = context,
+    required this._context,
+  }) :
        _evaluate = library.lookupFunction<_EvaluateNative, _Evaluate>(
          'sc_evaluate',
        ),
@@ -89,8 +89,9 @@ class FfiCalcBackend implements CalcBackend {
       'sc_context_create',
     );
     final context = create();
-    if (context == nullptr)
+    if (context == nullptr) {
       throw StateError('Could not create native calculation context.');
+    }
     return FfiCalcBackend._(library: library, context: context);
   }
 
@@ -99,11 +100,12 @@ class FfiCalcBackend implements CalcBackend {
 
   @override
   Future<CalcEvaluation> evaluate(String expression, double x) async {
-    if (_disposed)
+    if (_disposed) {
       return const CalcEvaluation.failure(
         backend: 'Native FFI',
         message: 'Backend is closed.',
       );
+    }
     final expressionPointer = expression.toNativeUtf8();
     final output = calloc<Double>();
     try {
@@ -136,7 +138,9 @@ class FfiCalcBackend implements CalcBackend {
         xs.length,
         output,
       );
-      if (status != 0) return List<double?>.filled(xs.length, null);
+      if (status != 0) {
+        return List<double?>.filled(xs.length, null);
+      }
       return output
           .asTypedList(xs.length)
           .map<double?>((value) => value.isFinite ? value : null)
@@ -163,10 +167,18 @@ class FfiCalcBackend implements CalcBackend {
   }
 
   static String _libraryName() {
-    if (Platform.isAndroid) return 'libsupercalc_core.so';
-    if (Platform.isWindows) return 'supercalc_core.dll';
-    if (Platform.isMacOS || Platform.isIOS) return 'libsupercalc_core.dylib';
-    if (Platform.isLinux) return 'libsupercalc_core.so';
+    if (Platform.isAndroid) {
+      return 'libsupercalc_core.so';
+    }
+    if (Platform.isWindows) {
+      return 'supercalc_core.dll';
+    }
+    if (Platform.isMacOS || Platform.isIOS) {
+      return 'libsupercalc_core.dylib';
+    }
+    if (Platform.isLinux) {
+      return 'libsupercalc_core.so';
+    }
     throw UnsupportedError('Native FFI is not configured for this platform.');
   }
 }

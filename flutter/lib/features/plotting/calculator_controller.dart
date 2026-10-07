@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/backend/calc_backend.dart';
 import '../../core/backend/providers.dart';
+import '../../core/plot/plot_point.dart';
 
 final calculatorControllerProvider =
     NotifierProvider<CalculatorController, CalculatorState>(
@@ -59,13 +60,6 @@ class CalculatorState {
   }
 }
 
-class PlotPoint {
-  const PlotPoint(this.x, this.y);
-
-  final double x;
-  final double y;
-}
-
 class CalculatorController extends Notifier<CalculatorState> {
   @override
   CalculatorState build() => const CalculatorState.initial();
@@ -112,7 +106,9 @@ class CalculatorController extends Notifier<CalculatorState> {
     final points = <PlotPoint>[];
     for (var index = 0; index < xs.length; index++) {
       final y = ys[index];
-      if (y != null && y.isFinite) points.add(PlotPoint(xs[index], y));
+      if (y != null && y.isFinite) {
+        points.add(PlotPoint(xs[index], y));
+      }
     }
 
     state = state.copyWith(

@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../backend/calc_backend.dart';
+import 'plot_point.dart';
 
 class FunctionPlotPainter extends CustomPainter {
   const FunctionPlotPainter({required this.points, required this.scheme});
@@ -14,7 +14,9 @@ class FunctionPlotPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final background = Paint()..color = scheme.surfaceContainerLowest;
     canvas.drawRect(Offset.zero & size, background);
-    if (size.width <= 1 || size.height <= 1) return;
+    if (size.width <= 1 || size.height <= 1) {
+      return;
+    }
 
     final gridPaint = Paint()
       ..color = scheme.outlineVariant.withValues(alpha: 0.45)
