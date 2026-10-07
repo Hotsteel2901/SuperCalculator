@@ -35,10 +35,16 @@
   "featureComingSoon": "此功能已经加入迁移矩阵，将按阶段逐步接入。",
   "aboutBody": "SuperCalculator - Next Era 使用一个 Flutter 应用替代旧 Tkinter 和 Java UI，同时保留 C 计算核心。",
   "versionLabel": "版本 {version}",
-  "versionLabel@description": "关于页面显示的应用版本",
+  "@versionLabel": {
+    "description": "关于页面显示的应用版本"
+  },
   "version": "0.1.0",
   "plotPoints": "已采样 {count} 个点",
-  "plotPoints@description": "当前绘图预览使用的点数量",
+  "@plotPoints": {
+    "description": "当前绘图预览使用的点数量"
+  },
   "accessibilityPlotSummary": "表达式 {expression} 的函数图，共有 {count} 个有效采样点。",
-  "accessibilityPlotSummary@description": "绘图预览的读屏摘要"
+  "@accessibilityPlotSummary": {
+    "description": "绘图预览的读屏摘要"
+  }
 }

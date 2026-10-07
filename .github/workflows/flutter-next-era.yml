@@ -33,27 +33,7 @@ jobs:
           cache: true
       - run: flutter --version
       - run: dart --version
-      - name: Resolve Dart and Flutter dependencies
-        id: pub_get
-        continue-on-error: true
-        run: |
-          set -o pipefail
-          flutter pub get 2>&1 | tee "$RUNNER_TEMP/pub-get.log"
-      - name: Report dependency resolution failure
-        if: steps.pub_get.outcome == 'failure'
-        run: |
-          echo '### flutter pub get diagnostics' >> "$GITHUB_STEP_SUMMARY"
-          tail -n 120 "$RUNNER_TEMP/pub-get.log" >> "$GITHUB_STEP_SUMMARY"
-          echo '--- dependency-resolution diagnostics ---'
-          grep -Ei 'error|failed|because|incompatible|could not|exception|version solving|exit code|denied|timeout' \
-            "$RUNNER_TEMP/pub-get.log" | tail -n 80 || true
-          while IFS= read -r line; do
-            line="${line//'%'/'%25'}"
-            line="${line//$'\r'/'%0D'}"
-            line="${line//$'\n'/'%0A'}"
-            echo "::error title=pub get diagnostic::$line"
-          done < <(grep -Ei 'error|failed|because|incompatible|could not|exception|version solving|exit code|denied|timeout' "$RUNNER_TEMP/pub-get.log" | tail -n 40 || true)
-          exit 1
+      - run: flutter pub get
       - run: flutter gen-l10n
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed lib test integration_test

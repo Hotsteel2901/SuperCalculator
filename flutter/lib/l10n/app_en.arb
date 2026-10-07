@@ -35,10 +35,16 @@
   "featureComingSoon": "This feature is included in the migration matrix and is being connected incrementally.",
   "aboutBody": "SuperCalculator - Next Era replaces the legacy Tkinter and Java UI with one Flutter application while preserving the C computation core.",
   "versionLabel": "Version {version}",
-  "versionLabel@description": "The application version shown on the About page",
+  "@versionLabel": {
+    "description": "The application version shown on the About page"
+  },
   "version": "0.1.0",
   "plotPoints": "{count} sampled points",
-  "plotPoints@description": "Number of points currently rendered in the plot preview",
+  "@plotPoints": {
+    "description": "Number of points currently rendered in the plot preview"
+  },
   "accessibilityPlotSummary": "Function plot for {expression}, with {count} finite samples.",
-  "accessibilityPlotSummary@description": "Screen reader summary for the plot preview"
+  "@accessibilityPlotSummary": {
+    "description": "Screen reader summary for the plot preview"
+  }
 }
