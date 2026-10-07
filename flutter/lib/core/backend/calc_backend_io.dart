@@ -51,24 +51,20 @@ typedef _LastErrorNative = Pointer<Utf8> Function(Pointer<Void>);
 typedef _LastError = Pointer<Utf8> Function(Pointer<Void>);
 
 class FfiCalcBackend implements CalcBackend {
-  FfiCalcBackend._({
-    required DynamicLibrary library,
-    required this._context,
-  }) :
-       _evaluate = library.lookupFunction<_EvaluateNative, _Evaluate>(
-         'sc_evaluate',
-       ),
-       _evaluateArray = library
-           .lookupFunction<_EvaluateArrayNative, _EvaluateArray>(
-             'sc_evaluate_array',
-           ),
-       _destroy = library
-           .lookupFunction<_ContextDestroyNative, _ContextDestroy>(
-             'sc_context_destroy',
-           ),
-       _lastError = library.lookupFunction<_LastErrorNative, _LastError>(
-         'sc_last_error',
-       );
+  FfiCalcBackend._({required DynamicLibrary library, required this._context})
+    : _evaluate = library.lookupFunction<_EvaluateNative, _Evaluate>(
+        'sc_evaluate',
+      ),
+      _evaluateArray = library
+          .lookupFunction<_EvaluateArrayNative, _EvaluateArray>(
+            'sc_evaluate_array',
+          ),
+      _destroy = library.lookupFunction<_ContextDestroyNative, _ContextDestroy>(
+        'sc_context_destroy',
+      ),
+      _lastError = library.lookupFunction<_LastErrorNative, _LastError>(
+        'sc_last_error',
+      );
 
   final Pointer<Void> _context;
   final _Evaluate _evaluate;
