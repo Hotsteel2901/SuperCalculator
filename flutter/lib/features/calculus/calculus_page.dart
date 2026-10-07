@@ -147,7 +147,9 @@ class _CalculusPageState extends ConsumerState<CalculusPage> {
                     OutlinedButton.icon(
                       onPressed: _busy ? null : () => _run('area'),
                       icon: const Icon(Icons.compare_arrows),
-                      label: Text(nextEraText(context, 'Area between', '曲线间面积')),
+                      label: Text(
+                        nextEraText(context, 'Area between', '曲线间面积'),
+                      ),
                     ),
                   ],
                 ),
