@@ -479,53 +479,53 @@ class DartComputation {
     }
     final function = ExpressionEngine.compile(expression);
     var x = guess.clamp(minimum, maximum).toDouble();
-    var left = minimum;
-    var right = maximum;
-    var fLeft = function.evaluate(x: left);
-    var fRight = function.evaluate(x: right);
+
+    // First use safeguarded Newton steps from the user's guess. A bracket is
+    // not assumed here: functions such as x squared minus 2 have the same
+    // sign at both default bounds even though Newton converges immediately.
     for (var i = 0; i < maxIterations; i++) {
       final fx = function.evaluate(x: x);
-      if (fx.isFinite && fx.abs() <= tolerance) {
-        return x;
-      }
+      if (!fx.isFinite) return null;
+      if (fx.abs() <= tolerance) return x;
       final h = 1e-6 * (x.abs() + 1);
       final fp = function.evaluate(x: x + h);
       final fm = function.evaluate(x: x - h);
       final derivative = fp.isFinite && fm.isFinite
           ? (fp - fm) / (2 * h)
           : double.nan;
-      var next = double.nan;
-      if (derivative.isFinite && derivative.abs() > 1e-14 && fx.isFinite) {
-        next = x - fx / derivative;
-      }
-      if (!next.isFinite || next <= left || next >= right) {
-        next = (left + right) / 2;
-      }
-      final fNext = function.evaluate(x: next);
-      if (!fNext.isFinite) {
-        return null;
-      }
-      if (fLeft.isFinite && fLeft.sign != fNext.sign) {
-        right = next;
-        fRight = fNext;
-      } else if (fRight.isFinite && fRight.sign != fNext.sign) {
-        left = next;
-        fLeft = fNext;
-      } else {
-        if (next < x) {
-          left = next;
-          fLeft = fNext;
-        } else {
-          right = next;
-          fRight = fNext;
-        }
-      }
+      if (!derivative.isFinite || derivative.abs() <= 1e-14) break;
+      final next = x - fx / derivative;
+      if (!next.isFinite || next < minimum || next > maximum) break;
       x = next;
-      if ((right - left).abs() <= tolerance) {
-        return x;
+    }
+
+    // If Newton did not converge, fall back to a true bracketed bisection.
+    // This path is deliberately separate so it never invents a bracket from
+    // two same-sign endpoints.
+    var left = minimum;
+    var right = maximum;
+    var fLeft = function.evaluate(x: left);
+    var fRight = function.evaluate(x: right);
+    if (![fLeft, fRight].every((value) => value.isFinite)) return null;
+    if (fLeft.abs() <= tolerance) return left;
+    if (fRight.abs() <= tolerance) return right;
+    if (fLeft.sign == fRight.sign) return null;
+    for (var i = 0; i < maxIterations; i++) {
+      final middle = (left + right) / 2;
+      final fMiddle = function.evaluate(x: middle);
+      if (!fMiddle.isFinite) return null;
+      if (fMiddle.abs() <= tolerance || (right - left).abs() <= tolerance) {
+        return middle;
+      }
+      if (fLeft.sign != fMiddle.sign) {
+        right = middle;
+        fRight = fMiddle;
+      } else {
+        left = middle;
+        fLeft = fMiddle;
       }
     }
-    return null;
+    return (left + right) / 2;
   }
 
   static CalcOdeSolution ode(
