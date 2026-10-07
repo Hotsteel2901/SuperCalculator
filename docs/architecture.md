@@ -29,9 +29,16 @@ services live under `flutter/lib/core`.
 Riverpod is the dependency-injection boundary. Native, Wasm, Dart fallback and fake
 backends can be overridden in tests without changing widgets.
 
-## Current vertical slice
+## Current vertical slices
 
-M1 contains a working application shell, localization, Material 3 Expressive color
-scheme, a bounded Dart expression evaluator, a native FFI adapter, and a 2D plot
-preview. The native adapter falls back safely when the shared library has not yet
-been packaged by the platform build.
+The current workbench contains the shell, localization, Material 3 Expressive color
+scheme, compiled Dart expression fallback, native FFI adapter boundary, history,
+plot modes (function, parametric, polar and implicit), calculus, equations, ODE,
+signals, statistics, data analysis, linear algebra and tools pages. Each page calls a
+backend or deterministic fallback rather than being a static mock.
+
+Native C ABI v2 is linked against the legacy core and its smoke vectors cover scalar,
+array, invalid-expression, derivative, integral, root and RK4 behavior. When a target
+platform has not packaged the shared library, the provider selects the bounded Dart
+backend. Web currently uses that fallback; a production Wasm adapter remains a
+separate release gate.

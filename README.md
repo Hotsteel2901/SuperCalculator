@@ -1,17 +1,18 @@
 # SuperCalculator - Next Era
 
-> The project is migrating to a single Flutter application using Material 3 Expressive,
-> while retaining the C computation core through a versioned FFI/Wasm boundary.
->
-> The legacy Python Tkinter/Matplotlib UI remains runnable during the incremental
-> migration, but it is not the target production UI.
+> A single Flutter production UI using null safety, Material 3 Expressive, Riverpod
+> and go_router, with the existing C calculation core retained behind a versioned
+> FFI boundary.
 
-**Migration status:** M0/M1 scaffolded. See [`docs/migration/m0-baseline.md`](docs/migration/m0-baseline.md),
-[`docs/migration/feature-manifest.json`](docs/migration/feature-manifest.json),
+**Migration status:** M0–M3 first workbench slices are implemented and verified by
+native smoke tests plus Flutter stable CI. The full legacy inventory remains tracked
+in [`docs/migration/feature-manifest.json`](docs/migration/feature-manifest.json);
+see [`docs/migration/milestones.md`](docs/migration/milestones.md),
 [`docs/architecture.md`](docs/architecture.md), and [`docs/ffi.md`](docs/ffi.md).
 
-The current legacy implementation uses the Bridge Pattern:
-C for computation, Python for the legacy GUI, and `ctypes` as the bridge.
+The legacy Python Tkinter/Matplotlib, Android and Web entry points remain available
+only as rollback/parity references during the incremental migration. Flutter is the
+new target UI; no new feature should be added to a second UI.
 
 [![Build Windows EXE](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-windows-exe.yml/badge.svg)](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-windows-exe.yml)
 
@@ -19,24 +20,40 @@ C for computation, Python for the legacy GUI, and `ctypes` as the bridge.
 
 [中文](README_CN.md) | **English**
 
-Also includes an **Android APK** build (aarch64) with a Material Design 3 UI.
+## Quick start: Flutter
+
+```bash
+cd flutter
+flutter pub get
+flutter gen-l10n
+flutter run -d chrome
+flutter analyze
+flutter test
+```
+
+From the repository root, `./tool/build_native.sh` builds the C ABI v2 shared library
+and runs its scalar/array/error/calculus/root/RK4 smoke vectors. Native artifacts are
+optional during Web development; Riverpod selects the compiled Dart fallback when an
+FFI library is unavailable.
 
 ## Architecture
 
-```
-+---------------------------------+
-|  super_calc_bridged.py          |  Tkinter + Matplotlib GUI
-|  (Abstraction)                  |
-+---------------------------------+
-|  calc_bridge.py                 |  ctypes bridge layer
-|  (Bridge)                       |
-+---------------------------------+
-|  calc_core.dll / .so            |  C dynamic library
-|  (Implementation)               |
-+---------------------------------+
+```text
+Flutter feature pages (Riverpod + go_router + M3 Expressive)
+                │
+         CalcBackend contract
+          ┌─────┴─────┐
+       dart:ffi     Dart fallback
+          │             │
+       C ABI v2      compiled AST
+          │
+       legacy C calculation core
 ```
 
-The bridge layer auto-detects platform and CPU architecture at load time, selecting the correct binary from the available pre-compiled options.
+Flutter vertical slices currently cover plotting modes, calculus, equations, ODE,
+signals, data analysis, statistics, linear algebra, tools and session history. The
+legacy feature list below remains the parity inventory; `partial` and `planned`
+statuses are intentionally explicit rather than silently claiming completion.
 
 ## Features
 

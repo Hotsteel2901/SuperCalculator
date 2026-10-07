@@ -15,10 +15,14 @@
 - The Python bridge is `calc_bridge.py`.
 - Android has an independent Java/XML UI and JNI bridge.
 - The Web page is an independent JavaScript demo.
-- The C source has no public ABI header yet.
-- The code defines 25 function presets even though the README advertises 21.
+- The additive public ABI v2 now lives in `native/calc_core/include/` and is linked
+  against the legacy C symbols by the native smoke build.
+- The code defines more presets than the older README advertises; the migration
+  manifest keeps the legacy count as a parity requirement instead of silently
+  changing it.
 - FFT, regression, statistics, finance, probability, and dense matrix operations
-  are not all implemented by the C core today.
+  are not all implemented by the C core today; the current Flutter fallback covers
+  deterministic slices and records the remaining work in the manifest.
 
 ## M0 exit condition
 

@@ -403,7 +403,7 @@ static double apply_func(FuncId f, double v) {
     }
 }
 
-static int eval_rpn(RPN* rpn, int nrpn, double x, double y, double* result) {
+static int eval_rpn(const RPN* rpn, int nrpn, double x, double y, double* result) {
     double stack[256]; int sp = 0;
     const int MAX_STACK = 256;
     
@@ -690,24 +690,62 @@ EXPORT double solve_bisection(const char* expr, double a, double b,
     return (a+b)/2.0;
 }
 
+static int simpson_rpn(const RPN* rpn, int count, double a, double b,
+                        int n, double* out) {
+    if (!rpn || !out || n < 2 || n % 2 != 0) return -1;
+    const double h = (b - a) / n;
+    double fa, fb;
+    if (eval_rpn(rpn, count, a, 0.0, &fa) != 0 ||
+        eval_rpn(rpn, count, b, 0.0, &fb) != 0 ||
+        !isfinite(fa) || !isfinite(fb)) {
+        return -1;
+    }
+    double sum = fa + fb;
+    for (int i = 1; i < n; i++) {
+        double value;
+        if (eval_rpn(rpn, count, a + i * h, 0.0, &value) != 0 ||
+            !isfinite(value)) {
+            return -1;
+        }
+        sum += (i % 2 == 0 ? 2.0 : 4.0) * value;
+    }
+    *out = h * sum / 3.0;
+    return isfinite(*out) ? 0 : -1;
+}
+
 EXPORT double integrate_adaptive(const char* expr, double a, double b, double tol) {
     if (!expr) { set_error("NULL expression"); return NAN; }
     if (a > b) { set_error("Invalid interval: a must be <= b"); return NAN; }
+    if (!isfinite(tol) || tol <= 0.0) {
+        set_error("tol must be finite and > 0");
+        return NAN;
+    }
     if (a == b) { clear_error(); return 0.0; }
     clear_error();
+
+    /* Compile once for the whole refinement sequence. The old implementation
+       called integrate() repeatedly, reparsing the same expression each time. */
+    RPN rpn[MAX_RPN];
+    int count = 0;
+    if (compile_expression(expr, rpn, &count) != 0) return NAN;
+
     int n = 64;
-    double prev, cur;
-    cur = integrate(expr, a, b, n);
-    if (isnan(cur)) return NAN;
+    double previous, current;
+    if (simpson_rpn(rpn, count, a, b, n, &current) != 0) {
+        set_error("Function returned a non-finite value during integration");
+        return NAN;
+    }
     for (int k = 0; k < 12; k++) {
+        previous = current;
         n *= 2;
-        prev = cur;
-        cur  = integrate(expr, a, b, n);
-        if (isnan(cur)) return NAN;
-        if (fabs(cur - prev) < tol) return cur;
+        if (simpson_rpn(rpn, count, a, b, n, &current) != 0) {
+            set_error("Function returned a non-finite value during integration");
+            return NAN;
+        }
+        if (fabs(current - previous) < tol) return current;
     }
     set_error("Adaptive integration did not converge");
-    return cur;
+    return current;
 }
 
 /* --------------------------------------------------------------------------

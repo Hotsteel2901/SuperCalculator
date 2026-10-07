@@ -2,9 +2,11 @@
 
 ## Status
 
-M0/M1 introduce the additive ABI boundary in `native/calc_core/include/supercalc_core.h`.
-The legacy `calc_core.c` exports remain available for Python and Android until parity
-verification is complete.
+The additive ABI v2 boundary in `native/calc_core/include/supercalc_core.h` is
+implemented and linked against the legacy `calc_core.c` exports. The legacy symbols
+remain available for Python and Android during the rollback window. The smoke test
+covers scalar, array, invalid-expression/error propagation, derivative, integral,
+root and RK4 vectors; broader legacy parity is still tracked in the manifest.
 
 ## Rules
 

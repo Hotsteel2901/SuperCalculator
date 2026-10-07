@@ -1,41 +1,55 @@
 # SuperCalculator - Next Era
 
-> 项目正在迁移到统一的 Flutter 应用，采用 Material 3 Expressive，并通过版本化 FFI/Wasm 边界继续复用 C 计算核心。
->
-> 增量迁移期间仍保留旧 Python Tkinter/Matplotlib 界面以便回滚，但它不是最终生产 UI。
+> 统一的 Flutter 生产 UI：使用 null safety、Material 3 Expressive、Riverpod 和
+> go_router，并通过版本化 FFI 边界继续复用现有 C 计算核心。
 
-**迁移状态：** M0/M1 基础设施已建立。请查看 [`docs/migration/m0-baseline.md`](docs/migration/m0-baseline.md)、
-[`docs/migration/feature-manifest.json`](docs/migration/feature-manifest.json)、
+**迁移状态：** M0–M3 的首批工作区已实现，并由 native smoke test 与 Flutter stable
+CI 验证。完整旧功能清单仍保存在
+[`docs/migration/feature-manifest.json`](docs/migration/feature-manifest.json)，并请参阅
+[`docs/migration/milestones.md`](docs/migration/milestones.md)、
 [`docs/architecture.md`](docs/architecture.md) 和 [`docs/ffi.md`](docs/ffi.md)。
 
-当前旧实现采用桥接模式：C 负责计算，Python 负责旧 GUI，`ctypes` 负责桥接。
+旧 Python Tkinter/Matplotlib、Android 和 Web 入口在增量迁移期间仅用于回滚和对照；
+Flutter 是新的目标 UI，后续新功能不再维护第二套主界面。
 
 [![Build Windows EXE](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-windows-exe.yml/badge.svg)](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-windows-exe.yml)
 
 [![Build Android APK](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-android-apk.yml/badge.svg)](https://github.com/Hotsteel2901/SuperCalculator/actions/workflows/build-android-apk.yml)
 
 [English](README.md) | **中文**
-同时包含一个基于 Material Design 3 的 **Android APK** (aarch64)。
+
+## Flutter 快速开始
+
+```bash
+cd flutter
+flutter pub get
+flutter gen-l10n
+flutter run -d chrome
+flutter analyze
+flutter test
+```
+
+在仓库根目录执行 `./tool/build_native.sh` 可构建 C ABI v2 并运行标量、数组、错误、
+微积分、求根和 RK4 smoke vectors。Web 开发时 native 库可以缺省；Riverpod 会自动
+选择已编译的 Dart fallback。
 
 ## 架构
 
-```
-+---------------------------------+
-|  super_calc_bridged.py          |  Tkinter + Matplotlib GUI
-|  (抽象层)                       |
-+---------------------------------+
-|  calc_bridge.py                 |  ctypes 桥接层
-|  (桥接层)                       |
-+---------------------------------+
-|  calc_core.dll / .so            |  C 动态库
-|  (实现层)                       |
-+---------------------------------+
+```text
+Flutter 功能页（Riverpod + go_router + M3 Expressive）
+                 │
+          CalcBackend 契约
+           ┌─────┴─────┐
+        dart:ffi     Dart fallback
+           │             │
+        C ABI v2      编译 AST
+           │
+        旧 C 计算核心
 ```
 
-采用**桥接模式(Bridge Pattern)**设计：
-- **C 层**负责所有数值计算 — 表达式解析、微积分、方程求解
-- **Python 层**通过 `ctypes` 调用 C 核心，提供 Tkinter + Matplotlib 图形界面
-- 桥接层启动时自动检测平台和 CPU 架构，选择正确的预编译二进制文件
+当前 Flutter vertical slices 包含绘图、微积分、方程、ODE、信号、数据分析、统计、
+线性代数、工具和会话历史。下面的旧功能列表仍是对照清单；`partial` 和 `planned`
+状态是有意保留的，不代表已经悄悄完成全部迁移。
 
 ## 功能特性
 

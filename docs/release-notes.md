@@ -1,20 +1,39 @@
-# SuperCalculator - Next Era 0.1.0 scaffold
+# SuperCalculator - Next Era release notes
 
-## Included
+## Current migration increment
 
-- Flutter application shell with go_router and responsive NavigationRail/NavigationBar.
-- Material 3 theme using the verified expressive color-scheme variant and app-owned design tokens.
-- English and Simplified Chinese localization sources and a temporary pre-SDK compatibility stub.
-- Riverpod backend injection with native `dart:ffi`, Web fallback boundary and bounded Dart evaluator.
-- First plotting vertical slice: expression input, scalar result, adaptive-safe finite sample gaps and accessible summary.
-- Additive versioned C ABI header, CMake build, portable shell/PowerShell build scripts and smoke test.
-- Feature migration manifest, golden-vector seed, architecture, FFI, accessibility, compatibility,
-  performance and rollback documentation.
-- Flutter and native CI checks for the stable toolchain recorded by the migration baseline.
+This increment delivers a working Flutter workbench beside the legacy entry points.
+It is not presented as full legacy parity; the feature manifest is the source of
+truth for every remaining capability.
 
-## Not yet claimed
+### Delivered
 
-This is not feature parity. Calculus, equations, ODE, signal, statistics, probability,
-data, matrix, finance, number-theory, unit, calendar and advanced plotting screens are
-routed placeholders until their corresponding golden vectors and acceptance tests pass.
-The legacy UI remains available during rollback.
+- Flutter stable project with null safety, Material 3 Expressive theming, responsive
+  NavigationRail/NavigationBar shell, go_router and Riverpod dependency injection.
+- English and Simplified Chinese localization with generated-compatible sources.
+- Native ABI v2 header, FFI adapter boundary, Web/Dart fallback and portable native
+  build/smoke scripts.
+- Compiled Dart expression evaluator with scalar/array/XY-array sampling, derivatives,
+  adaptive Simpson integration, Newton plus bracketed bisection roots, RK4, DFT
+  spectrum, statistics, linear regression, matrix operations, base and unit conversion.
+- Plot modes for function, parametric, polar and implicit previews, plus accessible
+  summaries and finite-gap handling.
+- Vertical-slice pages for calculus, equations, ODE, signals, data analysis,
+  statistics, linear algebra, tools and session-scoped calculation history.
+- Deterministic Dart vectors, native C vectors and CI for localization, formatting,
+  analyzer, tests and Web release build.
+
+### Explicitly not yet claimed
+
+Full legacy parity still includes custom functions, complex arithmetic, all advanced
+plot/contour/vector-field modes, distributions/probability, finance, number theory,
+sparse matrices, calendar tools, complete export/persistence, per-platform native
+packaging and device accessibility/performance evidence. These remain tracked as
+planned or partial rather than silently removed.
+
+### Rollback
+
+The legacy Python/Android/Web sources and C exports remain in the repository. A
+rollback can remove the Flutter routing entry point and continue using the previous
+entry points while the ABI and migration vectors remain available. See
+`docs/rollback.md`.

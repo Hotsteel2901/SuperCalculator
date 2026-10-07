@@ -1,0 +1,150 @@
+name: Flutter Next Era platform builds
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'next-era-v*'
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    name: Web release
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.6'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - run: flutter build web --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: supercalculator-next-era-web
+          path: flutter/build/web
+          if-no-files-found: error
+
+  android:
+    name: Android debug artifact
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.6'
+          channel: stable
+          cache: true
+      - run: flutter create --no-pub --platforms=android .
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      # A signed release needs repository-specific keystore secrets. The debug
+      # APK proves that the generated Android project and Dart source compile.
+      - run: flutter build apk --debug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: supercalculator-next-era-android-debug
+          path: flutter/build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+
+  linux:
+    name: Linux release
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.6'
+          channel: stable
+          cache: true
+      - run: flutter create --no-pub --platforms=linux .
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - run: flutter build linux --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: supercalculator-next-era-linux
+          path: flutter/build/linux/x64/release/bundle
+          if-no-files-found: error
+
+  windows:
+    name: Windows release
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.6'
+          channel: stable
+          cache: true
+      - run: flutter create --no-pub --platforms=windows .
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - run: flutter build windows --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: supercalculator-next-era-windows
+          path: flutter/build/windows/x64/runner/Release
+          if-no-files-found: error
+
+  macos:
+    name: macOS release
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.6'
+          channel: stable
+          cache: true
+      - run: flutter create --no-pub --platforms=macos .
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - run: flutter build macos --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: supercalculator-next-era-macos
+          path: flutter/build/macos/Build/Products/Release
+          if-no-files-found: error
+
+  ios:
+    name: iOS unsigned release build
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.6'
+          channel: stable
+          cache: true
+      - run: flutter create --no-pub --platforms=ios .
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - run: flutter build ios --release --no-codesign
+      - uses: actions/upload-artifact@v4
+        with:
+          name: supercalculator-next-era-ios-unsigned
+          path: flutter/build/ios/iphoneos/Runner.app
+          if-no-files-found: error

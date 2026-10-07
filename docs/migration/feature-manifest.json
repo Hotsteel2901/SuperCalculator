@@ -1,7 +1,12 @@
 {
   "schemaVersion": 1,
   "product": "SuperCalculator - Next Era",
-  "legacySources": ["README.md", "README_CN.md", "docs/usage_en.md", "docs/usage_cn.md"],
+  "legacySources": [
+    "README.md",
+    "README_CN.md",
+    "docs/usage_en.md",
+    "docs/usage_cn.md"
+  ],
   "priorityDefinitions": {
     "P0": "foundation and blocking paths",
     "P1": "core user paths",
@@ -9,39 +14,358 @@
     "P3": "long-tail tools and release hardening; mandatory"
   },
   "features": [
-    {"id": "expr.evaluate", "name": "Expression evaluation", "priority": "P0", "legacy": ["calc_core.c", "calc_bridge.py", "index.html"], "status": "planned"},
-    {"id": "plot.function2d", "name": "2D function plotting", "priority": "P0", "legacy": ["super_calc_bridged.py"], "status": "scaffolded"},
-    {"id": "plot.multiCurve", "name": "Multi-curve overlay", "priority": "P1", "legacy": ["super_calc_bridged.py"], "status": "planned"},
-    {"id": "plot.surface3d", "name": "3D surface plotting", "priority": "P2", "legacy": ["super_calc_bridged.py", "android"], "status": "planned"},
-    {"id": "plot.parametric", "name": "Parametric curves and 10 presets", "priority": "P1", "legacy": ["calc_bridge.py", "super_calc_bridged.py"], "status": "planned"},
-    {"id": "plot.polar", "name": "Polar curves and 12 presets", "priority": "P1", "legacy": ["super_calc_bridged.py"], "status": "planned"},
-    {"id": "plot.implicit", "name": "Implicit curves and 8 presets", "priority": "P2", "legacy": ["super_calc_bridged.py"], "status": "planned"},
-    {"id": "plot.contour", "name": "Contour/level-set plots and 5 presets", "priority": "P2", "legacy": ["calc_core.c", "super_calc_bridged.py", "index.html"], "status": "planned"},
-    {"id": "plot.directionField", "name": "Direction fields and 8 presets", "priority": "P2", "legacy": ["super_calc_bridged.py"], "status": "planned"},
-    {"id": "plot.vectorField", "name": "Vector fields", "priority": "P2", "legacy": ["calc_core.c", "super_calc_bridged.py", "index.html"], "status": "planned"},
-    {"id": "calculus.all", "name": "Derivatives, integrals, limits, Taylor, arc length, area and revolution volume", "priority": "P1", "legacy": ["calc_core.c", "calc_bridge.py", "super_calc_bridged.py"], "status": "planned"},
-    {"id": "equations.all", "name": "Roots, systems, extrema, scanning, intersections, tangent and normal", "priority": "P1", "legacy": ["calc_core.c", "super_calc_bridged.py"], "status": "planned"},
-    {"id": "ode.all", "name": "RK4, Euler, improved Euler, midpoint, RKF45 and comparison", "priority": "P1", "legacy": ["calc_core.c", "calc_bridge.py", "super_calc_bridged.py"], "status": "planned"},
-    {"id": "signals.all", "name": "FFT, spectrum export and convolution", "priority": "P1", "legacy": ["calc_bridge.py", "calc_core.c", "index.html"], "status": "planned"},
-    {"id": "statistics.all", "name": "Descriptive statistics and histogram", "priority": "P2", "legacy": ["super_calc_bridged.py"], "status": "planned"},
-    {"id": "distributions.six", "name": "Six distributions with PDF/PMF, CDF and PPF", "priority": "P2", "legacy": ["stat_dist.py", "super_calc_bridged.py"], "status": "planned"},
-    {"id": "probability.all", "name": "Combinatorics, events, Bayes and discrete distributions", "priority": "P2", "legacy": ["probability_calc.py", "super_calc_bridged.py", "index.html"], "status": "planned"},
-    {"id": "data.regression", "name": "Five regressions, R2, CSV data and chart export", "priority": "P2", "legacy": ["calc_bridge.py", "super_calc_bridged.py", "index.html"], "status": "planned"},
-    {"id": "data.interpolation", "name": "Six interpolation methods", "priority": "P2", "legacy": ["calc_core.c", "super_calc_bridged.py", "index.html"], "status": "planned"},
-    {"id": "linearAlgebra.dense", "name": "Dense matrix operations and eigenvalues", "priority": "P2", "legacy": ["super_calc_bridged.py", "android"], "status": "planned"},
-    {"id": "linearAlgebra.sparse", "name": "COO, SpMV and conjugate gradient", "priority": "P3", "legacy": ["calc_core.c", "super_calc_bridged.py", "index.html"], "status": "planned"},
-    {"id": "complex.all", "name": "Complex arithmetic and functions", "priority": "P1", "legacy": ["calc_core.c", "calc_bridge.py", "android"], "status": "planned"},
-    {"id": "numberTheory.all", "name": "Factorization, primes, GCD/LCM, Fibonacci, modPow and phi", "priority": "P3", "legacy": ["super_calc_bridged.py", "android"], "status": "planned"},
-    {"id": "discrete.base", "name": "Base conversion from 2 to 36", "priority": "P3", "legacy": ["calc_core.c", "index.html"], "status": "planned"},
-    {"id": "discrete.bitwise", "name": "Bitwise operations at 8, 16 and 32 bits", "priority": "P3", "legacy": ["super_calc_bridged.py", "index.html"], "status": "planned"},
-    {"id": "tools.units", "name": "Nine unit conversion categories", "priority": "P3", "legacy": ["super_calc_bridged.py"], "status": "planned"},
-    {"id": "tools.calendar", "name": "Calendar, date difference and date arithmetic", "priority": "P3", "legacy": ["super_calc_bridged.py", "android", "index.html"], "status": "planned"},
-    {"id": "tools.finance", "name": "Loans, compound interest, NPV/IRR, depreciation, bonds and retirement", "priority": "P2", "legacy": ["finance_calc.py", "super_calc_bridged.py", "index.html"], "status": "planned"},
-    {"id": "app.customFunctions", "name": "Custom functions with composition", "priority": "P1", "legacy": ["calc_core.c", "super_calc_bridged.py", "index.html"], "status": "planned"},
-    {"id": "app.history", "name": "Last 10 calculations, persistence and CSV", "priority": "P1", "legacy": ["calc_core.c", "super_calc_bridged.py", "android"], "status": "planned"},
-    {"id": "app.functionTable", "name": "Function tables, copy and CSV export", "priority": "P1", "legacy": ["super_calc_bridged.py"], "status": "planned"},
-    {"id": "app.presets", "name": "Verified 25 function presets and parameter presets", "priority": "P1", "legacy": ["super_calc_bridged.py"], "status": "scaffolded"},
-    {"id": "platform.i18n", "name": "English and Chinese localization", "priority": "P0", "legacy": ["locale_strings.py", "android", "index.html"], "status": "scaffolded"},
-    {"id": "platform.release", "name": "Android, iOS, Windows, Linux, macOS, Web and CI/CD", "priority": "P3", "legacy": [".github/workflows", "android"], "status": "planned"}
-  ]
+    {
+      "id": "expr.evaluate",
+      "name": "Expression evaluation",
+      "priority": "P0",
+      "legacy": [
+        "calc_core.c",
+        "calc_bridge.py",
+        "index.html"
+      ],
+      "status": "implemented"
+    },
+    {
+      "id": "plot.function2d",
+      "name": "2D function plotting",
+      "priority": "P0",
+      "legacy": [
+        "super_calc_bridged.py"
+      ],
+      "status": "implemented"
+    },
+    {
+      "id": "plot.multiCurve",
+      "name": "Multi-curve overlay",
+      "priority": "P1",
+      "legacy": [
+        "super_calc_bridged.py"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "plot.surface3d",
+      "name": "3D surface plotting",
+      "priority": "P2",
+      "legacy": [
+        "super_calc_bridged.py",
+        "android"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "plot.parametric",
+      "name": "Parametric curves and 10 presets",
+      "priority": "P1",
+      "legacy": [
+        "calc_bridge.py",
+        "super_calc_bridged.py"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "plot.polar",
+      "name": "Polar curves and 12 presets",
+      "priority": "P1",
+      "legacy": [
+        "super_calc_bridged.py"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "plot.implicit",
+      "name": "Implicit curves and 8 presets",
+      "priority": "P2",
+      "legacy": [
+        "super_calc_bridged.py"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "plot.contour",
+      "name": "Contour/level-set plots and 5 presets",
+      "priority": "P2",
+      "legacy": [
+        "calc_core.c",
+        "super_calc_bridged.py",
+        "index.html"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "plot.directionField",
+      "name": "Direction fields and 8 presets",
+      "priority": "P2",
+      "legacy": [
+        "super_calc_bridged.py"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "plot.vectorField",
+      "name": "Vector fields",
+      "priority": "P2",
+      "legacy": [
+        "calc_core.c",
+        "super_calc_bridged.py",
+        "index.html"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "calculus.all",
+      "name": "Derivatives, integrals, limits, Taylor, arc length, area and revolution volume",
+      "priority": "P1",
+      "legacy": [
+        "calc_core.c",
+        "calc_bridge.py",
+        "super_calc_bridged.py"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "equations.all",
+      "name": "Roots, systems, extrema, scanning, intersections, tangent and normal",
+      "priority": "P1",
+      "legacy": [
+        "calc_core.c",
+        "super_calc_bridged.py"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "ode.all",
+      "name": "RK4, Euler, improved Euler, midpoint, RKF45 and comparison",
+      "priority": "P1",
+      "legacy": [
+        "calc_core.c",
+        "calc_bridge.py",
+        "super_calc_bridged.py"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "signals.all",
+      "name": "FFT, spectrum export and convolution",
+      "priority": "P1",
+      "legacy": [
+        "calc_bridge.py",
+        "calc_core.c",
+        "index.html"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "statistics.all",
+      "name": "Descriptive statistics and histogram",
+      "priority": "P2",
+      "legacy": [
+        "super_calc_bridged.py"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "distributions.six",
+      "name": "Six distributions with PDF/PMF, CDF and PPF",
+      "priority": "P2",
+      "legacy": [
+        "stat_dist.py",
+        "super_calc_bridged.py"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "probability.all",
+      "name": "Combinatorics, events, Bayes and discrete distributions",
+      "priority": "P2",
+      "legacy": [
+        "probability_calc.py",
+        "super_calc_bridged.py",
+        "index.html"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "data.regression",
+      "name": "Five regressions, R2, CSV data and chart export",
+      "priority": "P2",
+      "legacy": [
+        "calc_bridge.py",
+        "super_calc_bridged.py",
+        "index.html"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "data.interpolation",
+      "name": "Six interpolation methods",
+      "priority": "P2",
+      "legacy": [
+        "calc_core.c",
+        "super_calc_bridged.py",
+        "index.html"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "linearAlgebra.dense",
+      "name": "Dense matrix operations and eigenvalues",
+      "priority": "P2",
+      "legacy": [
+        "super_calc_bridged.py",
+        "android"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "linearAlgebra.sparse",
+      "name": "COO, SpMV and conjugate gradient",
+      "priority": "P3",
+      "legacy": [
+        "calc_core.c",
+        "super_calc_bridged.py",
+        "index.html"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "complex.all",
+      "name": "Complex arithmetic and functions",
+      "priority": "P1",
+      "legacy": [
+        "calc_core.c",
+        "calc_bridge.py",
+        "android"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "numberTheory.all",
+      "name": "Factorization, primes, GCD/LCM, Fibonacci, modPow and phi",
+      "priority": "P3",
+      "legacy": [
+        "super_calc_bridged.py",
+        "android"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "discrete.base",
+      "name": "Base conversion from 2 to 36",
+      "priority": "P3",
+      "legacy": [
+        "calc_core.c",
+        "index.html"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "discrete.bitwise",
+      "name": "Bitwise operations at 8, 16 and 32 bits",
+      "priority": "P3",
+      "legacy": [
+        "super_calc_bridged.py",
+        "index.html"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "tools.units",
+      "name": "Nine unit conversion categories",
+      "priority": "P3",
+      "legacy": [
+        "super_calc_bridged.py"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "tools.calendar",
+      "name": "Calendar, date difference and date arithmetic",
+      "priority": "P3",
+      "legacy": [
+        "super_calc_bridged.py",
+        "android",
+        "index.html"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "tools.finance",
+      "name": "Loans, compound interest, NPV/IRR, depreciation, bonds and retirement",
+      "priority": "P2",
+      "legacy": [
+        "finance_calc.py",
+        "super_calc_bridged.py",
+        "index.html"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "app.customFunctions",
+      "name": "Custom functions with composition",
+      "priority": "P1",
+      "legacy": [
+        "calc_core.c",
+        "super_calc_bridged.py",
+        "index.html"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "app.history",
+      "name": "Last 10 calculations, persistence and CSV",
+      "priority": "P1",
+      "legacy": [
+        "calc_core.c",
+        "super_calc_bridged.py",
+        "android"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "app.functionTable",
+      "name": "Function tables, copy and CSV export",
+      "priority": "P1",
+      "legacy": [
+        "super_calc_bridged.py"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "app.presets",
+      "name": "Verified 25 function presets and parameter presets",
+      "priority": "P1",
+      "legacy": [
+        "super_calc_bridged.py"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "platform.i18n",
+      "name": "English and Chinese localization",
+      "priority": "P0",
+      "legacy": [
+        "locale_strings.py",
+        "android",
+        "index.html"
+      ],
+      "status": "implemented"
+    },
+    {
+      "id": "platform.release",
+      "name": "Android, iOS, Windows, Linux, macOS, Web and CI/CD",
+      "priority": "P3",
+      "legacy": [
+        ".github/workflows",
+        "android"
+      ],
+      "status": "partial"
+    }
+  ],
+  "statusDefinitions": {
+    "implemented": "Implemented and covered by a deterministic vector or CI test in this migration.",
+    "partial": "Usable vertical slice; remaining legacy sub-capabilities remain explicitly tracked.",
+    "scaffolded": "Shell or contract exists but the user path is not yet complete.",
+    "planned": "Not yet migrated; retained in the manifest for parity tracking."
+  }
 }
