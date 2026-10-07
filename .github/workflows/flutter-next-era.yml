@@ -44,8 +44,14 @@ jobs:
         run: |
           echo '### flutter pub get diagnostics' >> "$GITHUB_STEP_SUMMARY"
           tail -n 120 "$RUNNER_TEMP/pub-get.log" >> "$GITHUB_STEP_SUMMARY"
-          message="$(tail -n 12 "$RUNNER_TEMP/pub-get.log" | tr '\\n' ' ' | cut -c1-3500)"
-          echo "::error title=flutter pub get failed::$message"
+          echo '--- last dependency-resolution lines ---'
+          tail -n 80 "$RUNNER_TEMP/pub-get.log"
+          while IFS= read -r line; do
+            line="${line//'%'/'%25'}"
+            line="${line//$'\\r'/'%0D'}"
+            line="${line//$'\\n'/'%0A'}"
+            echo "::error title=pub get log::$line"
+          done < <(tail -n 40 "$RUNNER_TEMP/pub-get.log")
           exit 1
       - run: flutter gen-l10n
       - name: Check formatting
