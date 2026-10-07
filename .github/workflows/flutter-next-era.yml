@@ -86,13 +86,35 @@ jobs:
         id: analyze
         continue-on-error: true
         run: |
-          set -o pipefail
-          flutter analyze 2>&1 | tee "$RUNNER_TEMP/flutter-analyze.log"
+          set +e
+          flutter analyze --machine > "$RUNNER_TEMP/flutter-analyze.json"
+          status=$?
+          echo "$status" > "$RUNNER_TEMP/flutter-analyze.status"
+          exit 0
       - name: Report analyzer diagnostics
-        if: steps.analyze.outcome == 'failure'
+        if: steps.analyze.outcome == 'success'
         run: |
-          grep -Ei 'error|warning|info|^  ' "$RUNNER_TEMP/flutter-analyze.log" | tail -n 120 || true
-          exit 1
+          python3 - "$RUNNER_TEMP/flutter-analyze.json" <<'PY'
+          import json
+          import pathlib
+          import sys
+          path = pathlib.Path(sys.argv[1])
+          for line in path.read_text().splitlines():
+              try:
+                  item = json.loads(line)
+              except json.JSONDecodeError:
+                  continue
+              if item.get('kind') != 'analysisIssue':
+                  continue
+              location = item.get('location', {})
+              file = location.get('file', '')
+              start = location.get('start', {})
+              message = item.get('problemMessage', item.get('message', 'analyzer issue'))
+              print(
+                  f"::error file={file},line={start.get('line', 1)},col={start.get('column', 1)}::{message}"
+              )
+          PY
+          test "$(cat "$RUNNER_TEMP/flutter-analyze.status")" = 0
       - run: flutter test
       - run: flutter build web --release
 
