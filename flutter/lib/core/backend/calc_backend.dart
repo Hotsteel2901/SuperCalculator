@@ -25,13 +25,12 @@ abstract interface class CalcBackend {
 
   Future<List<double?>> evaluateArray(String expression, List<double> xs);
 
-  void dispose() {}
+  void dispose();
 }
 
 class DartCalcBackend implements CalcBackend {
   const DartCalcBackend({this.displayName = 'Dart fallback'});
 
-  @override
   final String displayName;
 
   @override
@@ -70,6 +69,9 @@ class DartCalcBackend implements CalcBackend {
     }
     return values;
   }
+
+  @override
+  void dispose() {}
 }
 
 /// Small, deliberately bounded fallback parser used by the app shell and Web
@@ -113,13 +115,15 @@ class _ExpressionParser {
         value *= _parsePower();
       } else if (_match('/')) {
         final divisor = _parsePower();
-        if (divisor.abs() < 1e-15)
+        if (divisor.abs() < 1e-15) {
           throw const FormatException('Division by zero.');
+        }
         value /= divisor;
       } else if (_match('%') || _matchWord('mod')) {
         final divisor = _parsePower();
-        if (divisor.abs() < 1e-15)
+        if (divisor.abs() < 1e-15) {
           throw const FormatException('Modulo by zero.');
+        }
         value %= divisor;
       } else {
         return value;
@@ -204,29 +208,38 @@ class _ExpressionParser {
 
   double _parseNumber() {
     final start = position;
-    while (position < source.length && _isDigit(source[position])) position++;
+    while (position < source.length && _isDigit(source[position])) {
+      position++;
+    }
     if (position < source.length && source[position] == '.') {
       position++;
-      while (position < source.length && _isDigit(source[position])) position++;
+      while (position < source.length && _isDigit(source[position])) {
+        position++;
+      }
     }
     if (position < source.length &&
         (source[position] == 'e' || source[position] == 'E')) {
       position++;
       if (position < source.length &&
-          (source[position] == '+' || source[position] == '-'))
+          (source[position] == '+' || source[position] == '-')) {
         position++;
-      while (position < source.length && _isDigit(source[position])) position++;
+      }
+      while (position < source.length && _isDigit(source[position])) {
+        position++;
+      }
     }
     return double.parse(source.substring(start, position));
   }
 
   String? _parseIdentifier() {
     _skipSpaces();
-    if (position >= source.length || !_isIdentifierStart(source[position]))
+    if (position >= source.length || !_isIdentifierStart(source[position])) {
       return null;
+    }
     final start = position++;
-    while (position < source.length && _isIdentifierPart(source[position]))
+    while (position < source.length && _isIdentifierPart(source[position])) {
       position++;
+    }
     return source.substring(start, position).toLowerCase();
   }
 
@@ -254,13 +267,15 @@ class _ExpressionParser {
 
   void _expect(String character) {
     _skipSpaces();
-    if (!_match(character))
+    if (!_match(character)) {
       throw FormatException('Expected "$character" at position $position.');
+    }
   }
 
   void _skipSpaces() {
-    while (position < source.length && source[position].trim().isEmpty)
+    while (position < source.length && source[position].trim().isEmpty) {
       position++;
+    }
   }
 
   bool _isDigit(String character) =>
