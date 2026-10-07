@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/theme/design_tokens.dart';
-import '../../l10n/generated/app_localizations.dart';
 import '../../core/plot/function_plot_painter.dart';
+import '../../core/ui/feature_widgets.dart';
+import '../../l10n/generated/app_localizations.dart';
 import 'calculator_controller.dart';
 
 class PlotPage extends ConsumerStatefulWidget {
@@ -15,6 +16,7 @@ class PlotPage extends ConsumerStatefulWidget {
 
 class _PlotPageState extends ConsumerState<PlotPage> {
   late final TextEditingController _expressionController;
+  late final TextEditingController _secondaryController;
   late final TextEditingController _xController;
 
   @override
@@ -22,12 +24,16 @@ class _PlotPageState extends ConsumerState<PlotPage> {
     super.initState();
     final initial = ref.read(calculatorControllerProvider);
     _expressionController = TextEditingController(text: initial.expression);
+    _secondaryController = TextEditingController(
+      text: initial.secondaryExpression,
+    );
     _xController = TextEditingController(text: initial.xText);
   }
 
   @override
   void dispose() {
     _expressionController.dispose();
+    _secondaryController.dispose();
     _xController.dispose();
     super.dispose();
   }
@@ -39,6 +45,12 @@ class _PlotPageState extends ConsumerState<PlotPage> {
     final state = ref.watch(calculatorControllerProvider);
     final controller = ref.read(calculatorControllerProvider.notifier);
     final scheme = Theme.of(context).colorScheme;
+    final modes = <String, String>{
+      'function': nextEraText(context, 'Function y=f(x)', '函数 y=f(x)'),
+      'parametric': nextEraText(context, 'Parametric x(t), y(t)', '参数曲线 x(t), y(t)'),
+      'polar': nextEraText(context, 'Polar r(t)', '极坐标 r(t)'),
+      'implicit': nextEraText(context, 'Implicit f(x,y)=0', '隐式曲线 f(x,y)=0'),
+    };
 
     return CustomScrollView(
       slivers: <Widget>[
@@ -53,8 +65,32 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
+                      DropdownButtonFormField<String>(
+                        initialValue: state.mode,
+                        decoration: InputDecoration(
+                          labelText: nextEraText(context, 'Plot mode', '绘图模式'),
+                        ),
+                        items: modes.entries
+                            .map(
+                              (entry) => DropdownMenuItem<String>(
+                                value: entry.key,
+                                child: Text(entry.value),
+                              ),
+                            )
+                            .toList(growable: false),
+                        onChanged: (value) {
+                          if (value != null) controller.setMode(value);
+                        },
+                      ),
+                      SizedBox(height: tokens.controlGap),
                       Text(
-                        l10n.expression,
+                        state.mode == 'parametric'
+                            ? nextEraText(context, 'x(t)', 'x(t)')
+                            : state.mode == 'polar'
+                            ? nextEraText(context, 'r(t)', 'r(t)')
+                            : state.mode == 'implicit'
+                            ? nextEraText(context, 'f(x,y)', 'f(x,y)')
+                            : l10n.expression,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       SizedBox(height: tokens.controlGap),
@@ -64,26 +100,46 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                         onSubmitted: (_) => controller.evaluate(),
                         keyboardType: TextInputType.text,
                         textInputAction: TextInputAction.go,
-                        decoration: const InputDecoration(hintText: 'sin(x)'),
+                        decoration: InputDecoration(
+                          hintText: state.mode == 'parametric'
+                              ? 'cos(x)'
+                              : state.mode == 'polar'
+                              ? '1 + cos(x)'
+                              : 'sin(x)',
+                        ),
                         style: const TextStyle(fontFamily: 'monospace'),
                       ),
+                      if (state.mode == 'parametric') ...<Widget>[
+                        SizedBox(height: tokens.controlGap),
+                        TextField(
+                          controller: _secondaryController,
+                          onChanged: controller.setSecondaryExpression,
+                          decoration: InputDecoration(
+                            labelText: nextEraText(context, 'y(t)', 'y(t)'),
+                            hintText: 'sin(x)',
+                          ),
+                          style: const TextStyle(fontFamily: 'monospace'),
+                        ),
+                      ],
                       SizedBox(height: tokens.controlGap),
                       Row(
                         children: <Widget>[
-                          Expanded(
-                            child: TextField(
-                              controller: _xController,
-                              onChanged: controller.setX,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                              decoration: InputDecoration(
-                                labelText: l10n.argumentX,
+                          if (state.mode == 'function')
+                            Expanded(
+                              child: TextField(
+                                controller: _xController,
+                                onChanged: controller.setX,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                decoration: InputDecoration(
+                                  labelText: l10n.argumentX,
+                                ),
                               ),
                             ),
-                          ),
-                          SizedBox(width: tokens.controlGap),
+                          if (state.mode == 'function')
+                            SizedBox(width: tokens.controlGap),
                           FilledButton.icon(
                             onPressed: state.isCalculating
                                 ? null
@@ -114,6 +170,7 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                                 label: Text(example),
                                 onPressed: () {
                                   _expressionController.text = example;
+                                  controller.setMode('function');
                                   controller.setExpression(example);
                                 },
                               ),

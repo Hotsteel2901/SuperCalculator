@@ -94,7 +94,9 @@ class SuperCalcDesignTokens extends ThemeExtension<SuperCalcDesignTokens> {
     covariant ThemeExtension<SuperCalcDesignTokens>? other,
     double t,
   ) {
-    if (other is! SuperCalcDesignTokens) return this;
+    if (other is! SuperCalcDesignTokens) {
+      return this;
+    }
     double d(double a, double b) => a + (b - a) * t;
     return SuperCalcDesignTokens(
       compactBreakpoint: d(compactBreakpoint, other.compactBreakpoint),

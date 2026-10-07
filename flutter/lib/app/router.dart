@@ -5,6 +5,7 @@ import '../features/calculus/calculus_page.dart';
 import '../features/data_analysis/data_analysis_page.dart';
 import '../features/equations/equations_page.dart';
 import '../features/home/home_page.dart';
+import '../features/history/history_page.dart';
 import '../features/linear_algebra/linear_algebra_page.dart';
 import '../features/ode/ode_page.dart';
 import '../features/plotting/plot_page.dart';
@@ -37,6 +38,7 @@ final GoRouter appRouter = GoRouter(
           builder: (_, _) => const LinearAlgebraPage(),
         ),
         GoRoute(path: '/tools', builder: (_, _) => const ToolsPage()),
+        GoRoute(path: '/history', builder: (_, _) => const HistoryPage()),
       ],
     ),
   ],

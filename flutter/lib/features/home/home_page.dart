@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/theme/design_tokens.dart';
+import '../../core/ui/feature_widgets.dart';
 import '../../l10n/generated/app_localizations.dart';
 
 class HomePage extends StatelessWidget {
@@ -139,6 +140,7 @@ class _FeatureGrid extends StatelessWidget {
       _FeatureCardData(l10n.statistics, Icons.bar_chart, '/statistics'),
       _FeatureCardData(l10n.linearAlgebra, Icons.grid_4x4, '/linear-algebra'),
       _FeatureCardData(l10n.tools, Icons.build, '/tools'),
+      _FeatureCardData(nextEraText(context, 'History', '历史'), Icons.history, '/history'),
     ];
 
     return LayoutBuilder(

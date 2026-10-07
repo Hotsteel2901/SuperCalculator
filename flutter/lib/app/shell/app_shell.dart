@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/theme/design_tokens.dart';
+import '../../core/ui/feature_widgets.dart';
 import '../../l10n/generated/app_localizations.dart';
 
 class AppShell extends StatelessWidget {
@@ -65,6 +66,12 @@ class AppShell extends StatelessWidget {
         l10n.linearAlgebra,
       ),
       _Destination('/tools', Icons.build_outlined, Icons.build, l10n.tools),
+      _Destination(
+        '/history',
+        Icons.history_outlined,
+        Icons.history,
+        nextEraText(context, 'History', '历史'),
+      ),
     ];
     final compactDestinations = <_Destination>[
       ...destinations.take(4),
@@ -107,7 +114,9 @@ class AppShell extends StatelessWidget {
                 ),
         );
 
-        if (!useRail) return page;
+        if (!useRail) {
+          return page;
+        }
 
         return Scaffold(
           body: Row(

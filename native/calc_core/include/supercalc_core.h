@@ -20,7 +20,7 @@ extern "C" {
 typedef struct sc_context sc_context_t;
 
 enum {
-    SC_ABI_VERSION = 1,
+    SC_ABI_VERSION = 2,
     SC_OK = 0,
     SC_INVALID_ARGUMENT = 1,
     SC_CALCULATION_ERROR = 2,
@@ -46,7 +46,22 @@ SC_API int32_t sc_evaluate_array(
     int32_t count,
     double* results);
 
+SC_API int32_t sc_evaluate_array_xy(
+    sc_context_t* context,
+    const char* expression,
+    const double* xs,
+    const double* ys,
+    int32_t count,
+    double* results);
+
 SC_API int32_t sc_derivative(
+    sc_context_t* context,
+    const char* expression,
+    double x,
+    double step,
+    double* result);
+
+SC_API int32_t sc_derivative2(
     sc_context_t* context,
     const char* expression,
     double x,
@@ -61,6 +76,15 @@ SC_API int32_t sc_integrate(
     double tolerance,
     double* result);
 
+SC_API int32_t sc_solve_bisection(
+    sc_context_t* context,
+    const char* expression,
+    double a,
+    double b,
+    double tolerance,
+    int32_t max_iterations,
+    double* result);
+
 SC_API int32_t sc_solve(
     sc_context_t* context,
     const char* expression,
@@ -70,6 +94,18 @@ SC_API int32_t sc_solve(
     double tolerance,
     int32_t max_iterations,
     double* result);
+
+SC_API int32_t sc_ode_rk4(
+    sc_context_t* context,
+    const char* expression,
+    double x0,
+    double y0,
+    double x_end,
+    int32_t steps,
+    double* out_x,
+    double* out_y,
+    int32_t max_out,
+    int32_t* out_count);
 
 #ifdef __cplusplus
 }

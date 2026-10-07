@@ -31,6 +31,12 @@
 #include <ctype.h>
 #include <limits.h>
 
+#if defined(__GNUC__) || defined(__clang__)
+#define SC_MAYBE_UNUSED __attribute__((unused))
+#else
+#define SC_MAYBE_UNUSED
+#endif
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -180,7 +186,7 @@ static int tokenize(const char* s, Token* toks, int max_toks) {
                 /* Check custom function registry (allow names up to 31 chars) */
                 char full_name[32] = {0};
                 int fi = i;
-                strncpy(full_name, name, 7);
+                memcpy(full_name, name, (size_t)i);
                 while (isalpha(*s) && fi < 31) full_name[fi++] = *s++;
                 full_name[fi] = '\0';
                 CustomFunc* cf = custom_func_find(full_name);
@@ -479,15 +485,26 @@ static int eval_rpn(RPN* rpn, int nrpn, double x, double y, double* result) {
     return 0;
 }
 
+static int compile_expression(const char* expr, RPN* rpn, int* count) {
+    if (!expr || !rpn || !count) {
+        set_error("Invalid expression compiler argument");
+        return -1;
+    }
+    Token toks[MAX_TOKENS];
+    const int token_count = tokenize(expr, toks, MAX_TOKENS);
+    if (token_count < 0) return -1;
+    const int rpn_count = shunt(toks, token_count, rpn, MAX_RPN);
+    if (rpn_count < 0) return -1;
+    *count = rpn_count;
+    return 0;
+}
+
 static int parse_and_eval(const char* expr, double x, double y, double* result) {
     clear_error();
-    Token toks[MAX_TOKENS];
-    RPN   rpn[MAX_RPN];
-    int nt = tokenize(expr, toks, MAX_TOKENS);
-    if (nt < 0) return -1;
-    int nr = shunt(toks, nt, rpn, MAX_RPN);
-    if (nr < 0) return -1;
-    return eval_rpn(rpn, nr, x, y, result);
+    RPN rpn[MAX_RPN];
+    int count = 0;
+    if (compile_expression(expr, rpn, &count) != 0) return -1;
+    return eval_rpn(rpn, count, x, y, result);
 }
 
 EXPORT double evaluate(const char* expr, double x) {
@@ -509,15 +526,9 @@ EXPORT double evaluate_xy(const char* expr, double x, double y) {
 EXPORT void evaluate_array(const char* expr, const double* xs, double* out, int n) {
     if (!expr || !xs || !out || n <= 0) return;
     clear_error();
-    Token toks[MAX_TOKENS];
-    RPN   rpn[MAX_RPN];
-    int nt = tokenize(expr, toks, MAX_TOKENS);
-    if (nt < 0) {
-        for (int i = 0; i < n; i++) out[i] = NAN;
-        return;
-    }
-    int nr = shunt(toks, nt, rpn, MAX_RPN);
-    if (nr < 0) {
+    RPN rpn[MAX_RPN];
+    int nr = 0;
+    if (compile_expression(expr, rpn, &nr) != 0) {
         for (int i = 0; i < n; i++) out[i] = NAN;
         return;
     }
@@ -533,15 +544,9 @@ EXPORT void evaluate_array(const char* expr, const double* xs, double* out, int 
 EXPORT void evaluate_xy_array(const char* expr, const double* xs, const double* ys, double* out, int n) {
     if (!expr || !xs || !ys || !out || n <= 0) return;
     clear_error();
-    Token toks[MAX_TOKENS];
-    RPN   rpn[MAX_RPN];
-    int nt = tokenize(expr, toks, MAX_TOKENS);
-    if (nt < 0) {
-        for (int i = 0; i < n; i++) out[i] = NAN;
-        return;
-    }
-    int nr = shunt(toks, nt, rpn, MAX_RPN);
-    if (nr < 0) {
+    RPN rpn[MAX_RPN];
+    int nr = 0;
+    if (compile_expression(expr, rpn, &nr) != 0) {
         for (int i = 0; i < n; i++) out[i] = NAN;
         return;
     }
@@ -559,8 +564,11 @@ EXPORT double derivative(const char* expr, double x, double h) {
     clear_error();
     if (!expr) { set_error("NULL expression"); return NAN; }
     if (h == 0.0) { set_error("Step size h cannot be zero"); return NAN; }
-    if (parse_and_eval(expr, x+h, 0.0, &fp) != 0) return NAN;
-    if (parse_and_eval(expr, x-h, 0.0, &fm) != 0) return NAN;
+    RPN rpn[MAX_RPN];
+    int count = 0;
+    if (compile_expression(expr, rpn, &count) != 0) return NAN;
+    if (eval_rpn(rpn, count, x + h, 0.0, &fp) != 0) return NAN;
+    if (eval_rpn(rpn, count, x - h, 0.0, &fm) != 0) return NAN;
     return (fp - fm) / (2.0 * h);
 }
 
@@ -569,10 +577,13 @@ EXPORT double derivative2(const char* expr, double x, double h) {
     clear_error();
     if (!expr) { set_error("NULL expression"); return NAN; }
     if (h == 0.0) { set_error("Step size h cannot be zero"); return NAN; }
-    if (parse_and_eval(expr, x,   0.0, &fc) != 0) return NAN;
-    if (parse_and_eval(expr, x+h, 0.0, &fp) != 0) return NAN;
-    if (parse_and_eval(expr, x-h, 0.0, &fm) != 0) return NAN;
-    return (fp - 2.0*fc + fm) / (h*h);
+    RPN rpn[MAX_RPN];
+    int count = 0;
+    if (compile_expression(expr, rpn, &count) != 0) return NAN;
+    if (eval_rpn(rpn, count, x, 0.0, &fc) != 0) return NAN;
+    if (eval_rpn(rpn, count, x + h, 0.0, &fp) != 0) return NAN;
+    if (eval_rpn(rpn, count, x - h, 0.0, &fm) != 0) return NAN;
+    return (fp - 2.0 * fc + fm) / (h * h);
 }
 
 EXPORT double integrate(const char* expr, double a, double b, int n) {
@@ -582,15 +593,18 @@ EXPORT double integrate(const char* expr, double a, double b, int n) {
     if (a > b) { set_error("Invalid interval: a must be <= b"); return NAN; }
     if (a == b) { clear_error(); return 0.0; }
     clear_error();
+    RPN rpn[MAX_RPN];
+    int count = 0;
+    if (compile_expression(expr, rpn, &count) != 0) return NAN;
     double h = (b - a) / n;
     double fa, fb;
-    if (parse_and_eval(expr, a, 0.0, &fa) != 0) return NAN;
-    if (parse_and_eval(expr, b, 0.0, &fb) != 0) return NAN;
+    if (eval_rpn(rpn, count, a, 0.0, &fa) != 0) return NAN;
+    if (eval_rpn(rpn, count, b, 0.0, &fb) != 0) return NAN;
     double sum = fa + fb;
     for (int i = 1; i < n; i++) {
-        double xi = a + i*h, fi;
-        if (parse_and_eval(expr, xi, 0.0, &fi) != 0) return NAN;
-        sum += (i%2==0 ? 2.0 : 4.0) * fi;
+        double xi = a + i * h, fi;
+        if (eval_rpn(rpn, count, xi, 0.0, &fi) != 0) return NAN;
+        sum += (i % 2 == 0 ? 2.0 : 4.0) * fi;
     }
     return (h/3.0) * sum;
 }
@@ -602,26 +616,29 @@ EXPORT double solve_equation(const char* expr, double guess,
     if (xmin >= xmax) { set_error("Invalid interval: xmin must be < xmax"); return NAN; }
     if (max_iter <= 0) max_iter = 100;
     clear_error();
+    RPN rpn[MAX_RPN];
+    int count = 0;
+    if (compile_expression(expr, rpn, &count) != 0) return NAN;
     double x = guess;
     if (x < xmin) x = xmin + 0.1*(xmax-xmin);
     if (x > xmax) x = xmax - 0.1*(xmax-xmin);
 
     for (int iter = 0; iter < max_iter; iter++) {
         double f, fp, fm, df;
-        if (parse_and_eval(expr, x, 0.0, &f) != 0) return NAN;
+        if (eval_rpn(rpn, count, x, 0.0, &f) != 0) return NAN;
         if (isnan(f)) { set_error("Function returned NaN at current point"); return NAN; }
         if (fabs(f) < tol) return x;
         double h = 1e-6 * (fabs(x) + 1.0);
-        if (parse_and_eval(expr, x+h, 0.0, &fp) != 0) return NAN;
+        if (eval_rpn(rpn, count, x+h, 0.0, &fp) != 0) return NAN;
         if (isnan(fp)) { set_error("Function returned NaN during derivative evaluation"); return NAN; }
-        if (parse_and_eval(expr, x-h, 0.0, &fm) != 0) return NAN;
+        if (eval_rpn(rpn, count, x-h, 0.0, &fm) != 0) return NAN;
         if (isnan(fm)) { set_error("Function returned NaN during derivative evaluation"); return NAN; }
         df = (fp - fm) / (2.0*h);
         if (fabs(df) < 1e-15) {
-            double fa; if (parse_and_eval(expr, xmin, 0.0, &fa) != 0) return NAN;
+            double fa; if (eval_rpn(rpn, count, xmin, 0.0, &fa) != 0) return NAN;
             if (isnan(fa)) { set_error("Function returned NaN at interval endpoint"); return NAN; }
             double mid = (xmin + xmax)/2.0, fmid;
-            if (parse_and_eval(expr, mid, 0.0, &fmid) != 0) return NAN;
+            if (eval_rpn(rpn, count, mid, 0.0, &fmid) != 0) return NAN;
             if (isnan(fmid)) { set_error("Function returned NaN during bisection"); return NAN; }
             if (fa*fmid <= 0) xmax = mid;
             else xmin = mid;
@@ -630,10 +647,10 @@ EXPORT double solve_equation(const char* expr, double guess,
             double nx = x - f/df;
             if (isnan(nx) || isinf(nx)) { set_error("Newton step produced NaN/Inf"); return NAN; }
             if (nx < xmin || nx > xmax) {
-                double fa; if (parse_and_eval(expr, xmin, 0.0, &fa) != 0) return NAN;
+                double fa; if (eval_rpn(rpn, count, xmin, 0.0, &fa) != 0) return NAN;
                 if (isnan(fa)) { set_error("Function returned NaN at interval endpoint"); return NAN; }
                 double mid = (xmin+xmax)/2.0, fmid;
-                if (parse_and_eval(expr, mid, 0.0, &fmid) != 0) return NAN;
+                if (eval_rpn(rpn, count, mid, 0.0, &fmid) != 0) return NAN;
                 if (isnan(fmid)) { set_error("Function returned NaN during bisection"); return NAN; }
                 if (fa*fmid <= 0) xmax = mid; else xmin = mid;
                 x = mid;
@@ -650,17 +667,20 @@ EXPORT double solve_bisection(const char* expr, double a, double b,
     if (a >= b) { set_error("Invalid interval: a must be < b"); return NAN; }
     if (max_iter <= 0) max_iter = 100;
     clear_error();
+    RPN rpn[MAX_RPN];
+    int count = 0;
+    if (compile_expression(expr, rpn, &count) != 0) return NAN;
     double fa, fb, fc, c;
-    if (parse_and_eval(expr, a, 0.0, &fa) != 0) return NAN;
+    if (eval_rpn(rpn, count, a, 0.0, &fa) != 0) return NAN;
     if (isnan(fa)) { set_error("Function returned NaN at interval endpoint"); return NAN; }
-    if (parse_and_eval(expr, b, 0.0, &fb) != 0) return NAN;
+    if (eval_rpn(rpn, count, b, 0.0, &fb) != 0) return NAN;
     if (isnan(fb)) { set_error("Function returned NaN at interval endpoint"); return NAN; }
     if (fabs(fa) < tol) return a;
     if (fabs(fb) < tol) return b;
     if (signbit(fa) == signbit(fb)) { set_error("f(a) and f(b) must have opposite signs"); return NAN; }
     for (int i = 0; i < max_iter; i++) {
         c = (a+b)/2.0;
-        if (parse_and_eval(expr, c, 0.0, &fc) != 0) return NAN;
+        if (eval_rpn(rpn, count, c, 0.0, &fc) != 0) return NAN;
         if (isnan(fc)) { set_error("Function returned NaN during bisection"); return NAN; }
         if (fabs(fc) < tol || (b-a)/2.0 < tol) return c;
         if (signbit(fa) != signbit(fc)) { b = c; fb = fc; }
@@ -711,6 +731,9 @@ EXPORT int ode_solve_rk4(const char* expr, double x0, double y0, double x_end,
     if (n_steps > 10000000) { set_error("n_steps too large (max 10000000)"); return -1; }
     if (max_out < n_steps + 1) { set_error("Output buffer too small"); return -1; }
     clear_error();
+    RPN rpn[MAX_RPN];
+    int count = 0;
+    if (compile_expression(expr, rpn, &count) != 0) return -1;
 
     double h = (x_end - x0) / n_steps;
     double x = x0;
@@ -723,19 +746,19 @@ EXPORT int ode_solve_rk4(const char* expr, double x0, double y0, double x_end,
         double k1_val, k2_val, k3_val, k4_val;
 
         /* k1 = f(x, y) */
-        if (parse_and_eval(expr, x, y, &k1_val) != 0) return -1;
+        if (eval_rpn(rpn, count, x, y, &k1_val) != 0) return -1;
         if (isnan(k1_val)) { set_error("f(x,y) returned NaN at RK4 k1"); return -1; }
 
         /* k2 = f(x + h/2, y + h*k1/2) */
-        if (parse_and_eval(expr, x + 0.5 * h, y + 0.5 * h * k1_val, &k2_val) != 0) return -1;
+        if (eval_rpn(rpn, count, x + 0.5 * h, y + 0.5 * h * k1_val, &k2_val) != 0) return -1;
         if (isnan(k2_val)) { set_error("f(x,y) returned NaN at RK4 k2"); return -1; }
 
         /* k3 = f(x + h/2, y + h*k2/2) */
-        if (parse_and_eval(expr, x + 0.5 * h, y + 0.5 * h * k2_val, &k3_val) != 0) return -1;
+        if (eval_rpn(rpn, count, x + 0.5 * h, y + 0.5 * h * k2_val, &k3_val) != 0) return -1;
         if (isnan(k3_val)) { set_error("f(x,y) returned NaN at RK4 k3"); return -1; }
 
         /* k4 = f(x + h, y + h*k3) */
-        if (parse_and_eval(expr, x + h, y + h * k3_val, &k4_val) != 0) return -1;
+        if (eval_rpn(rpn, count, x + h, y + h * k3_val, &k4_val) != 0) return -1;
         if (isnan(k4_val)) { set_error("f(x,y) returned NaN at RK4 k4"); return -1; }
 
         /* y_{n+1} = y_n + h*(k1 + 2*k2 + 2*k3 + k4)/6 */
@@ -1018,7 +1041,7 @@ static Complex complex_div(Complex a, Complex b) {
                         (a.im * b.re - a.re * b.im) / denom);
 }
 
-static Complex complex_neg(Complex a) {
+static SC_MAYBE_UNUSED Complex complex_neg(Complex a) {
     return complex_make(-a.re, -a.im);
 }
 
@@ -1086,7 +1109,7 @@ static Complex complex_tan(Complex a) {
 }
 
 /* Parse a complex number from string: "a+bi", "a-bi", "a", "bi" */
-static int parse_complex(const char* s, Complex* result) {
+static SC_MAYBE_UNUSED int parse_complex(const char* s, Complex* result) {
     if (!s || !result) return -1;
     
     char* end;
@@ -2694,6 +2717,7 @@ EXPORT int sparse_spmv(const SparseMatrix* m, const double* x, double* y, int n)
 EXPORT int sparse_solve_cg(const SparseMatrix* m, const double* b, double* x,
                             int max_iter, double tol, double* out_x, int n) {
     if (!m || !b || !out_x) return -1;
+    (void)x;  /* The solver intentionally starts from the zero vector. */
     if (n != m->n_rows || n != m->n_cols) {
         set_error("sparse_solve_cg: dimension mismatch");
         return -1;

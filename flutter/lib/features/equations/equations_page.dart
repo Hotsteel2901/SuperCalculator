@@ -1,16 +1,219 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/backend/providers.dart';
+import '../../core/ui/feature_widgets.dart';
 import '../../l10n/generated/app_localizations.dart';
-import '../home/feature_placeholder_page.dart';
 
-class EquationsPage extends StatelessWidget {
+class EquationsPage extends ConsumerStatefulWidget {
   const EquationsPage({super.key});
 
   @override
+  ConsumerState<EquationsPage> createState() => _EquationsPageState();
+}
+
+class _EquationsPageState extends ConsumerState<EquationsPage> {
+  final _expression = TextEditingController(text: 'x^2 - 2');
+  final _guess = TextEditingController(text: '1');
+  final _minimum = TextEditingController(text: '-10');
+  final _maximum = TextEditingController(text: '10');
+  String? _result;
+  String? _error;
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _expression.dispose();
+    _guess.dispose();
+    _minimum.dispose();
+    _maximum.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return FeaturePlaceholderPage(
+    return FeaturePageFrame(
       title: AppLocalizations.of(context).equations,
       icon: Icons.account_tree,
+      subtitle: nextEraText(
+        context,
+        'Use bounded Newton iterations and scan an interval for every sign-changing root.',
+        '使用有界牛顿迭代，并扫描区间寻找所有变号根。',
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          FeatureCard(
+            title: nextEraText(context, 'Root finder', '求根器'),
+            icon: Icons.radar,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                TextField(
+                  controller: _expression,
+                  decoration: InputDecoration(
+                    labelText: nextEraText(context, 'f(x) = 0', 'f(x) = 0'),
+                  ),
+                  style: const TextStyle(fontFamily: 'monospace'),
+                ),
+                const SizedBox(height: 12),
+                FormRow(
+                  children: <Widget>[
+                    TextField(
+                      controller: _guess,
+                      decoration: InputDecoration(
+                        labelText: nextEraText(context, 'Initial guess', '初始猜测'),
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
+                    TextField(
+                      controller: _minimum,
+                      decoration: InputDecoration(
+                        labelText: nextEraText(context, 'Minimum', '最小值'),
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
+                    TextField(
+                      controller: _maximum,
+                      decoration: InputDecoration(
+                        labelText: nextEraText(context, 'Maximum', '最大值'),
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
+                  ],
+                ),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: <Widget>[
+                    FilledButton.icon(
+                      onPressed: _busy ? null : _solve,
+                      icon: const Icon(Icons.bolt),
+                      label: Text(nextEraText(context, 'Solve', '求解')),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : _scanRoots,
+                      icon: const Icon(Icons.search),
+                      label: Text(nextEraText(context, 'Scan roots', '扫描全部根')),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          ResultCard(
+            value: _result ?? nextEraText(context, 'No root computed yet.', '尚未计算根。'),
+            error: _error,
+          ),
+          if (_busy) ...<Widget>[
+            const SizedBox(height: 12),
+            const LinearProgressIndicator(),
+          ],
+        ],
+      ),
     );
+  }
+
+  Future<void> _solve() async {
+    final guess = parseMathNumber(_guess.text);
+    final minimum = parseMathNumber(_minimum.text);
+    final maximum = parseMathNumber(_maximum.text);
+    if (guess == null || minimum == null || maximum == null) {
+      _invalidInput();
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+      _result = null;
+    });
+    final result = await ref.read(calcBackendProvider).solve(
+      _expression.text,
+      guess: guess,
+      minimum: minimum,
+      maximum: maximum,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _busy = false;
+      _result = result.value == null
+          ? null
+          : 'x = ${result.value!.toStringAsPrecision(12)}';
+      _error = result.error;
+    });
+  }
+
+  Future<void> _scanRoots() async {
+    final minimum = parseMathNumber(_minimum.text);
+    final maximum = parseMathNumber(_maximum.text);
+    if (minimum == null || maximum == null || minimum >= maximum) {
+      _invalidInput();
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+      _result = null;
+    });
+    final backend = ref.read(calcBackendProvider);
+    const count = 512;
+    final xs = List<double>.generate(
+      count + 1,
+      (index) => minimum + (maximum - minimum) * index / count,
+      growable: false,
+    );
+    final ys = await backend.evaluateArray(_expression.text, xs);
+    final roots = <double>[];
+    for (var i = 0; i < count; i++) {
+      final y1 = ys[i];
+      final y2 = ys[i + 1];
+      if (y1 == null || y2 == null) {
+        continue;
+      }
+      if (y1.abs() < 1e-8) {
+        roots.add(xs[i]);
+      }
+      if (y1.sign != y2.sign) {
+        final result = await backend.solve(
+          _expression.text,
+          guess: (xs[i] + xs[i + 1]) / 2,
+          minimum: xs[i],
+          maximum: xs[i + 1],
+        );
+        if (result.value != null &&
+            roots.every((root) => (root - result.value!).abs() > 1e-5)) {
+          roots.add(result.value!);
+        }
+      }
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _busy = false;
+      _result = roots.isEmpty
+          ? nextEraText(context, 'No sign-changing roots found.', '未找到变号根。')
+          : roots.map((root) => root.toStringAsPrecision(10)).join(', ');
+    });
+  }
+
+  void _invalidInput() {
+    setState(() {
+      _error = nextEraText(
+        context,
+        'Enter a valid interval and numeric guess.',
+        '请输入有效区间和数字猜测。',
+      );
+      _result = null;
+    });
   }
 }
