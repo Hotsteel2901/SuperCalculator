@@ -529,11 +529,9 @@ class DartComputation {
     -math.sin(value.real) * _sinh(value.imaginary),
   );
 
-  static double _sinh(double value) =>
-      (math.exp(value) - math.exp(-value)) / 2;
+  static double _sinh(double value) => (math.exp(value) - math.exp(-value)) / 2;
 
-  static double _cosh(double value) =>
-      (math.exp(value) + math.exp(-value)) / 2;
+  static double _cosh(double value) => (math.exp(value) + math.exp(-value)) / 2;
 
   static ComplexValue complexTan(ComplexValue value) =>
       complexSin(value) / complexCos(value);
