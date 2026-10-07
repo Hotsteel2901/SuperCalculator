@@ -38,20 +38,32 @@ jobs:
       - run: dart --version
       - run: flutter pub get
       - run: flutter gen-l10n
+
       - name: Apply Dart formatting
         run: dart format lib test integration_test
       - name: Commit formatting changes
         if: github.event_name == 'pull_request'
         run: |
           cd "$GITHUB_WORKSPACE"
+          git status --short
+          git diff --stat
           if git diff --quiet -- flutter; then
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add flutter/lib flutter/test flutter/integration_test
-          git commit -m 'style: format Flutter sources'
-          git push origin "HEAD:${{ github.head_ref }}"
+          if ! commit_output=$(git commit -m 'style: format Flutter sources' 2>&1); then
+            clean_output="$(printf '%s' "$commit_output" | tr '\n' ' ' | cut -c1-3500)"
+            echo "::error title=formatter commit failed::$clean_output"
+            exit 1
+          fi
+          if ! push_output=$(git push origin "HEAD:${{ github.head_ref }}" 2>&1); then
+            clean_output="$(printf '%s' "$push_output" | tr '\n' ' ' | cut -c1-3500)"
+            echo "::error title=formatter push failed::$clean_output"
+            exit 1
+          fi
+
       - run: flutter analyze
       - run: flutter test
       - run: flutter build web --release
