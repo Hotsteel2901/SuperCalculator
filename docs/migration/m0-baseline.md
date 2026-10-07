@@ -6,6 +6,8 @@
 - Dart SDK embedded by that Flutter release: 3.13.5
 - Local checkout does not currently contain a Flutter or Dart executable, so CI must
   run `flutter --version` and `dart --version` before dependency resolution.
+- Code generation packages are pinned to the Dart 3.13-compatible analyzer range:
+  `build_runner 2.14.1`, `freezed 3.2.4`, and `json_serializable 6.11.3`.
 
 ## Repository observations
 
