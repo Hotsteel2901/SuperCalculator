@@ -188,8 +188,8 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                       SizedBox(height: tokens.controlGap),
                       Semantics(
                         label: l10n.accessibilityPlotSummary(
-                          state.expression,
                           state.points.length,
+                          state.expression,
                         ),
                         child: SizedBox(
                           height: tokens.plotMinHeight,
