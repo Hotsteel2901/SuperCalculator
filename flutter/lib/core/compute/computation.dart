@@ -491,9 +491,8 @@ class DartComputation {
         for (var index = 0; index < level - order; index++) {
           final factor = math.pow(2, order).toDouble();
           table[index][order] =
-              (table[index + 1][order - 1] * factor -
-                      table[index][order - 1]) /
-                  (factor - 1);
+              (table[index + 1][order - 1] * factor - table[index][order - 1]) /
+              (factor - 1);
         }
       }
       return table[0][level - 1];
@@ -542,12 +541,7 @@ class DartComputation {
     var factorial = 1.0;
     for (var index = 0; index <= order; index++) {
       if (index > 0) factorial *= index;
-      final derivative = _nthDerivativeCompiled(
-        function,
-        point,
-        index,
-        1e-4,
-      );
+      final derivative = _nthDerivativeCompiled(function, point, index, 1e-4);
       coefficients.add(derivative == null ? null : derivative / factorial);
     }
     return coefficients;
@@ -629,7 +623,9 @@ class DartComputation {
     for (var index = 1; index <= samples; index++) {
       final current = function.evaluate(x: start + index * step);
       if (!current.isFinite) return null;
-      length += math.sqrt(step * step + (current - previous) * (current - previous));
+      length += math.sqrt(
+        step * step + (current - previous) * (current - previous),
+      );
       previous = current;
     }
     return length;
@@ -648,8 +644,11 @@ class DartComputation {
     double value(double x) {
       final left = f.evaluate(x: x);
       final right = g.evaluate(x: x);
-      return left.isFinite && right.isFinite ? (left - right).abs() : double.nan;
+      return left.isFinite && right.isFinite
+          ? (left - right).abs()
+          : double.nan;
     }
+
     if (start == end) return 0;
     final fa = value(start);
     final fb = value(end);
@@ -696,8 +695,11 @@ class DartComputation {
     double value(double x) {
       final a = outer.evaluate(x: x);
       final b = inner.evaluate(x: x);
-      return a.isFinite && b.isFinite ? math.pi * (a * a - b * b).abs() : double.nan;
+      return a.isFinite && b.isFinite
+          ? math.pi * (a * a - b * b).abs()
+          : double.nan;
     }
+
     return _integrateFunction(value, start, end, tolerance);
   }
 
@@ -712,6 +714,7 @@ class DartComputation {
       final y = function.evaluate(x: x);
       return y.isFinite ? 2 * math.pi * x.abs() * y.abs() : double.nan;
     }
+
     return _integrateFunction(value, start, end, tolerance);
   }
 
@@ -754,13 +757,17 @@ class DartComputation {
       }
       final scale = math.max(x.abs(), y.abs()).toDouble();
       final step = 1e-6 * (scale + 1);
-      final fX = (f.evaluate(x: x + step, y: y) - f.evaluate(x: x - step, y: y)) /
+      final fX =
+          (f.evaluate(x: x + step, y: y) - f.evaluate(x: x - step, y: y)) /
           (2 * step);
-      final fY = (f.evaluate(x: x, y: y + step) - f.evaluate(x: x, y: y - step)) /
+      final fY =
+          (f.evaluate(x: x, y: y + step) - f.evaluate(x: x, y: y - step)) /
           (2 * step);
-      final gX = (g.evaluate(x: x + step, y: y) - g.evaluate(x: x - step, y: y)) /
+      final gX =
+          (g.evaluate(x: x + step, y: y) - g.evaluate(x: x - step, y: y)) /
           (2 * step);
-      final gY = (g.evaluate(x: x, y: y + step) - g.evaluate(x: x, y: y - step)) /
+      final gY =
+          (g.evaluate(x: x, y: y + step) - g.evaluate(x: x, y: y - step)) /
           (2 * step);
       final determinant = fX * gY - fY * gX;
       if (!determinant.isFinite || determinant.abs() < 1e-14) return null;
@@ -790,7 +797,9 @@ class DartComputation {
       final current = function.evaluate(x: currentX);
       if (previous.isFinite && previous.abs() <= tolerance) {
         roots.add(previousX);
-      } else if (previous.isFinite && current.isFinite && previous.sign != current.sign) {
+      } else if (previous.isFinite &&
+          current.isFinite &&
+          previous.sign != current.sign) {
         var left = previousX;
         var right = currentX;
         var fLeft = previous;

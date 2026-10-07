@@ -34,18 +34,12 @@ void main() {
   });
 
   test('limits, Taylor series and extrema remain deterministic', () {
-    expect(
-      DartComputation.limit('sin(x) / x', 0),
-      closeTo(1, 1e-6),
-    );
+    expect(DartComputation.limit('sin(x) / x', 0), closeTo(1, 1e-6));
     final coefficients = DartComputation.taylorCoefficients('exp(x)', 0, 3);
     expect(coefficients, isNotNull);
     expect(coefficients![0], closeTo(1, 1e-6));
     expect(coefficients[1], closeTo(1, 1e-4));
-    expect(
-      DartComputation.findExtremum('x^2', -2, 2),
-      closeTo(0, 1e-5),
-    );
+    expect(DartComputation.findExtremum('x^2', -2, 2), closeTo(0, 1e-5));
   });
 
   test('area, parametric sampling and two-variable systems work', () {
