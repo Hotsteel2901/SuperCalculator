@@ -42,8 +42,8 @@ jobs:
         run: dart format lib test integration_test
       - name: Commit formatting changes
         if: github.event_name == 'pull_request'
-        working-directory: .
         run: |
+          cd "$GITHUB_WORKSPACE"
           if git diff --quiet -- flutter; then
             exit 0
           fi
