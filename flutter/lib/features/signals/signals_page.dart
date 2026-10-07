@@ -220,11 +220,12 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
         _error = null;
       });
     } on FormatException catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _busy = false;
           _error = error.message;
         });
+      }
     }
   }
 

@@ -2366,8 +2366,9 @@ class DartComputation {
     ) {
       var pivot = pivotRow;
       for (var row = pivotRow + 1; row < matrix.rowCount; row++) {
-        if (values[row][column].abs() > values[pivot][column].abs())
+        if (values[row][column].abs() > values[pivot][column].abs()) {
           pivot = row;
+        }
       }
       if (values[pivot][column].abs() < 1e-14) {
         continue;

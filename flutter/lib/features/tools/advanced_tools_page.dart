@@ -390,8 +390,9 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
       double.tryParse(_real2.text),
       double.tryParse(_imaginary2.text),
     ];
-    if (values.any((value) => value == null))
+    if (values.any((value) => value == null)) {
       return _showError('Enter four finite complex components.');
+    }
     await _runBusy(() async {
       final result = await ref
           .read(calcBackendProvider)
