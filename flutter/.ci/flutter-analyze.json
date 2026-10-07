@@ -1,8 +1,0 @@
-
-   info • Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private • lib/core/compute/computation.dart:26:46 • library_private_types_in_public_api
-  error • The function 'sinh' isn't defined. Try importing the library that defines 'sinh', correcting the name to the name of an existing function, or defining a function named 'sinh' • lib/core/compute/computation.dart:172:21 • undefined_function
-  error • The function 'cosh' isn't defined. Try importing the library that defines 'cosh', correcting the name to the name of an existing function, or defining a function named 'cosh' • lib/core/compute/computation.dart:174:21 • undefined_function
-  error • The function 'tanh' isn't defined. Try importing the library that defines 'tanh', correcting the name to the name of an existing function, or defining a function named 'tanh' • lib/core/compute/computation.dart:176:21 • undefined_function
-  error • The argument type 'num' can't be assigned to the parameter type 'double'.  • lib/core/compute/computation.dart:660:17 • argument_type_not_assignable
-warning • Unused import: '../../core/compute/calculation_models.dart'. Try removing the import directive • lib/features/linear_algebra/linear_algebra_page.dart:5:8 • unused_import
-
