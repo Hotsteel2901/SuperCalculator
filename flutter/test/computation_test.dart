@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:supercalculator_next_era/core/compute/computation.dart';
+import 'package:supercalculator_next_era/core/compute/computation_dispatcher.dart';
 
 void main() {
   test('compiled expression reuses one AST for array sampling', () {
@@ -16,6 +17,17 @@ void main() {
     final value = DartComputation.integrate('x^2', 0, 1);
     expect(value, isNotNull);
     expect(value, closeTo(1 / 3, 1e-8));
+  });
+
+  test('heavy fallback work crosses the computation dispatcher', () async {
+    final values = await ComputationDispatcher.evaluateArray(
+      'x^2',
+      <double>[0, 1, 2],
+    );
+    final integral = await ComputationDispatcher.integrate('x^2', 0, 1);
+
+    expect(values, <double?>[0, 1, 4]);
+    expect(integral, closeTo(1 / 3, 1e-8));
   });
 
   test('bounded root solver finds both a Newton root and a bracketed root', () {

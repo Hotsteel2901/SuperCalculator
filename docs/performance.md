@@ -8,10 +8,10 @@
 - Native ABI v2 array and repeated-sampling paths reuse compiled RPN in the C core.
 - Plot previews cap sample counts, preserve non-finite gaps, and repaint only the
   chart surface through a dedicated `CustomPainter`.
-- The backend is asynchronous at the UI boundary, so the native library can be
-  moved to an isolate without changing feature widgets. Large calculations should
-  use the isolate adapter before release; the current small preview paths remain
-  bounded for responsive interaction.
+- Heavy Dart fallback paths cross `ComputationDispatcher`, which uses Flutter's
+  `compute` boundary (native worker isolate; Web-compatible synchronous fallback):
+  array sampling, derivatives, integration, roots, RK4, spectrum, statistics and
+  regression. Native FFI calls remain behind the same async backend contract.
 - The app-owned design tokens keep spacing, minimum plot height and control density
   consistent across compact and expanded layouts.
 

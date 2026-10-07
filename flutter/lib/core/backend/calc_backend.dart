@@ -1,5 +1,6 @@
 import '../compute/calculation_models.dart';
 import '../compute/computation.dart';
+import '../compute/computation_dispatcher.dart';
 
 class CalcEvaluation {
   const CalcEvaluation({
@@ -118,7 +119,7 @@ class DartCalcBackend implements CalcBackend {
     List<double> xs,
   ) async {
     try {
-      return DartComputation.evaluateArray(expression, xs);
+      return await ComputationDispatcher.evaluateArray(expression, xs);
     } on FormatException {
       return List<double?>.filled(xs.length, null, growable: false);
     }
@@ -132,7 +133,7 @@ class DartCalcBackend implements CalcBackend {
     bool second = false,
   }) async {
     try {
-      final value = DartComputation.derivative(
+      final value = await ComputationDispatcher.derivative(
         expression,
         x,
         step: step,
@@ -157,7 +158,7 @@ class DartCalcBackend implements CalcBackend {
     double tolerance = 1e-8,
   }) async {
     try {
-      final value = DartComputation.integrate(
+      final value = await ComputationDispatcher.integrate(
         expression,
         a,
         b,
@@ -184,7 +185,7 @@ class DartCalcBackend implements CalcBackend {
     int maxIterations = 100,
   }) async {
     try {
-      final value = DartComputation.solve(
+      final value = await ComputationDispatcher.solve(
         expression,
         guess: guess,
         minimum: minimum,
@@ -211,7 +212,7 @@ class DartCalcBackend implements CalcBackend {
     required double xEnd,
     int steps = 200,
   }) async {
-    return DartComputation.ode(
+    return ComputationDispatcher.ode(
       expression,
       x0: x0,
       y0: y0,
@@ -227,18 +228,23 @@ class DartCalcBackend implements CalcBackend {
     required double b,
     int samples = 1024,
   }) async {
-    return DartComputation.spectrum(expression, a: a, b: b, samples: samples);
+    return ComputationDispatcher.spectrum(
+      expression,
+      a: a,
+      b: b,
+      samples: samples,
+    );
   }
 
   @override
-  Future<CalcStatistics> statistics(List<double> values) async =>
-      DartComputation.statistics(values);
+  Future<CalcStatistics> statistics(List<double> values) =>
+      ComputationDispatcher.statistics(values);
 
   @override
   Future<CalcRegression> linearRegression(
     List<double> xs,
     List<double> ys,
-  ) async => DartComputation.linearRegression(xs, ys);
+  ) => ComputationDispatcher.linearRegression(xs, ys);
 
   @override
   Future<CalcMatrix> parseMatrix(String input) async =>

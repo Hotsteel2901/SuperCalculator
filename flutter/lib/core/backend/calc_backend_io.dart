@@ -5,6 +5,7 @@ import 'package:ffi/ffi.dart';
 
 import '../compute/calculation_models.dart';
 import '../compute/computation.dart';
+import '../compute/computation_dispatcher.dart';
 import 'calc_backend.dart';
 
 CalcBackend createCalcBackend() {
@@ -380,18 +381,22 @@ class FfiCalcBackend implements CalcBackend {
     required double a,
     required double b,
     int samples = 1024,
-  }) async =>
-      DartComputation.spectrum(expression, a: a, b: b, samples: samples);
+  }) => ComputationDispatcher.spectrum(
+    expression,
+    a: a,
+    b: b,
+    samples: samples,
+  );
 
   @override
-  Future<CalcStatistics> statistics(List<double> values) async =>
-      DartComputation.statistics(values);
+  Future<CalcStatistics> statistics(List<double> values) =>
+      ComputationDispatcher.statistics(values);
 
   @override
   Future<CalcRegression> linearRegression(
     List<double> xs,
     List<double> ys,
-  ) async => DartComputation.linearRegression(xs, ys);
+  ) => ComputationDispatcher.linearRegression(xs, ys);
 
   @override
   Future<CalcMatrix> parseMatrix(String input) async =>
