@@ -135,7 +135,36 @@ jobs:
                       print(f"::error::{line[:900]}")
           PY
           test "$(cat "$RUNNER_TEMP/flutter-analyze.status")" = 0
-      - run: flutter test
+      - name: Run Flutter tests
+        id: tests
+        continue-on-error: true
+        run: |
+          set +e
+          flutter test 2>&1 | tee "$RUNNER_TEMP/flutter-test.log"
+          status=${PIPESTATUS[0]}
+          echo "$status" > "$RUNNER_TEMP/flutter-test.status"
+          exit 0
+      - name: Save test diagnostics for debugging
+        if: steps.tests.outcome == 'success'
+        run: |
+          if [ "$(cat "$RUNNER_TEMP/flutter-test.status")" != 0 ]; then
+            mkdir -p .ci
+            cp "$RUNNER_TEMP/flutter-test.log" .ci/flutter-test.log
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .ci/flutter-test.log
+            git commit -m "ci: capture Flutter test diagnostics [skip ci]" || true
+            git push origin "HEAD:${GITHUB_HEAD_REF}"
+          fi
+      - name: Report test diagnostics
+        if: steps.tests.outcome == 'success'
+        run: |
+          if [ "$(cat "$RUNNER_TEMP/flutter-test.status")" != 0 ]; then
+            while IFS= read -r line; do
+              [ -n "$line" ] && echo "::error::$line"
+            done < "$RUNNER_TEMP/flutter-test.log"
+            exit 1
+          fi
       - run: flutter build web --release
 
   native:
