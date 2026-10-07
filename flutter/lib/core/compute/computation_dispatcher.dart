@@ -44,6 +44,72 @@ class ComputationDispatcher {
     _IntegrateTask(expression: expression, a: a, b: b, tolerance: tolerance),
   );
 
+  static Future<double?> limit(
+    String expression,
+    double point, {
+    double tolerance = 1e-8,
+    int maxLevel = 10,
+    String side = 'two-sided',
+  }) => compute(
+    _limitTask,
+    _LimitTask(
+      expression: expression,
+      point: point,
+      tolerance: tolerance,
+      maxLevel: maxLevel,
+      side: side,
+    ),
+  );
+
+  static Future<double?> nthDerivative(
+    String expression,
+    double point,
+    int order, {
+    double step = 1e-4,
+  }) => compute(
+    _nthDerivativeTask,
+    _NthDerivativeTask(
+      expression: expression,
+      point: point,
+      order: order,
+      step: step,
+    ),
+  );
+
+  static Future<double?> extremum(
+    String expression,
+    double start,
+    double end, {
+    bool minimum = true,
+    double tolerance = 1e-8,
+  }) => compute(
+    _extremumTask,
+    _ExtremumTask(
+      expression: expression,
+      start: start,
+      end: end,
+      minimum: minimum,
+      tolerance: tolerance,
+    ),
+  );
+
+  static Future<double?> areaBetweenCurves(
+    String expressionF,
+    String expressionG,
+    double start,
+    double end, {
+    double tolerance = 1e-8,
+  }) => compute(
+    _areaTask,
+    _AreaTask(
+      expressionF: expressionF,
+      expressionG: expressionG,
+      start: start,
+      end: end,
+      tolerance: tolerance,
+    ),
+  );
+
   static Future<double?> solve(
     String expression, {
     double guess = 0,
@@ -180,6 +246,100 @@ double? _integrateTask(_IntegrateTask task) => DartComputation.integrate(
   task.expression,
   task.a,
   task.b,
+  tolerance: task.tolerance,
+);
+
+class _LimitTask {
+  const _LimitTask({
+    required this.expression,
+    required this.point,
+    required this.tolerance,
+    required this.maxLevel,
+    required this.side,
+  });
+
+  final String expression;
+  final double point;
+  final double tolerance;
+  final int maxLevel;
+  final String side;
+}
+
+double? _limitTask(_LimitTask task) => DartComputation.limit(
+  task.expression,
+  task.point,
+  tolerance: task.tolerance,
+  maxLevel: task.maxLevel,
+  side: task.side,
+);
+
+class _NthDerivativeTask {
+  const _NthDerivativeTask({
+    required this.expression,
+    required this.point,
+    required this.order,
+    required this.step,
+  });
+
+  final String expression;
+  final double point;
+  final int order;
+  final double step;
+}
+
+double? _nthDerivativeTask(_NthDerivativeTask task) =>
+    DartComputation.nthDerivative(
+      task.expression,
+      task.point,
+      task.order,
+      step: task.step,
+    );
+
+class _ExtremumTask {
+  const _ExtremumTask({
+    required this.expression,
+    required this.start,
+    required this.end,
+    required this.minimum,
+    required this.tolerance,
+  });
+
+  final String expression;
+  final double start;
+  final double end;
+  final bool minimum;
+  final double tolerance;
+}
+
+double? _extremumTask(_ExtremumTask task) => DartComputation.findExtremum(
+  task.expression,
+  task.start,
+  task.end,
+  minimum: task.minimum,
+  tolerance: task.tolerance,
+);
+
+class _AreaTask {
+  const _AreaTask({
+    required this.expressionF,
+    required this.expressionG,
+    required this.start,
+    required this.end,
+    required this.tolerance,
+  });
+
+  final String expressionF;
+  final String expressionG;
+  final double start;
+  final double end;
+  final double tolerance;
+}
+
+double? _areaTask(_AreaTask task) => DartComputation.areaBetweenCurves(
+  task.expressionF,
+  task.expressionG,
+  task.start,
+  task.end,
   tolerance: task.tolerance,
 );
 

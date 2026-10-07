@@ -14,6 +14,7 @@ class CalculusPage extends ConsumerStatefulWidget {
 
 class _CalculusPageState extends ConsumerState<CalculusPage> {
   final _expression = TextEditingController(text: 'sin(x)');
+  final _secondExpression = TextEditingController(text: '0');
   final _x = TextEditingController(text: '1');
   final _a = TextEditingController(text: '0');
   final _b = TextEditingController(text: 'pi');
@@ -24,6 +25,7 @@ class _CalculusPageState extends ConsumerState<CalculusPage> {
   @override
   void dispose() {
     _expression.dispose();
+    _secondExpression.dispose();
     _x.dispose();
     _a.dispose();
     _b.dispose();
@@ -56,6 +58,19 @@ class _CalculusPageState extends ConsumerState<CalculusPage> {
                   decoration: InputDecoration(
                     labelText: nextEraText(context, 'f(x)', 'f(x)'),
                     hintText: 'sin(x)',
+                  ),
+                  style: const TextStyle(fontFamily: 'monospace'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _secondExpression,
+                  decoration: InputDecoration(
+                    labelText: nextEraText(
+                      context,
+                      'g(x) for area between curves',
+                      '曲线面积的 g(x)',
+                    ),
+                    hintText: '0',
                   ),
                   style: const TextStyle(fontFamily: 'monospace'),
                 ),
@@ -114,6 +129,26 @@ class _CalculusPageState extends ConsumerState<CalculusPage> {
                         nextEraText(context, 'Adaptive integral', '自适应积分'),
                       ),
                     ),
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : () => _run('limit'),
+                      icon: const Icon(Icons.call_missed_outlined),
+                      label: Text(nextEraText(context, 'Limit', '极限')),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : () => _run('minimum'),
+                      icon: const Icon(Icons.vertical_align_bottom),
+                      label: Text(nextEraText(context, 'Minimum x', '最小值 x')),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : () => _run('maximum'),
+                      icon: const Icon(Icons.vertical_align_top),
+                      label: Text(nextEraText(context, 'Maximum x', '最大值 x')),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : () => _run('area'),
+                      icon: const Icon(Icons.compare_arrows),
+                      label: Text(nextEraText(context, 'Area between', '曲线间面积')),
+                    ),
                   ],
                 ),
               ],
@@ -156,13 +191,28 @@ class _CalculusPageState extends ConsumerState<CalculusPage> {
       _result = null;
     });
     final backend = ref.read(calcBackendProvider);
-    final result = operation == 'integral'
-        ? await backend.integrate(_expression.text, a, b)
-        : await backend.derivative(
-            _expression.text,
-            x,
-            second: operation == 'second',
-          );
+    final result = switch (operation) {
+      'integral' => await backend.integrate(_expression.text, a, b),
+      'limit' => await backend.limit(_expression.text, x),
+      'minimum' => await backend.extremum(_expression.text, a, b),
+      'maximum' => await backend.extremum(
+        _expression.text,
+        a,
+        b,
+        minimum: false,
+      ),
+      'area' => await backend.areaBetweenCurves(
+        _expression.text,
+        _secondExpression.text,
+        a,
+        b,
+      ),
+      _ => await backend.derivative(
+        _expression.text,
+        x,
+        second: operation == 'second',
+      ),
+    };
     if (!mounted) {
       return;
     }

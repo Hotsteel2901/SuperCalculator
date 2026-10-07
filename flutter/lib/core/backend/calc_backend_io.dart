@@ -288,6 +288,112 @@ class FfiCalcBackend implements CalcBackend {
   }
 
   @override
+  Future<CalcEvaluation> limit(
+    String expression,
+    double point, {
+    double tolerance = 1e-8,
+    int maxLevel = 10,
+    String side = 'two-sided',
+  }) async {
+    try {
+      final value = await ComputationDispatcher.limit(
+        expression,
+        point,
+        tolerance: tolerance,
+        maxLevel: maxLevel,
+        side: side,
+      );
+      return value == null
+          ? CalcEvaluation.failure(
+              backend: name,
+              message: 'The limit does not exist or is not finite.',
+            )
+          : CalcEvaluation(value: value, backend: name);
+    } on FormatException catch (error) {
+      return CalcEvaluation.failure(backend: name, message: error.message);
+    }
+  }
+
+  @override
+  Future<CalcEvaluation> nthDerivative(
+    String expression,
+    double point,
+    int order, {
+    double step = 1e-4,
+  }) async {
+    try {
+      final value = await ComputationDispatcher.nthDerivative(
+        expression,
+        point,
+        order,
+        step: step,
+      );
+      return value == null
+          ? CalcEvaluation.failure(
+              backend: name,
+              message: 'The derivative could not be evaluated.',
+            )
+          : CalcEvaluation(value: value, backend: name);
+    } on FormatException catch (error) {
+      return CalcEvaluation.failure(backend: name, message: error.message);
+    }
+  }
+
+  @override
+  Future<CalcEvaluation> extremum(
+    String expression,
+    double start,
+    double end, {
+    bool minimum = true,
+    double tolerance = 1e-8,
+  }) async {
+    try {
+      final value = await ComputationDispatcher.extremum(
+        expression,
+        start,
+        end,
+        minimum: minimum,
+        tolerance: tolerance,
+      );
+      return value == null
+          ? CalcEvaluation.failure(
+              backend: name,
+              message: 'No finite extremum was found in the interval.',
+            )
+          : CalcEvaluation(value: value, backend: name);
+    } on FormatException catch (error) {
+      return CalcEvaluation.failure(backend: name, message: error.message);
+    }
+  }
+
+  @override
+  Future<CalcEvaluation> areaBetweenCurves(
+    String expressionF,
+    String expressionG,
+    double start,
+    double end, {
+    double tolerance = 1e-8,
+  }) async {
+    try {
+      final value = await ComputationDispatcher.areaBetweenCurves(
+        expressionF,
+        expressionG,
+        start,
+        end,
+        tolerance: tolerance,
+      );
+      return value == null
+          ? CalcEvaluation.failure(
+              backend: name,
+              message: 'The area could not be evaluated.',
+            )
+          : CalcEvaluation(value: value, backend: name);
+    } on FormatException catch (error) {
+      return CalcEvaluation.failure(backend: name, message: error.message);
+    }
+  }
+
+  @override
   Future<CalcEvaluation> solve(
     String expression, {
     double guess = 0,
