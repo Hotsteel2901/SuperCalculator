@@ -466,6 +466,404 @@ class DartComputation {
     return _adaptiveSimpson(value, a, b, tolerance, whole, fa, middle, fb, 18);
   }
 
+  static double? limit(
+    String expression,
+    double point, {
+    double tolerance = 1e-8,
+    int maxLevel = 10,
+    String side = 'two-sided',
+  }) {
+    if (!point.isFinite || tolerance <= 0 || maxLevel < 1) return null;
+    final function = ExpressionEngine.compile(expression);
+    double? oneSided(double direction) {
+      final level = maxLevel.clamp(1, 16).toInt();
+      final table = List<List<double>>.generate(
+        level,
+        (_) => List<double>.filled(level, double.nan),
+      );
+      for (var index = 0; index < level; index++) {
+        final h = .1 * math.pow(.5, index).toDouble();
+        final value = function.evaluate(x: point + direction * h);
+        if (!value.isFinite) return null;
+        table[index][0] = value;
+      }
+      for (var order = 1; order < level; order++) {
+        for (var index = 0; index < level - order; index++) {
+          final factor = math.pow(2, order).toDouble();
+          table[index][order] =
+              (table[index + 1][order - 1] * factor -
+                      table[index][order - 1]) /
+                  (factor - 1);
+        }
+      }
+      return table[0][level - 1];
+    }
+
+    if (side == 'left') return oneSided(-1);
+    if (side == 'right') return oneSided(1);
+    final left = oneSided(-1);
+    final right = oneSided(1);
+    if (left == null || right == null || (left - right).abs() > tolerance) {
+      return null;
+    }
+    return (left + right) / 2;
+  }
+
+  static double? nthDerivative(
+    String expression,
+    double x,
+    int order, {
+    double step = 1e-4,
+  }) {
+    if (order < 0 || order > 12 || !step.isFinite || step <= 0) return null;
+    final function = ExpressionEngine.compile(expression);
+    double? difference(double at, int remaining) {
+      if (remaining == 0) {
+        final value = function.evaluate(x: at);
+        return value.isFinite ? value : null;
+      }
+      final left = difference(at - step, remaining - 1);
+      final right = difference(at + step, remaining - 1);
+      if (left == null || right == null) return null;
+      return (right - left) / (2 * step);
+    }
+
+    return difference(x, order);
+  }
+
+  static List<double?>? taylorCoefficients(
+    String expression,
+    double point,
+    int order,
+  ) {
+    if (order < 0 || order > 12) return null;
+    final function = ExpressionEngine.compile(expression);
+    final coefficients = <double?>[];
+    var factorial = 1.0;
+    for (var index = 0; index <= order; index++) {
+      if (index > 0) factorial *= index;
+      final derivative = _nthDerivativeCompiled(
+        function,
+        point,
+        index,
+        1e-4,
+      );
+      coefficients.add(derivative == null ? null : derivative / factorial);
+    }
+    return coefficients;
+  }
+
+  static double? taylorEvaluate(
+    String expression,
+    double point,
+    double x,
+    int order,
+  ) {
+    final coefficients = taylorCoefficients(expression, point, order);
+    if (coefficients == null) return null;
+    final delta = x - point;
+    var power = 1.0;
+    var result = 0.0;
+    for (final coefficient in coefficients) {
+      if (coefficient == null) return null;
+      result += coefficient * power;
+      power *= delta;
+    }
+    return result;
+  }
+
+  static double? findExtremum(
+    String expression,
+    double start,
+    double end, {
+    bool minimum = true,
+    double tolerance = 1e-8,
+    int maxIterations = 100,
+  }) {
+    if (!start.isFinite || !end.isFinite || start >= end || tolerance <= 0) {
+      return null;
+    }
+    final function = ExpressionEngine.compile(expression);
+    const ratio = .6180339887498949;
+    var left = start;
+    var right = end;
+    var first = right - ratio * (right - left);
+    var second = left + ratio * (right - left);
+    var firstValue = function.evaluate(x: first);
+    var secondValue = function.evaluate(x: second);
+    if (!firstValue.isFinite || !secondValue.isFinite) return null;
+    bool better(double a, double b) => minimum ? a < b : a > b;
+    for (var iteration = 0; iteration < maxIterations; iteration++) {
+      if ((right - left).abs() <= tolerance) break;
+      if (better(firstValue, secondValue)) {
+        right = second;
+        second = first;
+        secondValue = firstValue;
+        first = right - ratio * (right - left);
+        firstValue = function.evaluate(x: first);
+      } else {
+        left = first;
+        first = second;
+        firstValue = secondValue;
+        second = left + ratio * (right - left);
+        secondValue = function.evaluate(x: second);
+      }
+      if (!firstValue.isFinite || !secondValue.isFinite) return null;
+    }
+    return (left + right) / 2;
+  }
+
+  static double? arcLength(
+    String expression,
+    double start,
+    double end, {
+    int samples = 2000,
+  }) {
+    if (start == end) return 0;
+    if (start > end || samples < 1) return null;
+    final function = ExpressionEngine.compile(expression);
+    final step = (end - start) / samples;
+    var length = 0.0;
+    var previous = function.evaluate(x: start);
+    if (!previous.isFinite) return null;
+    for (var index = 1; index <= samples; index++) {
+      final current = function.evaluate(x: start + index * step);
+      if (!current.isFinite) return null;
+      length += math.sqrt(step * step + (current - previous) * (current - previous));
+      previous = current;
+    }
+    return length;
+  }
+
+  static double? areaBetweenCurves(
+    String expressionF,
+    String expressionG,
+    double start,
+    double end, {
+    double tolerance = 1e-8,
+  }) {
+    if (start > end || tolerance <= 0) return null;
+    final f = ExpressionEngine.compile(expressionF);
+    final g = ExpressionEngine.compile(expressionG);
+    double value(double x) {
+      final left = f.evaluate(x: x);
+      final right = g.evaluate(x: x);
+      return left.isFinite && right.isFinite ? (left - right).abs() : double.nan;
+    }
+    if (start == end) return 0;
+    final fa = value(start);
+    final fb = value(end);
+    final middle = value((start + end) / 2);
+    if (![fa, fb, middle].every((item) => item.isFinite)) return null;
+    return _adaptiveSimpson(
+      value,
+      start,
+      end,
+      tolerance,
+      _simpson(start, end, fa, middle, fb),
+      fa,
+      middle,
+      fb,
+      18,
+    );
+  }
+
+  static double? volumeDisk(
+    String expression,
+    double start,
+    double end, {
+    double tolerance = 1e-8,
+  }) {
+    final value = integrate(
+      'pi * ($expression)^2',
+      start,
+      end,
+      tolerance: tolerance,
+    );
+    return value;
+  }
+
+  static double? volumeWasher(
+    String outerExpression,
+    String innerExpression,
+    double start,
+    double end, {
+    double tolerance = 1e-8,
+  }) {
+    final outer = ExpressionEngine.compile(outerExpression);
+    final inner = ExpressionEngine.compile(innerExpression);
+    if (start > end || tolerance <= 0) return null;
+    double value(double x) {
+      final a = outer.evaluate(x: x);
+      final b = inner.evaluate(x: x);
+      return a.isFinite && b.isFinite ? math.pi * (a * a - b * b).abs() : double.nan;
+    }
+    return _integrateFunction(value, start, end, tolerance);
+  }
+
+  static double? volumeShell(
+    String expression,
+    double start,
+    double end, {
+    double tolerance = 1e-8,
+  }) {
+    final function = ExpressionEngine.compile(expression);
+    double value(double x) {
+      final y = function.evaluate(x: x);
+      return y.isFinite ? 2 * math.pi * x.abs() * y.abs() : double.nan;
+    }
+    return _integrateFunction(value, start, end, tolerance);
+  }
+
+  static List<Map<String, double>> evaluateParametric(
+    String expressionX,
+    String expressionY, {
+    double start = 0,
+    double end = 2 * math.pi,
+    int samples = 500,
+  }) {
+    if (samples < 2 || start >= end) return const <Map<String, double>>[];
+    final xs = ExpressionEngine.compile(expressionX);
+    final ys = ExpressionEngine.compile(expressionY);
+    return List<Map<String, double>>.generate(samples, (index) {
+      final t = start + (end - start) * index / (samples - 1);
+      return <String, double>{
+        't': t,
+        'x': xs.evaluate(x: t),
+        'y': ys.evaluate(x: t),
+      };
+    }, growable: false);
+  }
+
+  static Map<String, double>? solveSystem2d(
+    String expressionF,
+    String expressionG, {
+    double x = 0,
+    double y = 0,
+    double tolerance = 1e-10,
+    int maxIterations = 100,
+  }) {
+    final f = ExpressionEngine.compile(expressionF);
+    final g = ExpressionEngine.compile(expressionG);
+    for (var iteration = 0; iteration < maxIterations; iteration++) {
+      final fValue = f.evaluate(x: x, y: y);
+      final gValue = g.evaluate(x: x, y: y);
+      if (![fValue, gValue].every((value) => value.isFinite)) return null;
+      if (math.max(fValue.abs(), gValue.abs()) <= tolerance) {
+        return <String, double>{'x': x, 'y': y};
+      }
+      final scale = math.max(x.abs(), y.abs()).toDouble();
+      final step = 1e-6 * (scale + 1);
+      final fX = (f.evaluate(x: x + step, y: y) - f.evaluate(x: x - step, y: y)) /
+          (2 * step);
+      final fY = (f.evaluate(x: x, y: y + step) - f.evaluate(x: x, y: y - step)) /
+          (2 * step);
+      final gX = (g.evaluate(x: x + step, y: y) - g.evaluate(x: x - step, y: y)) /
+          (2 * step);
+      final gY = (g.evaluate(x: x, y: y + step) - g.evaluate(x: x, y: y - step)) /
+          (2 * step);
+      final determinant = fX * gY - fY * gX;
+      if (!determinant.isFinite || determinant.abs() < 1e-14) return null;
+      final deltaX = (fValue * gY - fY * gValue) / determinant;
+      final deltaY = (fX * gValue - fValue * gX) / determinant;
+      x -= deltaX;
+      y -= deltaY;
+      if (!x.isFinite || !y.isFinite) return null;
+    }
+    return null;
+  }
+
+  static List<double> scanRoots(
+    String expression,
+    double start,
+    double end, {
+    int samples = 512,
+    double tolerance = 1e-8,
+  }) {
+    if (samples < 2 || start >= end) return const <double>[];
+    final function = ExpressionEngine.compile(expression);
+    final roots = <double>[];
+    var previousX = start;
+    var previous = function.evaluate(x: previousX);
+    for (var index = 1; index <= samples; index++) {
+      final currentX = start + (end - start) * index / samples;
+      final current = function.evaluate(x: currentX);
+      if (previous.isFinite && previous.abs() <= tolerance) {
+        roots.add(previousX);
+      } else if (previous.isFinite && current.isFinite && previous.sign != current.sign) {
+        var left = previousX;
+        var right = currentX;
+        var fLeft = previous;
+        for (var step = 0; step < 80; step++) {
+          final middle = (left + right) / 2;
+          final fMiddle = function.evaluate(x: middle);
+          if (!fMiddle.isFinite) break;
+          if (fMiddle.abs() <= tolerance) {
+            left = middle;
+            right = middle;
+            break;
+          }
+          if (fLeft.sign != fMiddle.sign) {
+            right = middle;
+          } else {
+            left = middle;
+            fLeft = fMiddle;
+          }
+        }
+        roots.add((left + right) / 2);
+      }
+      previousX = currentX;
+      previous = current;
+    }
+    return roots.fold<List<double>>(<double>[], (unique, root) {
+      if (unique.every((item) => (item - root).abs() > 1e-5)) {
+        unique.add(root);
+      }
+      return unique;
+    });
+  }
+
+  static double? _integrateFunction(
+    double Function(double) function,
+    double start,
+    double end,
+    double tolerance,
+  ) {
+    if (start > end || tolerance <= 0) return null;
+    if (start == end) return 0;
+    final fa = function(start);
+    final fb = function(end);
+    final middle = function((start + end) / 2);
+    if (![fa, fb, middle].every((value) => value.isFinite)) return null;
+    return _adaptiveSimpson(
+      function,
+      start,
+      end,
+      tolerance,
+      _simpson(start, end, fa, middle, fb),
+      fa,
+      middle,
+      fb,
+      18,
+    );
+  }
+
+  static double? _nthDerivativeCompiled(
+    CompiledExpression function,
+    double x,
+    int order,
+    double step,
+  ) {
+    if (order == 0) {
+      final value = function.evaluate(x: x);
+      return value.isFinite ? value : null;
+    }
+    final left = _nthDerivativeCompiled(function, x - step, order - 1, step);
+    final right = _nthDerivativeCompiled(function, x + step, order - 1, step);
+    if (left == null || right == null) return null;
+    return (right - left) / (2 * step);
+  }
+
   static double? solve(
     String expression, {
     double guess = 0,

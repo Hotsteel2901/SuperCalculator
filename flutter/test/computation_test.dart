@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:supercalculator_next_era/core/compute/computation.dart';
@@ -29,6 +31,43 @@ void main() {
 
     expect(values, <double?>[0, 1, 4]);
     expect(integral, closeTo(1 / 3, 1e-8));
+  });
+
+  test('limits, Taylor series and extrema remain deterministic', () {
+    expect(
+      DartComputation.limit('sin(x) / x', 0),
+      closeTo(1, 1e-6),
+    );
+    final coefficients = DartComputation.taylorCoefficients('exp(x)', 0, 3);
+    expect(coefficients, isNotNull);
+    expect(coefficients![0], closeTo(1, 1e-6));
+    expect(coefficients[1], closeTo(1, 1e-4));
+    expect(
+      DartComputation.findExtremum('x^2', -2, 2),
+      closeTo(0, 1e-5),
+    );
+  });
+
+  test('area, parametric sampling and two-variable systems work', () {
+    expect(
+      DartComputation.areaBetweenCurves('x', '0', 0, 1),
+      closeTo(.5, 1e-6),
+    );
+    final curve = DartComputation.evaluateParametric(
+      'cos(x)',
+      'sin(x)',
+      samples: 9,
+    );
+    expect(curve, hasLength(9));
+    expect(curve.first['x'], closeTo(1, 1e-12));
+    final system = DartComputation.solveSystem2d(
+      'x^2 + y^2 - 1',
+      'x - y',
+      x: .7,
+      y: .7,
+    );
+    expect(system, isNotNull);
+    expect(system!['x'], closeTo(1 / math.sqrt(2), 1e-5));
   });
 
   test('bounded root solver finds both a Newton root and a bracketed root', () {
