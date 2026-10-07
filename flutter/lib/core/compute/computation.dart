@@ -520,14 +520,20 @@ class DartComputation {
   }
 
   static ComplexValue complexSin(ComplexValue value) => ComplexValue(
-    math.sin(value.real) * math.cosh(value.imaginary),
-    math.cos(value.real) * math.sinh(value.imaginary),
+    math.sin(value.real) * _cosh(value.imaginary),
+    math.cos(value.real) * _sinh(value.imaginary),
   );
 
   static ComplexValue complexCos(ComplexValue value) => ComplexValue(
-    math.cos(value.real) * math.cosh(value.imaginary),
-    -math.sin(value.real) * math.sinh(value.imaginary),
+    math.cos(value.real) * _cosh(value.imaginary),
+    -math.sin(value.real) * _sinh(value.imaginary),
   );
+
+  static double _sinh(double value) =>
+      (math.exp(value) - math.exp(-value)) / 2;
+
+  static double _cosh(double value) =>
+      (math.exp(value) + math.exp(-value)) / 2;
 
   static ComplexValue complexTan(ComplexValue value) =>
       complexSin(value) / complexCos(value);
@@ -578,8 +584,9 @@ class DartComputation {
       }
       divisor = divisor == BigInt.two ? BigInt.from(3) : divisor + BigInt.two;
     }
-    if (remaining > BigInt.one)
+    if (remaining > BigInt.one) {
       factors[remaining] = (factors[remaining] ?? 0) + 1;
+    }
     return factors;
   }
 
@@ -1744,7 +1751,9 @@ class DartComputation {
         second[i] = (rhs[i] - upper[i] * second[i + 1]) / diagonal[i];
       }
       var index = 0;
-      while (index < n - 2 && x > points[index + 1][0]) index++;
+      while (index < n - 2 && x > points[index + 1][0]) {
+        index++;
+      }
       final left = points[index];
       final rightIndex = math.min(index + 1, n - 1).toInt();
       final right = points[rightIndex];
@@ -1779,7 +1788,9 @@ class DartComputation {
     if (method == 'hermite' && points.length >= 2) {
       // Piecewise cubic Hermite with finite-difference slopes.
       var index = 0;
-      while (index < points.length - 2 && x > points[index + 1][0]) index++;
+      while (index < points.length - 2 && x > points[index + 1][0]) {
+        index++;
+      }
       final left = points[index];
       final right = points[index + 1];
       final h = right[0] - left[0];
