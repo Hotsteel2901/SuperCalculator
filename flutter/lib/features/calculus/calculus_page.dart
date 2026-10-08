@@ -258,16 +258,14 @@ class _CalculusPageState extends ConsumerState<CalculusPage> {
           order,
         );
         if (!mounted) return;
-        final formatted = coefficients == null
-            ? null
-            : coefficients
-                  .asMap()
-                  .entries
-                  .map(
-                    (entry) =>
-                        'c${entry.key} = ${entry.value?.toStringAsPrecision(12) ?? 'undefined'}',
-                  )
-                  .join('\n');
+        final formatted = coefficients
+            ?.asMap()
+            .entries
+            .map(
+              (entry) =>
+                  'c${entry.key} = ${entry.value?.toStringAsPrecision(12) ?? 'undefined'}',
+            )
+            .join('\n');
         setState(() {
           _busy = false;
           _result = formatted;

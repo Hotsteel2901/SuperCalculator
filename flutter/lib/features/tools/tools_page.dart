@@ -10,7 +10,7 @@ class ToolsPage extends ConsumerStatefulWidget {
   const ToolsPage({super.key});
 
   @override
-  State<ToolsPage> createState() => _ToolsPageState();
+  ConsumerState<ToolsPage> createState() => _ToolsPageState();
 }
 
 class _ToolsPageState extends ConsumerState<ToolsPage> {
