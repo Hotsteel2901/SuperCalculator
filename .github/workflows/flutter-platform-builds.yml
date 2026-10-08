@@ -69,11 +69,14 @@ jobs:
       - run: flutter build apk --release --split-per-abi
       - name: Build Android universal release APK
         run: flutter build apk --release
+      - name: Build Android release app bundle
+        run: flutter build appbundle --release
       - uses: actions/upload-artifact@v4
         with:
           name: SuperCalculator-Next-Era-android
           path: |
             flutter/build/app/outputs/flutter-apk/*.apk
+            flutter/build/app/outputs/bundle/release/*.aab
           if-no-files-found: error
 
   linux:
@@ -212,15 +215,17 @@ jobs:
             -I native/calc_core/include calc_core.c \
             native/calc_core/src/supercalc_core.c -lm \
             -o "$app/Contents/Frameworks/libsupercalc_core.dylib"
-          ditto -c -k --sequesterRsrc --keepParent "$app" SuperCalculator-Next-Era-macos-universal.zip
+          # The hosted runner builds one native architecture. Do not label this
+          # artifact universal unless a separate multi-arch build is performed.
+          ditto -c -k --sequesterRsrc --keepParent "$app" SuperCalculator-Next-Era-macos-host-arch.zip
           hdiutil create -volname 'SuperCalculator - Next Era' -srcfolder "$app" \
-            -ov -format UDZO SuperCalculator-Next-Era-macos.dmg
+            -ov -format UDZO SuperCalculator-Next-Era-macos-host-arch.dmg
       - uses: actions/upload-artifact@v4
         with:
           name: SuperCalculator-Next-Era-macos
           path: |
-            SuperCalculator-Next-Era-macos-universal.zip
-            SuperCalculator-Next-Era-macos.dmg
+            SuperCalculator-Next-Era-macos-host-arch.zip
+            SuperCalculator-Next-Era-macos-host-arch.dmg
           if-no-files-found: error
 
   ios:
@@ -270,12 +275,23 @@ jobs:
           merge-multiple: true
       - name: Generate checksums
         working-directory: release-assets
-        run: sha256sum * > SHA256SUMS
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -d '' assets < <(
+            find . -type f ! -name SHA256SUMS -print0 | sort -z
+          )
+          test "${#assets[@]}" -gt 0
+          sha256sum "${assets[@]}" > SHA256SUMS
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
-          gh release create "$GITHUB_REF_NAME" release-assets/* \
+          set -euo pipefail
+          mapfile -d '' assets < <(find release-assets -type f -print0 | sort -z)
+          test "${#assets[@]}" -gt 0
+          gh release create "$GITHUB_REF_NAME" "${assets[@]}" \
             --title "SuperCalculator - Next Era $GITHUB_REF_NAME" \
             --generate-notes \
             --notes "Platform packages are unsigned where Apple signing or repository keystore secrets are required. See SHA256SUMS and the compatibility report for installation and signing notes."

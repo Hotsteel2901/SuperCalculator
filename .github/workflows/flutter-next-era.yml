@@ -8,6 +8,7 @@ on:
       - 'calc_core.c'
       - 'tool/**'
       - '.github/workflows/flutter-next-era.yml'
+      - '.github/workflows/flutter-platform-builds.yml'
   push:
     branches: [master]
     paths:
@@ -16,6 +17,7 @@ on:
       - 'calc_core.c'
       - 'tool/**'
       - '.github/workflows/flutter-next-era.yml'
+      - '.github/workflows/flutter-platform-builds.yml'
   workflow_dispatch:
 
 permissions:
