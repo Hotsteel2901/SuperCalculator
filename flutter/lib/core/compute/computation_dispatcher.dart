@@ -71,7 +71,7 @@ class ComputationDispatcher {
   }) => compute(
     _vectorFieldTask,
     _VectorFieldTask(
-      expressionX: expressionX,
+      expression: expressionX,
       expressionY: expressionY,
       xMin: xMin,
       xMax: xMax,

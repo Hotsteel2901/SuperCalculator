@@ -980,7 +980,6 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
             );
             _financeResult = 'future value = ${value.toStringAsPrecision(12)}';
         }
-        ;
       },
       historyExpression: 'finance $_financeOperation',
       historyResult: () => _financeResult,
