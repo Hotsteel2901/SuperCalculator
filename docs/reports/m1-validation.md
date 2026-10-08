@@ -24,8 +24,8 @@ an additional local sanity check, not a replacement for Flutter analyzer/test.
 
 ## CI checks
 
-Successful workflow run **37728950445** (Flutter job **113153448993**, native job
-**113153448811**) ran on the branch head and completed all gates:
+Successful workflow run **37758682310** (Flutter job **113249494547**, native job
+**113249494956**) ran on commit `a1120c3` and completed all gates:
 
 - Flutter stable baseline `3.47.6` and its embedded Dart version were printed;
 - `flutter pub get`;
@@ -33,6 +33,7 @@ Successful workflow run **37728950445** (Flutter job **113153448993**, native jo
 - Dart formatting, including the workflow's formatter commit step;
 - `flutter analyze`;
 - `flutter test`;
+- migration manifest and golden-vector JSON validation;
 - `flutter build web --release`;
 - native ABI smoke test with GCC.
 
@@ -41,10 +42,12 @@ the future `ubuntu-latest` image migration; these are not code failures.
 
 ## Coverage added in the current increment
 
-The deterministic Flutter vectors now include ODE method convergence, function-table
+The deterministic Flutter vectors now include calculus Taylor/arc-length/revolution
+volume edges, retirement zero-rate behavior, ODE method convergence, function-table
 spacing/CSV, regression, distribution boundaries, probability, calendar arithmetic,
 COO sparse matrix-vector multiplication and conjugate-gradient solving. The UI slices
-also cover multi-curve plots, histograms, copyable tables and the new advanced tools.
+also cover cross-page history recording, multi-curve plots, histograms, copyable tables
+and the new advanced tools.
 
 ## Still requiring physical devices
 
@@ -55,7 +58,7 @@ CI does not certify:
 - screen-reader semantics on each target, large text, high contrast, keyboard,
   pointer, touch, stylus, rotation and foldable layouts;
 - native FFI artifact parity for every platform ABI or a production WebAssembly artifact;
-- persistent history storage and full interactive 3D rendering.
+- persistence behavior in private/restricted profiles and full interactive 3D rendering.
 
 These are release gates, not silently inferred successes; see `docs/compatibility.md`,
 `docs/performance.md` and `docs/accessibility.md`.
