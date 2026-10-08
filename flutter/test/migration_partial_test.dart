@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:supercalculator_next_era/core/compute/computation.dart';
+import 'package:supercalculator_next_era/core/presets/preset_catalog.dart';
 
 void main() {
   test('all plot samplers return finite, bounded vector data', () {
@@ -205,6 +206,13 @@ void main() {
       final compiled = ExpressionEngine.compile(expression as String);
       expect(compiled.evaluate(x: 1, y: .5).isFinite, isTrue, reason: label);
     }
+    final parsedCatalog = PresetCatalog.parse(
+      File('assets/presets/function_presets.json').readAsStringSync(),
+    );
+    expect(parsedCatalog['function'], hasLength(25));
+    expect(parsedCatalog['parametric'], hasLength(10));
+    expect(parsedCatalog['polar'], hasLength(12));
+
     final parameterPresets = (document['parameterPresets'] as List)
         .cast<Map<String, dynamic>>();
     expect(parameterPresets, isNotEmpty);

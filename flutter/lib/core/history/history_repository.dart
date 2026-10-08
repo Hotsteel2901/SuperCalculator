@@ -67,6 +67,42 @@ class HistoryEntry {
   }
 }
 
+class HistoryCodec {
+  const HistoryCodec._();
+
+  static String toCsv(Iterable<HistoryEntry> entries) {
+    final rows = <String>['expression,result,backend,createdAt'];
+    for (final entry in entries) {
+      rows.add(
+        <String>[
+          _escape(entry.expression),
+          _escape(entry.result),
+          _escape(entry.backend),
+          entry.createdAt.toIso8601String(),
+        ].join(','),
+      );
+    }
+    return rows.join('\n');
+  }
+
+  static String toJson(Iterable<HistoryEntry> entries) => jsonEncode(
+    entries.map((entry) => entry.toJson()).toList(growable: false),
+  );
+
+  static List<HistoryEntry> fromJson(String encoded, {int limit = 10}) {
+    if (limit < 1) return const <HistoryEntry>[];
+    final decoded = jsonDecode(encoded);
+    if (decoded is! List) return const <HistoryEntry>[];
+    return decoded
+        .map(HistoryEntry.fromJson)
+        .whereType<HistoryEntry>()
+        .take(limit)
+        .toList(growable: false);
+  }
+
+  static String _escape(String value) => '"${value.replaceAll('"', '""')}"';
+}
+
 class CalculationHistoryController extends Notifier<List<HistoryEntry>> {
   late Future<void> _ready;
   bool _hasLocalChanges = false;
@@ -103,36 +139,16 @@ class CalculationHistoryController extends Notifier<List<HistoryEntry>> {
     unawaited(_persist());
   }
 
-  String exportCsv() {
-    final rows = <String>['expression,result,backend,createdAt'];
-    for (final entry in state) {
-      rows.add(
-        <String>[
-          _escape(entry.expression),
-          _escape(entry.result),
-          _escape(entry.backend),
-          entry.createdAt.toIso8601String(),
-        ].join(','),
-      );
-    }
-    return rows.join('\n');
-  }
+  String exportCsv() => HistoryCodec.toCsv(state);
 
-  String exportJson() =>
-      jsonEncode(state.map((entry) => entry.toJson()).toList());
+  String exportJson() => HistoryCodec.toJson(state);
 
   Future<void> _restore() async {
     try {
       final preferences = await SharedPreferences.getInstance();
       final encoded = preferences.getString(_historyStorageKey);
       if (encoded == null || _hasLocalChanges) return;
-      final decoded = jsonDecode(encoded);
-      if (decoded is! List) return;
-      final entries = decoded
-          .map(HistoryEntry.fromJson)
-          .whereType<HistoryEntry>()
-          .take(10)
-          .toList(growable: false);
+      final entries = HistoryCodec.fromJson(encoded);
       if (!_hasLocalChanges) state = entries;
     } catch (_) {
       // Corrupt or unavailable storage must never prevent the calculator from
@@ -151,5 +167,4 @@ class CalculationHistoryController extends Notifier<List<HistoryEntry>> {
     }
   }
 
-  String _escape(String value) => '"${value.replaceAll('"', '""')}"';
 }

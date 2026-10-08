@@ -133,3 +133,31 @@ jobs:
             native/calc_core/tests/smoke_test.c -L/tmp -Wl,-rpath,/tmp \
             -lsupercalc_core -o /tmp/supercalc_core_smoke
           /tmp/supercalc_core_smoke
+
+  platform-contract:
+    name: Validate platform release contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check declared platform artifacts and signing labels
+        shell: bash
+        run: |
+          set -euo pipefail
+          workflow=.github/workflows/flutter-platform-builds.yml
+          test -s "$workflow"
+          for job in web android linux windows macos ios release; do
+            grep -q "^  $job:" "$workflow"
+          done
+          for artifact in \
+            'SuperCalculator-Next-Era-web' \
+            'SuperCalculator-Next-Era-android' \
+            'SuperCalculator-Next-Era-linux' \
+            'SuperCalculator-Next-Era-windows' \
+            'SuperCalculator-Next-Era-macos' \
+            'SuperCalculator-Next-Era-ios'; do
+            grep -q "$artifact" "$workflow"
+          done
+          grep -q 'ios-unsigned' "$workflow"
+          grep -q 'unsigned where Apple signing' "$workflow"
+          grep -q 'FLUTTER_VERSION:' "$workflow"
+          test "$(grep -c 'actions/upload-artifact@v4' "$workflow")" -ge 6
