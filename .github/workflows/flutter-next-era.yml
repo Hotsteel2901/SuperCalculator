@@ -107,7 +107,16 @@ jobs:
             echo "::error title=Flutter analyzer::$summary"
           fi
           exit "$status"
-      - run: flutter test
+      - name: Run Flutter tests
+        run: |
+          set +e
+          flutter test --reporter expanded 2>&1 | tee /tmp/flutter-test.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            summary=$(python3 -c 'import pathlib; print(pathlib.Path("/tmp/flutter-test.log").read_text().replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A"))')
+            echo "::error title=Flutter tests::$summary"
+          fi
+          exit "$status"
       - run: flutter build web --release
 
   native:
