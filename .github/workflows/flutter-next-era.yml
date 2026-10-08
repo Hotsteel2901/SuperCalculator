@@ -9,6 +9,8 @@ on:
       - 'tool/**'
       - '.github/workflows/flutter-next-era.yml'
       - '.github/workflows/flutter-platform-builds.yml'
+      - 'docs/migration/**'
+      - 'docs/compatibility.md'
   push:
     branches: [master]
     paths:
@@ -18,6 +20,8 @@ on:
       - 'tool/**'
       - '.github/workflows/flutter-next-era.yml'
       - '.github/workflows/flutter-platform-builds.yml'
+      - 'docs/migration/**'
+      - 'docs/compatibility.md'
   workflow_dispatch:
 
 permissions:
@@ -31,6 +35,11 @@ jobs:
         working-directory: flutter
     steps:
       - uses: actions/checkout@v4
+      - name: Validate migration manifests
+        working-directory: ${{ github.workspace }}
+        run: |
+          python -m json.tool docs/migration/feature-manifest.json >/dev/null
+          python -m json.tool docs/migration/golden_vectors.json >/dev/null
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.47.6'
