@@ -119,6 +119,7 @@ abstract interface class CalcBackend {
     required double y0,
     required double xEnd,
     int steps = 200,
+    String method = 'RK4',
   });
 
   Future<CalcSpectrum> spectrum(
@@ -481,6 +482,7 @@ class DartCalcBackend implements CalcBackend {
     required double y0,
     required double xEnd,
     int steps = 200,
+    String method = 'RK4',
   }) async {
     return ComputationDispatcher.ode(
       expression,
@@ -488,6 +490,7 @@ class DartCalcBackend implements CalcBackend {
       y0: y0,
       xEnd: xEnd,
       steps: steps,
+      method: method,
     );
   }
 

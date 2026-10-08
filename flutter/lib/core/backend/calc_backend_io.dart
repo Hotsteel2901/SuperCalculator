@@ -488,7 +488,18 @@ class FfiCalcBackend implements CalcBackend {
     required double y0,
     required double xEnd,
     int steps = 200,
+    String method = 'RK4',
   }) async {
+    if (method.toUpperCase() != 'RK4') {
+      return ComputationDispatcher.ode(
+        expression,
+        x0: x0,
+        y0: y0,
+        xEnd: xEnd,
+        steps: steps,
+        method: method,
+      );
+    }
     if (_disposed || steps < 1) {
       return const CalcOdeSolution(
         xs: <double>[],

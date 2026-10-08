@@ -91,6 +91,21 @@ void main() {
     expect(solution.ys.last, closeTo(2.7182818, 1e-5));
   });
 
+  test('ODE method comparison stays finite and converges', () {
+    for (final method in <String>['Euler', 'Improved-Euler', 'Midpoint', 'RK4', 'RKF45']) {
+      final solution = DartComputation.odeMethod(
+        'y',
+        x0: 0,
+        y0: 1,
+        xEnd: 1,
+        steps: 100,
+        method: method,
+      );
+      expect(solution.ys.last, isNotNull);
+      expect(solution.ys.last, closeTo(math.e, method == 'Euler' ? .03 : .001));
+    }
+  });
+
   test('FFT identifies a five hertz signal', () {
     final spectrum = DartComputation.spectrum(
       'sin(2*pi*5*x)',

@@ -19,6 +19,7 @@ class _OdePageState extends ConsumerState<OdePage> {
   final _y0 = TextEditingController(text: '0.5');
   final _xEnd = TextEditingController(text: '2');
   final _steps = TextEditingController(text: '200');
+  String _method = 'RK4';
   List<PlotPoint> _points = const <PlotPoint>[];
   String? _result;
   String? _error;
@@ -72,6 +73,14 @@ class _OdePageState extends ConsumerState<OdePage> {
                     _numberField(_y0, nextEraText(context, 'y₀', 'y₀')),
                     _numberField(_xEnd, nextEraText(context, 'x end', '终点 x')),
                     _numberField(_steps, nextEraText(context, 'Steps', '步数')),
+                    DropdownButtonFormField<String>(
+                      initialValue: _method,
+                      decoration: InputDecoration(labelText: nextEraText(context, 'Method', '方法')),
+                      items: <String>['RK4', 'Euler', 'Improved-Euler', 'Midpoint', 'RKF45']
+                          .map((value) => DropdownMenuItem(value: value, child: Text(value)))
+                          .toList(growable: false),
+                      onChanged: (value) => setState(() => _method = value ?? 'RK4'),
+                    ),
                   ],
                 ),
                 FilledButton.icon(
@@ -172,6 +181,7 @@ class _OdePageState extends ConsumerState<OdePage> {
           y0: y0,
           xEnd: xEnd,
           steps: steps.clamp(1, 10000).toInt(),
+          method: _method,
         );
     if (!mounted) {
       return;

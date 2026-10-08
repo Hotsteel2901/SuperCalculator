@@ -1330,6 +1330,75 @@ class DartComputation {
     return CalcOdeSolution(xs: xs, ys: ys, method: 'RK4');
   }
 
+  static CalcOdeSolution odeMethod(
+    String expression, {
+    required double x0,
+    required double y0,
+    required double xEnd,
+    int steps = 200,
+    String method = 'RK4',
+  }) {
+    if (steps < 1 || !x0.isFinite || !xEnd.isFinite || !y0.isFinite) {
+      return const CalcOdeSolution(
+        xs: <double>[],
+        ys: <double?>[],
+        method: 'invalid',
+      );
+    }
+    final function = ExpressionEngine.compile(expression);
+    final h = (xEnd - x0) / steps;
+    var x = x0;
+    var y = y0;
+    final xs = <double>[x0];
+    final ys = <double?>[y0];
+    final normalized = method.toLowerCase();
+    double slope(double atX, double atY) => function.evaluate(x: atX, y: atY);
+    for (var index = 0; index < steps; index++) {
+      final k1 = slope(x, y);
+      if (!k1.isFinite) break;
+      var next = double.nan;
+      switch (normalized) {
+        case 'euler':
+          next = y + h * k1;
+        case 'improved-euler':
+        case 'heun':
+          final predictor = y + h * k1;
+          final k2 = slope(x + h, predictor);
+          if (!k2.isFinite) break;
+          next = y + h * (k1 + k2) / 2;
+        case 'midpoint':
+          final k2 = slope(x + h / 2, y + h * k1 / 2);
+          if (!k2.isFinite) break;
+          next = y + h * k2;
+        case 'rkf45':
+          final k2 = slope(x + h / 4, y + h * k1 / 4);
+          final k3 = slope(x + 3 * h / 8, y + 3 * h * k1 / 32 + 9 * h * k2 / 32);
+          final k4 = slope(x + 12 * h / 13, y + 1932 * h * k1 / 2197 - 7200 * h * k2 / 2197 + 7296 * h * k3 / 2197);
+          final k5 = slope(x + h, y + 439 * h * k1 / 216 - 8 * h * k2 + 3680 * h * k3 / 513 - 845 * h * k4 / 4104);
+          final k6 = slope(x + h / 2, y - 8 * h * k1 / 27 + 2 * h * k2 - 3544 * h * k3 / 2565 + 1859 * h * k4 / 4104 - 11 * h * k5 / 40);
+          if (![k2, k3, k4, k5, k6].every((value) => value.isFinite)) break;
+          next = y + h * (16 * k1 / 135 + 6656 * k3 / 12825 + 28561 * k4 / 56430 - 9 * k5 / 50 + 2 * k6 / 55);
+        case 'rk4':
+        default:
+          final k2 = slope(x + h / 2, y + h * k1 / 2);
+          final k3 = slope(x + h / 2, y + h * k2 / 2);
+          final k4 = slope(x + h, y + h * k3);
+          if (![k2, k3, k4].every((value) => value.isFinite)) break;
+          next = y + h * (k1 + 2 * k2 + 2 * k3 + k4) / 6;
+      }
+      if (!next.isFinite) break;
+      y = next;
+      x = x0 + (index + 1) * h;
+      xs.add(x);
+      ys.add(y);
+    }
+    return CalcOdeSolution(
+      xs: xs,
+      ys: ys,
+      method: method.toUpperCase(),
+    );
+  }
+
   static CalcSpectrum spectrum(
     String expression, {
     required double a,

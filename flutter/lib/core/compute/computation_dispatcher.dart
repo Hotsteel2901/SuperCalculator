@@ -135,9 +135,17 @@ class ComputationDispatcher {
     required double y0,
     required double xEnd,
     int steps = 200,
+    String method = 'RK4',
   }) => compute(
     _odeTask,
-    _OdeTask(expression: expression, x0: x0, y0: y0, xEnd: xEnd, steps: steps),
+    _OdeTask(
+      expression: expression,
+      x0: x0,
+      y0: y0,
+      xEnd: xEnd,
+      steps: steps,
+      method: method,
+    ),
   );
 
   static Future<CalcSpectrum> spectrum(
@@ -652,6 +660,7 @@ class _OdeTask {
     required this.y0,
     required this.xEnd,
     required this.steps,
+    required this.method,
   });
 
   final String expression;
@@ -659,14 +668,16 @@ class _OdeTask {
   final double y0;
   final double xEnd;
   final int steps;
+  final String method;
 }
 
-CalcOdeSolution _odeTask(_OdeTask task) => DartComputation.ode(
+CalcOdeSolution _odeTask(_OdeTask task) => DartComputation.odeMethod(
   task.expression,
   x0: task.x0,
   y0: task.y0,
   xEnd: task.xEnd,
   steps: task.steps,
+  method: task.method,
 );
 
 class _SpectrumTask {
