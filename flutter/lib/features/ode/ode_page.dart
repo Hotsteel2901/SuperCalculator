@@ -104,11 +104,7 @@ class _OdePageState extends ConsumerState<OdePage> {
                 SwitchListTile.adaptive(
                   contentPadding: EdgeInsets.zero,
                   title: Text(
-                    nextEraText(
-                      context,
-                      'Compare all five methods',
-                      '比较五种方法',
-                    ),
+                    nextEraText(context, 'Compare all five methods', '比较五种方法'),
                   ),
                   subtitle: Text(
                     nextEraText(
@@ -155,17 +151,17 @@ class _OdePageState extends ConsumerState<OdePage> {
               child: Semantics(
                 label: nextEraText(
                   context,
-                    _compareMethods
-                        ? nextEraText(
-                            context,
-                            'ODE comparison with ${_series.length} methods and ${_points.length} samples.',
-                            'ODE 方法比较，${_series.length} 种方法，${_points.length} 个采样点。',
-                          )
-                        : nextEraText(
-                            context,
-                            'ODE solution curve with ${_points.length} samples.',
-                            '包含 ${_points.length} 个采样点的 ODE 解曲线。',
-                          ),
+                  _compareMethods
+                      ? nextEraText(
+                          context,
+                          'ODE comparison with ${_series.length} methods and ${_points.length} samples.',
+                          'ODE 方法比较，${_series.length} 种方法，${_points.length} 个采样点。',
+                        )
+                      : nextEraText(
+                          context,
+                          'ODE solution curve with ${_points.length} samples.',
+                          '包含 ${_points.length} 个采样点的 ODE 解曲线。',
+                        ),
                 ),
                 child: SizedBox(
                   height: 360,
@@ -256,7 +252,9 @@ class _OdePageState extends ConsumerState<OdePage> {
     }
     final series = solutions.map(_toPoints).toList(growable: false);
     final points = _compareMethods
-        ? (series.isEmpty ? const <PlotPoint>[] : series[methods.indexOf(_method)])
+        ? (series.isEmpty
+              ? const <PlotPoint>[]
+              : series[methods.indexOf(_method)])
         : series.first;
     final successful = series.where((item) => item.isNotEmpty).length;
     setState(() {

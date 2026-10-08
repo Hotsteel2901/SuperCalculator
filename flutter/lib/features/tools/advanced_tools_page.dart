@@ -378,21 +378,22 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
             decoration: InputDecoration(
               labelText: nextEraText(context, 'Operation', '运算'),
             ),
-            items: <String>[
-              'loan',
-              'compound',
-              'npv',
-              'irr',
-              'depreciation',
-              'bond',
-            ]
-                .map(
-                  (value) => DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  ),
-                )
-                .toList(growable: false),
+            items:
+                <String>[
+                      'loan',
+                      'compound',
+                      'npv',
+                      'irr',
+                      'depreciation',
+                      'bond',
+                    ]
+                    .map(
+                      (value) => DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      ),
+                    )
+                    .toList(growable: false),
             onChanged: (value) =>
                 setState(() => _financeOperation = value ?? 'loan'),
           ),
@@ -737,14 +738,14 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
         'modPow' => '${DartComputation.modPow(n, m, modulus)}',
         'totient' => '${DartComputation.eulerTotient(n)}',
         _ => _formatBitwise(
-            DartComputation.bitwise(
-              _integerOperation.replaceFirst('bitwise ', ''),
-              n.toInt(),
-              m.toInt(),
-              _bitwiseWidth,
-            ),
+          DartComputation.bitwise(
+            _integerOperation.replaceFirst('bitwise ', ''),
+            n.toInt(),
+            m.toInt(),
             _bitwiseWidth,
           ),
+          _bitwiseWidth,
+        ),
       };
     });
   }

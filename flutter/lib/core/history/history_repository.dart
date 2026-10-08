@@ -133,10 +133,7 @@ class CalculationHistoryController extends Notifier<List<HistoryEntry>> {
     try {
       await _ready;
       final preferences = await SharedPreferences.getInstance();
-      await preferences.setString(
-        _historyStorageKey,
-        exportJson(),
-      );
+      await preferences.setString(_historyStorageKey, exportJson());
     } catch (_) {
       // Web private mode and restricted desktop profiles may reject storage;
       // history remains usable for the current session in that case.

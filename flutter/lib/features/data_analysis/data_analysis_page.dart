@@ -188,7 +188,9 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
                   }
                 },
                 icon: const Icon(Icons.copy_outlined),
-                label: Text(nextEraText(context, 'Copy fitted CSV', '复制拟合 CSV')),
+                label: Text(
+                  nextEraText(context, 'Copy fitted CSV', '复制拟合 CSV'),
+                ),
               ),
             ),
           ],

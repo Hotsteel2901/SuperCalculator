@@ -147,7 +147,9 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
                         }
                       },
                 icon: const Icon(Icons.copy_outlined),
-                label: Text(nextEraText(context, 'Copy spectrum CSV', '复制频谱 CSV')),
+                label: Text(
+                  nextEraText(context, 'Copy spectrum CSV', '复制频谱 CSV'),
+                ),
               ),
             ),
             const SizedBox(height: 8),

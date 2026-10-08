@@ -49,10 +49,18 @@ const _plotPresets = <String, List<_PlotPreset>>{
     _PlotPreset('Lissajous', 'sin(3*x+pi/2)', 'sin(2*x)'),
     _PlotPreset('Spiral', 'x*cos(x)', 'x*sin(x)'),
     _PlotPreset('Cardioid', '2*cos(x)-cos(2*x)', '2*sin(x)-sin(2*x)'),
-    _PlotPreset('Heart', '16*sin(x)^3', '13*cos(x)-5*cos(2*x)-2*cos(3*x)-cos(4*x)'),
+    _PlotPreset(
+      'Heart',
+      '16*sin(x)^3',
+      '13*cos(x)-5*cos(2*x)-2*cos(3*x)-cos(4*x)',
+    ),
     _PlotPreset('Astroid', '4*cos(x)^3', '4*sin(x)^3'),
     _PlotPreset('Hypotrochoid', '2*cos(x)+cos(2*x)', '2*sin(x)-sin(2*x)'),
-    _PlotPreset('Butterfly seed', 'sin(x)*(exp(cos(x))-2*cos(4*x)-sin(x/12)^5)', 'cos(x)*(exp(cos(x))-2*cos(4*x)-sin(x/12)^5)'),
+    _PlotPreset(
+      'Butterfly seed',
+      'sin(x)*(exp(cos(x))-2*cos(4*x)-sin(x/12)^5)',
+      'cos(x)*(exp(cos(x))-2*cos(4*x)-sin(x/12)^5)',
+    ),
     _PlotPreset('Rose', 'cos(4*x)*cos(x)', 'cos(4*x)*sin(x)'),
   ],
   'polar': <_PlotPreset>[
@@ -202,9 +210,10 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                       if (presets.isNotEmpty) ...<Widget>[
                         SizedBox(height: tokens.controlGap),
                         DropdownButtonFormField<String>(
-                          initialValue: presets.any(
-                            (preset) => preset.label == _selectedPreset,
-                          )
+                          initialValue:
+                              presets.any(
+                                (preset) => preset.label == _selectedPreset,
+                              )
                               ? _selectedPreset
                               : null,
                           decoration: InputDecoration(
@@ -227,7 +236,9 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                             controller.setExpression(preset.expression);
                             if (preset.secondary != null) {
                               _secondaryController.text = preset.secondary!;
-                              controller.setSecondaryExpression(preset.secondary!);
+                              controller.setSecondaryExpression(
+                                preset.secondary!,
+                              );
                             }
                             setState(() => _selectedPreset = label);
                           },
