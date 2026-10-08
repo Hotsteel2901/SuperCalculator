@@ -240,12 +240,12 @@ void main() {
   });
 
   test('sparse matrix operations validate COO and solver boundaries', () {
-    final matrix = DartComputation.parseSparseMatrix(
-      3,
-      3,
-      '0,0,4;1,1,5;2,2,6',
-    );
-    expect(DartComputation.sparseMatVec(matrix, <double>[1, 2, 3]), <double>[4, 10, 18]);
+    final matrix = DartComputation.parseSparseMatrix(3, 3, '0,0,4;1,1,5;2,2,6');
+    expect(DartComputation.sparseMatVec(matrix, <double>[1, 2, 3]), <double>[
+      4,
+      10,
+      18,
+    ]);
     final solution = DartComputation.conjugateGradient(
       matrix,
       <double>[4, 10, 18],

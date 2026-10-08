@@ -2211,7 +2211,9 @@ class DartComputation {
     _checkProbability(intersection, 'P(A and B)');
     _checkProbability(given, 'P(B)');
     if (given == 0 || intersection > given) {
-      throw const FormatException('P(B) must be positive and bound the intersection.');
+      throw const FormatException(
+        'P(B) must be positive and bound the intersection.',
+      );
     }
     return intersection / given;
   }

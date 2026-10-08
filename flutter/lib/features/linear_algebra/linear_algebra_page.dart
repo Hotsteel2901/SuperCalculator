@@ -171,9 +171,8 @@ class _LinearAlgebraPageState extends ConsumerState<LinearAlgebraPage> {
                             ),
                           )
                           .toList(growable: false),
-                      onChanged: (value) => setState(
-                        () => _sparseOperation = value ?? 'spmv',
-                      ),
+                      onChanged: (value) =>
+                          setState(() => _sparseOperation = value ?? 'spmv'),
                     ),
                   ],
                 ),
@@ -270,9 +269,7 @@ class _LinearAlgebraPageState extends ConsumerState<LinearAlgebraPage> {
         .where((value) => value.trim().isNotEmpty)
         .map(double.tryParse)
         .toList(growable: false);
-    return values.any((value) => value == null)
-        ? null
-        : values.cast<double>();
+    return values.any((value) => value == null) ? null : values.cast<double>();
   }
 
   void _showSparseError(String message) {

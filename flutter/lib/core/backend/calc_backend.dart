@@ -186,11 +186,7 @@ abstract interface class CalcBackend {
 
   Future<CalcMatrix> inverseMatrix(String input);
 
-  Future<SparseMatrix> parseSparseMatrix(
-    int rows,
-    int columns,
-    String input,
-  );
+  Future<SparseMatrix> parseSparseMatrix(int rows, int columns, String input);
 
   Future<List<double>> sparseMatVec(SparseMatrix matrix, List<double> vector);
 
@@ -652,11 +648,8 @@ class DartCalcBackend implements CalcBackend {
     SparseMatrix matrix,
     List<double> vector,
     List<double> initial,
-  ) async => DartComputation.conjugateGradient(
-    matrix,
-    vector,
-    initial: initial,
-  );
+  ) async =>
+      DartComputation.conjugateGradient(matrix, vector, initial: initial);
 
   @override
   void dispose() {}

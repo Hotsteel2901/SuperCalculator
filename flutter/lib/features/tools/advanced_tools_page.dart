@@ -375,25 +375,25 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
             decoration: InputDecoration(
               labelText: nextEraText(context, 'Operation', '运算'),
             ),
-            items: <String>[
-              'combination',
-              'permutation',
-              'binomial',
-              'complement',
-              'union',
-              'conditional',
-              'bayes',
-            ]
-                .map(
-                  (value) => DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  ),
-                )
-                .toList(growable: false),
-            onChanged: (value) => setState(
-              () => _probabilityOperation = value ?? 'combination',
-            ),
+            items:
+                <String>[
+                      'combination',
+                      'permutation',
+                      'binomial',
+                      'complement',
+                      'union',
+                      'conditional',
+                      'bayes',
+                    ]
+                    .map(
+                      (value) => DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      ),
+                    )
+                    .toList(growable: false),
+            onChanged: (value) =>
+                setState(() => _probabilityOperation = value ?? 'combination'),
           ),
           const SizedBox(height: 12),
           FormRow(
@@ -447,9 +447,8 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
                   ),
                 )
                 .toList(growable: false),
-            onChanged: (value) => setState(
-              () => _calendarOperation = value ?? 'weekday',
-            ),
+            onChanged: (value) =>
+                setState(() => _calendarOperation = value ?? 'weekday'),
           ),
           const SizedBox(height: 12),
           FormRow(
@@ -582,11 +581,7 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                nextEraText(
-                                  context,
-                                  'CSV copied.',
-                                  'CSV 已复制。',
-                                ),
+                                nextEraText(context, 'CSV copied.', 'CSV 已复制。'),
                               ),
                             ),
                           );
@@ -709,7 +704,11 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
     final a = double.tryParse(_probabilityA.text.trim());
     final b = double.tryParse(_probabilityB.text.trim());
     final intersection = double.tryParse(_probabilityIntersection.text.trim());
-    if (n == null || r == null || a == null || b == null || intersection == null) {
+    if (n == null ||
+        r == null ||
+        a == null ||
+        b == null ||
+        intersection == null) {
       return _showError('Enter valid probability inputs.');
     }
     await _runBusy(() async {
@@ -718,10 +717,14 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
         'permutation' => 'P($n, $r) = ${DartComputation.permutation(n, r)}',
         'binomial' =>
           'P(X=$r) = ${DartComputation.binomialProbability(n: n, k: r, p: a).toStringAsPrecision(12)}\nmean = ${DartComputation.binomialMean(n, a).toStringAsPrecision(12)}\nvariance = ${DartComputation.binomialVariance(n, a).toStringAsPrecision(12)}',
-        'complement' => 'P(not A) = ${DartComputation.complementProbability(a).toStringAsPrecision(12)}',
-        'union' => 'P(A or B) = ${DartComputation.unionProbability(eventA: a, eventB: b, intersection: intersection).toStringAsPrecision(12)}',
-        'conditional' => 'P(A | B) = ${DartComputation.conditionalProbability(intersection: intersection, given: b).toStringAsPrecision(12)}',
-        'bayes' => 'P(A | evidence) = ${DartComputation.bayesProbability(prior: a, likelihood: b, evidence: intersection).toStringAsPrecision(12)}',
+        'complement' =>
+          'P(not A) = ${DartComputation.complementProbability(a).toStringAsPrecision(12)}',
+        'union' =>
+          'P(A or B) = ${DartComputation.unionProbability(eventA: a, eventB: b, intersection: intersection).toStringAsPrecision(12)}',
+        'conditional' =>
+          'P(A | B) = ${DartComputation.conditionalProbability(intersection: intersection, given: b).toStringAsPrecision(12)}',
+        'bayes' =>
+          'P(A | evidence) = ${DartComputation.bayesProbability(prior: a, likelihood: b, evidence: intersection).toStringAsPrecision(12)}',
         _ => '',
       };
       _probabilityResult = result;
@@ -732,15 +735,15 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
     await _runBusy(() async {
       _calendarResult = switch (_calendarOperation) {
         'weekday' => _weekdayLabel(
-            context,
-            DartComputation.calendarWeekday(_calendarDate.text),
-          ),
+          context,
+          DartComputation.calendarWeekday(_calendarDate.text),
+        ),
         'difference' =>
           '${DartComputation.calendarDateDifference(_calendarDate.text, _calendarDate2.text)} days',
         'add' => DartComputation.calendarAddDays(
-            _calendarDate.text,
-            int.parse(_calendarDays.text.trim()),
-          ),
+          _calendarDate.text,
+          int.parse(_calendarDays.text.trim()),
+        ),
         _ => '',
       };
     });
