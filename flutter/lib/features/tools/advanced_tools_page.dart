@@ -387,10 +387,10 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
                       'compound',
                       'npv',
                       'irr',
-              'depreciation',
-              'bond',
-              'retirement',
-            ]
+                      'depreciation',
+                      'bond',
+                      'retirement',
+                    ]
                     .map(
                       (value) => DropdownMenuItem<String>(
                         value: value,
@@ -419,7 +419,11 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
               _numberField(_financeYear, 'Year', '年份'),
               _numberField(_financeCoupon, 'Coupon rate', '票面利率'),
               _numberField(_financeMarket, 'Bond market rate', '债券市场利率'),
-              _numberField(_financeContribution, 'Monthly contribution', '每月投入'),
+              _numberField(
+                _financeContribution,
+                'Monthly contribution',
+                '每月投入',
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -711,17 +715,18 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
     if (values.any((value) => value == null)) {
       return _showError('Enter four finite complex components.');
     }
-    await _runBusy(() async {
-      final result = await ref
-          .read(calcBackendProvider)
-          .complexOperation(
-            _complexOperation,
-            ComplexValue(values[0]!, values[1]!),
-            ComplexValue(values[2]!, values[3]!),
-          );
-      _complexResult =
-          '$result\n|z| = ${result.magnitude.toStringAsPrecision(10)}\narg(z) = ${result.phase.toStringAsPrecision(10)}';
-    },
+    await _runBusy(
+      () async {
+        final result = await ref
+            .read(calcBackendProvider)
+            .complexOperation(
+              _complexOperation,
+              ComplexValue(values[0]!, values[1]!),
+              ComplexValue(values[2]!, values[3]!),
+            );
+        _complexResult =
+            '$result\n|z| = ${result.magnitude.toStringAsPrecision(10)}\narg(z) = ${result.phase.toStringAsPrecision(10)}';
+      },
       historyExpression: 'complex $_complexOperation',
       historyResult: () => _complexResult,
     );
@@ -734,28 +739,29 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
     if (n == null || m == null || modulus == null) {
       return _showError('Enter integer inputs.');
     }
-    await _runBusy(() async {
-      _integerResult = switch (_integerOperation) {
-        'factor' => DartComputation.formatFactors(
-          DartComputation.factorInteger(n),
-        ),
-        'prime' => DartComputation.isPrime(n) ? 'prime' : 'not prime',
-        'gcd' => '${DartComputation.gcd(n, m)}',
-        'lcm' => '${DartComputation.lcm(n, m)}',
-        'fibonacci' => '${DartComputation.fibonacci(n.toInt())}',
-        'modPow' => '${DartComputation.modPow(n, m, modulus)}',
-        'totient' => '${DartComputation.eulerTotient(n)}',
-        _ => _formatBitwise(
-          DartComputation.bitwise(
-            _integerOperation.replaceFirst('bitwise ', ''),
-            n.toInt(),
-            m.toInt(),
+    await _runBusy(
+      () async {
+        _integerResult = switch (_integerOperation) {
+          'factor' => DartComputation.formatFactors(
+            DartComputation.factorInteger(n),
+          ),
+          'prime' => DartComputation.isPrime(n) ? 'prime' : 'not prime',
+          'gcd' => '${DartComputation.gcd(n, m)}',
+          'lcm' => '${DartComputation.lcm(n, m)}',
+          'fibonacci' => '${DartComputation.fibonacci(n.toInt())}',
+          'modPow' => '${DartComputation.modPow(n, m, modulus)}',
+          'totient' => '${DartComputation.eulerTotient(n)}',
+          _ => _formatBitwise(
+            DartComputation.bitwise(
+              _integerOperation.replaceFirst('bitwise ', ''),
+              n.toInt(),
+              m.toInt(),
+              _bitwiseWidth,
+            ),
             _bitwiseWidth,
           ),
-          _bitwiseWidth,
-        ),
-      };
-    },
+        };
+      },
       historyExpression: '$_integerOperation: ${_integer.text}',
       historyResult: () => _integerResult,
     );
@@ -804,11 +810,12 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
       },
       _ => <String, double>{'lambda': values.isNotEmpty ? values[0]! : 5},
     };
-    await _runBusy(() async {
-      _distributionResult = await ref
-          .read(calcBackendProvider)
-          .distribution(_distribution, x, parameters);
-    },
+    await _runBusy(
+      () async {
+        _distributionResult = await ref
+            .read(calcBackendProvider)
+            .distribution(_distribution, x, parameters);
+      },
       historyExpression: '$_distribution distribution at x=$x',
       historyResult: _distributionSummary,
     );
@@ -827,45 +834,47 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
         intersection == null) {
       return _showError('Enter valid probability inputs.');
     }
-    await _runBusy(() async {
-      final result = switch (_probabilityOperation) {
-        'combination' => 'C($n, $r) = ${DartComputation.combination(n, r)}',
-        'permutation' => 'P($n, $r) = ${DartComputation.permutation(n, r)}',
-        'binomial' =>
-          'P(X=$r) = ${DartComputation.binomialProbability(n: n, k: r, p: a).toStringAsPrecision(12)}\nmean = ${DartComputation.binomialMean(n, a).toStringAsPrecision(12)}\nvariance = ${DartComputation.binomialVariance(n, a).toStringAsPrecision(12)}',
-        'complement' =>
-          'P(not A) = ${DartComputation.complementProbability(a).toStringAsPrecision(12)}',
-        'union' =>
-          'P(A or B) = ${DartComputation.unionProbability(eventA: a, eventB: b, intersection: intersection).toStringAsPrecision(12)}',
-        'conditional' =>
-          'P(A | B) = ${DartComputation.conditionalProbability(intersection: intersection, given: b).toStringAsPrecision(12)}',
-        'bayes' =>
-          'P(A | evidence) = ${DartComputation.bayesProbability(prior: a, likelihood: b, evidence: intersection).toStringAsPrecision(12)}',
-        _ => '',
-      };
-      _probabilityResult = result;
-    },
+    await _runBusy(
+      () async {
+        final result = switch (_probabilityOperation) {
+          'combination' => 'C($n, $r) = ${DartComputation.combination(n, r)}',
+          'permutation' => 'P($n, $r) = ${DartComputation.permutation(n, r)}',
+          'binomial' =>
+            'P(X=$r) = ${DartComputation.binomialProbability(n: n, k: r, p: a).toStringAsPrecision(12)}\nmean = ${DartComputation.binomialMean(n, a).toStringAsPrecision(12)}\nvariance = ${DartComputation.binomialVariance(n, a).toStringAsPrecision(12)}',
+          'complement' =>
+            'P(not A) = ${DartComputation.complementProbability(a).toStringAsPrecision(12)}',
+          'union' =>
+            'P(A or B) = ${DartComputation.unionProbability(eventA: a, eventB: b, intersection: intersection).toStringAsPrecision(12)}',
+          'conditional' =>
+            'P(A | B) = ${DartComputation.conditionalProbability(intersection: intersection, given: b).toStringAsPrecision(12)}',
+          'bayes' =>
+            'P(A | evidence) = ${DartComputation.bayesProbability(prior: a, likelihood: b, evidence: intersection).toStringAsPrecision(12)}',
+          _ => '',
+        };
+        _probabilityResult = result;
+      },
       historyExpression: 'probability $_probabilityOperation',
       historyResult: () => _probabilityResult,
     );
   }
 
   Future<void> _calculateCalendar() async {
-    await _runBusy(() async {
-      _calendarResult = switch (_calendarOperation) {
-        'weekday' => _weekdayLabel(
-          context,
-          DartComputation.calendarWeekday(_calendarDate.text),
-        ),
-        'difference' =>
-          '${DartComputation.calendarDateDifference(_calendarDate.text, _calendarDate2.text)} days',
-        'add' => DartComputation.calendarAddDays(
-          _calendarDate.text,
-          int.parse(_calendarDays.text.trim()),
-        ),
-        _ => '',
-      };
-    },
+    await _runBusy(
+      () async {
+        _calendarResult = switch (_calendarOperation) {
+          'weekday' => _weekdayLabel(
+            context,
+            DartComputation.calendarWeekday(_calendarDate.text),
+          ),
+          'difference' =>
+            '${DartComputation.calendarDateDifference(_calendarDate.text, _calendarDate2.text)} days',
+          'add' => DartComputation.calendarAddDays(
+            _calendarDate.text,
+            int.parse(_calendarDays.text.trim()),
+          ),
+          _ => '',
+        };
+      },
       historyExpression: 'calendar $_calendarOperation: ${_calendarDate.text}',
       historyResult: () => _calendarResult,
     );
@@ -914,24 +923,25 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
         cashFlows.any((value) => value == null)) {
       return _showError('Enter valid finance inputs.');
     }
-    await _runBusy(() async {
-      _financeResult = switch (_financeOperation) {
-        'loan' => _formatFinanceLoan(principal, rate, periods),
-        'compound' =>
-          'future value = ${DartComputation.compoundInterest(principal: principal, annualRate: rate, compoundsPerYear: compounds, years: years).toStringAsPrecision(12)}',
-        'npv' =>
-          'NPV = ${DartComputation.npv(rate, cashFlows.whereType<double>().toList()).toStringAsPrecision(12)}',
-        'irr' =>
-          'IRR = ${_formatNullable(DartComputation.irr(cashFlows.whereType<double>().toList()))}',
-        'depreciation' =>
-          'annual depreciation = ${DartComputation.straightLineDepreciation(principal, salvage, periods, year).toStringAsPrecision(12)}',
-        'bond' =>
-          'bond price = ${DartComputation.bondPrice(faceValue: principal, couponRate: coupon, marketRate: market, periods: periods).toStringAsPrecision(12)}',
-        'retirement' =>
-          'future value = ${DartComputation.retirementFutureValue(initialBalance: principal, monthlyContribution: contribution, annualRate: rate, years: years).toStringAsPrecision(12)}',
-        _ => '',
-      };
-    },
+    await _runBusy(
+      () async {
+        _financeResult = switch (_financeOperation) {
+          'loan' => _formatFinanceLoan(principal, rate, periods),
+          'compound' =>
+            'future value = ${DartComputation.compoundInterest(principal: principal, annualRate: rate, compoundsPerYear: compounds, years: years).toStringAsPrecision(12)}',
+          'npv' =>
+            'NPV = ${DartComputation.npv(rate, cashFlows.whereType<double>().toList()).toStringAsPrecision(12)}',
+          'irr' =>
+            'IRR = ${_formatNullable(DartComputation.irr(cashFlows.whereType<double>().toList()))}',
+          'depreciation' =>
+            'annual depreciation = ${DartComputation.straightLineDepreciation(principal, salvage, periods, year).toStringAsPrecision(12)}',
+          'bond' =>
+            'bond price = ${DartComputation.bondPrice(faceValue: principal, couponRate: coupon, marketRate: market, periods: periods).toStringAsPrecision(12)}',
+          'retirement' =>
+            'future value = ${DartComputation.retirementFutureValue(initialBalance: principal, monthlyContribution: contribution, annualRate: rate, years: years).toStringAsPrecision(12)}',
+          _ => '',
+        };
+      },
       historyExpression: 'finance $_financeOperation',
       historyResult: () => _financeResult,
     );
@@ -961,18 +971,19 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
     if (definitions.isEmpty) {
       return _showError('Add at least one definition such as f=x^2+1.');
     }
-    await _runBusy(() async {
-      final value = DartComputation.evaluateCustom(
-        _customExpression.text,
-        definitions,
-      );
-      if (!value.isFinite) {
-        throw const FormatException(
-          'Custom function returned a non-finite value.',
+    await _runBusy(
+      () async {
+        final value = DartComputation.evaluateCustom(
+          _customExpression.text,
+          definitions,
         );
-      }
-      _customResult = value.toStringAsPrecision(12);
-    },
+        if (!value.isFinite) {
+          throw const FormatException(
+            'Custom function returned a non-finite value.',
+          );
+        }
+        _customResult = value.toStringAsPrecision(12);
+      },
       historyExpression: _customExpression.text,
       historyResult: () => _customResult,
     );
@@ -985,18 +996,19 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
     if (start == null || end == null || rows == null || rows < 2) {
       return _showError('Enter a valid range and at least two rows.');
     }
-    await _runBusy(() async {
-      final csv = DartComputation.functionTableCsv(
-        _tableExpression.text,
-        start,
-        end,
-        rows,
-      );
-      if (csv.isEmpty) {
-        throw const FormatException('The function table inputs are invalid.');
-      }
-      _tableResult = csv;
-    },
+    await _runBusy(
+      () async {
+        final csv = DartComputation.functionTableCsv(
+          _tableExpression.text,
+          start,
+          end,
+          rows,
+        );
+        if (csv.isEmpty) {
+          throw const FormatException('The function table inputs are invalid.');
+        }
+        _tableResult = csv;
+      },
       historyExpression: 'table ${_tableExpression.text}',
       historyResult: () => _tableResult,
     );

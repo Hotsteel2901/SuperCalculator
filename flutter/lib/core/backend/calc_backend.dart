@@ -418,7 +418,13 @@ class DartCalcBackend implements CalcBackend {
     double end, {
     double tolerance = 1e-8,
   }) async => _optionalValue(
-    DartComputation.volumeWasher(outer, inner, start, end, tolerance: tolerance),
+    DartComputation.volumeWasher(
+      outer,
+      inner,
+      start,
+      end,
+      tolerance: tolerance,
+    ),
     'Washer volume could not be evaluated.',
   );
 

@@ -47,10 +47,7 @@ void main() {
       DartComputation.volumeWasher('2', '1', 0, 1),
       closeTo(3 * math.pi, 1e-8),
     );
-    expect(
-      DartComputation.volumeShell('1', 0, 1),
-      closeTo(math.pi, 1e-8),
-    );
+    expect(DartComputation.volumeShell('1', 0, 1), closeTo(math.pi, 1e-8));
   });
 
   test('area, parametric sampling and two-variable systems work', () {

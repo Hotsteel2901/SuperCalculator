@@ -223,7 +223,8 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
     recordCalculationHistory(
       ref,
       expression: 'statistics: ${_data.text}',
-      result: 'mean = ${result.mean.toStringAsPrecision(12)}, '
+      result:
+          'mean = ${result.mean.toStringAsPrecision(12)}, '
           'median = ${result.median.toStringAsPrecision(12)}, '
           'sd = ${result.standardDeviation.toStringAsPrecision(12)}',
       backend: ref.read(calcBackendProvider).name,

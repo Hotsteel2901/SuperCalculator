@@ -110,7 +110,11 @@ class _CalculusPageState extends ConsumerState<CalculusPage> {
                     TextField(
                       controller: _order,
                       decoration: InputDecoration(
-                        labelText: nextEraText(context, 'Taylor order', 'Taylor 阶数'),
+                        labelText: nextEraText(
+                          context,
+                          'Taylor order',
+                          'Taylor 阶数',
+                        ),
                       ),
                       keyboardType: TextInputType.number,
                     ),
@@ -164,7 +168,9 @@ class _CalculusPageState extends ConsumerState<CalculusPage> {
                     OutlinedButton.icon(
                       onPressed: _busy ? null : () => _run('taylor'),
                       icon: const Icon(Icons.functions),
-                      label: Text(nextEraText(context, 'Taylor series', 'Taylor 展开')),
+                      label: Text(
+                        nextEraText(context, 'Taylor series', 'Taylor 展开'),
+                      ),
                     ),
                     OutlinedButton.icon(
                       onPressed: _busy ? null : () => _run('arc'),
@@ -179,7 +185,9 @@ class _CalculusPageState extends ConsumerState<CalculusPage> {
                     OutlinedButton.icon(
                       onPressed: _busy ? null : () => _run('washer'),
                       icon: const Icon(Icons.donut_large),
-                      label: Text(nextEraText(context, 'Washer volume', '垫圈体积')),
+                      label: Text(
+                        nextEraText(context, 'Washer volume', '垫圈体积'),
+                      ),
                     ),
                     OutlinedButton.icon(
                       onPressed: _busy ? null : () => _run('shell'),
@@ -230,92 +238,92 @@ class _CalculusPageState extends ConsumerState<CalculusPage> {
     final backend = ref.read(calcBackendProvider);
     try {
       if (operation == 'taylor') {
-      final order = int.tryParse(_order.text.trim());
-      if (order == null || order < 0 || order > 12) {
-        if (mounted) {
-          setState(() {
-            _busy = false;
-            _error = nextEraText(
-              context,
-              'Taylor order must be between 0 and 12.',
-              'Taylor 阶数必须在 0 到 12 之间。',
-            );
-          });
+        final order = int.tryParse(_order.text.trim());
+        if (order == null || order < 0 || order > 12) {
+          if (mounted) {
+            setState(() {
+              _busy = false;
+              _error = nextEraText(
+                context,
+                'Taylor order must be between 0 and 12.',
+                'Taylor 阶数必须在 0 到 12 之间。',
+              );
+            });
+          }
+          return;
+        }
+        final coefficients = await backend.taylorCoefficients(
+          _expression.text,
+          x,
+          order,
+        );
+        if (!mounted) return;
+        final formatted = coefficients == null
+            ? null
+            : coefficients
+                  .asMap()
+                  .entries
+                  .map(
+                    (entry) =>
+                        'c${entry.key} = ${entry.value?.toStringAsPrecision(12) ?? 'undefined'}',
+                  )
+                  .join('\n');
+        setState(() {
+          _busy = false;
+          _result = formatted;
+          _error = coefficients == null
+              ? nextEraText(context, 'Taylor series failed.', 'Taylor 展开失败。')
+              : null;
+        });
+        if (formatted != null) {
+          recordCalculationHistory(
+            ref,
+            expression: 'Taylor(${_expression.text}, x=$x, order=$order)',
+            result: formatted,
+            backend: backend.name,
+          );
         }
         return;
       }
-      final coefficients = await backend.taylorCoefficients(
-        _expression.text,
-        x,
-        order,
-      );
-      if (!mounted) return;
-      final formatted = coefficients == null
-          ? null
-          : coefficients
-                .asMap()
-                .entries
-                .map(
-                  (entry) =>
-                      'c${entry.key} = ${entry.value?.toStringAsPrecision(12) ?? 'undefined'}',
-                )
-                .join('\n');
+      final result = switch (operation) {
+        'integral' => await backend.integrate(_expression.text, a, b),
+        'limit' => await backend.limit(_expression.text, x),
+        'minimum' => await backend.extremum(_expression.text, a, b),
+        'maximum' => await backend.extremum(
+          _expression.text,
+          a,
+          b,
+          minimum: false,
+        ),
+        'area' => await backend.areaBetweenCurves(
+          _expression.text,
+          _secondExpression.text,
+          a,
+          b,
+        ),
+        'arc' => await backend.arcLength(_expression.text, a, b),
+        'disk' => await backend.volumeDisk(_expression.text, a, b),
+        'washer' => await backend.volumeWasher(
+          _expression.text,
+          _secondExpression.text,
+          a,
+          b,
+        ),
+        'shell' => await backend.volumeShell(_expression.text, a, b),
+        _ => await backend.derivative(
+          _expression.text,
+          x,
+          second: operation == 'second',
+        ),
+      };
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _busy = false;
-        _result = formatted;
-        _error = coefficients == null
-            ? nextEraText(context, 'Taylor series failed.', 'Taylor 展开失败。')
-            : null;
+        _result = result.value?.toStringAsPrecision(12);
+        _error = result.error;
       });
-      if (formatted != null) {
-        recordCalculationHistory(
-          ref,
-          expression: 'Taylor(${_expression.text}, x=$x, order=$order)',
-          result: formatted,
-          backend: backend.name,
-        );
-      }
-      return;
-    }
-    final result = switch (operation) {
-      'integral' => await backend.integrate(_expression.text, a, b),
-      'limit' => await backend.limit(_expression.text, x),
-      'minimum' => await backend.extremum(_expression.text, a, b),
-      'maximum' => await backend.extremum(
-        _expression.text,
-        a,
-        b,
-        minimum: false,
-      ),
-      'area' => await backend.areaBetweenCurves(
-        _expression.text,
-        _secondExpression.text,
-        a,
-        b,
-      ),
-      'arc' => await backend.arcLength(_expression.text, a, b),
-      'disk' => await backend.volumeDisk(_expression.text, a, b),
-      'washer' => await backend.volumeWasher(
-        _expression.text,
-        _secondExpression.text,
-        a,
-        b,
-      ),
-      'shell' => await backend.volumeShell(_expression.text, a, b),
-      _ => await backend.derivative(
-        _expression.text,
-        x,
-        second: operation == 'second',
-      ),
-    };
-    if (!mounted) {
-      return;
-    }
-    setState(() {
-      _busy = false;
-      _result = result.value?.toStringAsPrecision(12);
-      _error = result.error;
-    });
       if (result.value != null) {
         recordCalculationHistory(
           ref,

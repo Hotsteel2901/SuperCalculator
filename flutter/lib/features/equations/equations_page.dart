@@ -271,7 +271,8 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
         : roots.map((root) => root.toStringAsPrecision(10)).join(', ');
     setState(() {
       _busy = false;
-      _result = rootsText ??
+      _result =
+          rootsText ??
           nextEraText(context, 'No sign-changing roots found.', '未找到变号根。');
     });
     if (rootsText != null) {
@@ -314,7 +315,8 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
                 .join(', ');
       setState(() {
         _busy = false;
-        _result = intersectionsText ??
+        _result =
+            intersectionsText ??
             nextEraText(context, 'No intersections found.', '未找到交点。');
       });
       if (intersectionsText != null) {

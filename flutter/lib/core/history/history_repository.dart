@@ -18,11 +18,9 @@ void recordCalculationHistory(
   required String result,
   required String backend,
 }) {
-  ref.read(calculationHistoryProvider.notifier).add(
-    expression: expression,
-    result: result,
-    backend: backend,
-  );
+  ref
+      .read(calculationHistoryProvider.notifier)
+      .add(expression: expression, result: result, backend: backend);
 }
 
 @immutable

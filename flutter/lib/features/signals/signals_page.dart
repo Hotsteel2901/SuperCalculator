@@ -233,9 +233,9 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
       final values = await backend.evaluateArray(_expression.text, xs);
       final signal = values.whereType<double>().toList(growable: false);
       final result = await backend.convolution(
-            signal,
-            kernel.whereType<double>().toList(growable: false),
-          );
+        signal,
+        kernel.whereType<double>().toList(growable: false),
+      );
       if (!mounted) return;
       final convolutionText = nextEraText(
         context,

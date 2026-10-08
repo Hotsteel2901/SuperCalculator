@@ -355,11 +355,7 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
     }
   }
 
-  double? _interpolateFitted(
-    double x,
-    List<double> fitXs,
-    List<double> fitYs,
-  ) {
+  double? _interpolateFitted(double x, List<double> fitXs, List<double> fitYs) {
     if (fitXs.isEmpty || fitXs.length != fitYs.length || !x.isFinite) {
       return null;
     }
