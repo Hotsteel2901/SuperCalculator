@@ -23,6 +23,7 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
   String? _result;
   String? _error;
   bool _busy = false;
+  bool _extremumMinimum = true;
 
   @override
   void dispose() {
@@ -158,6 +159,26 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
                         nextEraText(context, 'Tangent / normal', '切线 / 法线'),
                       ),
                     ),
+                    OutlinedButton.icon(
+                      onPressed: _busy
+                          ? null
+                          : () {
+                              setState(() => _extremumMinimum = true);
+                              _findExtremum();
+                            },
+                      icon: const Icon(Icons.arrow_downward),
+                      label: Text(nextEraText(context, 'Minimum', '最小值')),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _busy
+                          ? null
+                          : () {
+                              setState(() => _extremumMinimum = false);
+                              _findExtremum();
+                            },
+                      icon: const Icon(Icons.arrow_upward),
+                      label: Text(nextEraText(context, 'Maximum', '最大值')),
+                    ),
                   ],
                 ),
               ],
@@ -233,56 +254,40 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
       _result = null;
     });
     final backend = ref.read(calcBackendProvider);
-    const count = 512;
-    final xs = List<double>.generate(
-      count + 1,
-      (index) => minimum + (maximum - minimum) * index / count,
-      growable: false,
-    );
-    final ys = await backend.evaluateArray(_expression.text, xs);
-    final roots = <double>[];
-    for (var i = 0; i < count; i++) {
-      final y1 = ys[i];
-      final y2 = ys[i + 1];
-      if (y1 == null || y2 == null) {
-        continue;
-      }
-      if (y1.abs() < 1e-8) {
-        roots.add(xs[i]);
-      }
-      if (y1.sign != y2.sign) {
-        final result = await backend.solve(
-          _expression.text,
-          guess: (xs[i] + xs[i + 1]) / 2,
-          minimum: xs[i],
-          maximum: xs[i + 1],
-        );
-        if (result.value != null &&
-            roots.every((root) => (root - result.value!).abs() > 1e-5)) {
-          roots.add(result.value!);
-        }
-      }
-    }
-    if (!mounted) {
-      return;
-    }
-    final rootsText = roots.isEmpty
-        ? null
-        : roots.map((root) => root.toStringAsPrecision(10)).join(', ');
-    setState(() {
-      _busy = false;
-      _result =
-          rootsText ??
-          nextEraText(context, 'No sign-changing roots found.', '未找到变号根。');
-    });
-    if (rootsText != null) {
-      recordCalculationHistory(
-        ref,
-        expression: 'scan roots: ${_expression.text}',
-        result: rootsText,
-        backend: backend.name,
+    try {
+      final roots = await backend.scanRoots(
+        _expression.text,
+        minimum,
+        maximum,
+        samples: 1024,
       );
+      if (!mounted) return;
+      final rootsText = roots.isEmpty
+          ? null
+          : roots.map((root) => root.toStringAsPrecision(10)).join(', ');
+      setState(() {
+        _busy = false;
+        _result =
+            rootsText ??
+            nextEraText(context, 'No roots found in the interval.', '区间内未找到根。');
+      });
+      if (rootsText != null) {
+        recordCalculationHistory(
+          ref,
+          expression: 'scan roots: ${_expression.text}',
+          result: rootsText,
+          backend: backend.name,
+        );
+      }
+    } on FormatException catch (error) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = error.message;
+        });
+      }
     }
+    return;
   }
 
   Future<void> _findIntersections() async {
@@ -385,6 +390,55 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
           _error = error.message;
         });
       }
+    }
+  }
+
+  Future<void> _findExtremum() async {
+    final minimum = parseMathNumber(_minimum.text);
+    final maximum = parseMathNumber(_maximum.text);
+    if (minimum == null || maximum == null || minimum >= maximum) {
+      _invalidInput();
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+      _result = null;
+    });
+    try {
+      final backend = ref.read(calcBackendProvider);
+      final point = await backend.extremum(
+        _expression.text,
+        minimum,
+        maximum,
+        minimum: _extremumMinimum,
+      );
+      if (!mounted) return;
+      final result = point.value == null
+          ? null
+          : '${_extremumMinimum ? 'minimum' : 'maximum'} at x = '
+                '${point.value!.toStringAsPrecision(12)}';
+      setState(() {
+        _busy = false;
+        _result = result;
+        _error = point.error;
+      });
+      if (result != null) {
+        recordCalculationHistory(
+          ref,
+          expression:
+              '${_extremumMinimum ? 'min' : 'max'} ${_expression.text} '
+              'on [$minimum, $maximum]',
+          result: result,
+          backend: point.backend,
+        );
+      }
+    } on FormatException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = error.message;
+      });
     }
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/backend/calc_backend.dart';
 import '../../core/backend/providers.dart';
 import '../../core/compute/calculation_models.dart';
 import '../../core/compute/computation.dart';
@@ -741,6 +742,16 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
     }
     await _runBusy(
       () async {
+        if (_integerOperation.startsWith('bitwise ')) {
+          final value = await ref.read(calcBackendProvider).bitwise(
+            _integerOperation.replaceFirst('bitwise ', ''),
+            n.toInt(),
+            m.toInt(),
+            _bitwiseWidth,
+          );
+          _integerResult = _formatBitwise(value, _bitwiseWidth);
+          return;
+        }
         _integerResult = switch (_integerOperation) {
           'factor' => DartComputation.formatFactors(
             DartComputation.factorInteger(n),
@@ -751,15 +762,7 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
           'fibonacci' => '${DartComputation.fibonacci(n.toInt())}',
           'modPow' => '${DartComputation.modPow(n, m, modulus)}',
           'totient' => '${DartComputation.eulerTotient(n)}',
-          _ => _formatBitwise(
-            DartComputation.bitwise(
-              _integerOperation.replaceFirst('bitwise ', ''),
-              n.toInt(),
-              m.toInt(),
-              _bitwiseWidth,
-            ),
-            _bitwiseWidth,
-          ),
+          _ => '',
         };
       },
       historyExpression: '$_integerOperation: ${_integer.text}',
@@ -925,21 +928,54 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
     }
     await _runBusy(
       () async {
-        _financeResult = switch (_financeOperation) {
-          'loan' => _formatFinanceLoan(principal, rate, periods),
-          'compound' =>
-            'future value = ${DartComputation.compoundInterest(principal: principal, annualRate: rate, compoundsPerYear: compounds, years: years).toStringAsPrecision(12)}',
-          'npv' =>
-            'NPV = ${DartComputation.npv(rate, cashFlows.whereType<double>().toList()).toStringAsPrecision(12)}',
-          'irr' =>
-            'IRR = ${_formatNullable(DartComputation.irr(cashFlows.whereType<double>().toList()))}',
-          'depreciation' =>
-            'annual depreciation = ${DartComputation.straightLineDepreciation(principal, salvage, periods, year).toStringAsPrecision(12)}',
-          'bond' =>
-            'bond price = ${DartComputation.bondPrice(faceValue: principal, couponRate: coupon, marketRate: market, periods: periods).toStringAsPrecision(12)}',
-          'retirement' =>
-            'future value = ${DartComputation.retirementFutureValue(initialBalance: principal, monthlyContribution: contribution, annualRate: rate, years: years).toStringAsPrecision(12)}',
-          _ => '',
+        final backend = ref.read(calcBackendProvider);
+        final values = cashFlows.whereType<double>().toList(growable: false);
+        switch (_financeOperation) {
+          case 'loan':
+            _financeResult = await _formatFinanceLoan(
+              backend,
+              principal,
+              rate,
+              periods,
+            );
+          case 'compound':
+            final value = await backend.compoundInterest(
+              principal: principal,
+              annualRate: rate,
+              compoundsPerYear: compounds,
+              years: years,
+            );
+            _financeResult = 'future value = ${value.toStringAsPrecision(12)}';
+          case 'npv':
+            final value = await backend.npv(rate, values);
+            _financeResult = 'NPV = ${value.toStringAsPrecision(12)}';
+          case 'irr':
+            _financeResult = 'IRR = ${_formatNullable(await backend.irr(values))}';
+          case 'depreciation':
+            final value = await backend.straightLineDepreciation(
+              principal,
+              salvage,
+              periods,
+              year,
+            );
+            _financeResult =
+                'annual depreciation = ${value.toStringAsPrecision(12)}';
+          case 'bond':
+            final value = await backend.bondPrice(
+              faceValue: principal,
+              couponRate: coupon,
+              marketRate: market,
+              periods: periods,
+            );
+            _financeResult = 'bond price = ${value.toStringAsPrecision(12)}';
+          case 'retirement':
+            final value = await backend.retirementFutureValue(
+              initialBalance: principal,
+              monthlyContribution: contribution,
+              annualRate: rate,
+              years: years,
+            );
+            _financeResult = 'future value = ${value.toStringAsPrecision(12)}';
         };
       },
       historyExpression: 'finance $_financeOperation',
@@ -947,8 +983,13 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
     );
   }
 
-  String _formatFinanceLoan(double principal, double rate, int periods) {
-    final payment = DartComputation.loanPayment(
+  Future<String> _formatFinanceLoan(
+    CalcBackend backend,
+    double principal,
+    double rate,
+    int periods,
+  ) async {
+    final payment = await backend.loanPayment(
       principal: principal,
       annualRate: rate,
       periods: periods,
@@ -1041,7 +1082,7 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
             ref,
             expression: historyExpression,
             result: result,
-            backend: 'Dart computation',
+            backend: ref.read(calcBackendProvider).name,
           );
         }
       }

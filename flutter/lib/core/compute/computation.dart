@@ -1056,49 +1056,98 @@ class DartComputation {
     int samples = 512,
     double tolerance = 1e-8,
   }) {
-    if (samples < 2 || start >= end) return const <double>[];
-    final function = ExpressionEngine.compile(expression);
-    final roots = <double>[];
-    var previousX = start;
-    var previous = function.evaluate(x: previousX);
-    for (var index = 1; index <= samples; index++) {
-      final currentX = start + (end - start) * index / samples;
-      final current = function.evaluate(x: currentX);
-      if (previous.isFinite && previous.abs() <= tolerance) {
-        roots.add(previousX);
-      } else if (previous.isFinite &&
-          current.isFinite &&
-          previous.sign != current.sign) {
-        var left = previousX;
-        var right = currentX;
-        var fLeft = previous;
-        for (var step = 0; step < 80; step++) {
-          final middle = (left + right) / 2;
-          final fMiddle = function.evaluate(x: middle);
-          if (!fMiddle.isFinite) break;
-          if (fMiddle.abs() <= tolerance) {
-            left = middle;
-            right = middle;
-            break;
-          }
-          if (fLeft.sign != fMiddle.sign) {
-            right = middle;
-          } else {
-            left = middle;
-            fLeft = fMiddle;
-          }
-        }
-        roots.add((left + right) / 2);
-      }
-      previousX = currentX;
-      previous = current;
+    if (!start.isFinite ||
+        !end.isFinite ||
+        samples < 2 ||
+        start >= end ||
+        !tolerance.isFinite ||
+        tolerance <= 0) {
+      return const <double>[];
     }
-    return roots.fold<List<double>>(<double>[], (unique, root) {
-      if (unique.every((item) => (item - root).abs() > 1e-5)) {
-        unique.add(root);
+    final function = ExpressionEngine.compile(expression);
+    final xs = List<double>.generate(
+      samples + 1,
+      (index) => start + (end - start) * index / samples,
+      growable: false,
+    );
+    final values = xs
+        .map((x) => function.evaluate(x: x))
+        .toList(growable: false);
+    final roots = <double>[];
+    void addRoot(double root) {
+      if (root.isFinite &&
+          roots.every((existing) => (existing - root).abs() > 1e-5)) {
+        roots.add(root);
       }
-      return unique;
-    });
+    }
+
+    for (var index = 0; index < samples; index++) {
+      final left = values[index];
+      final right = values[index + 1];
+      if (left.isFinite && left.abs() <= tolerance) {
+        addRoot(xs[index]);
+      }
+      if (!left.isFinite || !right.isFinite || left.sign == right.sign) {
+        continue;
+      }
+      var low = xs[index];
+      var high = xs[index + 1];
+      var lowValue = left;
+      for (var iteration = 0; iteration < 80; iteration++) {
+        final middle = (low + high) / 2;
+        final middleValue = function.evaluate(x: middle);
+        // A discontinuity must not be reported as a root. Keep the interval
+        // only when the midpoint remains finite.
+        if (!middleValue.isFinite) break;
+        if (middleValue.abs() <= tolerance || (high - low).abs() <= tolerance) {
+          low = middle;
+          high = middle;
+          break;
+        }
+        if (lowValue.sign != middleValue.sign) {
+          high = middle;
+        } else {
+          low = middle;
+          lowValue = middleValue;
+        }
+      }
+      final candidate = (low + high) / 2;
+      final residual = function.evaluate(x: candidate);
+      if (residual.isFinite && residual.abs() <= tolerance * 10) {
+        addRoot(candidate);
+      }
+    }
+
+    // A root with even multiplicity does not change sign. Detect a finite
+    // local minimum of |f| and let safeguarded Newton refine it, but verify
+    // the residual so a shallow non-zero minimum is never advertised as a root.
+    for (var index = 1; index < samples; index++) {
+      final value = values[index];
+      if (!value.isFinite ||
+          value.abs() > math.max(tolerance * 100, 1e-4) ||
+          !values[index - 1].isFinite ||
+          !values[index + 1].isFinite ||
+          value.abs() > values[index - 1].abs() ||
+          value.abs() > values[index + 1].abs()) {
+        continue;
+      }
+      final candidate = solve(
+        expression,
+        guess: xs[index],
+        minimum: xs[index - 1],
+        maximum: xs[index + 1],
+        tolerance: tolerance,
+        maxIterations: 80,
+      );
+      if (candidate != null) {
+        final residual = function.evaluate(x: candidate);
+        if (residual.isFinite && residual.abs() <= tolerance * 10) {
+          addRoot(candidate);
+        }
+      }
+    }
+    roots.sort();
+    return roots;
   }
 
   static List<double> findIntersections(
@@ -1155,6 +1204,39 @@ class DartComputation {
         final x = xMin + (xMax - xMin) * column / (columns - 1);
         final z = compiled.evaluate(x: x, y: y);
         if (z.isFinite) points.add(PlotPointValue(x: x, y: y, value: z));
+      }
+    }
+    return points;
+  }
+
+  static List<PlotPointValue> sampleImplicit(
+    String expression,
+    double xMin,
+    double xMax,
+    double yMin,
+    double yMax, {
+    int rows = 121,
+    int columns = 121,
+    double levelTolerance = .15,
+  }) {
+    if (rows < 2 ||
+        columns < 2 ||
+        xMin >= xMax ||
+        yMin >= yMax ||
+        !levelTolerance.isFinite ||
+        levelTolerance <= 0) {
+      return const <PlotPointValue>[];
+    }
+    final compiled = ExpressionEngine.compile(expression);
+    final points = <PlotPointValue>[];
+    for (var row = 0; row < rows; row++) {
+      final y = yMin + (yMax - yMin) * row / (rows - 1);
+      for (var column = 0; column < columns; column++) {
+        final x = xMin + (xMax - xMin) * column / (columns - 1);
+        final value = compiled.evaluate(x: x, y: y);
+        if (value.isFinite && value.abs() <= levelTolerance) {
+          points.add(PlotPointValue(x: x, y: y, value: value));
+        }
       }
     }
     return points;
@@ -2316,7 +2398,11 @@ class DartComputation {
     required double annualRate,
     required int periods,
   }) {
-    if (principal < 0 || annualRate < 0 || periods < 1) {
+    if (!principal.isFinite ||
+        !annualRate.isFinite ||
+        principal < 0 ||
+        annualRate < 0 ||
+        periods < 1) {
       throw const FormatException('Principal, rate and periods are invalid.');
     }
     final rate = annualRate / 12;
@@ -2330,7 +2416,13 @@ class DartComputation {
     required int compoundsPerYear,
     required double years,
   }) {
-    if (principal < 0 || compoundsPerYear < 1 || years < 0) {
+    if (!principal.isFinite ||
+        !annualRate.isFinite ||
+        !years.isFinite ||
+        principal < 0 ||
+        compoundsPerYear < 1 ||
+        years < 0 ||
+        1 + annualRate / compoundsPerYear <= 0) {
       throw const FormatException('Compound-interest inputs are invalid.');
     }
     return (principal *
@@ -2342,8 +2434,13 @@ class DartComputation {
   }
 
   static double npv(double rate, List<double> cashFlows) {
-    if (rate <= -1) {
-      throw const FormatException('Discount rate must be greater than -100%.');
+    if (!rate.isFinite ||
+        rate <= -1 ||
+        cashFlows.isEmpty ||
+        cashFlows.any((value) => !value.isFinite)) {
+      throw const FormatException(
+        'Discount rate and cash flows must be finite and valid.',
+      );
     }
     var result = 0.0;
     for (var index = 0; index < cashFlows.length; index++) {
@@ -2353,7 +2450,13 @@ class DartComputation {
   }
 
   static double? irr(List<double> cashFlows) {
-    if (cashFlows.length < 2) return null;
+    if (cashFlows.length < 2 || cashFlows.any((value) => !value.isFinite)) {
+      return null;
+    }
+    if (!cashFlows.any((value) => value < 0) ||
+        !cashFlows.any((value) => value > 0)) {
+      return null;
+    }
     var low = -0.9999;
     var high = 10.0;
     var fLow = npv(low, cashFlows);
@@ -2380,7 +2483,12 @@ class DartComputation {
     int years,
     int year,
   ) {
-    if (years < 1 || year < 1 || year > years || cost < salvage) {
+    if (!cost.isFinite ||
+        !salvage.isFinite ||
+        years < 1 ||
+        year < 1 ||
+        year > years ||
+        cost < salvage) {
       throw const FormatException('Depreciation inputs are invalid.');
     }
     return math.max(0, (cost - salvage) / years).toDouble();
@@ -2392,7 +2500,12 @@ class DartComputation {
     required double marketRate,
     required int periods,
   }) {
-    if (periods < 1 || faceValue < 0) {
+    if (!faceValue.isFinite ||
+        !couponRate.isFinite ||
+        !marketRate.isFinite ||
+        periods < 1 ||
+        faceValue < 0 ||
+        1 + marketRate <= 0) {
       throw const FormatException('Bond inputs are invalid.');
     }
     final coupon = faceValue * couponRate;
@@ -2521,22 +2634,38 @@ class DartComputation {
   }
 
   static CalcMatrix parseMatrix(String input) {
-    final rows = input
-        .trim()
-        .split(';')
-        .where((row) => row.trim().isNotEmpty)
-        .map(
-          (row) => row
-              .trim()
-              .split(RegExp(r'[,\s]+'))
-              .map(double.parse)
-              .toList(growable: false),
-        )
-        .toList(growable: false);
-    if (rows.isEmpty || rows.any((row) => row.length != rows.first.length)) {
+    final normalized = input.trim();
+    if (normalized.isEmpty) {
+      throw const FormatException('Enter a non-empty matrix.');
+    }
+    final rows = <List<double>>[];
+    for (final rawRow in normalized.split(';')) {
+      final rowText = rawRow.trim();
+      if (rowText.isEmpty) {
+        throw const FormatException('Matrix rows cannot be empty.');
+      }
+      final cells = rowText.split(RegExp(r'[,\s]+'));
+      final row = <double>[];
+      for (final cell in cells) {
+        final value = double.tryParse(cell);
+        if (value == null || !value.isFinite) {
+          throw const FormatException('Matrix entries must be finite numbers.');
+        }
+        row.add(value);
+      }
+      rows.add(row);
+    }
+    if (rows.isEmpty ||
+        rows.first.isEmpty ||
+        rows.any((row) => row.length != rows.first.length)) {
       throw const FormatException('Matrix rows must have equal columns.');
     }
-    return CalcMatrix(rows);
+    if (rows.length > 256 || rows.first.length > 256) {
+      throw const FormatException('Matrix dimensions are limited to 256.');
+    }
+    return CalcMatrix(
+      rows.map((row) => row.toList(growable: false)).toList(growable: false),
+    );
   }
 
   static CalcMatrix matrixMultiply(CalcMatrix left, CalcMatrix right) {
@@ -2724,8 +2853,10 @@ class DartComputation {
   }
 
   static SparseMatrix parseSparseMatrix(int rows, int columns, String input) {
-    if (rows < 1 || columns < 1) {
-      throw const FormatException('Sparse matrix dimensions must be positive.');
+    if (rows < 1 || columns < 1 || rows > 10000 || columns > 10000) {
+      throw const FormatException(
+        'Sparse matrix dimensions must be between 1 and 10000.',
+      );
     }
     final entries = <SparseEntry>[];
     for (final token in input.split(';')) {
@@ -2742,6 +2873,7 @@ class DartComputation {
       if (row == null ||
           column == null ||
           value == null ||
+          !value.isFinite ||
           row < 0 ||
           row >= rows ||
           column < 0 ||
@@ -2754,8 +2886,11 @@ class DartComputation {
   }
 
   static List<double> sparseMatVec(SparseMatrix matrix, List<double> vector) {
-    if (vector.length != matrix.columns) {
-      throw const FormatException('Vector dimension does not match matrix.');
+    if (vector.length != matrix.columns ||
+        vector.any((value) => !value.isFinite)) {
+      throw const FormatException(
+        'Vector dimension or finite values do not match matrix.',
+      );
     }
     final result = List<double>.filled(matrix.rows, 0);
     for (final entry in matrix.entries) {

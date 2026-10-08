@@ -3,16 +3,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/theme/design_tokens.dart';
 import '../../core/plot/function_plot_painter.dart';
+import '../../core/presets/preset_catalog.dart';
 import '../../core/ui/feature_widgets.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'calculator_controller.dart';
 
 class _PlotPreset {
-  const _PlotPreset(this.label, this.expression, [this.secondary]);
+  const _PlotPreset(
+    this.label,
+    this.expression, [
+    this.secondary,
+    this.start = 0,
+    this.end = 2 * 3.141592653589793,
+  ]);
 
   final String label;
   final String expression;
   final String? secondary;
+  final double start;
+  final double end;
 }
 
 const _plotPresets = <String, List<_PlotPreset>>{
@@ -47,7 +56,7 @@ const _plotPresets = <String, List<_PlotPreset>>{
     _PlotPreset('Circle', 'cos(x)', 'sin(x)'),
     _PlotPreset('Ellipse', '2*cos(x)', 'sin(x)'),
     _PlotPreset('Lissajous', 'sin(3*x+pi/2)', 'sin(2*x)'),
-    _PlotPreset('Spiral', 'x*cos(x)', 'x*sin(x)'),
+    _PlotPreset('Spiral', 'x*cos(x)', 'x*sin(x)', 0, 6 * 3.141592653589793),
     _PlotPreset('Cardioid', '2*cos(x)-cos(2*x)', '2*sin(x)-sin(2*x)'),
     _PlotPreset(
       'Heart',
@@ -60,6 +69,8 @@ const _plotPresets = <String, List<_PlotPreset>>{
       'Butterfly seed',
       'sin(x)*(exp(cos(x))-2*cos(4*x)-sin(x/12)^5)',
       'cos(x)*(exp(cos(x))-2*cos(4*x)-sin(x/12)^5)',
+      0,
+      12 * 3.141592653589793,
     ),
     _PlotPreset('Rose', 'cos(4*x)*cos(x)', 'cos(4*x)*sin(x)'),
   ],
@@ -69,8 +80,8 @@ const _plotPresets = <String, List<_PlotPreset>>{
     _PlotPreset('Rose 3', 'cos(3*x)', null),
     _PlotPreset('Rose 4', 'sin(4*x)', null),
     _PlotPreset('Clover', 'cos(2*x)', null),
-    _PlotPreset('Spiral', 'x/(2*pi)', null),
-    _PlotPreset('Archimedean spiral', 'x', null),
+    _PlotPreset('Spiral', 'x/(2*pi)', null, 0, 6 * 3.141592653589793),
+    _PlotPreset('Archimedean spiral', 'x', null, 0, 6 * 3.141592653589793),
     _PlotPreset('Lemniscate', 'sqrt(abs(cos(2*x)))', null),
     _PlotPreset('Limacon', '1+0.5*cos(x)', null),
     _PlotPreset('Conchoid seed', '1/cos(x)', null),
@@ -129,7 +140,36 @@ class _PlotPageState extends ConsumerState<PlotPage> {
   late final TextEditingController _expressionController;
   late final TextEditingController _secondaryController;
   late final TextEditingController _xController;
+  late final TextEditingController _parameterStartController;
+  late final TextEditingController _parameterEndController;
   String? _selectedPreset;
+  Map<String, List<_PlotPreset>> _availablePresets = _plotPresets;
+  double _plotZoom = 1;
+  Offset _plotPan = Offset.zero;
+  double _plotYaw = -.65;
+  double _plotPitch = .55;
+  double _gestureZoomStart = 1;
+  Offset _gesturePanStart = Offset.zero;
+  Offset _gestureFocalStart = Offset.zero;
+  double _gestureYawStart = -.65;
+  double _gesturePitchStart = .55;
+
+  void _updateParameterRange(CalculatorController controller) {
+    final start = double.tryParse(_parameterStartController.text.trim());
+    final end = double.tryParse(_parameterEndController.text.trim());
+    if (start != null && end != null) {
+      controller.setParameterRange(start, end);
+    }
+  }
+
+  void _resetPlotView() {
+    setState(() {
+      _plotZoom = 1;
+      _plotPan = Offset.zero;
+      _plotYaw = -.65;
+      _plotPitch = .55;
+    });
+  }
 
   @override
   void initState() {
@@ -140,6 +180,41 @@ class _PlotPageState extends ConsumerState<PlotPage> {
       text: initial.secondaryExpression,
     );
     _xController = TextEditingController(text: initial.xText);
+    _parameterStartController = TextEditingController(
+      text: initial.parameterStart.toString(),
+    );
+    _parameterEndController = TextEditingController(
+      text: initial.parameterEnd.toString(),
+    );
+    _loadPresetCatalog();
+  }
+
+  Future<void> _loadPresetCatalog() async {
+    try {
+      final definitions = await PresetCatalog.load();
+      final loaded = <String, List<_PlotPreset>>{};
+      for (final entry in definitions.entries) {
+        loaded[entry.key] = entry.value
+            .map(
+              (preset) => _PlotPreset(
+                preset.label,
+                preset.expression,
+                preset.secondary,
+                preset.start,
+                preset.end,
+              ),
+            )
+            .toList(growable: false);
+      }
+      if (mounted && loaded.isNotEmpty) {
+        setState(() => _availablePresets = loaded);
+      }
+    } on FormatException {
+      // The checked-in fallback keeps the plot page usable if an asset is
+      // unavailable in a restricted embedding or during a partial install.
+    } on FlutterError {
+      // Same compatibility fallback for a missing asset bundle.
+    }
   }
 
   @override
@@ -147,6 +222,8 @@ class _PlotPageState extends ConsumerState<PlotPage> {
     _expressionController.dispose();
     _secondaryController.dispose();
     _xController.dispose();
+    _parameterStartController.dispose();
+    _parameterEndController.dispose();
     super.dispose();
   }
 
@@ -157,7 +234,8 @@ class _PlotPageState extends ConsumerState<PlotPage> {
     final state = ref.watch(calculatorControllerProvider);
     final controller = ref.read(calculatorControllerProvider.notifier);
     final scheme = Theme.of(context).colorScheme;
-    final presets = _plotPresets[state.mode] ?? const <_PlotPreset>[];
+    final presets =
+        _availablePresets[state.mode] ?? const <_PlotPreset>[];
     final modes = <String, String>{
       'function': nextEraText(context, 'Function y=f(x)', '函数 y=f(x)'),
       'multi': nextEraText(context, 'Multi-curve overlay', '多曲线叠加'),
@@ -240,6 +318,14 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                                 preset.secondary!,
                               );
                             }
+                            _parameterStartController.text =
+                                preset.start.toString();
+                            _parameterEndController.text =
+                                preset.end.toString();
+                            controller.setParameterRange(
+                              preset.start,
+                              preset.end,
+                            );
                             setState(() => _selectedPreset = label);
                           },
                         ),
@@ -287,6 +373,35 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                             hintText: 'sin(x)',
                           ),
                           style: const TextStyle(fontFamily: 'monospace'),
+                        ),
+                      ],
+                      if (state.mode == 'parametric' || state.mode == 'polar') ...<Widget>[
+                        SizedBox(height: tokens.controlGap),
+                        FormRow(
+                          children: <Widget>[
+                            TextField(
+                              controller: _parameterStartController,
+                              onChanged: (_) => _updateParameterRange(controller),
+                              decoration: InputDecoration(
+                                labelText: nextEraText(context, 'Parameter start', '参数起点'),
+                              ),
+                              keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true,
+                                signed: true,
+                              ),
+                            ),
+                            TextField(
+                              controller: _parameterEndController,
+                              onChanged: (_) => _updateParameterRange(controller),
+                              decoration: InputDecoration(
+                                labelText: nextEraText(context, 'Parameter end', '参数终点'),
+                              ),
+                              keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true,
+                                signed: true,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                       SizedBox(height: tokens.controlGap),
@@ -416,19 +531,60 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                           state.points.length,
                           state.expression,
                         ),
-                        child: SizedBox(
-                          height: tokens.plotMinHeight,
-                          child: CustomPaint(
-                            painter: FunctionPlotPainter(
-                              points: state.points,
-                              scheme: scheme,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onDoubleTap: _resetPlotView,
+                          onScaleStart: (details) {
+                            _gestureZoomStart = _plotZoom;
+                            _gesturePanStart = _plotPan;
+                            _gestureFocalStart = details.focalPoint;
+                            _gestureYawStart = _plotYaw;
+                            _gesturePitchStart = _plotPitch;
+                          },
+                          onScaleUpdate: (details) {
+                            final delta = details.focalPoint - _gestureFocalStart;
+                            setState(() {
+                              _plotZoom = (_gestureZoomStart * details.scale)
+                                  .clamp(.5, 4.0)
+                                  .toDouble();
+                              if (state.mode == 'surface') {
+                                _plotYaw = _gestureYawStart + delta.dx * .01;
+                                _plotPitch = (_gesturePitchStart - delta.dy * .01)
+                                    .clamp(-1.35, 1.35)
+                                    .toDouble();
+                              } else {
+                                _plotPan = _gesturePanStart + delta;
+                              }
+                            });
+                          },
+                          child: SizedBox(
+                            height: tokens.plotMinHeight,
+                            child: CustomPaint(
+                              painter: FunctionPlotPainter(
+                                points: state.points,
+                                scheme: scheme,
+                                mode: state.mode,
+                                zoom: _plotZoom,
+                                pan: _plotPan,
+                                yaw: _plotYaw,
+                                pitch: _plotPitch,
+                              ),
+                              child: const SizedBox.expand(),
                             ),
-                            child: const SizedBox.expand(),
                           ),
                         ),
                       ),
                       SizedBox(height: tokens.controlGap),
-                      Text(l10n.plotPoints(state.points.length)),
+                      Row(
+                        children: <Widget>[
+                          Expanded(child: Text(l10n.plotPoints(state.points.length))),
+                          TextButton.icon(
+                            onPressed: _resetPlotView,
+                            icon: const Icon(Icons.center_focus_strong),
+                            label: Text(nextEraText(context, 'Reset view', '重置视图')),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),

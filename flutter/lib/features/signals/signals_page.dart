@@ -208,7 +208,13 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
     final start = parseMathNumber(_start.text);
     final end = parseMathNumber(_end.text);
     final samples = int.tryParse(_samples.text.trim());
-    if (start == null || end == null || samples == null || end <= start) {
+    if (start == null ||
+        end == null ||
+        samples == null ||
+        samples < 2 ||
+        !start.isFinite ||
+        !end.isFinite ||
+        end <= start) {
       setState(
         () => _error = nextEraText(
           context,
@@ -231,16 +237,26 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
         (index) => start + (end - start) * index / (sampleCount - 1),
       );
       final values = await backend.evaluateArray(_expression.text, xs);
-      final signal = values.whereType<double>().toList(growable: false);
-      final result = await backend.convolution(
-        signal,
-        kernel.whereType<double>().toList(growable: false),
-      );
+      if (values.length != xs.length || values.any((value) => value == null)) {
+        throw const FormatException(
+          'The signal contains a non-finite sample; convolution was cancelled.',
+        );
+      }
+      final signal = values.cast<double>().toList(growable: false);
+      final kernelValues = kernel.whereType<double>().toList(growable: false);
+      if (kernelValues.isEmpty) {
+        throw const FormatException('Enter at least one kernel value.');
+      }
+      final result = await backend.convolution(signal, kernelValues);
       if (!mounted) return;
+      final preview = result
+          .take(8)
+          .map((value) => value.toStringAsPrecision(8))
+          .join(', ');
       final convolutionText = nextEraText(
         context,
-        'Convolution length: ${result.length}',
-        '卷积长度：${result.length}',
+        'Convolution length: ${result.length}\nFirst values: $preview',
+        '卷积长度：${result.length}\n前八项：$preview',
       );
       setState(() {
         _busy = false;
@@ -267,7 +283,13 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
     final start = parseMathNumber(_start.text);
     final end = parseMathNumber(_end.text);
     final samples = int.tryParse(_samples.text.trim());
-    if (start == null || end == null || samples == null || end <= start) {
+    if (start == null ||
+        end == null ||
+        samples == null ||
+        samples < 2 ||
+        !start.isFinite ||
+        !end.isFinite ||
+        end <= start) {
       setState(() {
         _error = nextEraText(
           context,
@@ -285,7 +307,8 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
       _spectrum = const <PlotPoint>[];
     });
     final backend = ref.read(calcBackendProvider);
-    final spectrum = await backend.spectrum(
+    try {
+      final spectrum = await backend.spectrum(
       _expression.text,
       a: start,
       b: end,
@@ -337,6 +360,14 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
         result: spectrumResult,
         backend: backend.name,
       );
+    }
+    } on FormatException catch (error) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = error.message;
+        });
+      }
     }
   }
 }

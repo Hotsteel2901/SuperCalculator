@@ -235,7 +235,7 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
       }
       final x = double.tryParse(cells[0]);
       final y = double.tryParse(cells[1]);
-      if (x != null && y != null) {
+      if (x != null && y != null && x.isFinite && y.isFinite) {
         xs.add(x);
         ys.add(y);
       }
@@ -385,7 +385,7 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
       }
       final x = double.tryParse(cells[0]);
       final y = double.tryParse(cells[1]);
-      if (x != null && y != null) {
+      if (x != null && y != null && x.isFinite && y.isFinite) {
         xs.add(x);
         ys.add(y);
       }

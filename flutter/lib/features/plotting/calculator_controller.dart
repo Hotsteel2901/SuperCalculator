@@ -2,8 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/backend/calc_backend.dart';
 import '../../core/backend/providers.dart';
-import '../../core/compute/computation.dart';
 import '../../core/history/history_repository.dart';
 import '../../core/plot/plot_point.dart';
 
@@ -19,6 +19,8 @@ class CalculatorState {
     required this.xText,
     required this.mode,
     required this.backend,
+    this.parameterStart = 0,
+    this.parameterEnd = 2 * math.pi,
     this.value,
     this.error,
     this.isCalculating = false,
@@ -31,6 +33,8 @@ class CalculatorState {
       xText = '0',
       mode = 'function',
       backend = 'Dart fallback',
+      parameterStart = 0,
+      parameterEnd = 2 * math.pi,
       value = null,
       error = null,
       isCalculating = false,
@@ -41,6 +45,8 @@ class CalculatorState {
   final String xText;
   final String mode;
   final String backend;
+  final double parameterStart;
+  final double parameterEnd;
   final double? value;
   final String? error;
   final bool isCalculating;
@@ -52,6 +58,8 @@ class CalculatorState {
     String? xText,
     String? mode,
     String? backend,
+    double? parameterStart,
+    double? parameterEnd,
     double? value,
     bool clearValue = false,
     String? error,
@@ -65,6 +73,8 @@ class CalculatorState {
       xText: xText ?? this.xText,
       mode: mode ?? this.mode,
       backend: backend ?? this.backend,
+      parameterStart: parameterStart ?? this.parameterStart,
+      parameterEnd: parameterEnd ?? this.parameterEnd,
       value: clearValue ? null : value ?? this.value,
       error: clearError ? null : error ?? this.error,
       isCalculating: isCalculating ?? this.isCalculating,
@@ -89,6 +99,20 @@ class CalculatorController extends Notifier<CalculatorState> {
     state = state.copyWith(xText: value, clearError: true);
   }
 
+  void setParameterRange(double start, double end) {
+    if (!start.isFinite || !end.isFinite || start >= end) {
+      state = state.copyWith(
+        error: 'The parameter range must be finite and increasing.',
+      );
+      return;
+    }
+    state = state.copyWith(
+      parameterStart: start,
+      parameterEnd: end,
+      clearError: true,
+    );
+  }
+
   void setMode(String value) {
     state = state.copyWith(
       mode: value,
@@ -99,11 +123,20 @@ class CalculatorController extends Notifier<CalculatorState> {
 
   Future<void> evaluate() async {
     final backend = ref.read(calcBackendProvider);
-    final x = double.tryParse(state.xText.trim()) ?? 0;
+    final parsedX = double.tryParse(state.xText.trim());
+    final x = parsedX ?? 0;
     final expression = state.expression.trim();
     if (expression.isEmpty) {
       state = state.copyWith(
         error: 'Expression cannot be empty.',
+        clearValue: true,
+      );
+      return;
+    }
+    if (state.mode == 'function' &&
+        (parsedX == null || !parsedX.isFinite)) {
+      state = state.copyWith(
+        error: 'The x argument must be a finite number.',
         clearValue: true,
       );
       return;
@@ -146,13 +179,16 @@ class CalculatorController extends Notifier<CalculatorState> {
         return;
       }
 
-      final points = _sampleSpecialMode(
+      final points = await _sampleSpecialMode(
+        backend,
         state.mode,
         expression,
         state.secondaryExpression,
+        parameterStart: state.parameterStart,
+        parameterEnd: state.parameterEnd,
       );
       state = state.copyWith(
-        backend: 'Dart sampling',
+        backend: backend.name,
         isCalculating: false,
         points: points,
         error: points.isEmpty ? 'The plot could not be evaluated.' : null,
@@ -163,7 +199,7 @@ class CalculatorController extends Notifier<CalculatorState> {
             .add(
               expression: '${state.mode}: ${state.expression}',
               result: '${points.length} plotted points',
-              backend: 'Dart sampling',
+              backend: backend.name,
             );
       }
     } on FormatException catch (error) {
@@ -181,11 +217,14 @@ class CalculatorController extends Notifier<CalculatorState> {
     }
   }
 
-  List<PlotPoint> _sampleSpecialMode(
+  Future<List<PlotPoint>> _sampleSpecialMode(
+    CalcBackend backend,
     String mode,
     String expression,
-    String secondary,
-  ) {
+    String secondary, {
+    double parameterStart = -math.pi,
+    double parameterEnd = math.pi,
+  }) async {
     if (mode == 'multi') {
       final expressions = expression
           .split(RegExp(r'[;\n]+'))
@@ -200,7 +239,7 @@ class CalculatorController extends Notifier<CalculatorState> {
       );
       final points = <PlotPoint>[];
       for (final item in expressions) {
-        final values = DartComputation.evaluateArray(item, xs);
+        final values = await backend.evaluateArray(item, xs);
         points
           ..addAll(_pointsFromArrays(xs, values))
           ..add(const PlotPoint(double.nan, double.nan));
@@ -210,11 +249,13 @@ class CalculatorController extends Notifier<CalculatorState> {
     if (mode == 'parametric') {
       final ts = List<double>.generate(
         721,
-        (index) => -math.pi + 2 * math.pi * index / 720,
+        (index) =>
+            parameterStart +
+            (parameterEnd - parameterStart) * index / 720,
         growable: false,
       );
-      final xs = DartComputation.evaluateArray(expression, ts);
-      final ys = DartComputation.evaluateArray(secondary, ts);
+      final xs = await backend.evaluateArray(expression, ts);
+      final ys = await backend.evaluateArray(secondary, ts);
       return List<PlotPoint>.generate(ts.length, (index) {
         final x = xs[index];
         final y = ys[index];
@@ -226,10 +267,12 @@ class CalculatorController extends Notifier<CalculatorState> {
     if (mode == 'polar') {
       final angles = List<double>.generate(
         721,
-        (index) => 2 * math.pi * index / 720,
+        (index) =>
+            parameterStart +
+            (parameterEnd - parameterStart) * index / 720,
         growable: false,
       );
-      final radii = DartComputation.evaluateArray(expression, angles);
+      final radii = await backend.evaluateArray(expression, angles);
       return List<PlotPoint>.generate(angles.length, (index) {
         final radius = radii[index];
         if (radius == null || !radius.isFinite) {
@@ -243,7 +286,7 @@ class CalculatorController extends Notifier<CalculatorState> {
     }
 
     if (mode == 'surface' || mode == 'contour') {
-      final samples = DartComputation.sampleSurface(
+      final samples = await backend.sampleSurface(
         expression,
         -10,
         10,
@@ -253,29 +296,33 @@ class CalculatorController extends Notifier<CalculatorState> {
         columns: 45,
       );
       if (mode == 'surface') {
-        // Isometric projection keeps the Web/desktop preview lightweight while
-        // preserving the full z=f(x,y) sample set for a future 3D renderer.
+        // Preserve all three coordinates. The painter applies an interactive
+        // projection so the same sampled surface can be rotated and zoomed on
+        // touch, pointer and keyboard-driven desktop layouts.
         return samples
-            .map((sample) {
-              final projectedX = sample.x + sample.y * .35;
-              final projectedY = sample.value - sample.y * .25;
-              return PlotPoint(projectedX, projectedY);
-            })
+            .map((sample) => PlotPoint(sample.x, sample.y, z: sample.value))
             .toList(growable: false);
       }
       final finite = samples
           .map((sample) => sample.value)
           .where((value) => value.isFinite)
-          .toList();
-      if (finite.isEmpty) return const <PlotPoint>[];
-      final level = finite.reduce((a, b) => a + b) / finite.length;
-      return samples
-          .where((sample) => (sample.value - level).abs() < .15)
-          .map((sample) => PlotPoint(sample.x, sample.y))
           .toList(growable: false);
+      if (finite.isEmpty) return const <PlotPoint>[];
+      final low = finite.reduce((a, b) => math.min(a, b).toDouble());
+      final high = finite.reduce((a, b) => math.max(a, b).toDouble());
+      final span = (high - low).abs();
+      if (span < 1e-12) return const <PlotPoint>[];
+      final points = <PlotPoint>[];
+      for (final sample in samples) {
+        final normalized = (sample.value - low) / span * 8;
+        if ((normalized - normalized.round()).abs() < .08) {
+          points.add(PlotPoint(sample.x, sample.y));
+        }
+      }
+      return points;
     }
     if (mode == 'direction') {
-      final vectors = DartComputation.sampleDirectionField(
+      final vectors = await backend.sampleDirectionField(
         expression,
         -10,
         10,
@@ -298,7 +345,7 @@ class CalculatorController extends Notifier<CalculatorState> {
       return points;
     }
     if (mode == 'vector') {
-      final vectors = DartComputation.sampleVectorField(
+      final vectors = await backend.sampleVectorField(
         expression,
         secondary,
         -10,
@@ -322,27 +369,19 @@ class CalculatorController extends Notifier<CalculatorState> {
       return points;
     }
 
-    // Implicit curves are represented by a bounded contour sample. A small
-    // tolerance is sufficient for the preview and keeps rendering responsive;
-    // the native contour API remains available for a future high-resolution
-    // export surface.
-    final compiled = ExpressionEngine.compile(expression);
-    final points = <PlotPoint>[];
-    const grid = 121;
-    const min = -10.0;
-    const max = 10.0;
-    const step = (max - min) / (grid - 1);
-    for (var row = 0; row < grid; row++) {
-      final y = min + row * step;
-      for (var column = 0; column < grid; column++) {
-        final x = min + column * step;
-        final value = compiled.evaluate(x: x, y: y);
-        if (value.isFinite && value.abs() < step * 1.5) {
-          points.add(PlotPoint(x, y));
-        }
-      }
-    }
-    return points;
+    final implicit = await backend.sampleImplicit(
+      expression,
+      -10,
+      10,
+      -10,
+      10,
+      rows: 121,
+      columns: 121,
+      levelTolerance: 10 / 120 * 1.5,
+    );
+    return implicit
+        .map((sample) => PlotPoint(sample.x, sample.y))
+        .toList(growable: false);
   }
 
   List<PlotPoint> _pointsFromArrays(List<double> xs, List<double?> ys) {

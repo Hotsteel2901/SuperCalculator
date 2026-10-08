@@ -17,6 +17,94 @@ class ComputationDispatcher {
     List<double> xs,
   ) => compute(_evaluateArrayTask, _ArrayTask(expression: expression, xs: xs));
 
+  static Future<List<PlotPointValue>> sampleSurface(
+    String expression,
+    double xMin,
+    double xMax,
+    double yMin,
+    double yMax, {
+    int rows = 40,
+    int columns = 40,
+  }) => compute(
+    _surfaceTask,
+    _SurfaceTask(
+      expression: expression,
+      xMin: xMin,
+      xMax: xMax,
+      yMin: yMin,
+      yMax: yMax,
+      rows: rows,
+      columns: columns,
+    ),
+  );
+
+  static Future<List<PlotFieldVector>> sampleDirectionField(
+    String expression,
+    double xMin,
+    double xMax,
+    double yMin,
+    double yMax, {
+    int rows = 20,
+    int columns = 20,
+  }) => compute(
+    _directionFieldTask,
+    _DirectionFieldTask(
+      expression: expression,
+      xMin: xMin,
+      xMax: xMax,
+      yMin: yMin,
+      yMax: yMax,
+      rows: rows,
+      columns: columns,
+    ),
+  );
+
+  static Future<List<PlotFieldVector>> sampleVectorField(
+    String expressionX,
+    String expressionY,
+    double xMin,
+    double xMax,
+    double yMin,
+    double yMax, {
+    int rows = 20,
+    int columns = 20,
+  }) => compute(
+    _vectorFieldTask,
+    _VectorFieldTask(
+      expressionX: expressionX,
+      expressionY: expressionY,
+      xMin: xMin,
+      xMax: xMax,
+      yMin: yMin,
+      yMax: yMax,
+      rows: rows,
+      columns: columns,
+    ),
+  );
+
+  static Future<List<PlotPointValue>> sampleImplicit(
+    String expression,
+    double xMin,
+    double xMax,
+    double yMin,
+    double yMax, {
+    int rows = 121,
+    int columns = 121,
+    double levelTolerance = .15,
+  }) => compute(
+    _implicitTask,
+    _ImplicitTask(
+      expression: expression,
+      xMin: xMin,
+      xMax: xMax,
+      yMin: yMin,
+      yMax: yMax,
+      rows: rows,
+      columns: columns,
+      levelTolerance: levelTolerance,
+    ),
+  );
+
   static Future<CalcEvaluationValue> evaluate(
     String expression,
     double x, {
@@ -271,6 +359,128 @@ class ComputationDispatcher {
     _tangentTask,
     _TangentTask(expression: expression, x: x, step: step),
   );
+}
+
+class _SurfaceTask {
+  const _SurfaceTask({
+    required this.expression,
+    required this.xMin,
+    required this.xMax,
+    required this.yMin,
+    required this.yMax,
+    required this.rows,
+    required this.columns,
+  });
+
+  final String expression;
+  final double xMin;
+  final double xMax;
+  final double yMin;
+  final double yMax;
+  final int rows;
+  final int columns;
+}
+
+List<PlotPointValue> _surfaceTask(_SurfaceTask task) =>
+    DartComputation.sampleSurface(
+      task.expression,
+      task.xMin,
+      task.xMax,
+      task.yMin,
+      task.yMax,
+      rows: task.rows,
+      columns: task.columns,
+    );
+
+class _DirectionFieldTask extends _SurfaceTask {
+  const _DirectionFieldTask({
+    required super.expression,
+    required super.xMin,
+    required super.xMax,
+    required super.yMin,
+    required super.yMax,
+    required super.rows,
+    required super.columns,
+  });
+}
+
+List<PlotFieldVector> _directionFieldTask(_DirectionFieldTask task) =>
+    DartComputation.sampleDirectionField(
+      task.expression,
+      task.xMin,
+      task.xMax,
+      task.yMin,
+      task.yMax,
+      rows: task.rows,
+      columns: task.columns,
+    );
+
+class _VectorFieldTask extends _SurfaceTask {
+  const _VectorFieldTask({
+    required this.expressionY,
+    required super.expression,
+    required super.xMin,
+    required super.xMax,
+    required super.yMin,
+    required super.yMax,
+    required super.rows,
+    required super.columns,
+  });
+
+  final String expressionY;
+}
+
+List<PlotFieldVector> _vectorFieldTask(_VectorFieldTask task) =>
+    DartComputation.sampleVectorField(
+      task.expression,
+      task.expressionY,
+      task.xMin,
+      task.xMax,
+      task.yMin,
+      task.yMax,
+      rows: task.rows,
+      columns: task.columns,
+    );
+
+class _ImplicitTask extends _SurfaceTask {
+  const _ImplicitTask({
+    required this.levelTolerance,
+    required super.expression,
+    required super.xMin,
+    required super.xMax,
+    required super.yMin,
+    required super.yMax,
+    required super.rows,
+    required super.columns,
+  });
+
+  final double levelTolerance;
+}
+
+List<PlotPointValue> _implicitTask(_ImplicitTask task) {
+  if (task.rows < 2 ||
+      task.columns < 2 ||
+      task.xMin >= task.xMax ||
+      task.yMin >= task.yMax ||
+      !task.levelTolerance.isFinite ||
+      task.levelTolerance <= 0) {
+    return const <PlotPointValue>[];
+  }
+  final compiled = ExpressionEngine.compile(task.expression);
+  final points = <PlotPointValue>[];
+  for (var row = 0; row < task.rows; row++) {
+    final y = task.yMin +
+        (task.yMax - task.yMin) * row / (task.rows - 1);
+    for (var column = 0; column < task.columns; column++) {
+      final x = task.xMin +
+          (task.xMax - task.xMin) * column / (task.columns - 1);
+      final value = compiled.evaluate(x: x, y: y);
+      if (value.isFinite && value.abs() <= task.levelTolerance) {
+        points.add(PlotPointValue(x: x, y: y, value: value));
+      }
+    }
+  }
+  return points;
 }
 
 class _ScanRootsTask {

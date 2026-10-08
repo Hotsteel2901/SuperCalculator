@@ -233,8 +233,9 @@ class _OdePageState extends ConsumerState<OdePage> {
     final methods = _compareMethods
         ? <String>['Euler', 'Improved-Euler', 'Midpoint', 'RK4', 'RKF45']
         : <String>[_method];
-    final solutions = await Future.wait(
-      methods.map(
+    try {
+      final solutions = await Future.wait(
+        methods.map(
         (method) => backend.solveOde(
           _expression.text,
           x0: x0,
@@ -279,13 +280,32 @@ class _OdePageState extends ConsumerState<OdePage> {
             )
           : null;
     });
-    if (odeResult != null) {
-      recordCalculationHistory(
-        ref,
-        expression: 'dy/dx = ${_expression.text} (${methods.join(', ')})',
-        result: odeResult,
-        backend: backend.name,
-      );
+      if (odeResult != null) {
+        recordCalculationHistory(
+          ref,
+          expression: 'dy/dx = ${_expression.text} (${methods.join(', ')})',
+          result: odeResult,
+          backend: backend.name,
+        );
+      }
+    } on FormatException catch (error) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = error.message;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = nextEraText(
+            context,
+            'The ODE could not be evaluated.',
+            '无法计算该微分方程。',
+          );
+        });
+      }
     }
   }
 }

@@ -242,6 +242,86 @@ class FfiCalcBackend implements CalcBackend {
   }
 
   @override
+  Future<List<PlotPointValue>> sampleSurface(
+    String expression,
+    double xMin,
+    double xMax,
+    double yMin,
+    double yMax, {
+    int rows = 40,
+    int columns = 40,
+  }) => ComputationDispatcher.sampleSurface(
+    expression,
+    xMin,
+    xMax,
+    yMin,
+    yMax,
+    rows: rows,
+    columns: columns,
+  );
+
+  @override
+  Future<List<PlotFieldVector>> sampleDirectionField(
+    String expression,
+    double xMin,
+    double xMax,
+    double yMin,
+    double yMax, {
+    int rows = 20,
+    int columns = 20,
+  }) => ComputationDispatcher.sampleDirectionField(
+    expression,
+    xMin,
+    xMax,
+    yMin,
+    yMax,
+    rows: rows,
+    columns: columns,
+  );
+
+  @override
+  Future<List<PlotFieldVector>> sampleVectorField(
+    String expressionX,
+    String expressionY,
+    double xMin,
+    double xMax,
+    double yMin,
+    double yMax, {
+    int rows = 20,
+    int columns = 20,
+  }) => ComputationDispatcher.sampleVectorField(
+    expressionX,
+    expressionY,
+    xMin,
+    xMax,
+    yMin,
+    yMax,
+    rows: rows,
+    columns: columns,
+  );
+
+  @override
+  Future<List<PlotPointValue>> sampleImplicit(
+    String expression,
+    double xMin,
+    double xMax,
+    double yMin,
+    double yMax, {
+    int rows = 121,
+    int columns = 121,
+    double levelTolerance = .15,
+  }) => ComputationDispatcher.sampleImplicit(
+    expression,
+    xMin,
+    xMax,
+    yMin,
+    yMax,
+    rows: rows,
+    columns: columns,
+    levelTolerance: levelTolerance,
+  );
+
+  @override
   Future<CalcEvaluation> derivative(
     String expression,
     double x, {
@@ -715,6 +795,79 @@ class FfiCalcBackend implements CalcBackend {
     List<double> left,
     List<double> right,
   ) async => ComputationDispatcher.convolution(left, right);
+
+  // These utility calls intentionally use the shared fallback until their
+  // native ABI is versioned. Keeping them behind CalcBackend preserves the
+  // replaceable-backend contract for the UI and makes the fallback explicit.
+  @override
+  Future<int> bitwise(String operation, int left, int right, int width) async =>
+      DartComputation.bitwise(operation, left, right, width);
+
+  @override
+  Future<double> loanPayment({
+    required double principal,
+    required double annualRate,
+    required int periods,
+  }) async => DartComputation.loanPayment(
+    principal: principal,
+    annualRate: annualRate,
+    periods: periods,
+  );
+
+  @override
+  Future<double> compoundInterest({
+    required double principal,
+    required double annualRate,
+    required int compoundsPerYear,
+    required double years,
+  }) async => DartComputation.compoundInterest(
+    principal: principal,
+    annualRate: annualRate,
+    compoundsPerYear: compoundsPerYear,
+    years: years,
+  );
+
+  @override
+  Future<double> npv(double rate, List<double> cashFlows) async =>
+      DartComputation.npv(rate, cashFlows);
+
+  @override
+  Future<double?> irr(List<double> cashFlows) async =>
+      DartComputation.irr(cashFlows);
+
+  @override
+  Future<double> straightLineDepreciation(
+    double cost,
+    double salvage,
+    int years,
+    int year,
+  ) async => DartComputation.straightLineDepreciation(cost, salvage, years, year);
+
+  @override
+  Future<double> bondPrice({
+    required double faceValue,
+    required double couponRate,
+    required double marketRate,
+    required int periods,
+  }) async => DartComputation.bondPrice(
+    faceValue: faceValue,
+    couponRate: couponRate,
+    marketRate: marketRate,
+    periods: periods,
+  );
+
+  @override
+  Future<double> retirementFutureValue({
+    required double initialBalance,
+    required double monthlyContribution,
+    required double annualRate,
+    required double years,
+  }) async => DartComputation.retirementFutureValue(
+    initialBalance: initialBalance,
+    monthlyContribution: monthlyContribution,
+    annualRate: annualRate,
+    years: years,
+  );
 
   @override
   Future<CalcMatrix> multiplyMatrices(String left, String right) async =>
