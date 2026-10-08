@@ -1074,10 +1074,9 @@ class DartComputation {
         .map((x) => function.evaluate(x: x))
         .toList(growable: false);
     final roots = <double>[];
-    final rootSeparation = math.max(
-      1e-5,
-      (end - start) / samples * .5,
-    ).toDouble();
+    final rootSeparation = math
+        .max(1e-5, (end - start) / samples * .5)
+        .toDouble();
     void addRoot(double root) {
       if (!root.isFinite) return;
       final existingIndex = roots.indexWhere(
