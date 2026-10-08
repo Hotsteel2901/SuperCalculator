@@ -652,7 +652,11 @@ class DartCalcBackend implements CalcBackend {
     SparseMatrix matrix,
     List<double> vector,
     List<double> initial,
-  ) async => DartComputation.conjugateGradient(matrix, vector, initial);
+  ) async => DartComputation.conjugateGradient(
+    matrix,
+    vector,
+    initial: initial,
+  );
 
   @override
   void dispose() {}

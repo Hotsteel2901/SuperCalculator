@@ -685,7 +685,11 @@ class FfiCalcBackend implements CalcBackend {
     SparseMatrix matrix,
     List<double> vector,
     List<double> initial,
-  ) async => DartComputation.conjugateGradient(matrix, vector, initial);
+  ) async => DartComputation.conjugateGradient(
+    matrix,
+    vector,
+    initial: initial,
+  );
 
   Future<CalcEvaluation> _callScalar(
     String expression,

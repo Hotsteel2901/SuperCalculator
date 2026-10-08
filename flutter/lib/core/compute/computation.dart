@@ -2738,9 +2738,8 @@ class DartComputation {
 
   static List<double>? conjugateGradient(
     SparseMatrix matrix,
-    List<double> rhs, [
+    List<double> rhs, {
     List<double>? initial,
-  ], {
     int maxIterations = 1000,
     double tolerance = 1e-10,
   }) {

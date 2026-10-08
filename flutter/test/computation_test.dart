@@ -249,7 +249,7 @@ void main() {
     final solution = DartComputation.conjugateGradient(
       matrix,
       <double>[4, 10, 18],
-      <double>[0, 0, 0],
+      initial: <double>[0, 0, 0],
     );
     expect(solution, isNotNull);
     final resolved = solution!;
