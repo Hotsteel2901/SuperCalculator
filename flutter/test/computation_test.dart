@@ -92,7 +92,13 @@ void main() {
   });
 
   test('ODE method comparison stays finite and converges', () {
-    for (final method in <String>['Euler', 'Improved-Euler', 'Midpoint', 'RK4', 'RKF45']) {
+    for (final method in <String>[
+      'Euler',
+      'Improved-Euler',
+      'Midpoint',
+      'RK4',
+      'RKF45',
+    ]) {
       final solution = DartComputation.odeMethod(
         'y',
         x0: 0,

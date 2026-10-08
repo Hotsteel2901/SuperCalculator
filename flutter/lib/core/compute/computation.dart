@@ -1372,12 +1372,43 @@ class DartComputation {
           next = y + h * k2;
         case 'rkf45':
           final k2 = slope(x + h / 4, y + h * k1 / 4);
-          final k3 = slope(x + 3 * h / 8, y + 3 * h * k1 / 32 + 9 * h * k2 / 32);
-          final k4 = slope(x + 12 * h / 13, y + 1932 * h * k1 / 2197 - 7200 * h * k2 / 2197 + 7296 * h * k3 / 2197);
-          final k5 = slope(x + h, y + 439 * h * k1 / 216 - 8 * h * k2 + 3680 * h * k3 / 513 - 845 * h * k4 / 4104);
-          final k6 = slope(x + h / 2, y - 8 * h * k1 / 27 + 2 * h * k2 - 3544 * h * k3 / 2565 + 1859 * h * k4 / 4104 - 11 * h * k5 / 40);
+          final k3 = slope(
+            x + 3 * h / 8,
+            y + 3 * h * k1 / 32 + 9 * h * k2 / 32,
+          );
+          final k4 = slope(
+            x + 12 * h / 13,
+            y +
+                1932 * h * k1 / 2197 -
+                7200 * h * k2 / 2197 +
+                7296 * h * k3 / 2197,
+          );
+          final k5 = slope(
+            x + h,
+            y +
+                439 * h * k1 / 216 -
+                8 * h * k2 +
+                3680 * h * k3 / 513 -
+                845 * h * k4 / 4104,
+          );
+          final k6 = slope(
+            x + h / 2,
+            y -
+                8 * h * k1 / 27 +
+                2 * h * k2 -
+                3544 * h * k3 / 2565 +
+                1859 * h * k4 / 4104 -
+                11 * h * k5 / 40,
+          );
           if (![k2, k3, k4, k5, k6].every((value) => value.isFinite)) break;
-          next = y + h * (16 * k1 / 135 + 6656 * k3 / 12825 + 28561 * k4 / 56430 - 9 * k5 / 50 + 2 * k6 / 55);
+          next =
+              y +
+              h *
+                  (16 * k1 / 135 +
+                      6656 * k3 / 12825 +
+                      28561 * k4 / 56430 -
+                      9 * k5 / 50 +
+                      2 * k6 / 55);
         case 'rk4':
         default:
           final k2 = slope(x + h / 2, y + h * k1 / 2);
@@ -1392,11 +1423,7 @@ class DartComputation {
       xs.add(x);
       ys.add(y);
     }
-    return CalcOdeSolution(
-      xs: xs,
-      ys: ys,
-      method: method.toUpperCase(),
-    );
+    return CalcOdeSolution(xs: xs, ys: ys, method: method.toUpperCase());
   }
 
   static CalcSpectrum spectrum(
