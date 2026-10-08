@@ -20,11 +20,15 @@ until the Wasm adapter is packaged.
 
 ## Feature slices
 
-The app currently exposes plotting, calculus, equations, ODE, signals, data analysis,
-statistics, linear algebra, tools and session history. The manifest in
-`../docs/migration/feature-manifest.json` distinguishes implemented, partial,
-scaffolded and planned legacy capabilities. A partial page is an executable vertical
-slice with boundary/error handling, not a claim that every legacy sub-option is done.
+The app currently exposes plotting (including multi-curve and field previews),
+calculus, equations, ODE method selection, signals, data analysis, statistics with a
+histogram, dense and sparse linear algebra, base/unit tools, advanced complex/
+distribution/probability/calendar/finance/number-theory tools, custom functions,
+function tables and session history. The manifest in
+`../docs/migration/feature-manifest.json` distinguishes implemented and partial
+legacy capabilities. A partial item is an executable vertical slice with
+boundary/error handling, not a claim that every legacy preset or release feature is
+done.
 
 Platform folders can be generated for a target release with
 `../tool/bootstrap_flutter_platforms.sh`. They are intentionally not required for
