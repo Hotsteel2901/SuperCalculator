@@ -166,5 +166,4 @@ class CalculationHistoryController extends Notifier<List<HistoryEntry>> {
       // history remains usable for the current session in that case.
     }
   }
-
 }
