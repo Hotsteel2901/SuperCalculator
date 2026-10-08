@@ -2,38 +2,43 @@
 
 ## Current migration increment
 
-This increment delivers a working Flutter workbench beside the legacy entry points.
-It is not presented as full legacy parity; the feature manifest is the source of
-truth for every remaining capability.
+This increment keeps the migration additive and rollback-safe while making the Flutter
+workbench the only new UI. The feature manifest and golden vectors are the release
+source of truth.
 
-### Delivered
+### Delivered in this increment
 
-- Flutter stable project with null safety, Material 3 Expressive theming, responsive
-  NavigationRail/NavigationBar shell, go_router and Riverpod dependency injection.
-- English and Simplified Chinese localization with generated-compatible sources.
-- Native ABI v2 header, FFI adapter boundary, Web/Dart fallback and portable native
-  build/smoke scripts.
-- Compiled Dart expression evaluator with scalar/array/XY-array sampling, derivatives,
-  adaptive Simpson integration, Newton plus bracketed bisection roots, RK4, DFT
-  spectrum, statistics, linear regression, matrix operations, base and unit conversion.
-- Plot modes for function, parametric, polar and implicit previews, plus accessible
-  summaries and finite-gap handling.
-- Vertical-slice pages for calculus, equations, ODE, signals, data analysis,
-  statistics, linear algebra, tools and session-scoped calculation history.
-- Deterministic Dart vectors, native C vectors and CI for localization, formatting,
-  analyzer, tests and Web release build.
+- Added a multi-curve overlay mode using semicolon/newline-separated expressions.
+- Added selectable ODE methods: Euler, Improved-Euler/Heun, Midpoint, RK4 and RKF45;
+  non-RK4 methods use the Dart backend when the C ABI only exposes RK4.
+- Added deterministic function-table generation with copyable CSV output and range/
+  row validation.
+- Added a responsive statistics histogram with accessible bin summaries.
+- Added complex, distribution, probability/calendar, number-theory, finance,
+  custom-function, dense-matrix and sparse-COO workbench slices behind the
+  replaceable backend contract.
+- Added boundary/golden vectors for ODE convergence, function tables, regression and
+  distribution edge cases.
+- Updated English/Chinese README, feature manifest and migration reports to distinguish
+  implemented vertical slices from remaining parity work.
 
-### Explicitly not yet claimed
+### Explicitly not claimed
 
-Full legacy parity still includes custom functions, complex arithmetic, all advanced
-plot/contour/vector-field modes, distributions/probability, finance, number theory,
-sparse matrices, calendar tools, complete export/persistence, per-platform native
-packaging and device accessibility/performance evidence. These remain tracked as
-planned or partial rather than silently removed.
+Persistent history storage, complete preset inventories, full interactive 3D rendering,
+production per-platform FFI packaging/signing, WebAssembly packaging, physical-device
+performance measurements and screen-reader certification remain release gates. A
+lightweight 2D projection is used for surface/field previews until the interactive
+renderer is selected.
+
+### Verification
+
+The checked-in CI workflow runs the stable Flutter baseline, localization generation,
+formatting, analyzer, Flutter tests, Web release build and native ABI smoke tests.
+The latest successful CI evidence is recorded in the migration validation report; a
+local checkout without Flutter must not be described as locally verified.
 
 ### Rollback
 
-The legacy Python/Android/Web sources and C exports remain in the repository. A
-rollback can remove the Flutter routing entry point and continue using the previous
-entry points while the ABI and migration vectors remain available. See
-`docs/rollback.md`.
+The legacy C/Python/Android/Web sources and native ABI smoke scripts remain intact.
+Revert only the affected Flutter route, adapter or feature commit if a migration slice
+fails; do not delete the legacy implementation. See `docs/rollback.md`.

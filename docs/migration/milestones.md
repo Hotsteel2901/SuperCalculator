@@ -1,30 +1,31 @@
 # Migration milestones
 
-The migration is incremental: each milestone leaves the legacy entry points intact,
-records a rollback point, and is accepted only with numerical vectors plus the
-platform checks that apply to that slice.
+The migration is incremental: each milestone leaves a rollback point, records the
+legacy inventory, and is accepted only with numerical vectors plus applicable platform
+checks.
 
 | Milestone | Exit criteria | Current state |
 |---|---|---|
-| M0 inventory | Stable SDK baseline, feature IDs, priority matrix, rollback policy | Complete |
+| M0 inventory | Stable SDK baseline, feature IDs, priority matrix and rollback policy | Complete |
 | M1 shell | Flutter shell, M3 Expressive tokens, i18n, backend boundary and responsive navigation | Complete; CI verified |
-| M2 core bridge | Versioned C ABI, scalar/array/error/derivative/integration/root/RK4 vectors, native smoke test | Complete for the published ABI slice |
-| M3 first workbench | Plot modes, calculus, equations, ODE, signals, statistics, data, matrix and tools vertical slices | Complete as partial slices; long-tail parity remains in the manifest |
-| M4 parity expansion | Custom functions, complex, distributions, probability, advanced plot modes, exports and persistence | Planned; no legacy capability is removed |
-| M5 platform packaging | Generated Android/iOS/Windows/Linux/macOS projects, native artifacts, Web fallback/Wasm adapter | Bootstrap scripts and Web build are present; target packaging is next |
-| M6 quality | Device frame/memory benchmarks, accessibility matrix, visual regression and recovery drills | Reports and test hooks present; device measurements pending |
-| M7 release | Store/desktop/Web artifacts, CI/CD, signed release and removal of legacy UI from release workflows | Planned after parity sign-off |
+| M2 core bridge | Versioned C ABI, scalar/array/error/calculus/root/RK4 vectors and native smoke test | Complete for the published ABI slice |
+| M3 workbench | Plot, calculus, equations, ODE, signals, statistics, data, matrix and tools vertical slices | Complete as usable vertical slices; remaining sub-capabilities stay explicit |
+| M4 parity expansion | Custom functions, complex, distributions, probability/calendar, sparse tools, multi-curve, tables, histogram and advanced plot slices | In progress; 16 manifest items implemented and 18 partial |
+| M5 platform packaging | Generated Android/iOS/Windows/Linux/macOS projects, native artifacts and Web fallback/Wasm decision | Bootstrap scripts and Web build are present; packaging gates remain |
+| M6 quality | Device frame/memory benchmarks, accessibility matrix, visual regression and recovery drills | Reports and deterministic vectors present; device measurements pending |
+| M7 release | Store/desktop/Web artifacts, CI/CD, signed release and legacy UI removal from release workflows | Planned after parity sign-off |
 
 ## Current acceptance evidence
 
-- `./tool/build_native.sh` compiles the legacy C implementation plus ABI v2 with
-  `-Wall -Wextra -Wpedantic` and runs `supercalc_core smoke test passed`.
-- GitHub Actions workflow `Flutter Next Era checks` runs Flutter stable `3.47.6`
-  with `pub get`, localization generation, formatting, analyzer, tests and a Web
-  release build; the native job runs the same ABI smoke test.
-- `docs/migration/golden_vectors.json` is the seed contract for future backend
-  parity. The Flutter tests add deterministic vectors for the current Dart fallback.
-
-A status of `partial` means a usable feature slice exists, not that every legacy
-sub-option is complete. The full legacy inventory remains in
-`docs/migration/feature-manifest.json` and the original README files.
+- `./tool/build_native.sh` compiles the retained C implementation plus ABI v2 with
+  `-Wall -Wextra -Wpedantic` and runs the native smoke vectors.
+- `.github/workflows/flutter-next-era.yml` runs the stable Flutter baseline with pub
+  get, localization generation, formatting, analyzer, tests and a Web release build;
+  the native job runs the ABI smoke test.
+- `docs/migration/golden_vectors.json` is the cross-backend numerical contract. The
+  Flutter tests cover expression sampling, calculus, ODE methods, spectrum, stats,
+  regression/interpolation, distributions, complex/number theory, matrices, finance,
+  function tables, base and unit conversions.
+- `docs/migration/feature-manifest.json` is the parity status authority. A `partial`
+  item has a usable slice but remaining legacy sub-options; a `planned` item is not
+  claimed as migrated.

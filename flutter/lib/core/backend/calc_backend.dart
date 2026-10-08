@@ -186,6 +186,20 @@ abstract interface class CalcBackend {
 
   Future<CalcMatrix> inverseMatrix(String input);
 
+  Future<SparseMatrix> parseSparseMatrix(
+    int rows,
+    int columns,
+    String input,
+  );
+
+  Future<List<double>> sparseMatVec(SparseMatrix matrix, List<double> vector);
+
+  Future<List<double>?> conjugateGradient(
+    SparseMatrix matrix,
+    List<double> vector,
+    List<double> initial,
+  );
+
   void dispose();
 }
 
@@ -619,6 +633,26 @@ class DartCalcBackend implements CalcBackend {
   @override
   Future<CalcMatrix> inverseMatrix(String input) async =>
       DartComputation.matrixInverse(DartComputation.parseMatrix(input));
+
+  @override
+  Future<SparseMatrix> parseSparseMatrix(
+    int rows,
+    int columns,
+    String input,
+  ) async => DartComputation.parseSparseMatrix(rows, columns, input);
+
+  @override
+  Future<List<double>> sparseMatVec(
+    SparseMatrix matrix,
+    List<double> vector,
+  ) async => DartComputation.sparseMatVec(matrix, vector);
+
+  @override
+  Future<List<double>?> conjugateGradient(
+    SparseMatrix matrix,
+    List<double> vector,
+    List<double> initial,
+  ) async => DartComputation.conjugateGradient(matrix, vector, initial);
 
   @override
   void dispose() {}

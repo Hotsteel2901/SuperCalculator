@@ -177,6 +177,27 @@ class CalculatorController extends Notifier<CalculatorState> {
     String expression,
     String secondary,
   ) {
+    if (mode == 'multi') {
+      final expressions = expression
+          .split(RegExp(r'[;\n]+'))
+          .map((value) => value.trim())
+          .where((value) => value.isNotEmpty)
+          .toList(growable: false);
+      if (expressions.isEmpty) return const <PlotPoint>[];
+      final xs = List<double>.generate(
+        481,
+        (index) => (-10 + index / 24).toDouble(),
+        growable: false,
+      );
+      final points = <PlotPoint>[];
+      for (final item in expressions) {
+        final values = DartComputation.evaluateArray(item, xs);
+        points
+          ..addAll(_pointsFromArrays(xs, values))
+          ..add(const PlotPoint(double.nan, double.nan));
+      }
+      return points;
+    }
     if (mode == 'parametric') {
       final ts = List<double>.generate(
         721,

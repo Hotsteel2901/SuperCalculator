@@ -667,6 +667,26 @@ class FfiCalcBackend implements CalcBackend {
   Future<CalcMatrix> inverseMatrix(String input) async =>
       DartComputation.matrixInverse(DartComputation.parseMatrix(input));
 
+  @override
+  Future<SparseMatrix> parseSparseMatrix(
+    int rows,
+    int columns,
+    String input,
+  ) async => DartComputation.parseSparseMatrix(rows, columns, input);
+
+  @override
+  Future<List<double>> sparseMatVec(
+    SparseMatrix matrix,
+    List<double> vector,
+  ) async => DartComputation.sparseMatVec(matrix, vector);
+
+  @override
+  Future<List<double>?> conjugateGradient(
+    SparseMatrix matrix,
+    List<double> vector,
+    List<double> initial,
+  ) async => DartComputation.conjugateGradient(matrix, vector, initial);
+
   Future<CalcEvaluation> _callScalar(
     String expression,
     double x,

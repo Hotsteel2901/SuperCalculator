@@ -15,7 +15,13 @@ class LinearAlgebraPage extends ConsumerStatefulWidget {
 class _LinearAlgebraPageState extends ConsumerState<LinearAlgebraPage> {
   final _left = TextEditingController(text: '1,2;3,4');
   final _right = TextEditingController(text: '5,6;7,8');
+  final _sparseRows = TextEditingController(text: '3');
+  final _sparseColumns = TextEditingController(text: '3');
+  final _sparseEntries = TextEditingController(text: '0,0,4;1,1,5;2,2,6');
+  final _sparseVector = TextEditingController(text: '4,10,18');
+  final _sparseInitial = TextEditingController(text: '0,0,0');
   String _operation = 'determinant';
+  String _sparseOperation = 'spmv';
   String? _result;
   String? _error;
   bool _busy = false;
@@ -24,6 +30,11 @@ class _LinearAlgebraPageState extends ConsumerState<LinearAlgebraPage> {
   void dispose() {
     _left.dispose();
     _right.dispose();
+    _sparseRows.dispose();
+    _sparseColumns.dispose();
+    _sparseEntries.dispose();
+    _sparseVector.dispose();
+    _sparseInitial.dispose();
     super.dispose();
   }
 
@@ -128,9 +139,149 @@ class _LinearAlgebraPageState extends ConsumerState<LinearAlgebraPage> {
                 style: const TextStyle(fontFamily: 'monospace'),
               ),
             ),
+          const SizedBox(height: 16),
+          FeatureCard(
+            title: nextEraText(context, 'Sparse matrix tools', '稀疏矩阵工具'),
+            icon: Icons.grain,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Text(
+                  nextEraText(
+                    context,
+                    'COO entries use row,column,value; separate entries with semicolons.',
+                    'COO 格式为 行,列,值；使用分号分隔条目。',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                FormRow(
+                  children: <Widget>[
+                    _field(_sparseRows, 'Rows', '行数'),
+                    _field(_sparseColumns, 'Columns', '列数'),
+                    DropdownButtonFormField<String>(
+                      initialValue: _sparseOperation,
+                      decoration: InputDecoration(
+                        labelText: nextEraText(context, 'Operation', '运算'),
+                      ),
+                      items: <String>['spmv', 'conjugate-gradient']
+                          .map(
+                            (value) => DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            ),
+                          )
+                          .toList(growable: false),
+                      onChanged: (value) => setState(
+                        () => _sparseOperation = value ?? 'spmv',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _sparseEntries,
+                  decoration: InputDecoration(
+                    labelText: nextEraText(context, 'COO entries', 'COO 条目'),
+                  ),
+                  style: const TextStyle(fontFamily: 'monospace'),
+                ),
+                const SizedBox(height: 12),
+                FormRow(
+                  children: <Widget>[
+                    _field(_sparseVector, 'Vector b', '向量 b'),
+                    _field(_sparseInitial, 'Initial x', '初始 x'),
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : _calculateSparse,
+                      icon: const Icon(Icons.functions),
+                      label: Text(nextEraText(context, 'Run sparse', '执行稀疏运算')),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Widget _field(TextEditingController controller, String en, String zh) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(labelText: nextEraText(context, en, zh)),
+      keyboardType: const TextInputType.numberWithOptions(signed: true),
+    );
+  }
+
+  Future<void> _calculateSparse() async {
+    final rows = int.tryParse(_sparseRows.text.trim());
+    final columns = int.tryParse(_sparseColumns.text.trim());
+    final vector = _parseVector(_sparseVector.text);
+    final initial = _parseVector(_sparseInitial.text);
+    if (rows == null || columns == null || vector == null || initial == null) {
+      return _showSparseError('Enter valid sparse dimensions and vectors.');
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+      _result = null;
+    });
+    try {
+      final backend = ref.read(calcBackendProvider);
+      final matrix = await backend.parseSparseMatrix(
+        rows,
+        columns,
+        _sparseEntries.text,
+      );
+      final values = _sparseOperation == 'spmv'
+          ? await backend.sparseMatVec(matrix, vector)
+          : await backend.conjugateGradient(matrix, vector, initial);
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _result = values == null
+            ? null
+            : values.map((value) => value.toStringAsPrecision(12)).join(', ');
+        _error = values == null
+            ? nextEraText(
+                context,
+                'Conjugate gradient did not converge.',
+                '共轭梯度未收敛。',
+              )
+            : null;
+      });
+    } on FormatException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = error.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      _showSparseError(
+        nextEraText(context, 'Sparse operation failed.', '稀疏运算失败。'),
+      );
+    }
+  }
+
+  List<double>? _parseVector(String input) {
+    final values = input
+        .split(RegExp(r'[,;\s]+'))
+        .where((value) => value.trim().isNotEmpty)
+        .map(double.tryParse)
+        .toList(growable: false);
+    return values.any((value) => value == null)
+        ? null
+        : values.cast<double>();
+  }
+
+  void _showSparseError(String message) {
+    if (mounted) {
+      setState(() {
+        _busy = false;
+        _error = message;
+      });
+    }
   }
 
   Future<void> _calculate() async {

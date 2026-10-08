@@ -465,6 +465,41 @@ class DartComputation {
     return ExpressionEngine.compile(expression).sample(xs);
   }
 
+  static List<Map<String, double?>> functionTable(
+    String expression,
+    double start,
+    double end,
+    int rows,
+  ) {
+    if (!start.isFinite || !end.isFinite || rows < 2 || start > end) {
+      return const <Map<String, double?>>[];
+    }
+    final function = ExpressionEngine.compile(expression);
+    return List<Map<String, double?>>.generate(rows, (index) {
+      final x = start + (end - start) * index / (rows - 1);
+      final value = function.evaluate(x: x);
+      return <String, double?>{'x': x, 'value': value.isFinite ? value : null};
+    }, growable: false);
+  }
+
+  static String functionTableCsv(
+    String expression,
+    double start,
+    double end,
+    int rows,
+  ) {
+    final table = functionTable(expression, start, end, rows);
+    if (table.isEmpty) return '';
+    final buffer = StringBuffer('x,f(x)\n');
+    for (final row in table) {
+      buffer
+        ..write(row['x']?.toStringAsPrecision(12) ?? '')
+        ..write(',')
+        ..writeln(row['value']?.toStringAsPrecision(12) ?? '');
+    }
+    return buffer.toString().trimRight();
+  }
+
   static double evaluateCustom(
     String expression,
     Map<String, String> definitions, {
@@ -2125,6 +2160,153 @@ class DartComputation {
     return (low + high) / 2;
   }
 
+  // ---------- Probability and discrete mathematics ----------
+
+  static BigInt combination(int n, int k) {
+    if (n < 0 || k < 0 || k > n) {
+      throw const FormatException('Choose n and r with 0 ≤ r ≤ n.');
+    }
+    final reduced = math.min(k, n - k).toInt();
+    var result = BigInt.one;
+    for (var index = 1; index <= reduced; index++) {
+      result = result * BigInt.from(n - reduced + index) ~/ BigInt.from(index);
+    }
+    return result;
+  }
+
+  static BigInt permutation(int n, int k) {
+    if (n < 0 || k < 0 || k > n) {
+      throw const FormatException('Choose n and r with 0 ≤ r ≤ n.');
+    }
+    var result = BigInt.one;
+    for (var index = 0; index < k; index++) {
+      result *= BigInt.from(n - index);
+    }
+    return result;
+  }
+
+  static double complementProbability(double probability) {
+    _checkProbability(probability, 'Probability');
+    return 1 - probability;
+  }
+
+  static double unionProbability({
+    required double eventA,
+    required double eventB,
+    required double intersection,
+  }) {
+    _checkProbability(eventA, 'P(A)');
+    _checkProbability(eventB, 'P(B)');
+    _checkProbability(intersection, 'P(A and B)');
+    if (intersection > math.min(eventA, eventB)) {
+      throw const FormatException('The intersection exceeds an event.');
+    }
+    return eventA + eventB - intersection;
+  }
+
+  static double conditionalProbability({
+    required double intersection,
+    required double given,
+  }) {
+    _checkProbability(intersection, 'P(A and B)');
+    _checkProbability(given, 'P(B)');
+    if (given == 0 || intersection > given) {
+      throw const FormatException('P(B) must be positive and bound the intersection.');
+    }
+    return intersection / given;
+  }
+
+  static double bayesProbability({
+    required double prior,
+    required double likelihood,
+    required double evidence,
+  }) {
+    _checkProbability(prior, 'Prior');
+    _checkProbability(likelihood, 'Likelihood');
+    _checkProbability(evidence, 'Evidence');
+    if (evidence == 0) {
+      throw const FormatException('Evidence must be positive.');
+    }
+    final posterior = prior * likelihood / evidence;
+    if (!posterior.isFinite || posterior < 0 || posterior > 1) {
+      throw const FormatException('The inputs produce an invalid posterior.');
+    }
+    return posterior;
+  }
+
+  static double binomialProbability({
+    required int n,
+    required int k,
+    required double p,
+  }) {
+    if (n < 0 || k < 0 || k > n || !p.isFinite || p < 0 || p > 1) {
+      throw const FormatException('Binomial inputs are invalid.');
+    }
+    if ((p == 0 && k > 0) || (p == 1 && k < n)) return 0;
+    if (p == 0) return 1;
+    if (p == 1) return 1;
+    final logValue =
+        _logCombination(n, k) + k * math.log(p) + (n - k) * math.log(1 - p);
+    return math.exp(logValue);
+  }
+
+  static double binomialMean(int n, double p) {
+    if (n < 0 || !p.isFinite || p < 0 || p > 1) {
+      throw const FormatException('Binomial inputs are invalid.');
+    }
+    return n * p;
+  }
+
+  static double binomialVariance(int n, double p) {
+    if (n < 0 || !p.isFinite || p < 0 || p > 1) {
+      throw const FormatException('Binomial inputs are invalid.');
+    }
+    return n * p * (1 - p);
+  }
+
+  static void _checkProbability(double value, String label) {
+    if (!value.isFinite || value < 0 || value > 1) {
+      throw FormatException('$label must be between 0 and 1.');
+    }
+  }
+
+  // ---------- Calendar ----------
+
+  static DateTime parseCalendarDate(String value) {
+    final match = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$').firstMatch(value.trim());
+    if (match == null) {
+      throw const FormatException('Use the date format YYYY-MM-DD.');
+    }
+    final date = DateTime.utc(
+      int.parse(match.group(1)!),
+      int.parse(match.group(2)!),
+      int.parse(match.group(3)!),
+    );
+    if (date.year != int.parse(match.group(1)!) ||
+        date.month != int.parse(match.group(2)!) ||
+        date.day != int.parse(match.group(3)!)) {
+      throw const FormatException('The calendar date is invalid.');
+    }
+    return date;
+  }
+
+  static int calendarWeekday(String value) => parseCalendarDate(value).weekday;
+
+  static int calendarDateDifference(String start, String end) =>
+      parseCalendarDate(end).difference(parseCalendarDate(start)).inDays;
+
+  static String calendarAddDays(String value, int days) {
+    final date = parseCalendarDate(value).add(Duration(days: days));
+    return _formatCalendarDate(date);
+  }
+
+  static String _formatCalendarDate(DateTime date) {
+    final year = date.year.toString().padLeft(4, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
+  }
+
   // ---------- Finance ----------
 
   static double loanPayment({
@@ -2519,7 +2701,7 @@ class DartComputation {
     }
     final entries = <SparseEntry>[];
     for (final token in input.split(';')) {
-      final cells = token.trim().split(RegExp(r'[,\\s]+'));
+      final cells = token.trim().split(RegExp(r'[,\s]+'));
       if (token.trim().isEmpty) {
         continue;
       }
@@ -2556,12 +2738,17 @@ class DartComputation {
 
   static List<double>? conjugateGradient(
     SparseMatrix matrix,
-    List<double> rhs, {
+    List<double> rhs, [
+    List<double>? initial,
+  ], {
     int maxIterations = 1000,
     double tolerance = 1e-10,
   }) {
     if (matrix.rows != matrix.columns || rhs.length != matrix.rows) return null;
-    final x = List<double>.filled(matrix.rows, 0);
+    if (initial != null && initial.length != matrix.columns) return null;
+    final x = initial == null
+        ? List<double>.filled(matrix.rows, 0)
+        : List<double>.from(initial);
     List<double> subtract(List<double> a, List<double> b) =>
         List<double>.generate(
           a.length,

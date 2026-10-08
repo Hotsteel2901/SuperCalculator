@@ -162,7 +162,7 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
 
   Future<void> _convolve() async {
     final kernel = _kernel.text
-        .split(RegExp(r'[,;\\s]+'))
+        .split(RegExp(r'[,;\s]+'))
         .where((value) => value.isNotEmpty)
         .map(double.tryParse)
         .toList();

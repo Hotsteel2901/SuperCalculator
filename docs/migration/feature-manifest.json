@@ -41,7 +41,7 @@
       "legacy": [
         "super_calc_bridged.py"
       ],
-      "status": "planned"
+      "status": "implemented"
     },
     {
       "id": "plot.surface3d",
@@ -51,7 +51,7 @@
         "super_calc_bridged.py",
         "android"
       ],
-      "status": "planned"
+      "status": "partial"
     },
     {
       "id": "plot.parametric",
@@ -90,7 +90,7 @@
         "super_calc_bridged.py",
         "index.html"
       ],
-      "status": "planned"
+      "status": "partial"
     },
     {
       "id": "plot.directionField",
@@ -99,7 +99,7 @@
       "legacy": [
         "super_calc_bridged.py"
       ],
-      "status": "planned"
+      "status": "partial"
     },
     {
       "id": "plot.vectorField",
@@ -110,7 +110,7 @@
         "super_calc_bridged.py",
         "index.html"
       ],
-      "status": "planned"
+      "status": "partial"
     },
     {
       "id": "calculus.all",
@@ -162,7 +162,7 @@
       "legacy": [
         "super_calc_bridged.py"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "id": "distributions.six",
@@ -172,7 +172,7 @@
         "stat_dist.py",
         "super_calc_bridged.py"
       ],
-      "status": "planned"
+      "status": "implemented"
     },
     {
       "id": "probability.all",
@@ -183,7 +183,7 @@
         "super_calc_bridged.py",
         "index.html"
       ],
-      "status": "planned"
+      "status": "implemented"
     },
     {
       "id": "data.regression",
@@ -205,7 +205,7 @@
         "super_calc_bridged.py",
         "index.html"
       ],
-      "status": "planned"
+      "status": "implemented"
     },
     {
       "id": "linearAlgebra.dense",
@@ -226,7 +226,7 @@
         "super_calc_bridged.py",
         "index.html"
       ],
-      "status": "planned"
+      "status": "implemented"
     },
     {
       "id": "complex.all",
@@ -237,7 +237,7 @@
         "calc_bridge.py",
         "android"
       ],
-      "status": "planned"
+      "status": "implemented"
     },
     {
       "id": "numberTheory.all",
@@ -247,7 +247,7 @@
         "super_calc_bridged.py",
         "android"
       ],
-      "status": "planned"
+      "status": "implemented"
     },
     {
       "id": "discrete.base",
@@ -257,7 +257,7 @@
         "calc_core.c",
         "index.html"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "id": "discrete.bitwise",
@@ -267,7 +267,7 @@
         "super_calc_bridged.py",
         "index.html"
       ],
-      "status": "planned"
+      "status": "partial"
     },
     {
       "id": "tools.units",
@@ -276,7 +276,7 @@
       "legacy": [
         "super_calc_bridged.py"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "id": "tools.calendar",
@@ -287,7 +287,7 @@
         "android",
         "index.html"
       ],
-      "status": "planned"
+      "status": "implemented"
     },
     {
       "id": "tools.finance",
@@ -298,7 +298,7 @@
         "super_calc_bridged.py",
         "index.html"
       ],
-      "status": "planned"
+      "status": "partial"
     },
     {
       "id": "app.customFunctions",
@@ -309,7 +309,7 @@
         "super_calc_bridged.py",
         "index.html"
       ],
-      "status": "planned"
+      "status": "implemented"
     },
     {
       "id": "app.history",
@@ -329,7 +329,7 @@
       "legacy": [
         "super_calc_bridged.py"
       ],
-      "status": "planned"
+      "status": "implemented"
     },
     {
       "id": "app.presets",
@@ -367,5 +367,15 @@
     "partial": "Usable vertical slice; remaining legacy sub-capabilities remain explicitly tracked.",
     "scaffolded": "Shell or contract exists but the user path is not yet complete.",
     "planned": "Not yet migrated; retained in the manifest for parity tracking."
+  },
+  "verificationNotes": {
+    "deterministicVectors": "flutter/test/computation_test.dart",
+    "goldenVectors": "docs/migration/golden_vectors.json",
+    "ciWorkflow": ".github/workflows/flutter-next-era.yml",
+    "knownGaps": [
+      "Persistent history storage is intentionally isolated behind the repository and remains session-scoped until a platform storage adapter is selected.",
+      "Surface/contour/vector previews currently use a lightweight 2D projection; a full interactive 3D renderer is tracked as a compatibility-safe follow-up.",
+      "Complete preset inventories, production per-platform FFI packaging/signing, WebAssembly packaging and physical-device performance/accessibility certification remain release gates."
+    ]
   }
 }

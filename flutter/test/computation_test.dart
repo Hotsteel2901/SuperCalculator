@@ -227,6 +227,64 @@ void main() {
     );
   });
 
+  test('function tables are evenly spaced and CSV-ready', () {
+    final table = DartComputation.functionTable('x^2', -1, 1, 5);
+    expect(table, hasLength(5));
+    expect(table[0]['x'], closeTo(-1, 1e-12));
+    expect(table[2]['value'], closeTo(0, 1e-12));
+    expect(table[4]['value'], closeTo(1, 1e-12));
+    final csv = DartComputation.functionTableCsv('x', 0, 1, 3);
+    expect(csv.split('\n'), hasLength(4));
+    expect(csv, contains('0.5'));
+    expect(DartComputation.functionTable('x', 1, 0, 3), isEmpty);
+  });
+
+  test('sparse matrix operations validate COO and solver boundaries', () {
+    final matrix = DartComputation.parseSparseMatrix(
+      3,
+      3,
+      '0,0,4;1,1,5;2,2,6',
+    );
+    expect(DartComputation.sparseMatVec(matrix, <double>[1, 2, 3]), <double>[4, 10, 18]);
+    final solution = DartComputation.conjugateGradient(
+      matrix,
+      <double>[4, 10, 18],
+      <double>[0, 0, 0],
+    );
+    expect(solution, isNotNull);
+    final resolved = solution!;
+    expect(resolved[0], closeTo(1, 1e-8));
+    expect(resolved[1], closeTo(2, 1e-8));
+    expect(resolved[2], closeTo(3, 1e-8));
+  });
+
+  test('probability and calendar tools validate golden vectors', () {
+    expect(DartComputation.combination(10, 3), BigInt.from(120));
+    expect(DartComputation.permutation(5, 2), BigInt.from(20));
+    expect(
+      DartComputation.binomialProbability(n: 10, k: 0, p: 0),
+      closeTo(1, 1e-12),
+    );
+    expect(
+      DartComputation.unionProbability(
+        eventA: .6,
+        eventB: .5,
+        intersection: .2,
+      ),
+      closeTo(.9, 1e-12),
+    );
+    expect(DartComputation.calendarWeekday('2024-01-01'), 1);
+    expect(
+      DartComputation.calendarDateDifference('2024-01-01', '2024-01-31'),
+      30,
+    );
+    expect(DartComputation.calendarAddDays('2024-02-28', 2), '2024-03-01');
+    expect(
+      () => DartComputation.parseCalendarDate('2024-02-30'),
+      throwsA(isA<FormatException>()),
+    );
+  });
+
   test('base and unit conversion validate user input', () {
     expect(DartComputation.convertBase('FF', 16, 2), '11111111');
     expect(

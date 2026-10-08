@@ -47,6 +47,7 @@ class _PlotPageState extends ConsumerState<PlotPage> {
     final scheme = Theme.of(context).colorScheme;
     final modes = <String, String>{
       'function': nextEraText(context, 'Function y=f(x)', '函数 y=f(x)'),
+      'multi': nextEraText(context, 'Multi-curve overlay', '多曲线叠加'),
       'parametric': nextEraText(
         context,
         'Parametric x(t), y(t)',

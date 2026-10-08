@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/backend/providers.dart';
 import '../../core/compute/calculation_models.dart';
 import '../../core/compute/computation.dart';
 import '../../core/ui/feature_widgets.dart';
+
+String _calendarDefaultDate([int offsetDays = 0]) {
+  final date = DateTime.now().toUtc().add(Duration(days: offsetDays));
+  final year = date.year.toString().padLeft(4, '0');
+  final month = date.month.toString().padLeft(2, '0');
+  final day = date.day.toString().padLeft(2, '0');
+  return '$year-$month-$day';
+}
 
 class AdvancedToolsPage extends ConsumerStatefulWidget {
   const AdvancedToolsPage({super.key});
@@ -26,16 +35,33 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
   final _financePrincipal = TextEditingController(text: '250000');
   final _financeRate = TextEditingController(text: '0.045');
   final _financePeriods = TextEditingController(text: '360');
+  final _probabilityN = TextEditingController(text: '10');
+  final _probabilityR = TextEditingController(text: '3');
+  final _probabilityA = TextEditingController(text: '0.6');
+  final _probabilityB = TextEditingController(text: '0.5');
+  final _probabilityIntersection = TextEditingController(text: '0.2');
+  final _calendarDate = TextEditingController(text: _calendarDefaultDate());
+  final _calendarDate2 = TextEditingController(text: _calendarDefaultDate(30));
+  final _calendarDays = TextEditingController(text: '7');
   final _customDefinitions = TextEditingController(text: 'f=x^2+1');
   final _customExpression = TextEditingController(text: 'f(3)');
+  final _tableExpression = TextEditingController(text: 'sin(x)');
+  final _tableStart = TextEditingController(text: '-3.14');
+  final _tableEnd = TextEditingController(text: '3.14');
+  final _tableRows = TextEditingController(text: '21');
   String _complexOperation = 'add';
   String _integerOperation = 'factor';
   String _distribution = 'normal';
+  String _probabilityOperation = 'combination';
+  String _calendarOperation = 'weekday';
   String? _complexResult;
   String? _integerResult;
   CalcDistributionResult? _distributionResult;
   String? _financeResult;
+  String? _probabilityResult;
+  String? _calendarResult;
   String? _customResult;
+  String? _tableResult;
   String? _error;
   bool _busy = false;
 
@@ -54,8 +80,20 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
       _financePrincipal,
       _financeRate,
       _financePeriods,
+      _probabilityN,
+      _probabilityR,
+      _probabilityA,
+      _probabilityB,
+      _probabilityIntersection,
+      _calendarDate,
+      _calendarDate2,
+      _calendarDays,
       _customDefinitions,
       _customExpression,
+      _tableExpression,
+      _tableStart,
+      _tableEnd,
+      _tableRows,
     ]) {
       controller.dispose();
     }
@@ -82,6 +120,10 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
           _distributionCard(context),
           const SizedBox(height: 16),
           _financeCard(context),
+          const SizedBox(height: 16),
+          _probabilityCard(context),
+          const SizedBox(height: 16),
+          _calendarCard(context),
           const SizedBox(height: 16),
           _customFunctionCard(context),
           if (_busy) ...<Widget>[
@@ -321,6 +363,132 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
     );
   }
 
+  Widget _probabilityCard(BuildContext context) {
+    return FeatureCard(
+      title: nextEraText(context, 'Probability', '概率计算'),
+      icon: Icons.percent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          DropdownButtonFormField<String>(
+            initialValue: _probabilityOperation,
+            decoration: InputDecoration(
+              labelText: nextEraText(context, 'Operation', '运算'),
+            ),
+            items: <String>[
+              'combination',
+              'permutation',
+              'binomial',
+              'complement',
+              'union',
+              'conditional',
+              'bayes',
+            ]
+                .map(
+                  (value) => DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  ),
+                )
+                .toList(growable: false),
+            onChanged: (value) => setState(
+              () => _probabilityOperation = value ?? 'combination',
+            ),
+          ),
+          const SizedBox(height: 12),
+          FormRow(
+            children: <Widget>[
+              _numberField(_probabilityN, 'n', 'n'),
+              _numberField(_probabilityR, 'r / k', 'r / k'),
+              _numberField(_probabilityA, 'P(A) / prior', 'P(A) / 先验'),
+              _numberField(_probabilityB, 'P(B) / likelihood', 'P(B) / 似然'),
+              _numberField(
+                _probabilityIntersection,
+                'P(A and B) / evidence',
+                'P(A 且 B) / 证据',
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: _busy ? null : _calculateProbability,
+            icon: const Icon(Icons.calculate_outlined),
+            label: Text(nextEraText(context, 'Calculate probability', '计算概率')),
+          ),
+          if (_probabilityResult != null) ...<Widget>[
+            const SizedBox(height: 12),
+            SelectableText(
+              _probabilityResult!,
+              style: const TextStyle(fontFamily: 'monospace'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _calendarCard(BuildContext context) {
+    return FeatureCard(
+      title: nextEraText(context, 'Calendar', '万年历'),
+      icon: Icons.calendar_month,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          DropdownButtonFormField<String>(
+            initialValue: _calendarOperation,
+            decoration: InputDecoration(
+              labelText: nextEraText(context, 'Operation', '运算'),
+            ),
+            items: <String>['weekday', 'difference', 'add']
+                .map(
+                  (value) => DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  ),
+                )
+                .toList(growable: false),
+            onChanged: (value) => setState(
+              () => _calendarOperation = value ?? 'weekday',
+            ),
+          ),
+          const SizedBox(height: 12),
+          FormRow(
+            children: <Widget>[
+              TextField(
+                controller: _calendarDate,
+                decoration: InputDecoration(
+                  labelText: nextEraText(context, 'Date', '日期'),
+                  hintText: 'YYYY-MM-DD',
+                ),
+              ),
+              TextField(
+                controller: _calendarDate2,
+                decoration: InputDecoration(
+                  labelText: nextEraText(context, 'Second date', '第二个日期'),
+                  hintText: 'YYYY-MM-DD',
+                ),
+              ),
+              _numberField(_calendarDays, 'Days', '天数'),
+            ],
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: _busy ? null : _calculateCalendar,
+            icon: const Icon(Icons.event_available_outlined),
+            label: Text(nextEraText(context, 'Calculate date', '计算日期')),
+          ),
+          if (_calendarResult != null) ...<Widget>[
+            const SizedBox(height: 12),
+            SelectableText(
+              _calendarResult!,
+              style: const TextStyle(fontFamily: 'monospace'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _customFunctionCard(BuildContext context) {
     return FeatureCard(
       title: nextEraText(
@@ -364,6 +532,75 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
             const SizedBox(height: 12),
             SelectableText(
               _customResult!,
+              style: const TextStyle(fontFamily: 'monospace'),
+            ),
+          ],
+          const SizedBox(height: 20),
+          Text(
+            nextEraText(context, 'Function table', '函数表'),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _tableExpression,
+            decoration: InputDecoration(
+              labelText: nextEraText(context, 'f(x)', 'f(x)'),
+              helperText: nextEraText(
+                context,
+                'Generate a CSV-ready numeric table for plotting or export.',
+                '生成可用于绘图或导出的 CSV 数值表。',
+              ),
+            ),
+            style: const TextStyle(fontFamily: 'monospace'),
+          ),
+          const SizedBox(height: 8),
+          FormRow(
+            children: <Widget>[
+              _numberField(_tableStart, 'Start', '起点'),
+              _numberField(_tableEnd, 'End', '终点'),
+              _numberField(_tableRows, 'Rows', '行数'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            children: <Widget>[
+              OutlinedButton.icon(
+                onPressed: _busy ? null : _buildFunctionTable,
+                icon: const Icon(Icons.table_chart_outlined),
+                label: Text(nextEraText(context, 'Generate table', '生成函数表')),
+              ),
+              OutlinedButton.icon(
+                onPressed: _tableResult == null
+                    ? null
+                    : () async {
+                        await Clipboard.setData(
+                          ClipboardData(text: _tableResult!),
+                        );
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                nextEraText(
+                                  context,
+                                  'CSV copied.',
+                                  'CSV 已复制。',
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                icon: const Icon(Icons.copy_outlined),
+                label: Text(nextEraText(context, 'Copy CSV', '复制 CSV')),
+              ),
+            ],
+          ),
+          if (_tableResult != null) ...<Widget>[
+            const SizedBox(height: 12),
+            SelectableText(
+              _tableResult!,
               style: const TextStyle(fontFamily: 'monospace'),
             ),
           ],
@@ -435,7 +672,7 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
       return _showError('Enter x or a probability.');
     }
     final values = _distributionParameter.text
-        .split(RegExp(r'[,;\\s]+'))
+        .split(RegExp(r'[,;\s]+'))
         .where((value) => value.isNotEmpty)
         .map(double.tryParse)
         .toList();
@@ -466,6 +703,63 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
     });
   }
 
+  Future<void> _calculateProbability() async {
+    final n = int.tryParse(_probabilityN.text.trim());
+    final r = int.tryParse(_probabilityR.text.trim());
+    final a = double.tryParse(_probabilityA.text.trim());
+    final b = double.tryParse(_probabilityB.text.trim());
+    final intersection = double.tryParse(_probabilityIntersection.text.trim());
+    if (n == null || r == null || a == null || b == null || intersection == null) {
+      return _showError('Enter valid probability inputs.');
+    }
+    await _runBusy(() async {
+      final result = switch (_probabilityOperation) {
+        'combination' => 'C($n, $r) = ${DartComputation.combination(n, r)}',
+        'permutation' => 'P($n, $r) = ${DartComputation.permutation(n, r)}',
+        'binomial' =>
+          'P(X=$r) = ${DartComputation.binomialProbability(n: n, k: r, p: a).toStringAsPrecision(12)}\nmean = ${DartComputation.binomialMean(n, a).toStringAsPrecision(12)}\nvariance = ${DartComputation.binomialVariance(n, a).toStringAsPrecision(12)}',
+        'complement' => 'P(not A) = ${DartComputation.complementProbability(a).toStringAsPrecision(12)}',
+        'union' => 'P(A or B) = ${DartComputation.unionProbability(eventA: a, eventB: b, intersection: intersection).toStringAsPrecision(12)}',
+        'conditional' => 'P(A | B) = ${DartComputation.conditionalProbability(intersection: intersection, given: b).toStringAsPrecision(12)}',
+        'bayes' => 'P(A | evidence) = ${DartComputation.bayesProbability(prior: a, likelihood: b, evidence: intersection).toStringAsPrecision(12)}',
+        _ => '',
+      };
+      _probabilityResult = result;
+    });
+  }
+
+  Future<void> _calculateCalendar() async {
+    await _runBusy(() async {
+      _calendarResult = switch (_calendarOperation) {
+        'weekday' => _weekdayLabel(
+            context,
+            DartComputation.calendarWeekday(_calendarDate.text),
+          ),
+        'difference' =>
+          '${DartComputation.calendarDateDifference(_calendarDate.text, _calendarDate2.text)} days',
+        'add' => DartComputation.calendarAddDays(
+            _calendarDate.text,
+            int.parse(_calendarDays.text.trim()),
+          ),
+        _ => '',
+      };
+    });
+  }
+
+  String _weekdayLabel(BuildContext context, int weekday) {
+    const english = <String>[
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+    const chinese = <String>['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    return nextEraText(context, english[weekday - 1], chinese[weekday - 1]);
+  }
+
   Future<void> _calculateFinance() async {
     final principal = double.tryParse(_financePrincipal.text);
     final rate = double.tryParse(_financeRate.text);
@@ -487,7 +781,7 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
 
   Future<void> _evaluateCustom() async {
     final definitions = <String, String>{};
-    for (final item in _customDefinitions.text.split(RegExp(r'[;\\n]+'))) {
+    for (final item in _customDefinitions.text.split(RegExp(r'[;\n]+'))) {
       final pair = item.split('=');
       if (pair.length == 2 && pair[0].trim().isNotEmpty) {
         definitions[pair[0].trim()] = pair[1].trim();
@@ -507,6 +801,27 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
         );
       }
       _customResult = value.toStringAsPrecision(12);
+    });
+  }
+
+  Future<void> _buildFunctionTable() async {
+    final start = double.tryParse(_tableStart.text);
+    final end = double.tryParse(_tableEnd.text);
+    final rows = int.tryParse(_tableRows.text);
+    if (start == null || end == null || rows == null || rows < 2) {
+      return _showError('Enter a valid range and at least two rows.');
+    }
+    await _runBusy(() async {
+      final csv = DartComputation.functionTableCsv(
+        _tableExpression.text,
+        start,
+        end,
+        rows,
+      );
+      if (csv.isEmpty) {
+        throw const FormatException('The function table inputs are invalid.');
+      }
+      _tableResult = csv;
     });
   }
 
