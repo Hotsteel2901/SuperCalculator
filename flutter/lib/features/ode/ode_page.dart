@@ -149,20 +149,17 @@ class _OdePageState extends ConsumerState<OdePage> {
               title: nextEraText(context, 'Solution curve', '解曲线'),
               icon: Icons.show_chart,
               child: Semantics(
-                label: nextEraText(
-                  context,
-                  _compareMethods
-                      ? nextEraText(
-                          context,
-                          'ODE comparison with ${_series.length} methods and ${_points.length} samples.',
-                          'ODE 方法比较，${_series.length} 种方法，${_points.length} 个采样点。',
-                        )
-                      : nextEraText(
-                          context,
-                          'ODE solution curve with ${_points.length} samples.',
-                          '包含 ${_points.length} 个采样点的 ODE 解曲线。',
-                        ),
-                ),
+                label: _compareMethods
+                    ? nextEraText(
+                        context,
+                        'ODE comparison with ${_series.length} methods and ${_points.length} samples.',
+                        'ODE 方法比较，${_series.length} 种方法，${_points.length} 个采样点。',
+                      )
+                    : nextEraText(
+                        context,
+                        'ODE solution curve with ${_points.length} samples.',
+                        '包含 ${_points.length} 个采样点的 ODE 解曲线。',
+                      ),
                 child: SizedBox(
                   height: 360,
                   child: CustomPaint(

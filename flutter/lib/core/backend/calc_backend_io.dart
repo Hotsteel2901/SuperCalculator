@@ -751,7 +751,7 @@ class FfiCalcBackend implements CalcBackend {
     final executableDirectory = File(Platform.resolvedExecutable).parent.path;
     final candidates = <String>[
       '$executableDirectory$separator$fileName',
-      '$executableDirectory${separator}..${separator}Frameworks$separator$fileName',
+      '$executableDirectory$separator..${separator}Frameworks$separator$fileName',
     ];
     for (final candidate in candidates) {
       if (File(candidate).existsSync()) return candidate;
