@@ -237,6 +237,45 @@
         10,
         18
       ]
+    },
+    {
+      "id": "calculus.taylor-exp-order-three",
+      "operation": "taylorCoefficients",
+      "expression": "exp(x)",
+      "point": 0,
+      "order": 3,
+      "expected": [
+        1,
+        1,
+        0.5,
+        0.16666666666666666
+      ],
+      "tolerance": 0.0001
+    },
+    {
+      "id": "calculus.arc-length-flat",
+      "operation": "arcLength",
+      "expression": "0",
+      "a": 0,
+      "b": 2,
+      "expected": 2
+    },
+    {
+      "id": "calculus.disk-volume-unit",
+      "operation": "volumeDisk",
+      "expression": "1",
+      "a": 0,
+      "b": 1,
+      "expected": 3.141592653589793
+    },
+    {
+      "id": "finance.retirement-zero-rate",
+      "operation": "retirementFutureValue",
+      "initialBalance": 0,
+      "monthlyContribution": 100,
+      "annualRate": 0,
+      "years": 1,
+      "expected": 1200
     }
   ]
 }
