@@ -10,8 +10,8 @@ checks.
 | M1 shell | Flutter shell, M3 Expressive tokens, i18n, backend boundary and responsive navigation | Complete; CI verified |
 | M2 core bridge | Versioned C ABI, scalar/array/error/calculus/root/RK4 vectors and native smoke test | Complete for the published ABI slice |
 | M3 workbench | Plot, calculus, equations, ODE, signals, statistics, data, matrix and tools vertical slices | Complete as usable vertical slices; remaining sub-capabilities stay explicit |
-| M4 parity expansion | Custom functions, complex, distributions, probability/calendar, sparse tools, multi-curve, tables, histogram and advanced plot slices | In progress; 16 manifest items implemented and 18 partial |
-| M5 platform packaging | Generated Android/iOS/Windows/Linux/macOS projects, native artifacts and Web fallback/Wasm decision | Bootstrap scripts and Web build are present; packaging gates remain |
+| M4 parity expansion | Custom functions, complex, distributions, probability/calendar, sparse tools, multi-curve, tables, histogram and advanced plot slices | In progress; 17 manifest items implemented and 17 partial |
+| M5 platform packaging | Generated Android/iOS/Windows/Linux/macOS projects, native artifacts and Web fallback/Wasm decision | Installer workflow is defined with explicit unsigned/release-key gates; hosted platform execution remains required |
 | M6 quality | Device frame/memory benchmarks, accessibility matrix, visual regression and recovery drills | Reports and deterministic vectors present; device measurements pending |
 | M7 release | Store/desktop/Web artifacts, CI/CD, signed release and legacy UI removal from release workflows | Planned after parity sign-off |
 

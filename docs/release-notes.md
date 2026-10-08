@@ -24,9 +24,10 @@ source of truth.
 
 ### Explicitly not claimed
 
-Persistent history storage, complete preset inventories, full interactive 3D rendering,
-production per-platform FFI packaging/signing, WebAssembly packaging, physical-device
-performance measurements and screen-reader certification remain release gates. A
+Best-effort persistent history storage, complete preset verification, full interactive 3D
+rendering, production per-platform FFI packaging/signing, WebAssembly packaging,
+physical-device performance measurements and screen-reader certification remain release
+gates. A
 lightweight 2D projection is used for surface/field previews until the interactive
 renderer is selected.
 
