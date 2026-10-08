@@ -113,7 +113,7 @@ jobs:
           flutter test --reporter expanded 2>&1 | tee /tmp/flutter-test.log
           status=${PIPESTATUS[0]}
           if [ "$status" -ne 0 ]; then
-            summary=$(python3 -c 'import pathlib; print(pathlib.Path("/tmp/flutter-test.log").read_text().replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A"))')
+            summary=$(tail -n 80 /tmp/flutter-test.log | python3 -c 'import pathlib, sys; print(sys.stdin.read().replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A"))')
             echo "::error title=Flutter tests::$summary"
           fi
           exit "$status"

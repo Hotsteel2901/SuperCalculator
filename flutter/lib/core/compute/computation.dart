@@ -1136,7 +1136,7 @@ class DartComputation {
         guess: xs[index],
         minimum: xs[index - 1],
         maximum: xs[index + 1],
-        tolerance: tolerance,
+        tolerance: tolerance * .001,
         maxIterations: 80,
       );
       if (candidate != null) {
