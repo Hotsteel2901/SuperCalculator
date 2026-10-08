@@ -46,9 +46,13 @@ class PresetCatalog {
         if (item is! Map ||
             item['label'] is! String ||
             item['expression'] is! String) {
-          throw const FormatException('Preset entries require label and expression.');
+          throw const FormatException(
+            'Preset entries require label and expression.',
+          );
         }
-        final mode = item['mode'] is String ? item['mode'] as String : defaultMode;
+        final mode = item['mode'] is String
+            ? item['mode'] as String
+            : defaultMode;
         final start = _finiteNumber(item['start']) ?? 0;
         final end = _finiteNumber(item['end']) ?? 6.283185307179586;
         if (start >= end) {
@@ -56,18 +60,22 @@ class PresetCatalog {
         }
         final secondary = item['secondary'];
         if (secondary != null && secondary is! String) {
-          throw const FormatException('Preset secondary expressions must be strings.');
+          throw const FormatException(
+            'Preset secondary expressions must be strings.',
+          );
         }
-        result.putIfAbsent(mode, () => <PresetDefinition>[]).add(
-          PresetDefinition(
-            mode: mode,
-            label: item['label'] as String,
-            expression: item['expression'] as String,
-            secondary: secondary as String?,
-            start: start,
-            end: end,
-          ),
-        );
+        result
+            .putIfAbsent(mode, () => <PresetDefinition>[])
+            .add(
+              PresetDefinition(
+                mode: mode,
+                label: item['label'] as String,
+                expression: item['expression'] as String,
+                secondary: secondary as String?,
+                start: start,
+                end: end,
+              ),
+            );
       }
     }
 

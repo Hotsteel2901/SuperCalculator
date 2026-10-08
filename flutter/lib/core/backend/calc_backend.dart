@@ -917,7 +917,8 @@ class DartCalcBackend implements CalcBackend {
     double salvage,
     int years,
     int year,
-  ) async => DartComputation.straightLineDepreciation(cost, salvage, years, year);
+  ) async =>
+      DartComputation.straightLineDepreciation(cost, salvage, years, year);
 
   @override
   Future<double> bondPrice({

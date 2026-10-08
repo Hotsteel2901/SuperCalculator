@@ -80,10 +80,7 @@ void main() {
     expect(tangent, hasLength(1));
     expect(tangent.single, closeTo(.123, 1e-5));
 
-    expect(
-      DartComputation.scanRoots('1/x', -1, 1, samples: 512),
-      isEmpty,
-    );
+    expect(DartComputation.scanRoots('1/x', -1, 1, samples: 512), isEmpty);
     expect(
       DartComputation.scanRoots('x^2 - 1', -2, 2),
       containsAllInOrder(<double>[-1, 1]),
@@ -170,11 +167,7 @@ void main() {
 
   test('finance and preset assets are deterministic and executable', () {
     expect(
-      DartComputation.loanPayment(
-        principal: 1200,
-        annualRate: 0,
-        periods: 12,
-      ),
+      DartComputation.loanPayment(principal: 1200, annualRate: 0, periods: 12),
       closeTo(100, 1e-12),
     );
     expect(
@@ -212,13 +205,12 @@ void main() {
       final compiled = ExpressionEngine.compile(expression as String);
       expect(compiled.evaluate(x: .25, y: .5).isFinite, isTrue, reason: label);
     }
-    final parameterPresets =
-        (document['parameterPresets'] as List).cast<Map<String, dynamic>>();
+    final parameterPresets = (document['parameterPresets'] as List)
+        .cast<Map<String, dynamic>>();
     expect(parameterPresets, isNotEmpty);
     expect(
       parameterPresets.every(
-        (preset) =>
-            preset['mode'] is String && preset['expression'] is String,
+        (preset) => preset['mode'] is String && preset['expression'] is String,
       ),
       isTrue,
     );

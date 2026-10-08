@@ -469,11 +469,10 @@ List<PlotPointValue> _implicitTask(_ImplicitTask task) {
   final compiled = ExpressionEngine.compile(task.expression);
   final points = <PlotPointValue>[];
   for (var row = 0; row < task.rows; row++) {
-    final y = task.yMin +
-        (task.yMax - task.yMin) * row / (task.rows - 1);
+    final y = task.yMin + (task.yMax - task.yMin) * row / (task.rows - 1);
     for (var column = 0; column < task.columns; column++) {
-      final x = task.xMin +
-          (task.xMax - task.xMin) * column / (task.columns - 1);
+      final x =
+          task.xMin + (task.xMax - task.xMin) * column / (task.columns - 1);
       final value = compiled.evaluate(x: x, y: y);
       if (value.isFinite && value.abs() <= task.levelTolerance) {
         points.add(PlotPointValue(x: x, y: y, value: value));

@@ -309,58 +309,60 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
     final backend = ref.read(calcBackendProvider);
     try {
       final spectrum = await backend.spectrum(
-      _expression.text,
-      a: start,
-      b: end,
-      samples: samples.clamp(2, 32768).toInt(),
-    );
-    if (!mounted) {
-      return;
-    }
-    final points = <PlotPoint>[];
-    for (var i = 0; i < spectrum.length; i++) {
-      if (spectrum.amplitudes[i].isFinite) {
-        points.add(PlotPoint(spectrum.frequencies[i], spectrum.amplitudes[i]));
-      }
-    }
-    final dominant = spectrum.dominantIndex;
-    final csv = StringBuffer('frequency,amplitude,phase\n');
-    for (var i = 0; i < spectrum.length; i++) {
-      csv
-        ..write(spectrum.frequencies[i].toStringAsPrecision(12))
-        ..write(',')
-        ..write(spectrum.amplitudes[i].toStringAsPrecision(12))
-        ..write(',')
-        ..writeln(spectrum.phases[i].toStringAsPrecision(12));
-    }
-    final spectrumResult = dominant < 0
-        ? null
-        : nextEraText(
-            context,
-            'Dominant frequency: ${spectrum.frequencies[dominant].toStringAsPrecision(8)} Hz',
-            '主频：${spectrum.frequencies[dominant].toStringAsPrecision(8)} Hz',
-          );
-    setState(() {
-      _busy = false;
-      _spectrumCsv = csv.toString().trimRight();
-      _spectrum = points;
-      _result = spectrumResult;
-      _error = points.isEmpty
-          ? nextEraText(
-              context,
-              'The signal could not be evaluated.',
-              '无法计算该信号。',
-            )
-          : null;
-    });
-    if (spectrumResult != null) {
-      recordCalculationHistory(
-        ref,
-        expression: 'FFT: ${_expression.text}',
-        result: spectrumResult,
-        backend: backend.name,
+        _expression.text,
+        a: start,
+        b: end,
+        samples: samples.clamp(2, 32768).toInt(),
       );
-    }
+      if (!mounted) {
+        return;
+      }
+      final points = <PlotPoint>[];
+      for (var i = 0; i < spectrum.length; i++) {
+        if (spectrum.amplitudes[i].isFinite) {
+          points.add(
+            PlotPoint(spectrum.frequencies[i], spectrum.amplitudes[i]),
+          );
+        }
+      }
+      final dominant = spectrum.dominantIndex;
+      final csv = StringBuffer('frequency,amplitude,phase\n');
+      for (var i = 0; i < spectrum.length; i++) {
+        csv
+          ..write(spectrum.frequencies[i].toStringAsPrecision(12))
+          ..write(',')
+          ..write(spectrum.amplitudes[i].toStringAsPrecision(12))
+          ..write(',')
+          ..writeln(spectrum.phases[i].toStringAsPrecision(12));
+      }
+      final spectrumResult = dominant < 0
+          ? null
+          : nextEraText(
+              context,
+              'Dominant frequency: ${spectrum.frequencies[dominant].toStringAsPrecision(8)} Hz',
+              '主频：${spectrum.frequencies[dominant].toStringAsPrecision(8)} Hz',
+            );
+      setState(() {
+        _busy = false;
+        _spectrumCsv = csv.toString().trimRight();
+        _spectrum = points;
+        _result = spectrumResult;
+        _error = points.isEmpty
+            ? nextEraText(
+                context,
+                'The signal could not be evaluated.',
+                '无法计算该信号。',
+              )
+            : null;
+      });
+      if (spectrumResult != null) {
+        recordCalculationHistory(
+          ref,
+          expression: 'FFT: ${_expression.text}',
+          result: spectrumResult,
+          backend: backend.name,
+        );
+      }
     } on FormatException catch (error) {
       if (mounted) {
         setState(() {

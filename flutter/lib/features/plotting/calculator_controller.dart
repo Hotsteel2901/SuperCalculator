@@ -133,8 +133,7 @@ class CalculatorController extends Notifier<CalculatorState> {
       );
       return;
     }
-    if (state.mode == 'function' &&
-        (parsedX == null || !parsedX.isFinite)) {
+    if (state.mode == 'function' && (parsedX == null || !parsedX.isFinite)) {
       state = state.copyWith(
         error: 'The x argument must be a finite number.',
         clearValue: true,
@@ -250,8 +249,7 @@ class CalculatorController extends Notifier<CalculatorState> {
       final ts = List<double>.generate(
         721,
         (index) =>
-            parameterStart +
-            (parameterEnd - parameterStart) * index / 720,
+            parameterStart + (parameterEnd - parameterStart) * index / 720,
         growable: false,
       );
       final xs = await backend.evaluateArray(expression, ts);
@@ -268,8 +266,7 @@ class CalculatorController extends Notifier<CalculatorState> {
       final angles = List<double>.generate(
         721,
         (index) =>
-            parameterStart +
-            (parameterEnd - parameterStart) * index / 720,
+            parameterStart + (parameterEnd - parameterStart) * index / 720,
         growable: false,
       );
       final radii = await backend.evaluateArray(expression, angles);

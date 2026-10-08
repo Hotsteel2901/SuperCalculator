@@ -234,8 +234,7 @@ class _PlotPageState extends ConsumerState<PlotPage> {
     final state = ref.watch(calculatorControllerProvider);
     final controller = ref.read(calculatorControllerProvider.notifier);
     final scheme = Theme.of(context).colorScheme;
-    final presets =
-        _availablePresets[state.mode] ?? const <_PlotPreset>[];
+    final presets = _availablePresets[state.mode] ?? const <_PlotPreset>[];
     final modes = <String, String>{
       'function': nextEraText(context, 'Function y=f(x)', '函数 y=f(x)'),
       'multi': nextEraText(context, 'Multi-curve overlay', '多曲线叠加'),
@@ -318,10 +317,10 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                                 preset.secondary!,
                               );
                             }
-                            _parameterStartController.text =
-                                preset.start.toString();
-                            _parameterEndController.text =
-                                preset.end.toString();
+                            _parameterStartController.text = preset.start
+                                .toString();
+                            _parameterEndController.text = preset.end
+                                .toString();
                             controller.setParameterRange(
                               preset.start,
                               preset.end,
@@ -375,31 +374,44 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                           style: const TextStyle(fontFamily: 'monospace'),
                         ),
                       ],
-                      if (state.mode == 'parametric' || state.mode == 'polar') ...<Widget>[
+                      if (state.mode == 'parametric' ||
+                          state.mode == 'polar') ...<Widget>[
                         SizedBox(height: tokens.controlGap),
                         FormRow(
                           children: <Widget>[
                             TextField(
                               controller: _parameterStartController,
-                              onChanged: (_) => _updateParameterRange(controller),
+                              onChanged: (_) =>
+                                  _updateParameterRange(controller),
                               decoration: InputDecoration(
-                                labelText: nextEraText(context, 'Parameter start', '参数起点'),
+                                labelText: nextEraText(
+                                  context,
+                                  'Parameter start',
+                                  '参数起点',
+                                ),
                               ),
-                              keyboardType: const TextInputType.numberWithOptions(
-                                decimal: true,
-                                signed: true,
-                              ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                    signed: true,
+                                  ),
                             ),
                             TextField(
                               controller: _parameterEndController,
-                              onChanged: (_) => _updateParameterRange(controller),
+                              onChanged: (_) =>
+                                  _updateParameterRange(controller),
                               decoration: InputDecoration(
-                                labelText: nextEraText(context, 'Parameter end', '参数终点'),
+                                labelText: nextEraText(
+                                  context,
+                                  'Parameter end',
+                                  '参数终点',
+                                ),
                               ),
-                              keyboardType: const TextInputType.numberWithOptions(
-                                decimal: true,
-                                signed: true,
-                              ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                    signed: true,
+                                  ),
                             ),
                           ],
                         ),
@@ -542,16 +554,18 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                             _gesturePitchStart = _plotPitch;
                           },
                           onScaleUpdate: (details) {
-                            final delta = details.focalPoint - _gestureFocalStart;
+                            final delta =
+                                details.focalPoint - _gestureFocalStart;
                             setState(() {
                               _plotZoom = (_gestureZoomStart * details.scale)
                                   .clamp(.5, 4.0)
                                   .toDouble();
                               if (state.mode == 'surface') {
                                 _plotYaw = _gestureYawStart + delta.dx * .01;
-                                _plotPitch = (_gesturePitchStart - delta.dy * .01)
-                                    .clamp(-1.35, 1.35)
-                                    .toDouble();
+                                _plotPitch =
+                                    (_gesturePitchStart - delta.dy * .01)
+                                        .clamp(-1.35, 1.35)
+                                        .toDouble();
                               } else {
                                 _plotPan = _gesturePanStart + delta;
                               }
@@ -577,11 +591,15 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                       SizedBox(height: tokens.controlGap),
                       Row(
                         children: <Widget>[
-                          Expanded(child: Text(l10n.plotPoints(state.points.length))),
+                          Expanded(
+                            child: Text(l10n.plotPoints(state.points.length)),
+                          ),
                           TextButton.icon(
                             onPressed: _resetPlotView,
                             icon: const Icon(Icons.center_focus_strong),
-                            label: Text(nextEraText(context, 'Reset view', '重置视图')),
+                            label: Text(
+                              nextEraText(context, 'Reset view', '重置视图'),
+                            ),
                           ),
                         ],
                       ),

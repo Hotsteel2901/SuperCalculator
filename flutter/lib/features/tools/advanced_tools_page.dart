@@ -743,12 +743,14 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
     await _runBusy(
       () async {
         if (_integerOperation.startsWith('bitwise ')) {
-          final value = await ref.read(calcBackendProvider).bitwise(
-            _integerOperation.replaceFirst('bitwise ', ''),
-            n.toInt(),
-            m.toInt(),
-            _bitwiseWidth,
-          );
+          final value = await ref
+              .read(calcBackendProvider)
+              .bitwise(
+                _integerOperation.replaceFirst('bitwise ', ''),
+                n.toInt(),
+                m.toInt(),
+                _bitwiseWidth,
+              );
           _integerResult = _formatBitwise(value, _bitwiseWidth);
           return;
         }
@@ -950,7 +952,8 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
             final value = await backend.npv(rate, values);
             _financeResult = 'NPV = ${value.toStringAsPrecision(12)}';
           case 'irr':
-            _financeResult = 'IRR = ${_formatNullable(await backend.irr(values))}';
+            _financeResult =
+                'IRR = ${_formatNullable(await backend.irr(values))}';
           case 'depreciation':
             final value = await backend.straightLineDepreciation(
               principal,
@@ -976,7 +979,8 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
               years: years,
             );
             _financeResult = 'future value = ${value.toStringAsPrecision(12)}';
-        };
+        }
+        ;
       },
       historyExpression: 'finance $_financeOperation',
       historyResult: () => _financeResult,

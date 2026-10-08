@@ -8,6 +8,5 @@ class PlotPoint {
   final double y;
   final double? z;
 
-  bool get isFinite =>
-      x.isFinite && y.isFinite && (z == null || z!.isFinite);
+  bool get isFinite => x.isFinite && y.isFinite && (z == null || z!.isFinite);
 }

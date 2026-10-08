@@ -236,50 +236,50 @@ class _OdePageState extends ConsumerState<OdePage> {
     try {
       final solutions = await Future.wait(
         methods.map(
-        (method) => backend.solveOde(
-          _expression.text,
-          x0: x0,
-          y0: y0,
-          xEnd: xEnd,
-          steps: steps.clamp(1, 10000).toInt(),
-          method: method,
+          (method) => backend.solveOde(
+            _expression.text,
+            x0: x0,
+            y0: y0,
+            xEnd: xEnd,
+            steps: steps.clamp(1, 10000).toInt(),
+            method: method,
+          ),
         ),
-      ),
-    );
-    if (!mounted) {
-      return;
-    }
-    final series = solutions.map(_toPoints).toList(growable: false);
-    final points = _compareMethods
-        ? (series.isEmpty
-              ? const <PlotPoint>[]
-              : series[methods.indexOf(_method)])
-        : series.first;
-    final successful = series.where((item) => item.isNotEmpty).length;
-    final odeResult = successful == 0
-        ? null
-        : nextEraText(
-            context,
-            _compareMethods
-                ? 'Compared $successful numerical methods.'
-                : '${methods.first}: ${points.length} points',
-            _compareMethods
-                ? '已比较 $successful 种数值方法。'
-                : '${methods.first}：${points.length} 个点',
-          );
-    setState(() {
-      _busy = false;
-      _points = points;
-      _series = series;
-      _result = odeResult;
-      _error = successful == 0
-          ? nextEraText(
+      );
+      if (!mounted) {
+        return;
+      }
+      final series = solutions.map(_toPoints).toList(growable: false);
+      final points = _compareMethods
+          ? (series.isEmpty
+                ? const <PlotPoint>[]
+                : series[methods.indexOf(_method)])
+          : series.first;
+      final successful = series.where((item) => item.isNotEmpty).length;
+      final odeResult = successful == 0
+          ? null
+          : nextEraText(
               context,
-              'The ODE could not be evaluated.',
-              '无法计算该微分方程。',
-            )
-          : null;
-    });
+              _compareMethods
+                  ? 'Compared $successful numerical methods.'
+                  : '${methods.first}: ${points.length} points',
+              _compareMethods
+                  ? '已比较 $successful 种数值方法。'
+                  : '${methods.first}：${points.length} 个点',
+            );
+      setState(() {
+        _busy = false;
+        _points = points;
+        _series = series;
+        _result = odeResult;
+        _error = successful == 0
+            ? nextEraText(
+                context,
+                'The ODE could not be evaluated.',
+                '无法计算该微分方程。',
+              )
+            : null;
+      });
       if (odeResult != null) {
         recordCalculationHistory(
           ref,

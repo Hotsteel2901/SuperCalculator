@@ -54,8 +54,12 @@ class FunctionPlotPainter extends CustomPainter {
       xMin = -10;
       xMax = 10;
     }
-    var yMin = finite.map((point) => point.y).reduce((a, b) => math.min(a, b).toDouble());
-    var yMax = finite.map((point) => point.y).reduce((a, b) => math.max(a, b).toDouble());
+    var yMin = finite
+        .map((point) => point.y)
+        .reduce((a, b) => math.min(a, b).toDouble());
+    var yMax = finite
+        .map((point) => point.y)
+        .reduce((a, b) => math.max(a, b).toDouble());
     if ((yMax - yMin).abs() < 1e-9) {
       yMin -= 1;
       yMax += 1;
@@ -72,7 +76,11 @@ class FunctionPlotPainter extends CustomPainter {
         ..style = PaintingStyle.fill;
       for (final point in finite) {
         final mapped = _map2d(point, size, xMin, xMax, yMin, yMax);
-        canvas.drawCircle(mapped, 1.7 * math.sqrt(zoom.clamp(.5, 4)), pointPaint);
+        canvas.drawCircle(
+          mapped,
+          1.7 * math.sqrt(zoom.clamp(.5, 4)),
+          pointPaint,
+        );
       }
       return;
     }
@@ -104,14 +112,24 @@ class FunctionPlotPainter extends CustomPainter {
 
   void _drawSurface(Canvas canvas, Size size) {
     final finite = points
-        .where((point) => point.x.isFinite && point.y.isFinite && point.z != null && point.z!.isFinite)
+        .where(
+          (point) =>
+              point.x.isFinite &&
+              point.y.isFinite &&
+              point.z != null &&
+              point.z!.isFinite,
+        )
         .toList(growable: false);
     if (finite.isEmpty) {
       _drawGrid(canvas, size, -10, 10, -10, 10);
       return;
     }
-    final zMin = finite.map((point) => point.z!).reduce((a, b) => math.min(a, b).toDouble());
-    final zMax = finite.map((point) => point.z!).reduce((a, b) => math.max(a, b).toDouble());
+    final zMin = finite
+        .map((point) => point.z!)
+        .reduce((a, b) => math.min(a, b).toDouble());
+    final zMax = finite
+        .map((point) => point.z!)
+        .reduce((a, b) => math.max(a, b).toDouble());
     final zSpan = (zMax - zMin).abs() < 1e-9 ? 1.0 : zMax - zMin;
     final projected = <PlotPoint, _ProjectedPoint>{};
     for (final point in finite) {
@@ -132,7 +150,8 @@ class FunctionPlotPainter extends CustomPainter {
     };
     final cells = <String, PlotPoint>{
       for (final point in finite)
-        '${xIndex[_coordinateKey(point.x)]}:${yIndex[_coordinateKey(point.y)]}': point,
+        '${xIndex[_coordinateKey(point.x)]}:${yIndex[_coordinateKey(point.y)]}':
+            point,
     };
 
     for (final point in finite) {
@@ -148,8 +167,7 @@ class FunctionPlotPainter extends CustomPainter {
       if (down != null) {
         canvas.drawLine(from, projected[down]!.offset, gridPaint);
       }
-      final normalized =
-          ((point.z! - zMin) / zSpan).clamp(0.0, 1.0).toDouble();
+      final normalized = ((point.z! - zMin) / zSpan).clamp(0.0, 1.0).toDouble();
       pointPaint.color = HSVColor.fromAHSV(
         .9,
         220 - normalized * 180,
@@ -168,16 +186,8 @@ class FunctionPlotPainter extends CustomPainter {
       zMin,
       zSpan,
     ).offset;
-    canvas.drawLine(
-      origin,
-      origin + const Offset(42, 0),
-      labelPaint,
-    );
-    canvas.drawLine(
-      origin,
-      origin + const Offset(-24, -24),
-      labelPaint,
-    );
+    canvas.drawLine(origin, origin + const Offset(42, 0), labelPaint);
+    canvas.drawLine(origin, origin + const Offset(-24, -24), labelPaint);
   }
 
   _ProjectedPoint _projectSurface(
@@ -232,14 +242,7 @@ class FunctionPlotPainter extends CustomPainter {
         yMin,
         yMax,
       );
-      final end = _map2d(
-        PlotPoint(value, yMax),
-        size,
-        xMin,
-        xMax,
-        yMin,
-        yMax,
-      );
+      final end = _map2d(PlotPoint(value, yMax), size, xMin, xMax, yMin, yMax);
       canvas.drawLine(start, end, grid);
     }
     for (var index = 0; index <= 10; index++) {
@@ -252,14 +255,7 @@ class FunctionPlotPainter extends CustomPainter {
         yMin,
         yMax,
       );
-      final end = _map2d(
-        PlotPoint(xMax, value),
-        size,
-        xMin,
-        xMax,
-        yMin,
-        yMax,
-      );
+      final end = _map2d(PlotPoint(xMax, value), size, xMin, xMax, yMin, yMax);
       canvas.drawLine(start, end, grid);
     }
     if (xMin <= 0 && xMax >= 0) {
