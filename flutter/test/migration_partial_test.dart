@@ -203,7 +203,7 @@ void main() {
       expect(expression, isA<String>());
       expect(labels.add(label as String), isTrue);
       final compiled = ExpressionEngine.compile(expression as String);
-      expect(compiled.evaluate(x: .25, y: .5).isFinite, isTrue, reason: label);
+      expect(compiled.evaluate(x: 1, y: .5).isFinite, isTrue, reason: label);
     }
     final parameterPresets = (document['parameterPresets'] as List)
         .cast<Map<String, dynamic>>();

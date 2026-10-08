@@ -1074,10 +1074,21 @@ class DartComputation {
         .map((x) => function.evaluate(x: x))
         .toList(growable: false);
     final roots = <double>[];
+    final rootSeparation = math.max(
+      1e-5,
+      (end - start) / samples * .5,
+    ).toDouble();
     void addRoot(double root) {
-      if (root.isFinite &&
-          roots.every((existing) => (existing - root).abs() > 1e-5)) {
+      if (!root.isFinite) return;
+      final existingIndex = roots.indexWhere(
+        (existing) => (existing - root).abs() <= rootSeparation,
+      );
+      if (existingIndex < 0) {
         roots.add(root);
+      } else {
+        // A sampled even-multiplicity root can be seen once as a near-zero
+        // sample and again after Newton refinement. Keep the refined value.
+        roots[existingIndex] = root;
       }
     }
 
