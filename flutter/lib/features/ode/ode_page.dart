@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/backend/providers.dart';
 import '../../core/compute/calculation_models.dart';
+import '../../core/history/history_repository.dart';
 import '../../core/plot/plot_point.dart';
 import '../../core/ui/feature_widgets.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -254,21 +255,22 @@ class _OdePageState extends ConsumerState<OdePage> {
               : series[methods.indexOf(_method)])
         : series.first;
     final successful = series.where((item) => item.isNotEmpty).length;
+    final odeResult = successful == 0
+        ? null
+        : nextEraText(
+            context,
+            _compareMethods
+                ? 'Compared $successful numerical methods.'
+                : '${methods.first}: ${points.length} points',
+            _compareMethods
+                ? '已比较 $successful 种数值方法。'
+                : '${methods.first}：${points.length} 个点',
+          );
     setState(() {
       _busy = false;
       _points = points;
       _series = series;
-      _result = successful == 0
-          ? null
-          : nextEraText(
-              context,
-              _compareMethods
-                  ? 'Compared $successful numerical methods.'
-                  : '${methods.first}: ${points.length} points',
-              _compareMethods
-                  ? '已比较 $successful 种数值方法。'
-                  : '${methods.first}：${points.length} 个点',
-            );
+      _result = odeResult;
       _error = successful == 0
           ? nextEraText(
               context,
@@ -277,5 +279,13 @@ class _OdePageState extends ConsumerState<OdePage> {
             )
           : null;
     });
+    if (odeResult != null) {
+      recordCalculationHistory(
+        ref,
+        expression: 'dy/dx = ${_expression.text} (${methods.join(', ')})',
+        result: odeResult,
+        backend: backend.name,
+      );
+    }
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/backend/providers.dart';
+import '../../core/history/history_repository.dart';
 import '../../core/ui/feature_widgets.dart';
 import '../../l10n/generated/app_localizations.dart';
 
@@ -209,6 +210,14 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
           : 'x = ${result.value!.toStringAsPrecision(12)}';
       _error = result.error;
     });
+    if (result.value != null) {
+      recordCalculationHistory(
+        ref,
+        expression: '${_expression.text} = 0',
+        result: 'x = ${result.value!.toStringAsPrecision(12)}',
+        backend: result.backend,
+      );
+    }
   }
 
   Future<void> _scanRoots() async {
@@ -257,12 +266,22 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
     if (!mounted) {
       return;
     }
+    final rootsText = roots.isEmpty
+        ? null
+        : roots.map((root) => root.toStringAsPrecision(10)).join(', ');
     setState(() {
       _busy = false;
-      _result = roots.isEmpty
-          ? nextEraText(context, 'No sign-changing roots found.', '未找到变号根。')
-          : roots.map((root) => root.toStringAsPrecision(10)).join(', ');
+      _result = rootsText ??
+          nextEraText(context, 'No sign-changing roots found.', '未找到变号根。');
     });
+    if (rootsText != null) {
+      recordCalculationHistory(
+        ref,
+        expression: 'scan roots: ${_expression.text}',
+        result: rootsText,
+        backend: backend.name,
+      );
+    }
   }
 
   Future<void> _findIntersections() async {
@@ -278,25 +297,34 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
       _result = null;
     });
     try {
-      final roots = await ref
-          .read(calcBackendProvider)
-          .intersections(
-            _expression.text,
-            _secondExpression.text,
-            minimum,
-            maximum,
-          );
+      final backend = ref.read(calcBackendProvider);
+      final roots = await backend.intersections(
+        _expression.text,
+        _secondExpression.text,
+        minimum,
+        maximum,
+      );
       if (!mounted) {
         return;
       }
+      final intersectionsText = roots.isEmpty
+          ? null
+          : roots
+                .map((root) => 'x = ${root.toStringAsPrecision(10)}')
+                .join(', ');
       setState(() {
         _busy = false;
-        _result = roots.isEmpty
-            ? nextEraText(context, 'No intersections found.', '未找到交点。')
-            : roots
-                  .map((root) => 'x = ${root.toStringAsPrecision(10)}')
-                  .join(', ');
+        _result = intersectionsText ??
+            nextEraText(context, 'No intersections found.', '未找到交点。');
       });
+      if (intersectionsText != null) {
+        recordCalculationHistory(
+          ref,
+          expression: '${_expression.text} = ${_secondExpression.text}',
+          result: intersectionsText,
+          backend: backend.name,
+        );
+      }
     } on FormatException catch (error) {
       if (mounted) {
         setState(() {
@@ -326,11 +354,12 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
       if (!mounted) {
         return;
       }
+      final solutionText = solution == null
+          ? null
+          : 'x = ${solution['x']!.toStringAsPrecision(12)}, y = ${solution['y']!.toStringAsPrecision(12)}';
       setState(() {
         _busy = false;
-        _result = solution == null
-            ? null
-            : 'x = ${solution['x']!.toStringAsPrecision(12)}, y = ${solution['y']!.toStringAsPrecision(12)}';
+        _result = solutionText;
         _error = solution == null
             ? nextEraText(
                 context,
@@ -339,6 +368,14 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
               )
             : null;
       });
+      if (solutionText != null) {
+        recordCalculationHistory(
+          ref,
+          expression: '${_expression.text} = 0; ${_secondExpression.text} = 0',
+          result: solutionText,
+          backend: ref.read(calcBackendProvider).name,
+        );
+      }
     } on FormatException catch (error) {
       if (mounted) {
         setState(() {
@@ -361,20 +398,20 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
       _result = null;
     });
     try {
-      final value = await ref
-          .read(calcBackendProvider)
-          .tangentAndNormal(_expression.text, x);
+      final backend = ref.read(calcBackendProvider);
+      final value = await backend.tangentAndNormal(_expression.text, x);
       if (!mounted) {
         return;
       }
+      final normal = value?['normalSlope'];
+      final tangentText = value == null
+          ? null
+          : 'point = (${x.toStringAsPrecision(10)}, ${value['y']!.toStringAsPrecision(10)})\n'
+                'tangent slope = ${value['slope']!.toStringAsPrecision(10)}\n'
+                'normal slope = ${normal!.isFinite ? normal.toStringAsPrecision(10) : "vertical"}';
       setState(() {
         _busy = false;
-        final normal = value?['normalSlope'];
-        _result = value == null
-            ? null
-            : 'point = (${x.toStringAsPrecision(10)}, ${value['y']!.toStringAsPrecision(10)})\n'
-                  'tangent slope = ${value['slope']!.toStringAsPrecision(10)}\n'
-                  'normal slope = ${normal!.isFinite ? normal.toStringAsPrecision(10) : "vertical"}';
+        _result = tangentText;
         _error = value == null
             ? nextEraText(
                 context,
@@ -383,6 +420,14 @@ class _EquationsPageState extends ConsumerState<EquationsPage> {
               )
             : null;
       });
+      if (tangentText != null) {
+        recordCalculationHistory(
+          ref,
+          expression: 'tangent/normal: ${_expression.text} at x=$x',
+          result: tangentText,
+          backend: backend.name,
+        );
+      }
     } on FormatException catch (error) {
       if (mounted) {
         setState(() {

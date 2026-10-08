@@ -121,7 +121,7 @@
         "calc_bridge.py",
         "super_calc_bridged.py"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "id": "equations.all",
@@ -373,7 +373,7 @@
     "goldenVectors": "docs/migration/golden_vectors.json",
     "ciWorkflow": ".github/workflows/flutter-next-era.yml",
     "knownGaps": [
-      "Persistent history storage is intentionally isolated behind the repository and remains session-scoped until a platform storage adapter is selected.",
+      "History is persisted through SharedPreferences on supported platforms; private browsing or restricted profiles can still fall back to session-only storage.",
       "Surface/contour/vector previews currently use a lightweight 2D projection; a full interactive 3D renderer is tracked as a compatibility-safe follow-up.",
       "Complete preset inventories, production per-platform FFI packaging/signing, WebAssembly packaging and physical-device performance/accessibility certification remain release gates."
     ]

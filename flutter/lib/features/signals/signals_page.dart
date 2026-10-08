@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/backend/providers.dart';
+import '../../core/history/history_repository.dart';
 import '../../core/plot/plot_point.dart';
 import '../../core/ui/feature_widgets.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -223,30 +224,35 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
       _result = null;
     });
     try {
+      final sampleCount = samples.clamp(2, 4096).toInt();
+      final backend = ref.read(calcBackendProvider);
       final xs = List<double>.generate(
-        samples.clamp(2, 4096).toInt(),
-        (index) => start + (end - start) * index / (samples - 1),
+        sampleCount,
+        (index) => start + (end - start) * index / (sampleCount - 1),
       );
-      final values = await ref
-          .read(calcBackendProvider)
-          .evaluateArray(_expression.text, xs);
+      final values = await backend.evaluateArray(_expression.text, xs);
       final signal = values.whereType<double>().toList(growable: false);
-      final result = await ref
-          .read(calcBackendProvider)
-          .convolution(
+      final result = await backend.convolution(
             signal,
             kernel.whereType<double>().toList(growable: false),
           );
       if (!mounted) return;
+      final convolutionText = nextEraText(
+        context,
+        'Convolution length: ${result.length}',
+        '卷积长度：${result.length}',
+      );
       setState(() {
         _busy = false;
-        _result = nextEraText(
-          context,
-          'Convolution length: ${result.length}',
-          '卷积长度：${result.length}',
-        );
+        _result = convolutionText;
         _error = null;
       });
+      recordCalculationHistory(
+        ref,
+        expression: 'convolution: ${_expression.text}',
+        result: convolutionText,
+        backend: backend.name,
+      );
     } on FormatException catch (error) {
       if (mounted) {
         setState(() {
@@ -278,14 +284,13 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
       _spectrumCsv = null;
       _spectrum = const <PlotPoint>[];
     });
-    final spectrum = await ref
-        .read(calcBackendProvider)
-        .spectrum(
-          _expression.text,
-          a: start,
-          b: end,
-          samples: samples.clamp(2, 32768).toInt(),
-        );
+    final backend = ref.read(calcBackendProvider);
+    final spectrum = await backend.spectrum(
+      _expression.text,
+      a: start,
+      b: end,
+      samples: samples.clamp(2, 32768).toInt(),
+    );
     if (!mounted) {
       return;
     }
@@ -305,17 +310,18 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
         ..write(',')
         ..writeln(spectrum.phases[i].toStringAsPrecision(12));
     }
+    final spectrumResult = dominant < 0
+        ? null
+        : nextEraText(
+            context,
+            'Dominant frequency: ${spectrum.frequencies[dominant].toStringAsPrecision(8)} Hz',
+            '主频：${spectrum.frequencies[dominant].toStringAsPrecision(8)} Hz',
+          );
     setState(() {
       _busy = false;
       _spectrumCsv = csv.toString().trimRight();
       _spectrum = points;
-      _result = dominant < 0
-          ? null
-          : nextEraText(
-              context,
-              'Dominant frequency: ${spectrum.frequencies[dominant].toStringAsPrecision(8)} Hz',
-              '主频：${spectrum.frequencies[dominant].toStringAsPrecision(8)} Hz',
-            );
+      _result = spectrumResult;
       _error = points.isEmpty
           ? nextEraText(
               context,
@@ -324,5 +330,13 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
             )
           : null;
     });
+    if (spectrumResult != null) {
+      recordCalculationHistory(
+        ref,
+        expression: 'FFT: ${_expression.text}',
+        result: spectrumResult,
+        backend: backend.name,
+      );
+    }
   }
 }

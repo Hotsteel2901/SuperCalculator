@@ -41,6 +41,16 @@ void main() {
     expect(coefficients![0], closeTo(1, 1e-6));
     expect(coefficients[1], closeTo(1, 1e-4));
     expect(DartComputation.findExtremum('x^2', -2, 2), closeTo(0, 1e-5));
+    expect(DartComputation.arcLength('0', 0, 2), closeTo(2, 1e-8));
+    expect(DartComputation.volumeDisk('1', 0, 1), closeTo(math.pi, 1e-8));
+    expect(
+      DartComputation.volumeWasher('2', '1', 0, 1),
+      closeTo(3 * math.pi, 1e-8),
+    );
+    expect(
+      DartComputation.volumeShell('1', 0, 1),
+      closeTo(math.pi, 1e-8),
+    );
   });
 
   test('area, parametric sampling and two-variable systems work', () {
@@ -224,6 +234,36 @@ void main() {
     expect(
       DartComputation.npv(.1, <double>[-100, 60, 60]),
       closeTo(4.13223, 1e-5),
+    );
+  });
+
+  test('finance tools handle zero rates and retirement contributions', () {
+    expect(
+      DartComputation.retirementFutureValue(
+        initialBalance: 0,
+        monthlyContribution: 100,
+        annualRate: 0,
+        years: 1,
+      ),
+      closeTo(1200, 1e-12),
+    );
+    expect(
+      DartComputation.retirementFutureValue(
+        initialBalance: 1000,
+        monthlyContribution: 0,
+        annualRate: .12,
+        years: 1,
+      ),
+      closeTo(1126.82503013197, 1e-9),
+    );
+    expect(
+      () => DartComputation.retirementFutureValue(
+        initialBalance: -1,
+        monthlyContribution: 0,
+        annualRate: .1,
+        years: 1,
+      ),
+      throwsA(isA<FormatException>()),
     );
   });
 

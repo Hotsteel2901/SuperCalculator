@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/backend/providers.dart';
+import '../../core/history/history_repository.dart';
 import '../../core/ui/feature_widgets.dart';
 import '../../l10n/generated/app_localizations.dart';
 
@@ -18,6 +19,7 @@ class _CalculusPageState extends ConsumerState<CalculusPage> {
   final _x = TextEditingController(text: '1');
   final _a = TextEditingController(text: '0');
   final _b = TextEditingController(text: 'pi');
+  final _order = TextEditingController(text: '4');
   String? _result;
   String? _error;
   bool _busy = false;
@@ -29,6 +31,7 @@ class _CalculusPageState extends ConsumerState<CalculusPage> {
     _x.dispose();
     _a.dispose();
     _b.dispose();
+    _order.dispose();
     super.dispose();
   }
 
@@ -104,6 +107,13 @@ class _CalculusPageState extends ConsumerState<CalculusPage> {
                         decimal: true,
                       ),
                     ),
+                    TextField(
+                      controller: _order,
+                      decoration: InputDecoration(
+                        labelText: nextEraText(context, 'Taylor order', 'Taylor 阶数'),
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
                   ],
                 ),
                 Wrap(
@@ -151,6 +161,31 @@ class _CalculusPageState extends ConsumerState<CalculusPage> {
                         nextEraText(context, 'Area between', '曲线间面积'),
                       ),
                     ),
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : () => _run('taylor'),
+                      icon: const Icon(Icons.functions),
+                      label: Text(nextEraText(context, 'Taylor series', 'Taylor 展开')),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : () => _run('arc'),
+                      icon: const Icon(Icons.timeline),
+                      label: Text(nextEraText(context, 'Arc length', '弧长')),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : () => _run('disk'),
+                      icon: const Icon(Icons.circle_outlined),
+                      label: Text(nextEraText(context, 'Disk volume', '圆盘体积')),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : () => _run('washer'),
+                      icon: const Icon(Icons.donut_large),
+                      label: Text(nextEraText(context, 'Washer volume', '垫圈体积')),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : () => _run('shell'),
+                      icon: const Icon(Icons.rotate_90_degrees_ccw),
+                      label: Text(nextEraText(context, 'Shell volume', '壳体积')),
+                    ),
                   ],
                 ),
               ],
@@ -193,6 +228,55 @@ class _CalculusPageState extends ConsumerState<CalculusPage> {
       _result = null;
     });
     final backend = ref.read(calcBackendProvider);
+    try {
+      if (operation == 'taylor') {
+      final order = int.tryParse(_order.text.trim());
+      if (order == null || order < 0 || order > 12) {
+        if (mounted) {
+          setState(() {
+            _busy = false;
+            _error = nextEraText(
+              context,
+              'Taylor order must be between 0 and 12.',
+              'Taylor 阶数必须在 0 到 12 之间。',
+            );
+          });
+        }
+        return;
+      }
+      final coefficients = await backend.taylorCoefficients(
+        _expression.text,
+        x,
+        order,
+      );
+      if (!mounted) return;
+      final formatted = coefficients == null
+          ? null
+          : coefficients
+                .asMap()
+                .entries
+                .map(
+                  (entry) =>
+                      'c${entry.key} = ${entry.value?.toStringAsPrecision(12) ?? 'undefined'}',
+                )
+                .join('\n');
+      setState(() {
+        _busy = false;
+        _result = formatted;
+        _error = coefficients == null
+            ? nextEraText(context, 'Taylor series failed.', 'Taylor 展开失败。')
+            : null;
+      });
+      if (formatted != null) {
+        recordCalculationHistory(
+          ref,
+          expression: 'Taylor(${_expression.text}, x=$x, order=$order)',
+          result: formatted,
+          backend: backend.name,
+        );
+      }
+      return;
+    }
     final result = switch (operation) {
       'integral' => await backend.integrate(_expression.text, a, b),
       'limit' => await backend.limit(_expression.text, x),
@@ -209,6 +293,15 @@ class _CalculusPageState extends ConsumerState<CalculusPage> {
         a,
         b,
       ),
+      'arc' => await backend.arcLength(_expression.text, a, b),
+      'disk' => await backend.volumeDisk(_expression.text, a, b),
+      'washer' => await backend.volumeWasher(
+        _expression.text,
+        _secondExpression.text,
+        a,
+        b,
+      ),
+      'shell' => await backend.volumeShell(_expression.text, a, b),
       _ => await backend.derivative(
         _expression.text,
         x,
@@ -223,5 +316,32 @@ class _CalculusPageState extends ConsumerState<CalculusPage> {
       _result = result.value?.toStringAsPrecision(12);
       _error = result.error;
     });
+      if (result.value != null) {
+        recordCalculationHistory(
+          ref,
+          expression: '${operation.toUpperCase()}: ${_expression.text}',
+          result: result.value!.toStringAsPrecision(12),
+          backend: result.backend,
+        );
+      }
+    } on FormatException catch (error) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = error.message;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = nextEraText(
+            context,
+            'The calculus operation failed.',
+            '微积分运算失败。',
+          );
+        });
+      }
+    }
   }
 }

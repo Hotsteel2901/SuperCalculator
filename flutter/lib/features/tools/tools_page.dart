@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/compute/computation.dart';
+import '../../core/history/history_repository.dart';
 import '../../core/ui/feature_widgets.dart';
 import '../../l10n/generated/app_localizations.dart';
 
-class ToolsPage extends StatefulWidget {
+class ToolsPage extends ConsumerStatefulWidget {
   const ToolsPage({super.key});
 
   @override
   State<ToolsPage> createState() => _ToolsPageState();
 }
 
-class _ToolsPageState extends State<ToolsPage> {
+class _ToolsPageState extends ConsumerState<ToolsPage> {
   final _baseInput = TextEditingController(text: 'FF');
   final _baseFrom = TextEditingController(text: '16');
   final _baseTo = TextEditingController(text: '2');
@@ -221,6 +223,12 @@ class _ToolsPageState extends State<ToolsPage> {
         _baseResult = value;
         _error = null;
       });
+      recordCalculationHistory(
+        ref,
+        expression: '${_baseInput.text} (base $from → $to)',
+        result: value,
+        backend: 'Dart computation',
+      );
     } on FormatException catch (error) {
       _showError(error.message);
     }
@@ -239,10 +247,17 @@ class _ToolsPageState extends State<ToolsPage> {
         _toUnit,
         value,
       );
+      final resultText = '${result.toStringAsPrecision(12)} $_toUnit';
       setState(() {
-        _unitResult = '${result.toStringAsPrecision(12)} $_toUnit';
+        _unitResult = resultText;
         _error = null;
       });
+      recordCalculationHistory(
+        ref,
+        expression: '${_unitValue.text} $_fromUnit → $_toUnit',
+        result: resultText,
+        backend: 'Dart computation',
+      );
     } on FormatException catch (error) {
       _showError(error.message);
     }

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/backend/providers.dart';
 import '../../core/compute/calculation_models.dart';
 import '../../core/compute/computation.dart';
+import '../../core/history/history_repository.dart';
 import '../../core/ui/feature_widgets.dart';
 
 String _calendarDefaultDate([int offsetDays = 0]) {
@@ -42,6 +43,7 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
   final _financeYear = TextEditingController(text: '1');
   final _financeCoupon = TextEditingController(text: '0.05');
   final _financeMarket = TextEditingController(text: '0.04');
+  final _financeContribution = TextEditingController(text: '1000');
   final _probabilityN = TextEditingController(text: '10');
   final _probabilityR = TextEditingController(text: '3');
   final _probabilityA = TextEditingController(text: '0.6');
@@ -96,6 +98,7 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
       _financeYear,
       _financeCoupon,
       _financeMarket,
+      _financeContribution,
       _probabilityN,
       _probabilityR,
       _probabilityA,
@@ -384,9 +387,10 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
                       'compound',
                       'npv',
                       'irr',
-                      'depreciation',
-                      'bond',
-                    ]
+              'depreciation',
+              'bond',
+              'retirement',
+            ]
                     .map(
                       (value) => DropdownMenuItem<String>(
                         value: value,
@@ -415,6 +419,7 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
               _numberField(_financeYear, 'Year', '年份'),
               _numberField(_financeCoupon, 'Coupon rate', '票面利率'),
               _numberField(_financeMarket, 'Bond market rate', '债券市场利率'),
+              _numberField(_financeContribution, 'Monthly contribution', '每月投入'),
             ],
           ),
           const SizedBox(height: 8),
@@ -716,7 +721,10 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
           );
       _complexResult =
           '$result\n|z| = ${result.magnitude.toStringAsPrecision(10)}\narg(z) = ${result.phase.toStringAsPrecision(10)}';
-    });
+    },
+      historyExpression: 'complex $_complexOperation',
+      historyResult: () => _complexResult,
+    );
   }
 
   Future<void> _calculateInteger() async {
@@ -747,7 +755,10 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
           _bitwiseWidth,
         ),
       };
-    });
+    },
+      historyExpression: '$_integerOperation: ${_integer.text}',
+      historyResult: () => _integerResult,
+    );
   }
 
   String _formatBitwise(int value, int width) {
@@ -755,6 +766,12 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
     final octal = value.toRadixString(8);
     final hexadecimal = value.toRadixString(16).toUpperCase();
     return 'bin = $binary\noct = $octal\ndec = $value\nhex = 0x$hexadecimal';
+  }
+
+  String? _distributionSummary() {
+    final result = _distributionResult;
+    if (result == null) return null;
+    return 'pdf = ${_format(result.pdf)}; cdf = ${_format(result.cdf)}; ppf = ${_format(result.ppf)}';
   }
 
   Future<void> _calculateDistribution() async {
@@ -791,7 +808,10 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
       _distributionResult = await ref
           .read(calcBackendProvider)
           .distribution(_distribution, x, parameters);
-    });
+    },
+      historyExpression: '$_distribution distribution at x=$x',
+      historyResult: _distributionSummary,
+    );
   }
 
   Future<void> _calculateProbability() async {
@@ -824,7 +844,10 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
         _ => '',
       };
       _probabilityResult = result;
-    });
+    },
+      historyExpression: 'probability $_probabilityOperation',
+      historyResult: () => _probabilityResult,
+    );
   }
 
   Future<void> _calculateCalendar() async {
@@ -842,7 +865,10 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
         ),
         _ => '',
       };
-    });
+    },
+      historyExpression: 'calendar $_calendarOperation: ${_calendarDate.text}',
+      historyResult: () => _calendarResult,
+    );
   }
 
   String _weekdayLabel(BuildContext context, int weekday) {
@@ -869,6 +895,7 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
     final year = int.tryParse(_financeYear.text.trim());
     final coupon = double.tryParse(_financeCoupon.text.trim());
     final market = double.tryParse(_financeMarket.text.trim());
+    final contribution = double.tryParse(_financeContribution.text.trim());
     final cashFlows = _financeCashFlows.text
         .split(RegExp(r'[,;\s]+'))
         .where((value) => value.trim().isNotEmpty)
@@ -883,6 +910,7 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
         year == null ||
         coupon == null ||
         market == null ||
+        contribution == null ||
         cashFlows.any((value) => value == null)) {
       return _showError('Enter valid finance inputs.');
     }
@@ -899,9 +927,14 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
           'annual depreciation = ${DartComputation.straightLineDepreciation(principal, salvage, periods, year).toStringAsPrecision(12)}',
         'bond' =>
           'bond price = ${DartComputation.bondPrice(faceValue: principal, couponRate: coupon, marketRate: market, periods: periods).toStringAsPrecision(12)}',
+        'retirement' =>
+          'future value = ${DartComputation.retirementFutureValue(initialBalance: principal, monthlyContribution: contribution, annualRate: rate, years: years).toStringAsPrecision(12)}',
         _ => '',
       };
-    });
+    },
+      historyExpression: 'finance $_financeOperation',
+      historyResult: () => _financeResult,
+    );
   }
 
   String _formatFinanceLoan(double principal, double rate, int periods) {
@@ -939,7 +972,10 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
         );
       }
       _customResult = value.toStringAsPrecision(12);
-    });
+    },
+      historyExpression: _customExpression.text,
+      historyResult: () => _customResult,
+    );
   }
 
   Future<void> _buildFunctionTable() async {
@@ -960,22 +996,44 @@ class _AdvancedToolsPageState extends ConsumerState<AdvancedToolsPage> {
         throw const FormatException('The function table inputs are invalid.');
       }
       _tableResult = csv;
-    });
+    },
+      historyExpression: 'table ${_tableExpression.text}',
+      historyResult: () => _tableResult,
+    );
   }
 
-  Future<void> _runBusy(Future<void> Function() action) async {
+  Future<void> _runBusy(
+    Future<void> Function() action, {
+    String? historyExpression,
+    String? Function()? historyResult,
+  }) async {
     setState(() {
       _busy = true;
       _error = null;
     });
+    var completed = false;
     try {
       await action();
+      completed = true;
     } on FormatException catch (error) {
       _error = error.message;
     } catch (_) {
       _error = 'The operation could not be completed.';
     }
-    if (mounted) setState(() => _busy = false);
+    if (mounted) {
+      setState(() => _busy = false);
+      if (completed && historyExpression != null && historyResult != null) {
+        final result = historyResult();
+        if (result != null && result.isNotEmpty) {
+          recordCalculationHistory(
+            ref,
+            expression: historyExpression,
+            result: result,
+            backend: 'Dart computation',
+          );
+        }
+      }
+    }
   }
 
   Future<void> _showError(String message) async {

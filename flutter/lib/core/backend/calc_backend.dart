@@ -56,6 +56,41 @@ abstract interface class CalcBackend {
     double step = 1e-4,
   });
 
+  Future<List<double?>?> taylorCoefficients(
+    String expression,
+    double point,
+    int order,
+  );
+
+  Future<CalcEvaluation> arcLength(
+    String expression,
+    double start,
+    double end, {
+    int samples = 2000,
+  });
+
+  Future<CalcEvaluation> volumeDisk(
+    String expression,
+    double start,
+    double end, {
+    double tolerance = 1e-8,
+  });
+
+  Future<CalcEvaluation> volumeWasher(
+    String outer,
+    String inner,
+    double start,
+    double end, {
+    double tolerance = 1e-8,
+  });
+
+  Future<CalcEvaluation> volumeShell(
+    String expression,
+    double start,
+    double end, {
+    double tolerance = 1e-8,
+  });
+
   Future<CalcEvaluation> extremum(
     String expression,
     double start,
@@ -344,6 +379,64 @@ class DartCalcBackend implements CalcBackend {
     } on FormatException catch (error) {
       return CalcEvaluation.failure(backend: name, message: error.message);
     }
+  }
+
+  @override
+  Future<List<double?>?> taylorCoefficients(
+    String expression,
+    double point,
+    int order,
+  ) async => DartComputation.taylorCoefficients(expression, point, order);
+
+  @override
+  Future<CalcEvaluation> arcLength(
+    String expression,
+    double start,
+    double end, {
+    int samples = 2000,
+  }) async => _optionalValue(
+    DartComputation.arcLength(expression, start, end, samples: samples),
+    'Arc length could not be evaluated.',
+  );
+
+  @override
+  Future<CalcEvaluation> volumeDisk(
+    String expression,
+    double start,
+    double end, {
+    double tolerance = 1e-8,
+  }) async => _optionalValue(
+    DartComputation.volumeDisk(expression, start, end, tolerance: tolerance),
+    'Disk volume could not be evaluated.',
+  );
+
+  @override
+  Future<CalcEvaluation> volumeWasher(
+    String outer,
+    String inner,
+    double start,
+    double end, {
+    double tolerance = 1e-8,
+  }) async => _optionalValue(
+    DartComputation.volumeWasher(outer, inner, start, end, tolerance: tolerance),
+    'Washer volume could not be evaluated.',
+  );
+
+  @override
+  Future<CalcEvaluation> volumeShell(
+    String expression,
+    double start,
+    double end, {
+    double tolerance = 1e-8,
+  }) async => _optionalValue(
+    DartComputation.volumeShell(expression, start, end, tolerance: tolerance),
+    'Shell volume could not be evaluated.',
+  );
+
+  CalcEvaluation _optionalValue(double? value, String message) {
+    return value == null || !value.isFinite
+        ? CalcEvaluation.failure(backend: name, message: message)
+        : CalcEvaluation(value: value, backend: name);
   }
 
   @override

@@ -12,6 +12,19 @@ final calculationHistoryProvider =
       CalculationHistoryController.new,
     );
 
+void recordCalculationHistory(
+  WidgetRef ref, {
+  required String expression,
+  required String result,
+  required String backend,
+}) {
+  ref.read(calculationHistoryProvider.notifier).add(
+    expression: expression,
+    result: result,
+    backend: backend,
+  );
+}
+
 @immutable
 class HistoryEntry {
   const HistoryEntry({

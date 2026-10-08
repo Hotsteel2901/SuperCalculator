@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/backend/providers.dart';
+import '../../core/history/history_repository.dart';
 import '../../core/plot/plot_point.dart';
 import '../../core/ui/feature_widgets.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -292,18 +293,21 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
         equation = regression.equation;
       }
       final fittedCsv = StringBuffer('x,observed,fitted\n');
-      for (var index = 0; index < fitXs.length; index++) {
-        final observed = index < ys.length ? ys[index] : double.nan;
+      for (var index = 0; index < xs.length; index++) {
+        final fitted = _interpolateFitted(xs[index], fitXs, fitYs);
         fittedCsv
-          ..write(fitXs[index].toStringAsPrecision(12))
+          ..write(xs[index].toStringAsPrecision(12))
           ..write(',')
-          ..write(observed.isFinite ? observed.toStringAsPrecision(12) : '')
+          ..write(ys[index].toStringAsPrecision(12))
           ..write(',')
-          ..writeln(fitYs[index].toStringAsPrecision(12));
+          ..writeln(fitted?.toStringAsPrecision(12) ?? '');
       }
       if (!mounted) {
         return;
       }
+      final fittedText = rSquared.isFinite
+          ? '$equation    R² = ${rSquared.toStringAsPrecision(8)}'
+          : null;
       setState(() {
         _busy = false;
         _csvExport = fittedCsv.toString().trimRight();
@@ -313,9 +317,7 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
             .entries
             .map((entry) => PlotPoint(entry.value, fitYs[entry.key]))
             .toList(growable: false);
-        _result = rSquared.isFinite
-            ? '$equation    R² = ${rSquared.toStringAsPrecision(8)}'
-            : null;
+        _result = fittedText;
         _error = rSquared.isFinite
             ? null
             : nextEraText(
@@ -324,6 +326,14 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
                 '无法拟合该模型。',
               );
       });
+      if (fittedText != null) {
+        recordCalculationHistory(
+          ref,
+          expression: '$_model fit: ${_data.text}',
+          result: fittedText,
+          backend: backend.name,
+        );
+      }
     } on FormatException catch (error) {
       if (mounted) {
         setState(() {
@@ -343,6 +353,30 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
         });
       }
     }
+  }
+
+  double? _interpolateFitted(
+    double x,
+    List<double> fitXs,
+    List<double> fitYs,
+  ) {
+    if (fitXs.isEmpty || fitXs.length != fitYs.length || !x.isFinite) {
+      return null;
+    }
+    if (fitXs.length == 1) return fitYs.first;
+    if (x <= fitXs.first) return fitYs.first;
+    if (x >= fitXs.last) return fitYs.last;
+    for (var index = 1; index < fitXs.length; index++) {
+      if (x <= fitXs[index]) {
+        final leftX = fitXs[index - 1];
+        final rightX = fitXs[index];
+        final width = rightX - leftX;
+        if (width == 0) return fitYs[index];
+        final fraction = (x - leftX) / width;
+        return fitYs[index - 1] + fraction * (fitYs[index] - fitYs[index - 1]);
+      }
+    }
+    return fitYs.last;
   }
 
   Future<void> _interpolate() async {
@@ -379,21 +413,29 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
       _result = null;
     });
     try {
-      final value = await ref
-          .read(calcBackendProvider)
-          .interpolate(_interpolationMethod, xs, ys, x);
+      final backend = ref.read(calcBackendProvider);
+      final value = await backend.interpolate(_interpolationMethod, xs, ys, x);
       if (!mounted) {
         return;
       }
+      final interpolationText = value == null
+          ? null
+          : 'f($x) = ${value.toStringAsPrecision(12)}';
       setState(() {
         _busy = false;
-        _result = value == null
-            ? null
-            : 'f($x) = ${value.toStringAsPrecision(12)}';
+        _result = interpolationText;
         _error = value == null
             ? nextEraText(context, 'Interpolation failed.', '插值失败。')
             : null;
       });
+      if (interpolationText != null) {
+        recordCalculationHistory(
+          ref,
+          expression: '$_interpolationMethod interpolation at x=$x',
+          result: interpolationText,
+          backend: backend.name,
+        );
+      }
     } on FormatException catch (error) {
       if (mounted) {
         setState(() {

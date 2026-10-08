@@ -340,6 +340,64 @@ class FfiCalcBackend implements CalcBackend {
   }
 
   @override
+  Future<List<double?>?> taylorCoefficients(
+    String expression,
+    double point,
+    int order,
+  ) async => DartComputation.taylorCoefficients(expression, point, order);
+
+  @override
+  Future<CalcEvaluation> arcLength(
+    String expression,
+    double start,
+    double end, {
+    int samples = 2000,
+  }) async => _fallbackValue(
+    DartComputation.arcLength(expression, start, end, samples: samples),
+    'Arc length could not be evaluated.',
+  );
+
+  @override
+  Future<CalcEvaluation> volumeDisk(
+    String expression,
+    double start,
+    double end, {
+    double tolerance = 1e-8,
+  }) async => _fallbackValue(
+    DartComputation.volumeDisk(expression, start, end, tolerance: tolerance),
+    'Disk volume could not be evaluated.',
+  );
+
+  @override
+  Future<CalcEvaluation> volumeWasher(
+    String outer,
+    String inner,
+    double start,
+    double end, {
+    double tolerance = 1e-8,
+  }) async => _fallbackValue(
+    DartComputation.volumeWasher(outer, inner, start, end, tolerance: tolerance),
+    'Washer volume could not be evaluated.',
+  );
+
+  @override
+  Future<CalcEvaluation> volumeShell(
+    String expression,
+    double start,
+    double end, {
+    double tolerance = 1e-8,
+  }) async => _fallbackValue(
+    DartComputation.volumeShell(expression, start, end, tolerance: tolerance),
+    'Shell volume could not be evaluated.',
+  );
+
+  CalcEvaluation _fallbackValue(double? value, String message) {
+    return value == null || !value.isFinite
+        ? CalcEvaluation.failure(backend: name, message: message)
+        : CalcEvaluation(value: value, backend: name);
+  }
+
+  @override
   Future<CalcEvaluation> extremum(
     String expression,
     double start,

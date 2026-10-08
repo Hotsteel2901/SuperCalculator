@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/backend/providers.dart';
 import '../../core/compute/calculation_models.dart';
+import '../../core/history/history_repository.dart';
 import '../../core/ui/feature_widgets.dart';
 import '../../l10n/generated/app_localizations.dart';
 
@@ -219,5 +220,13 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
       _statistics = result;
       _values = values;
     });
+    recordCalculationHistory(
+      ref,
+      expression: 'statistics: ${_data.text}',
+      result: 'mean = ${result.mean.toStringAsPrecision(12)}, '
+          'median = ${result.median.toStringAsPrecision(12)}, '
+          'sd = ${result.standardDeviation.toStringAsPrecision(12)}',
+      backend: ref.read(calcBackendProvider).name,
+    );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/backend/providers.dart';
+import '../../core/history/history_repository.dart';
 import '../../core/ui/feature_widgets.dart';
 import '../../l10n/generated/app_localizations.dart';
 
@@ -236,11 +237,12 @@ class _LinearAlgebraPageState extends ConsumerState<LinearAlgebraPage> {
           ? await backend.sparseMatVec(matrix, vector)
           : await backend.conjugateGradient(matrix, vector, initial);
       if (!mounted) return;
+      final sparseResult = values
+          ?.map((value) => value.toStringAsPrecision(12))
+          .join(', ');
       setState(() {
         _busy = false;
-        _result = values
-            ?.map((value) => value.toStringAsPrecision(12))
-            .join(', ');
+        _result = sparseResult;
         _error = values == null
             ? nextEraText(
                 context,
@@ -249,6 +251,14 @@ class _LinearAlgebraPageState extends ConsumerState<LinearAlgebraPage> {
               )
             : null;
       });
+      if (sparseResult != null) {
+        recordCalculationHistory(
+          ref,
+          expression: '$_sparseOperation sparse matrix',
+          result: sparseResult,
+          backend: backend.name,
+        );
+      }
     } on FormatException catch (error) {
       if (!mounted) return;
       setState(() {
@@ -350,5 +360,11 @@ class _LinearAlgebraPageState extends ConsumerState<LinearAlgebraPage> {
       _busy = false;
       _result = value;
     });
+    recordCalculationHistory(
+      ref,
+      expression: '$_operation: ${_left.text}',
+      result: value,
+      backend: ref.read(calcBackendProvider).name,
+    );
   }
 }

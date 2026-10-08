@@ -17,8 +17,8 @@ class HistoryPage extends ConsumerWidget {
       icon: Icons.history,
       subtitle: nextEraText(
         context,
-        'The most recent ten successful calculations are kept in the app session.',
-        '应用会在当前会话保留最近十次成功计算。',
+        'The most recent ten successful calculations are persisted locally when storage is available.',
+        '在存储可用时，应用会在本地保存最近十次成功计算。',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -86,8 +86,8 @@ class HistoryPage extends ConsumerWidget {
           Text(
             nextEraText(
               context,
-              'History is intentionally session-scoped until the platform storage adapter is enabled.',
-              '在平台存储适配器启用前，历史记录仅限当前会话。',
+              'Storage is best-effort; private browsing or restricted profiles may keep history session-only.',
+              '存储采用尽力而为策略；隐私浏览或受限配置可能只保留当前会话。',
             ),
             style: Theme.of(context).textTheme.bodySmall,
           ),

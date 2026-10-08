@@ -2402,6 +2402,32 @@ class DartComputation {
         .toDouble();
   }
 
+  static double retirementFutureValue({
+    required double initialBalance,
+    required double monthlyContribution,
+    required double annualRate,
+    required double years,
+  }) {
+    if (!initialBalance.isFinite ||
+        !monthlyContribution.isFinite ||
+        !annualRate.isFinite ||
+        !years.isFinite ||
+        initialBalance < 0 ||
+        monthlyContribution < 0 ||
+        years < 0 ||
+        annualRate / 12 <= -1) {
+      throw const FormatException('Retirement inputs are invalid.');
+    }
+    final months = (years * 12).round();
+    final monthlyRate = annualRate / 12;
+    if (monthlyRate == 0) {
+      return initialBalance + monthlyContribution * months;
+    }
+    final growth = math.pow(1 + monthlyRate, months).toDouble();
+    return initialBalance * growth +
+        monthlyContribution * ((growth - 1) / monthlyRate);
+  }
+
   static String formatFactors(Map<BigInt, int> factors) => factors.entries
       .map(
         (entry) =>

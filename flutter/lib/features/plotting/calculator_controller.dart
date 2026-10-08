@@ -157,6 +157,15 @@ class CalculatorController extends Notifier<CalculatorState> {
         points: points,
         error: points.isEmpty ? 'The plot could not be evaluated.' : null,
       );
+      if (points.isNotEmpty) {
+        ref
+            .read(calculationHistoryProvider.notifier)
+            .add(
+              expression: '${state.mode}: ${state.expression}',
+              result: '${points.length} plotted points',
+              backend: 'Dart sampling',
+            );
+      }
     } on FormatException catch (error) {
       state = state.copyWith(
         isCalculating: false,
