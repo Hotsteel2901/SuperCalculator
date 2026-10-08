@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/backend/providers.dart';
@@ -22,6 +23,7 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
   List<PlotPoint> _points = const <PlotPoint>[];
   List<PlotPoint> _fit = const <PlotPoint>[];
   String? _result;
+  String? _csvExport;
   String? _error;
   bool _busy = false;
 
@@ -168,6 +170,28 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
                 ),
             error: _error,
           ),
+          if (_csvExport != null) ...<Widget>[
+            const SizedBox(height: 12),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  await Clipboard.setData(ClipboardData(text: _csvExport!));
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          nextEraText(context, 'CSV copied.', 'CSV 已复制。'),
+                        ),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.copy_outlined),
+                label: Text(nextEraText(context, 'Copy fitted CSV', '复制拟合 CSV')),
+              ),
+            ),
+          ],
           if (_busy) ...<Widget>[
             const SizedBox(height: 12),
             const LinearProgressIndicator(),
@@ -227,6 +251,7 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
       _busy = true;
       _error = null;
       _result = null;
+      _csvExport = null;
       _points = const <PlotPoint>[];
       _fit = const <PlotPoint>[];
     });
@@ -264,11 +289,22 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
         rSquared = regression.rSquared;
         equation = regression.equation;
       }
+      final fittedCsv = StringBuffer('x,observed,fitted\n');
+      for (var index = 0; index < fitXs.length; index++) {
+        final observed = index < ys.length ? ys[index] : double.nan;
+        fittedCsv
+          ..write(fitXs[index].toStringAsPrecision(12))
+          ..write(',')
+          ..write(observed.isFinite ? observed.toStringAsPrecision(12) : '')
+          ..write(',')
+          ..writeln(fitYs[index].toStringAsPrecision(12));
+      }
       if (!mounted) {
         return;
       }
       setState(() {
         _busy = false;
+        _csvExport = fittedCsv.toString().trimRight();
         _points = points;
         _fit = fitXs
             .asMap()

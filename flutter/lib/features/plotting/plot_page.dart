@@ -7,6 +7,109 @@ import '../../core/ui/feature_widgets.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'calculator_controller.dart';
 
+class _PlotPreset {
+  const _PlotPreset(this.label, this.expression, [this.secondary]);
+
+  final String label;
+  final String expression;
+  final String? secondary;
+}
+
+const _plotPresets = <String, List<_PlotPreset>>{
+  'function': <_PlotPreset>[
+    _PlotPreset('sin(x)', 'sin(x)'),
+    _PlotPreset('cos(x)', 'cos(x)'),
+    _PlotPreset('tan(x)', 'tan(x)'),
+    _PlotPreset('x²', 'x^2'),
+    _PlotPreset('x³', 'x^3'),
+    _PlotPreset('sqrt(x)', 'sqrt(x)'),
+    _PlotPreset('ln(x)', 'ln(x)'),
+    _PlotPreset('log10(x)', 'log(x)'),
+    _PlotPreset('exp(x)', 'exp(x)'),
+    _PlotPreset('1/x', '1/x'),
+    _PlotPreset('abs(x)', 'abs(x)'),
+    _PlotPreset('sin(x)+cos(x)', 'sin(x)+cos(x)'),
+    _PlotPreset('x·sin(x)', 'x*sin(x)'),
+    _PlotPreset('damped sine', 'exp(-x)*sin(2*pi*x)'),
+    _PlotPreset('x²/2-cos(x)', 'x^2/2-cos(x)'),
+    _PlotPreset('factorial', 'x!'),
+    _PlotPreset('floor(x)', 'floor(x)'),
+    _PlotPreset('ceil(x)', 'ceil(x)'),
+    _PlotPreset('x mod 1', 'x mod 1'),
+    _PlotPreset('sin(x) mod 1', 'sin(x) mod 1'),
+    _PlotPreset('3D paraboloid', 'x^2+y^2'),
+    _PlotPreset('3D wave', 'sin(x)*cos(y)'),
+    _PlotPreset('3D radial wave', 'sin(sqrt(x^2+y^2))'),
+    _PlotPreset('FFT two tones', 'sin(2*pi*x)+0.5*sin(6*pi*x)'),
+    _PlotPreset('FFT mixed tones', 'sin(5*x)+cos(10*x)'),
+  ],
+  'parametric': <_PlotPreset>[
+    _PlotPreset('Circle', 'cos(x)', 'sin(x)'),
+    _PlotPreset('Ellipse', '2*cos(x)', 'sin(x)'),
+    _PlotPreset('Lissajous', 'sin(3*x+pi/2)', 'sin(2*x)'),
+    _PlotPreset('Spiral', 'x*cos(x)', 'x*sin(x)'),
+    _PlotPreset('Cardioid', '2*cos(x)-cos(2*x)', '2*sin(x)-sin(2*x)'),
+    _PlotPreset('Heart', '16*sin(x)^3', '13*cos(x)-5*cos(2*x)-2*cos(3*x)-cos(4*x)'),
+    _PlotPreset('Astroid', '4*cos(x)^3', '4*sin(x)^3'),
+    _PlotPreset('Hypotrochoid', '2*cos(x)+cos(2*x)', '2*sin(x)-sin(2*x)'),
+    _PlotPreset('Butterfly seed', 'sin(x)*(exp(cos(x))-2*cos(4*x)-sin(x/12)^5)', 'cos(x)*(exp(cos(x))-2*cos(4*x)-sin(x/12)^5)'),
+    _PlotPreset('Rose', 'cos(4*x)*cos(x)', 'cos(4*x)*sin(x)'),
+  ],
+  'polar': <_PlotPreset>[
+    _PlotPreset('Circle', '1', null),
+    _PlotPreset('Cardioid', '1+cos(x)', null),
+    _PlotPreset('Rose 3', 'cos(3*x)', null),
+    _PlotPreset('Rose 4', 'sin(4*x)', null),
+    _PlotPreset('Clover', 'cos(2*x)', null),
+    _PlotPreset('Spiral', 'x/(2*pi)', null),
+    _PlotPreset('Archimedean spiral', 'x', null),
+    _PlotPreset('Lemniscate', 'sqrt(abs(cos(2*x)))', null),
+    _PlotPreset('Limacon', '1+0.5*cos(x)', null),
+    _PlotPreset('Conchoid seed', '1/cos(x)', null),
+    _PlotPreset('Butterfly', 'exp(sin(x))-2*cos(4*x)+sin((2*x-pi)/24)^5', null),
+    _PlotPreset('Fermat spiral', 'sqrt(x)', null),
+  ],
+  'implicit': <_PlotPreset>[
+    _PlotPreset('Circle', 'x^2+y^2-4'),
+    _PlotPreset('Ellipse', 'x^2/9+y^2/4-1'),
+    _PlotPreset('Hyperbola', 'x^2/4-y^2/4-1'),
+    _PlotPreset('Parabola', 'y-x^2'),
+    _PlotPreset('Saddle', 'x^2-y^2'),
+    _PlotPreset('Astroid', 'x^2+y^2-1'),
+    _PlotPreset('Lemniscate', '(x^2+y^2)^2-2*(x^2-y^2)'),
+    _PlotPreset('Folium seed', 'x^3+y^3-3*x*y'),
+  ],
+  'surface': <_PlotPreset>[
+    _PlotPreset('Paraboloid', 'x^2+y^2'),
+    _PlotPreset('Saddle', 'x^2-y^2'),
+    _PlotPreset('Gaussian', 'exp(-(x^2+y^2))'),
+  ],
+  'contour': <_PlotPreset>[
+    _PlotPreset('Circle levels', 'x^2+y^2'),
+    _PlotPreset('Paraboloid', 'x^2+y^2'),
+    _PlotPreset('Saddle', 'x^2-y^2'),
+    _PlotPreset('Gaussian', 'exp(-(x^2+y^2))'),
+    _PlotPreset('Peaks seed', 'sin(x)*cos(y)'),
+  ],
+  'direction': <_PlotPreset>[
+    _PlotPreset('Exponential growth', 'y'),
+    _PlotPreset('Logistic', 'y*(1-y)'),
+    _PlotPreset('Damped oscillator', 'y-x'),
+    _PlotPreset('Lotka seed', 'x-y'),
+    _PlotPreset('Slope field', 'sin(x)+cos(y)'),
+    _PlotPreset('Linear field', 'x+y'),
+    _PlotPreset('Cubic field', 'x^3-y'),
+    _PlotPreset('Van der Pol seed', '(1-y^2)*x-y'),
+  ],
+  'vector': <_PlotPreset>[
+    _PlotPreset('Rotation', '-y', 'x'),
+    _PlotPreset('Sink', '-x', '-y'),
+    _PlotPreset('Source', 'x', 'y'),
+    _PlotPreset('Saddle', 'x', '-y'),
+    _PlotPreset('Nonlinear swirl', 'y', '-x+x^3'),
+  ],
+};
+
 class PlotPage extends ConsumerStatefulWidget {
   const PlotPage({super.key});
 
@@ -18,6 +121,7 @@ class _PlotPageState extends ConsumerState<PlotPage> {
   late final TextEditingController _expressionController;
   late final TextEditingController _secondaryController;
   late final TextEditingController _xController;
+  String? _selectedPreset;
 
   @override
   void initState() {
@@ -45,6 +149,7 @@ class _PlotPageState extends ConsumerState<PlotPage> {
     final state = ref.watch(calculatorControllerProvider);
     final controller = ref.read(calculatorControllerProvider.notifier);
     final scheme = Theme.of(context).colorScheme;
+    final presets = _plotPresets[state.mode] ?? const <_PlotPreset>[];
     final modes = <String, String>{
       'function': nextEraText(context, 'Function y=f(x)', '函数 y=f(x)'),
       'multi': nextEraText(context, 'Multi-curve overlay', '多曲线叠加'),
@@ -88,9 +193,46 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                             )
                             .toList(growable: false),
                         onChanged: (value) {
-                          if (value != null) controller.setMode(value);
+                          if (value != null) {
+                            setState(() => _selectedPreset = null);
+                            controller.setMode(value);
+                          }
                         },
                       ),
+                      if (presets.isNotEmpty) ...<Widget>[
+                        SizedBox(height: tokens.controlGap),
+                        DropdownButtonFormField<String>(
+                          initialValue: presets.any(
+                            (preset) => preset.label == _selectedPreset,
+                          )
+                              ? _selectedPreset
+                              : null,
+                          decoration: InputDecoration(
+                            labelText: nextEraText(context, 'Preset', '预设'),
+                          ),
+                          items: presets
+                              .map(
+                                (preset) => DropdownMenuItem<String>(
+                                  value: preset.label,
+                                  child: Text(preset.label),
+                                ),
+                              )
+                              .toList(growable: false),
+                          onChanged: (label) {
+                            if (label == null) return;
+                            final preset = presets.firstWhere(
+                              (item) => item.label == label,
+                            );
+                            _expressionController.text = preset.expression;
+                            controller.setExpression(preset.expression);
+                            if (preset.secondary != null) {
+                              _secondaryController.text = preset.secondary!;
+                              controller.setSecondaryExpression(preset.secondary!);
+                            }
+                            setState(() => _selectedPreset = label);
+                          },
+                        ),
+                      ],
                       SizedBox(height: tokens.controlGap),
                       Text(
                         state.mode == 'parametric'

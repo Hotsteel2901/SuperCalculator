@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/backend/providers.dart';
+import '../../core/compute/calculation_models.dart';
 import '../../core/plot/plot_point.dart';
 import '../../core/ui/feature_widgets.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -20,7 +21,9 @@ class _OdePageState extends ConsumerState<OdePage> {
   final _xEnd = TextEditingController(text: '2');
   final _steps = TextEditingController(text: '200');
   String _method = 'RK4';
+  bool _compareMethods = true;
   List<PlotPoint> _points = const <PlotPoint>[];
+  List<List<PlotPoint>> _series = const <List<PlotPoint>>[];
   String? _result;
   String? _error;
   bool _busy = false;
@@ -98,11 +101,32 @@ class _OdePageState extends ConsumerState<OdePage> {
                     ),
                   ],
                 ),
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    nextEraText(
+                      context,
+                      'Compare all five methods',
+                      '比较五种方法',
+                    ),
+                  ),
+                  subtitle: Text(
+                    nextEraText(
+                      context,
+                      'Overlay Euler, Heun, Midpoint, RK4 and RKF45.',
+                      '叠加 Euler、Heun、Midpoint、RK4 和 RKF45。',
+                    ),
+                  ),
+                  value: _compareMethods,
+                  onChanged: _busy
+                      ? null
+                      : (value) => setState(() => _compareMethods = value),
+                ),
                 FilledButton.icon(
                   onPressed: _busy ? null : _solve,
                   icon: const Icon(Icons.play_arrow),
                   label: Text(
-                    nextEraText(context, 'Solve with RK4', '使用 RK4 求解'),
+                    nextEraText(context, 'Solve and compare', '求解并比较'),
                   ),
                 ),
               ],
@@ -131,14 +155,25 @@ class _OdePageState extends ConsumerState<OdePage> {
               child: Semantics(
                 label: nextEraText(
                   context,
-                  'Runge–Kutta solution curve with ${_points.length} samples.',
-                  '包含 ${_points.length} 个采样点的 Runge–Kutta 解曲线。',
+                    _compareMethods
+                        ? nextEraText(
+                            context,
+                            'ODE comparison with ${_series.length} methods and ${_points.length} samples.',
+                            'ODE 方法比较，${_series.length} 种方法，${_points.length} 个采样点。',
+                          )
+                        : nextEraText(
+                            context,
+                            'ODE solution curve with ${_points.length} samples.',
+                            '包含 ${_points.length} 个采样点的 ODE 解曲线。',
+                          ),
                 ),
                 child: SizedBox(
                   height: 360,
                   child: CustomPaint(
                     painter: LineSeriesPainter(
-                      series: <List<PlotPoint>>[_points],
+                      series: _series.isEmpty
+                          ? <List<PlotPoint>>[_points]
+                          : _series,
                       scheme: Theme.of(context).colorScheme,
                     ),
                     child: const SizedBox.expand(),
@@ -161,6 +196,17 @@ class _OdePageState extends ConsumerState<OdePage> {
         signed: true,
       ),
     );
+  }
+
+  List<PlotPoint> _toPoints(CalcOdeSolution solution) {
+    final points = <PlotPoint>[];
+    for (var i = 0; i < solution.xs.length && i < solution.ys.length; i++) {
+      final y = solution.ys[i];
+      if (y != null && y.isFinite) {
+        points.add(PlotPoint(solution.xs[i], y));
+      }
+    }
+    return points;
   }
 
   Future<void> _solve() async {
@@ -187,38 +233,48 @@ class _OdePageState extends ConsumerState<OdePage> {
       _error = null;
       _result = null;
       _points = const <PlotPoint>[];
+      _series = const <List<PlotPoint>>[];
     });
-    final solution = await ref
-        .read(calcBackendProvider)
-        .solveOde(
+    final backend = ref.read(calcBackendProvider);
+    final methods = _compareMethods
+        ? <String>['Euler', 'Improved-Euler', 'Midpoint', 'RK4', 'RKF45']
+        : <String>[_method];
+    final solutions = await Future.wait(
+      methods.map(
+        (method) => backend.solveOde(
           _expression.text,
           x0: x0,
           y0: y0,
           xEnd: xEnd,
           steps: steps.clamp(1, 10000).toInt(),
-          method: _method,
-        );
+          method: method,
+        ),
+      ),
+    );
     if (!mounted) {
       return;
     }
-    final points = <PlotPoint>[];
-    for (var i = 0; i < solution.xs.length && i < solution.ys.length; i++) {
-      final y = solution.ys[i];
-      if (y != null && y.isFinite) {
-        points.add(PlotPoint(solution.xs[i], y));
-      }
-    }
+    final series = solutions.map(_toPoints).toList(growable: false);
+    final points = _compareMethods
+        ? (series.isEmpty ? const <PlotPoint>[] : series[methods.indexOf(_method)])
+        : series.first;
+    final successful = series.where((item) => item.isNotEmpty).length;
     setState(() {
       _busy = false;
       _points = points;
-      _result = points.isEmpty
+      _series = series;
+      _result = successful == 0
           ? null
           : nextEraText(
               context,
-              '${solution.method}: ${points.length} points',
-              '${solution.method}：${points.length} 个点',
+              _compareMethods
+                  ? 'Compared $successful numerical methods.'
+                  : '${methods.first}: ${points.length} points',
+              _compareMethods
+                  ? '已比较 $successful 种数值方法。'
+                  : '${methods.first}：${points.length} 个点',
             );
-      _error = points.isEmpty
+      _error = successful == 0
           ? nextEraText(
               context,
               'The ODE could not be evaluated.',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/backend/providers.dart';
@@ -23,6 +24,7 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
   final _kernel = TextEditingController(text: '1, 0.5, 0.25');
   List<PlotPoint> _spectrum = const <PlotPoint>[];
   String? _result;
+  String? _spectrumCsv;
   String? _error;
   bool _busy = false;
 
@@ -125,6 +127,30 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
           ],
           if (_spectrum.isNotEmpty) ...<Widget>[
             const SizedBox(height: 16),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: OutlinedButton.icon(
+                onPressed: _spectrumCsv == null
+                    ? null
+                    : () async {
+                        await Clipboard.setData(
+                          ClipboardData(text: _spectrumCsv!),
+                        );
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                nextEraText(context, 'CSV copied.', 'CSV 已复制。'),
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                icon: const Icon(Icons.copy_outlined),
+                label: Text(nextEraText(context, 'Copy spectrum CSV', '复制频谱 CSV')),
+              ),
+            ),
+            const SizedBox(height: 8),
             FeatureCard(
               title: nextEraText(context, 'Amplitude spectrum', '幅度频谱'),
               icon: Icons.show_chart,
@@ -247,6 +273,7 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
       _busy = true;
       _error = null;
       _result = null;
+      _spectrumCsv = null;
       _spectrum = const <PlotPoint>[];
     });
     final spectrum = await ref
@@ -267,8 +294,18 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
       }
     }
     final dominant = spectrum.dominantIndex;
+    final csv = StringBuffer('frequency,amplitude,phase\n');
+    for (var i = 0; i < spectrum.length; i++) {
+      csv
+        ..write(spectrum.frequencies[i].toStringAsPrecision(12))
+        ..write(',')
+        ..write(spectrum.amplitudes[i].toStringAsPrecision(12))
+        ..write(',')
+        ..writeln(spectrum.phases[i].toStringAsPrecision(12));
+    }
     setState(() {
       _busy = false;
+      _spectrumCsv = csv.toString().trimRight();
       _spectrum = points;
       _result = dominant < 0
           ? null

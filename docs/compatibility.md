@@ -1,27 +1,44 @@
 # Compatibility matrix and release gates
 
-| Target | Current migration state | Native backend state | Release gate |
+The tagged workflow `.github/workflows/flutter-platform-builds.yml` builds a release
+artifact for every requested target. It is triggered manually or by tags matching
+`next-era-v*`; the release job publishes checksummed assets to GitHub Releases.
+
+| Target | Workflow artifact | Native backend | Signing/installation note |
 |---|---|---|---|
-| Web | CI `flutter build web --release` passes | bounded Dart fallback; Wasm artifact not packaged | browser matrix, WebAssembly parity, keyboard/reader audit |
-| Android | Flutter source and platform bootstrap script present | ABI artifact packaging/signing not yet automated | min SDK, arm64/armv7/x64 as supported, rotation, TalkBack |
-| iOS | Flutter source and platform bootstrap script present | framework/dylib packaging and signing not yet automated | simulator/device build, arm64, VoiceOver, entitlements |
-| Windows | Flutter source and platform bootstrap script present | DLL packaging not yet automated | x64/arm64 decision, MSVC/MinGW ABI check, Narrator |
-| Linux | Flutter source and platform bootstrap script present | `.so` packaging not yet automated | x64 package, GTK/desktop integration, screen reader |
-| macOS | Flutter source and platform bootstrap script present | dylib/framework packaging not yet automated | Intel/Apple Silicon decision, hardened runtime, VoiceOver |
+| Web | `SuperCalculator-Next-Era-web.tar.gz` | Dart fallback; WebAssembly remains an optional future adapter | Extract to any static host; base href must match deployment path |
+| Android | universal and split APKs | arm64 ABI is built into `jniLibs`; other ABIs use Dart fallback | APKs are release/debug-key artifacts unless a repository keystore is configured |
+| iOS | `SuperCalculator-Next-Era-ios-unsigned.ipa` | Dart fallback unless a signed native framework is supplied | Unsigned Payload must be re-signed with an Apple team/profile before install |
+| Windows | portable ZIP and Inno Setup installer | `supercalc_core.dll` is colocated with the runner | Install the generated setup EXE or extract the portable ZIP |
+| Linux | x64 tarball and amd64 `.deb` | `libsupercalc_core.so` is colocated with the bundle | Install with `dpkg -i` or extract the tarball |
+| macOS | universal app ZIP and DMG | `libsupercalc_core.dylib` is placed in the app Frameworks directory | Unsigned/notarized artifacts require Gatekeeper approval or signing |
 
-The checked-in source is deliberately platform-neutral. Run
-`./tool/bootstrap_flutter_platforms.sh` from the repository root with a supported
-Flutter SDK to generate missing platform folders; generated folders are not treated
-as proof that native artifacts are packaged. The manual/tag-triggered
-`.github/workflows/flutter-platform-builds.yml` workflow generates the target folder
-on its runner and produces Web, Android debug, Linux, Windows, macOS and unsigned iOS
-artifacts. It does not claim store signing or native FFI packaging parity.
+## Workflow behavior
 
-Product-visible naming is `SuperCalculator - Next Era`. The legacy Android application
-ID remains `com.supercalc` in the migration plan so a future signed APK can preserve
-upgrade compatibility; it must be confirmed against the shipped legacy manifest before
-an actual store release.
+1. Every job generates only its own Flutter platform folder with the pinned stable
+   SDK, so missing generated folders do not hide source compilation failures.
+2. Each desktop job compiles the versioned C ABI v2 and places the library beside the
+   application. The IO backend searches the executable and macOS Frameworks paths
+   before falling back to its library name.
+3. Android builds the arm64 shared library with the hosted Android NDK and packages
+   universal plus split release APKs. A signed AAB is intentionally not fabricated;
+   add repository keystore secrets and a release `key.properties` policy before store
+   publication.
+4. iOS produces a correctly shaped unsigned IPA because Apple signing credentials are
+   private release infrastructure. A signed IPA must be built in a protected workflow.
+5. The tag release job downloads every artifact, writes `SHA256SUMS`, and publishes
+   all packages as one GitHub Release.
 
-Every release must record Flutter/Dart versions, OS and architecture, minimum SDK,
-dynamic-library loading result, light/dark and large-text behavior, keyboard/pointer/
-touch/stylus input, rotation/foldable layout behavior and assistive-technology results.
+## Product identity
+
+The visible product name is `SuperCalculator - Next Era`. The package/org baseline is
+`com.supercalc` and `supercalculator_next_era`; confirm the legacy Android application
+ID before the first store upgrade so an existing installation is not orphaned.
+
+## Required release gates
+
+Record Flutter/Dart versions, OS and architecture, minimum SDK, dynamic-library load
+result, light/dark and large-text behavior, keyboard/pointer/touch/stylus input,
+rotation/foldable behavior, install/upgrade/uninstall behavior and assistive-technology
+results for each signed release. CI artifacts are build evidence, not store-signing
+or physical-device certification.

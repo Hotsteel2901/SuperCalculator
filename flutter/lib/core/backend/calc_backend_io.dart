@@ -737,15 +737,25 @@ class FfiCalcBackend implements CalcBackend {
     if (Platform.isAndroid) {
       return 'libsupercalc_core.so';
     }
-    if (Platform.isWindows) {
-      return 'supercalc_core.dll';
+    final fileName = Platform.isWindows
+        ? 'supercalc_core.dll'
+        : Platform.isMacOS || Platform.isIOS
+        ? 'libsupercalc_core.dylib'
+        : Platform.isLinux
+        ? 'libsupercalc_core.so'
+        : null;
+    if (fileName == null) {
+      throw UnsupportedError('Native FFI is not configured for this platform.');
     }
-    if (Platform.isMacOS || Platform.isIOS) {
-      return 'libsupercalc_core.dylib';
+    final separator = Platform.pathSeparator;
+    final executableDirectory = File(Platform.resolvedExecutable).parent.path;
+    final candidates = <String>[
+      '$executableDirectory$separator$fileName',
+      '$executableDirectory${separator}..${separator}Frameworks$separator$fileName',
+    ];
+    for (final candidate in candidates) {
+      if (File(candidate).existsSync()) return candidate;
     }
-    if (Platform.isLinux) {
-      return 'libsupercalc_core.so';
-    }
-    throw UnsupportedError('Native FFI is not configured for this platform.');
+    return fileName;
   }
 }
