@@ -145,6 +145,7 @@ jobs:
           set -euo pipefail
           workflow=.github/workflows/flutter-platform-builds.yml
           test -s "$workflow"
+          grep -q '^  pull_request:' "$workflow"
           for job in web android linux windows macos ios release; do
             grep -q "^  $job:" "$workflow"
           done
