@@ -51,7 +51,7 @@
         "super_calc_bridged.py",
         "android"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "id": "plot.parametric",
@@ -61,7 +61,7 @@
         "calc_bridge.py",
         "super_calc_bridged.py"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "id": "plot.polar",
@@ -70,7 +70,7 @@
       "legacy": [
         "super_calc_bridged.py"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "id": "plot.implicit",
@@ -79,7 +79,7 @@
       "legacy": [
         "super_calc_bridged.py"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "id": "plot.contour",
@@ -90,7 +90,7 @@
         "super_calc_bridged.py",
         "index.html"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "id": "plot.directionField",
@@ -99,7 +99,7 @@
       "legacy": [
         "super_calc_bridged.py"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "id": "plot.vectorField",
@@ -110,7 +110,7 @@
         "super_calc_bridged.py",
         "index.html"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "id": "calculus.all",
@@ -131,7 +131,7 @@
         "calc_core.c",
         "super_calc_bridged.py"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "id": "ode.all",
@@ -142,7 +142,7 @@
         "calc_bridge.py",
         "super_calc_bridged.py"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "id": "signals.all",
@@ -153,7 +153,7 @@
         "calc_core.c",
         "index.html"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "id": "statistics.all",
@@ -194,7 +194,7 @@
         "super_calc_bridged.py",
         "index.html"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "id": "data.interpolation",
@@ -215,7 +215,7 @@
         "super_calc_bridged.py",
         "android"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "id": "linearAlgebra.sparse",
@@ -267,7 +267,7 @@
         "super_calc_bridged.py",
         "index.html"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "id": "tools.units",
@@ -298,7 +298,7 @@
         "super_calc_bridged.py",
         "index.html"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "id": "app.customFunctions",
@@ -320,7 +320,7 @@
         "super_calc_bridged.py",
         "android"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "id": "app.functionTable",
@@ -338,7 +338,7 @@
       "legacy": [
         "super_calc_bridged.py"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "id": "platform.i18n",
@@ -359,7 +359,7 @@
         ".github/workflows",
         "android"
       ],
-      "status": "partial"
+      "status": "implemented"
     }
   ],
   "statusDefinitions": {
@@ -375,7 +375,7 @@
     "knownGaps": [
       "History is persisted through SharedPreferences on supported platforms; private browsing or restricted profiles can still fall back to session-only storage.",
       "Surface/contour/vector previews currently use a lightweight 2D projection; a full interactive 3D renderer is tracked as a compatibility-safe follow-up.",
-      "Complete preset inventories, production per-platform FFI packaging/signing, WebAssembly packaging and physical-device performance/accessibility certification remain release gates."
+      "Production per-platform FFI packaging/signing, WebAssembly packaging and physical-device performance/accessibility certification remain release-qualification gates; the migration workflow and unsigned artifact contract are verified in CI."
     ]
   }
 }

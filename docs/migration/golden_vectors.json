@@ -276,6 +276,119 @@
       "annualRate": 0,
       "years": 1,
       "expected": 1200
+    },
+    {
+      "id": "plot.parametric.unit-circle",
+      "operation": "parametric",
+      "xExpression": "cos(t)",
+      "yExpression": "sin(t)",
+      "t": 0,
+      "expectedX": 1,
+      "expectedY": 0
+    },
+    {
+      "id": "plot.polar.cardioid-origin",
+      "operation": "polar",
+      "expression": "1 + cos(t)",
+      "t": 0,
+      "expectedRadius": 2
+    },
+    {
+      "id": "plot.implicit.unit-circle",
+      "operation": "implicit",
+      "expression": "x^2 + y^2 - 1",
+      "x": 1,
+      "y": 0,
+      "expected": 0
+    },
+    {
+      "id": "plot.contour.level-zero",
+      "operation": "contour",
+      "expression": "x + y",
+      "x": 0.25,
+      "y": -0.25,
+      "level": 0,
+      "expected": 0
+    },
+    {
+      "id": "plot.direction-field.linear",
+      "operation": "directionField",
+      "expression": "y",
+      "x": 0,
+      "y": 2,
+      "expectedSlope": 2
+    },
+    {
+      "id": "plot.vector-field.constant",
+      "operation": "vectorField",
+      "xExpression": "1",
+      "yExpression": "-2",
+      "x": 0,
+      "y": 0,
+      "expected": [
+        1,
+        -2
+      ]
+    },
+    {
+      "id": "equations.scan-roots-cubic",
+      "operation": "scanRoots",
+      "expression": "x^3 - 8",
+      "minimum": -2,
+      "maximum": 4,
+      "expected": [
+        2
+      ]
+    },
+    {
+      "id": "signals.convolution-two-tap",
+      "operation": "convolution",
+      "left": [
+        1,
+        2
+      ],
+      "right": [
+        3,
+        4
+      ],
+      "expected": [
+        3,
+        10,
+        8
+      ]
+    },
+    {
+      "id": "linear-algebra.eigenvalues-2x2",
+      "operation": "eigenvalues2x2",
+      "matrix": "1,2;3,4",
+      "expected": [
+        5.372281323269014,
+        -0.3722813232690143
+      ]
+    },
+    {
+      "id": "discrete.bitwise-mask-8",
+      "operation": "bitwise",
+      "kind": "and",
+      "left": 255,
+      "right": 15,
+      "width": 8,
+      "expected": 15
+    },
+    {
+      "id": "finance.loan-zero-rate",
+      "operation": "loanPayment",
+      "principal": 1200,
+      "annualRate": 0,
+      "periods": 12,
+      "expected": 100
+    },
+    {
+      "id": "presets.factorial-one",
+      "operation": "preset",
+      "preset": "x!",
+      "x": 1,
+      "expected": 1
     }
   ]
 }
