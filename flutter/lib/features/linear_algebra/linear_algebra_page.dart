@@ -238,9 +238,7 @@ class _LinearAlgebraPageState extends ConsumerState<LinearAlgebraPage> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _result = values == null
-            ? null
-            : values.map((value) => value.toStringAsPrecision(12)).join(', ');
+        _result = values?.map((value) => value.toStringAsPrecision(12)).join(', ');
         _error = values == null
             ? nextEraText(
                 context,
