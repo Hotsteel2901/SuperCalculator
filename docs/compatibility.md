@@ -1,8 +1,8 @@
 # Compatibility matrix and release gates
 
-The tagged workflow `.github/workflows/flutter-platform-builds.yml` builds a release
-artifact for every requested target. It is triggered manually or by tags matching
-`next-era-v*`; the release job publishes checksummed assets to GitHub Releases.
+The platform workflow `.github/workflows/flutter-platform-builds.yml` builds a release
+artifact for every requested target. It is manual-only; select a `next-era-v*` tag
+when dispatching it if the final GitHub Release publication job should run.
 
 | Target | Workflow artifact | Native backend | Signing/installation note |
 |---|---|---|---|
