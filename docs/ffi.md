@@ -48,6 +48,8 @@ must record parity before it becomes the default.
 ```
 
 The CMake smoke test is intentionally small. It verifies ABI versioning, scalar and
-array evaluation, and error propagation before feature-specific bindings are added.
-The installer workflow repeats the ABI compilation on the target runner and includes
-checksums in tagged releases.
+array evaluation, implicit multiplication and case-insensitive built-ins, finite-input
+validation, invalid-expression status propagation, calculus, root and RK4 vectors.
+The C core keeps compiled RPN programs in a bounded per-thread cache for repeated
+scalar calls without changing the ABI. The installer workflow repeats the ABI
+compilation on the target runner and includes checksums in tagged releases.

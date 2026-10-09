@@ -170,4 +170,4 @@ jobs:
           grep -q 'actions/upload-pages-artifact@v3' "$pages"
           grep -q 'actions/deploy-pages@v4' "$pages"
           grep -q 'flutter/build/web' "$pages"
-          grep -q '/SuperCalculator/' "$pages"
+          grep -q 'steps.pages.outputs.base_path' "$pages"

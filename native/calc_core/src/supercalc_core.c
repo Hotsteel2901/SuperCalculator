@@ -13,6 +13,7 @@ extern double evaluate_xy(const char* expression, double x, double y);
 extern void evaluate_array(const char* expression, const double* xs, double* out, int n);
 extern void evaluate_xy_array(const char* expression, const double* xs, const double* ys,
                               double* out, int n);
+extern int validate_expression(const char* expression);
 extern double derivative(const char* expression, double x, double h);
 extern double derivative2(const char* expression, double x, double h);
 extern double integrate_adaptive(const char* expression, double a, double b, double tol);
@@ -33,6 +34,10 @@ static int valid_context(const sc_context_t* context) {
 
 static int valid_text(const char* expression) {
     return expression != NULL && expression[0] != '\0';
+}
+
+static int finite_value(double value) {
+    return isfinite(value) ? 1 : 0;
 }
 
 static int status_from_result(double value) {
@@ -68,7 +73,8 @@ SC_API int32_t sc_evaluate(
     double x,
     double y,
     double* result) {
-    if (!valid_context(context) || !valid_text(expression) || result == NULL) {
+    if (!valid_context(context) || !valid_text(expression) || result == NULL ||
+        !finite_value(x) || !finite_value(y)) {
         return SC_INVALID_ARGUMENT;
     }
     const double value = evaluate_xy(expression, x, y);
@@ -86,6 +92,7 @@ SC_API int32_t sc_evaluate_array(
         return SC_INVALID_ARGUMENT;
     }
     if (count == 0) return SC_OK;
+    if (!validate_expression(expression)) return SC_CALCULATION_ERROR;
     /* Non-finite samples are valid plot discontinuities. The caller maps them
      * to gaps instead of failing the complete array operation. */
     evaluate_array(expression, xs, results, count);
@@ -104,6 +111,7 @@ SC_API int32_t sc_evaluate_array_xy(
         return SC_INVALID_ARGUMENT;
     }
     if (count == 0) return SC_OK;
+    if (!validate_expression(expression)) return SC_CALCULATION_ERROR;
     evaluate_xy_array(expression, xs, ys, results, count);
     return SC_OK;
 }
@@ -114,7 +122,8 @@ SC_API int32_t sc_derivative(
     double x,
     double step,
     double* result) {
-    if (!valid_context(context) || !valid_text(expression) || result == NULL || step == 0.0) {
+    if (!valid_context(context) || !valid_text(expression) || result == NULL ||
+        !finite_value(x) || !finite_value(step) || step == 0.0) {
         return SC_INVALID_ARGUMENT;
     }
     const double value = derivative(expression, x, step);
@@ -128,7 +137,8 @@ SC_API int32_t sc_derivative2(
     double x,
     double step,
     double* result) {
-    if (!valid_context(context) || !valid_text(expression) || result == NULL || step == 0.0) {
+    if (!valid_context(context) || !valid_text(expression) || result == NULL ||
+        !finite_value(x) || !finite_value(step) || step == 0.0) {
         return SC_INVALID_ARGUMENT;
     }
     const double value = derivative2(expression, x, step);
@@ -143,7 +153,9 @@ SC_API int32_t sc_integrate(
     double b,
     double tolerance,
     double* result) {
-    if (!valid_context(context) || !valid_text(expression) || result == NULL || tolerance <= 0.0) {
+    if (!valid_context(context) || !valid_text(expression) || result == NULL ||
+        !finite_value(a) || !finite_value(b) || !finite_value(tolerance) ||
+        tolerance <= 0.0) {
         return SC_INVALID_ARGUMENT;
     }
     const double value = integrate_adaptive(expression, a, b, tolerance);
@@ -160,6 +172,7 @@ SC_API int32_t sc_solve_bisection(
     int32_t max_iterations,
     double* result) {
     if (!valid_context(context) || !valid_text(expression) || result == NULL ||
+        !finite_value(a) || !finite_value(b) || !finite_value(tolerance) ||
         tolerance <= 0.0 || max_iterations <= 0 || a >= b) {
         return SC_INVALID_ARGUMENT;
     }
@@ -178,7 +191,9 @@ SC_API int32_t sc_solve(
     int32_t max_iterations,
     double* result) {
     if (!valid_context(context) || !valid_text(expression) || result == NULL ||
-        tolerance <= 0.0 || max_iterations <= 0 || xmin > xmax) {
+        !finite_value(guess) || !finite_value(xmin) || !finite_value(xmax) ||
+        !finite_value(tolerance) || tolerance <= 0.0 ||
+        max_iterations <= 0 || xmin > xmax) {
         return SC_INVALID_ARGUMENT;
     }
     const double value = solve_equation(
@@ -199,7 +214,9 @@ SC_API int32_t sc_ode_rk4(
     int32_t max_out,
     int32_t* out_count) {
     if (!valid_context(context) || !valid_text(expression) || out_x == NULL ||
-        out_y == NULL || out_count == NULL || steps < 1 || max_out < steps + 1) {
+        out_y == NULL || out_count == NULL || !finite_value(x0) ||
+        !finite_value(y0) || !finite_value(x_end) || steps < 1 ||
+        steps > INT32_MAX - 1 || max_out < steps + 1) {
         return SC_INVALID_ARGUMENT;
     }
     const int count = ode_solve_rk4(

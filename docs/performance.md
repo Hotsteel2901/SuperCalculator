@@ -6,6 +6,11 @@
   for array sampling, numerical derivatives, adaptive Simpson integration, root
   solving and RK4.
 - Native ABI v2 array and repeated-sampling paths reuse compiled RPN in the C core.
+  Scalar hot paths additionally use a bounded, allocation-free per-thread LRU cache;
+  custom-function registry changes invalidate cached programs.
+- The C evaluator uses bounded token/RPN stacks, zero heap allocation in the common
+  scalar/array evaluation path, compensated Simpson sums, exact non-zero divisor
+  handling and finite-input/status validation at the ABI boundary.
 - Plot previews cap sample counts, preserve non-finite gaps, and repaint only the
   chart surface through a dedicated `CustomPainter`.
 - Heavy Dart fallback paths cross `ComputationDispatcher`, which uses Flutter's
