@@ -1,0 +1,168 @@
+name: Flutter Next Era checks
+
+on:
+  pull_request:
+    paths:
+      - 'flutter/**'
+      - 'native/calc_core/**'
+      - 'calc_core.c'
+      - 'tool/**'
+      - '.github/workflows/flutter-next-era.yml'
+      - '.github/workflows/flutter-platform-builds.yml'
+      - 'docs/migration/**'
+      - 'docs/compatibility.md'
+  push:
+    branches: [master]
+    paths:
+      - 'flutter/**'
+      - 'native/calc_core/**'
+      - 'calc_core.c'
+      - 'tool/**'
+      - '.github/workflows/flutter-next-era.yml'
+      - '.github/workflows/flutter-platform-builds.yml'
+      - 'docs/migration/**'
+      - 'docs/compatibility.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: flutter-next-era-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  flutter:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flutter
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate migration manifests
+        working-directory: ${{ github.workspace }}
+        run: |
+          python -m json.tool docs/migration/feature-manifest.json >/dev/null
+          python -m json.tool docs/migration/golden_vectors.json >/dev/null
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.6'
+          channel: stable
+          cache: true
+      - run: flutter --version
+      - run: dart --version
+      - run: flutter pub get
+      - run: flutter gen-l10n
+
+      - name: Apply Dart formatting
+        run: dart format lib test integration_test
+      - name: Commit formatting changes
+        if: github.event_name == 'pull_request'
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          git status --short
+          git diff --stat
+          if git diff --quiet -- flutter/lib flutter/test flutter/integration_test; then
+            exit 0
+          fi
+          branch="${{ github.head_ref }}"
+          git stash push --include-untracked -m 'temporary Flutter formatter changes'
+          git fetch origin "$branch"
+          if ! rebase_output=$(git rebase "origin/$branch" 2>&1); then
+            clean_output="$(printf '%s' "$rebase_output" | tr '\n' ' ' | cut -c1-3500)"
+            echo "::error title=formatter rebase failed::$clean_output"
+            exit 1
+          fi
+          if ! stash_output=$(git stash pop 2>&1); then
+            clean_output="$(printf '%s' "$stash_output" | tr '\n' ' ' | cut -c1-3500)"
+            echo "::error title=formatter stash failed::$clean_output"
+            exit 1
+          fi
+          git restore --worktree --staged flutter/analysis_options.yaml || true
+          rm -f flutter/pubspec.lock
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add flutter/lib flutter/test flutter/integration_test
+          if git diff --cached --quiet -- flutter/lib flutter/test flutter/integration_test; then
+            exit 0
+          fi
+          if ! commit_output=$(git commit -m 'style: format Flutter sources' 2>&1); then
+            clean_output="$(printf '%s' "$commit_output" | tr '\n' ' ' | cut -c1-3500)"
+            echo "::error title=formatter commit failed::$clean_output"
+            exit 1
+          fi
+          if ! push_output=$(git push origin "HEAD:$branch" 2>&1); then
+            clean_output="$(printf '%s' "$push_output" | tr '\n' ' ' | cut -c1-3500)"
+            echo "::error title=formatter push failed::$clean_output"
+            exit 1
+          fi
+
+      - name: Run Flutter analyzer
+        run: |
+          set +e
+          flutter analyze 2>&1 | tee /tmp/flutter-analyzer.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            summary=$(python3 -c 'import pathlib; print(pathlib.Path("/tmp/flutter-analyzer.log").read_text().replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A"))')
+            echo "::error title=Flutter analyzer::$summary"
+          fi
+          exit "$status"
+      - name: Run Flutter tests
+        run: |
+          set +e
+          flutter test --reporter expanded 2>&1 | tee /tmp/flutter-test.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            summary=$(tail -n 80 /tmp/flutter-test.log | python3 -c 'import pathlib, sys; print(sys.stdin.read().replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A"))')
+            echo "::error title=Flutter tests::$summary"
+          fi
+          exit "$status"
+      - run: flutter build web --release
+
+  native:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build C ABI smoke test
+        run: |
+          gcc -std=c11 -Wall -Wextra -Wpedantic -O2 -fPIC \
+            -DSUPERCALC_CORE_BUILD -shared -I native/calc_core/include \
+            calc_core.c native/calc_core/src/supercalc_core.c -lm \
+            -o /tmp/libsupercalc_core.so
+          gcc -std=c11 -Wall -Wextra -Wpedantic -O2 -I native/calc_core/include \
+            native/calc_core/tests/smoke_test.c -L/tmp -Wl,-rpath,/tmp \
+            -lsupercalc_core -o /tmp/supercalc_core_smoke
+          /tmp/supercalc_core_smoke
+
+  platform-contract:
+    name: Validate platform release contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check declared platform artifacts and signing labels
+        shell: bash
+        run: |
+          set -euo pipefail
+          workflow=.github/workflows/flutter-platform-builds.yml
+          test -s "$workflow"
+          grep -q '^  workflow_dispatch:' "$workflow"
+          if grep -q '^  pull_request:' "$workflow" || grep -q '^  push:' "$workflow"; then
+            echo 'Platform workflow must remain manual-only.' >&2
+            exit 1
+          fi
+          for job in web android linux windows macos ios release; do
+            grep -q "^  $job:" "$workflow"
+          done
+          for artifact in \
+            'SuperCalculator-Next-Era-web' \
+            'SuperCalculator-Next-Era-android' \
+            'SuperCalculator-Next-Era-linux' \
+            'SuperCalculator-Next-Era-windows' \
+            'SuperCalculator-Next-Era-macos' \
+            'SuperCalculator-Next-Era-ios'; do
+            grep -q "$artifact" "$workflow"
+          done
+          grep -q 'ios-unsigned' "$workflow"
+          grep -q 'unsigned where Apple signing' "$workflow"
+          grep -q 'FLUTTER_VERSION:' "$workflow"
+          test "$(grep -c 'actions/upload-artifact@v4' "$workflow")" -ge 6

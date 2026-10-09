@@ -1,0 +1,394 @@
+{
+  "schemaVersion": 1,
+  "tolerance": 1e-10,
+  "vectors": [
+    {
+      "id": "scalar.square-plus-one",
+      "expression": "x^2 + 1",
+      "x": 3,
+      "expected": 10
+    },
+    {
+      "id": "scalar.sin-pi-over-two",
+      "expression": "sin(pi / 2)",
+      "x": 0,
+      "expected": 1
+    },
+    {
+      "id": "scalar.sqrt",
+      "expression": "sqrt(x)",
+      "x": 9,
+      "expected": 3
+    },
+    {
+      "id": "scalar.factorial",
+      "expression": "5!",
+      "x": 0,
+      "expected": 120
+    },
+    {
+      "id": "scalar.modulo",
+      "expression": "17 mod 5",
+      "x": 0,
+      "expected": 2
+    },
+    {
+      "id": "scalar.variable-y",
+      "expression": "x + y",
+      "x": 2,
+      "y": 3,
+      "expected": 5,
+      "nativeOnly": true
+    },
+    {
+      "id": "error.divide-by-zero",
+      "expression": "1 / 0",
+      "x": 0,
+      "expectedError": true
+    },
+    {
+      "id": "plot.discontinuity",
+      "expression": "1 / x",
+      "xs": [
+        -1,
+        0,
+        1
+      ],
+      "finite": [
+        true,
+        false,
+        true
+      ]
+    },
+    {
+      "id": "calculus.limit-sinc",
+      "operation": "limit",
+      "expression": "sin(x) / x",
+      "point": 0,
+      "expected": 1
+    },
+    {
+      "id": "calculus.area-parabola",
+      "operation": "areaBetweenCurves",
+      "f": "x",
+      "g": "0",
+      "a": 0,
+      "b": 1,
+      "expected": 0.5
+    },
+    {
+      "id": "equations.system-diagonal-circle",
+      "operation": "solveSystem2d",
+      "f": "x^2 + y^2 - 1",
+      "g": "x - y",
+      "x0": 0.7,
+      "y0": 0.7,
+      "expectedX": 0.7071067811865475,
+      "expectedY": 0.7071067811865475
+    },
+    {
+      "id": "complex.square-one-plus-i",
+      "operation": "power",
+      "real": 1,
+      "imaginary": 1,
+      "exponentReal": 2,
+      "exponentImaginary": 0,
+      "expectedReal": 0,
+      "expectedImaginary": 2
+    },
+    {
+      "id": "probability.normal-zero",
+      "operation": "normal",
+      "x": 0,
+      "mu": 0,
+      "sigma": 1,
+      "pdf": 0.3989422804014327,
+      "cdf": 0.5
+    },
+    {
+      "id": "linear-algebra.det-2x2",
+      "operation": "determinant",
+      "matrix": "1,2;3,4",
+      "expected": -2
+    },
+    {
+      "id": "ode.exponential.rk4",
+      "operation": "ode",
+      "method": "RK4",
+      "expression": "y",
+      "x0": 0,
+      "y0": 1,
+      "xEnd": 1,
+      "steps": 100,
+      "expectedLast": 2.718281828459045,
+      "tolerance": 1e-05
+    },
+    {
+      "id": "ode.exponential.euler",
+      "operation": "ode",
+      "method": "Euler",
+      "expression": "y",
+      "x0": 0,
+      "y0": 1,
+      "xEnd": 1,
+      "steps": 100,
+      "expectedLast": 2.7048138294215285,
+      "tolerance": 0.001
+    },
+    {
+      "id": "data.function-table",
+      "operation": "functionTable",
+      "expression": "x^2",
+      "start": -1,
+      "end": 1,
+      "rows": 5,
+      "expectedX": [
+        -1,
+        -0.5,
+        0,
+        0.5,
+        1
+      ],
+      "expectedValues": [
+        1,
+        0.25,
+        0,
+        0.25,
+        1
+      ]
+    },
+    {
+      "id": "data.linear-regression",
+      "operation": "linearRegression",
+      "xs": [
+        0,
+        1,
+        2
+      ],
+      "ys": [
+        1,
+        3,
+        5
+      ],
+      "slope": 2,
+      "intercept": 1,
+      "rSquared": 1
+    },
+    {
+      "id": "distribution.binomial-edge",
+      "operation": "binomial",
+      "x": 0,
+      "n": 10,
+      "p": 0,
+      "pmf": 1,
+      "cdf": 1
+    },
+    {
+      "id": "error.function-table-range",
+      "operation": "functionTable",
+      "expression": "x",
+      "start": 1,
+      "end": 0,
+      "rows": 3,
+      "expectedError": true
+    },
+    {
+      "id": "probability.combination-10-3",
+      "operation": "combination",
+      "n": 10,
+      "r": 3,
+      "expected": 120
+    },
+    {
+      "id": "probability.binomial-boundary",
+      "operation": "binomialProbability",
+      "n": 10,
+      "k": 0,
+      "p": 0,
+      "expected": 1
+    },
+    {
+      "id": "calendar.leap-day-add",
+      "operation": "calendarAddDays",
+      "date": "2024-02-28",
+      "days": 2,
+      "expected": "2024-03-01"
+    },
+    {
+      "id": "calendar.date-difference",
+      "operation": "calendarDateDifference",
+      "start": "2024-01-01",
+      "end": "2024-01-31",
+      "expected": 30
+    },
+    {
+      "id": "sparse.diagonal-spmv",
+      "operation": "sparseMatVec",
+      "rows": 3,
+      "columns": 3,
+      "entries": "0,0,4;1,1,5;2,2,6",
+      "vector": [
+        1,
+        2,
+        3
+      ],
+      "expected": [
+        4,
+        10,
+        18
+      ]
+    },
+    {
+      "id": "calculus.taylor-exp-order-three",
+      "operation": "taylorCoefficients",
+      "expression": "exp(x)",
+      "point": 0,
+      "order": 3,
+      "expected": [
+        1,
+        1,
+        0.5,
+        0.16666666666666666
+      ],
+      "tolerance": 0.0001
+    },
+    {
+      "id": "calculus.arc-length-flat",
+      "operation": "arcLength",
+      "expression": "0",
+      "a": 0,
+      "b": 2,
+      "expected": 2
+    },
+    {
+      "id": "calculus.disk-volume-unit",
+      "operation": "volumeDisk",
+      "expression": "1",
+      "a": 0,
+      "b": 1,
+      "expected": 3.141592653589793
+    },
+    {
+      "id": "finance.retirement-zero-rate",
+      "operation": "retirementFutureValue",
+      "initialBalance": 0,
+      "monthlyContribution": 100,
+      "annualRate": 0,
+      "years": 1,
+      "expected": 1200
+    },
+    {
+      "id": "plot.parametric.unit-circle",
+      "operation": "parametric",
+      "xExpression": "cos(t)",
+      "yExpression": "sin(t)",
+      "t": 0,
+      "expectedX": 1,
+      "expectedY": 0
+    },
+    {
+      "id": "plot.polar.cardioid-origin",
+      "operation": "polar",
+      "expression": "1 + cos(t)",
+      "t": 0,
+      "expectedRadius": 2
+    },
+    {
+      "id": "plot.implicit.unit-circle",
+      "operation": "implicit",
+      "expression": "x^2 + y^2 - 1",
+      "x": 1,
+      "y": 0,
+      "expected": 0
+    },
+    {
+      "id": "plot.contour.level-zero",
+      "operation": "contour",
+      "expression": "x + y",
+      "x": 0.25,
+      "y": -0.25,
+      "level": 0,
+      "expected": 0
+    },
+    {
+      "id": "plot.direction-field.linear",
+      "operation": "directionField",
+      "expression": "y",
+      "x": 0,
+      "y": 2,
+      "expectedSlope": 2
+    },
+    {
+      "id": "plot.vector-field.constant",
+      "operation": "vectorField",
+      "xExpression": "1",
+      "yExpression": "-2",
+      "x": 0,
+      "y": 0,
+      "expected": [
+        1,
+        -2
+      ]
+    },
+    {
+      "id": "equations.scan-roots-cubic",
+      "operation": "scanRoots",
+      "expression": "x^3 - 8",
+      "minimum": -2,
+      "maximum": 4,
+      "expected": [
+        2
+      ]
+    },
+    {
+      "id": "signals.convolution-two-tap",
+      "operation": "convolution",
+      "left": [
+        1,
+        2
+      ],
+      "right": [
+        3,
+        4
+      ],
+      "expected": [
+        3,
+        10,
+        8
+      ]
+    },
+    {
+      "id": "linear-algebra.eigenvalues-2x2",
+      "operation": "eigenvalues2x2",
+      "matrix": "1,2;3,4",
+      "expected": [
+        5.372281323269014,
+        -0.3722813232690143
+      ]
+    },
+    {
+      "id": "discrete.bitwise-mask-8",
+      "operation": "bitwise",
+      "kind": "and",
+      "left": 255,
+      "right": 15,
+      "width": 8,
+      "expected": 15
+    },
+    {
+      "id": "finance.loan-zero-rate",
+      "operation": "loanPayment",
+      "principal": 1200,
+      "annualRate": 0,
+      "periods": 12,
+      "expected": 100
+    },
+    {
+      "id": "presets.factorial-one",
+      "operation": "preset",
+      "preset": "x!",
+      "x": 1,
+      "expected": 1
+    }
+  ]
+}
