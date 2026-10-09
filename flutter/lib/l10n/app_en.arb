@@ -13,10 +13,10 @@
   "tools": "Tools",
   "settings": "Settings",
   "about": "About",
-  "welcomeTitle": "A clearer way to explore mathematics",
-  "welcomeBody": "A Material 3 Expressive scientific calculator with a shared native computation core.",
-  "openPlotter": "Open plotter",
-  "migrationStatus": "Flutter migration in progress",
+  "welcomeTitle": "One fast workbench for exploring mathematics",
+  "welcomeBody": "SuperCalculator - Next Era brings function and multi-curve plotting, parameter controls, intersection markers and free coordinate points together with calculus, equations, ODE, data, matrices and finance.",
+  "openPlotter": "Open plotting workbench",
+  "migrationStatus": "Next Era v6.0.0",
   "expression": "Expression",
   "argumentX": "x value",
   "evaluate": "Evaluate",
@@ -32,13 +32,13 @@
   "computing": "Computing…",
   "invalidExpression": "Could not evaluate this expression.",
   "noResult": "Enter an expression and evaluate it.",
-  "featureComingSoon": "This feature is included in the migration matrix and is being connected incrementally.",
-  "aboutBody": "SuperCalculator - Next Era replaces the legacy Tkinter and Java UI with one Flutter application while preserving the C computation core.",
+  "featureComingSoon": "This capability is part of the Next Era feature set and will keep gaining native and replaceable backend implementations.",
+  "aboutBody": "SuperCalculator - Next Era uses a Flutter application shell with replaceable native and Dart computation backends, while preserving the shared C core and the legacy platform capability set.",
   "versionLabel": "Version {version}",
   "@versionLabel": {
     "description": "The application version shown on the About page"
   },
-  "version": "0.1.0",
+  "version": "6.0.0",
   "plotPoints": "{count} sampled points",
   "@plotPoints": {
     "description": "Number of points currently rendered in the plot preview"

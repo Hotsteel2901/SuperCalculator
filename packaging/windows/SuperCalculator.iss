@@ -1,5 +1,5 @@
 #define AppName "SuperCalculator - Next Era"
-#define AppVersion "0.1.0"
+#define AppVersion "6.0.0"
 #define AppPublisher "SuperCalculator maintainers"
 #define AppExeName "supercalculator_next_era.exe"
 #ifndef BuildDir
@@ -14,7 +14,8 @@ AppPublisher={#AppPublisher}
 DefaultDirName={autopf}\SuperCalculator Next Era
 DefaultGroupName={#AppName}
 OutputDir=Output
-OutputBaseFilename=SuperCalculator-Next-Era-windows-x64-setup
+OutputBaseFilename=SuperCalculator-Next-Era-v{#AppVersion}-windows-x64-setup
+SetupIconFile=..\..\SuperCalculator.ico
 Compression=lzma2
 SolidCompression=yes
 ArchitecturesInstallIn64BitMode=x64

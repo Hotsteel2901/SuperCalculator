@@ -103,7 +103,7 @@ class HomePage extends StatelessWidget {
     showAboutDialog(
       context: context,
       applicationName: l10n.appTitle,
-      applicationVersion: l10n.versionLabel('0.1.0'),
+      applicationVersion: l10n.versionLabel(l10n.version),
       applicationIcon: const Icon(Icons.calculate_outlined),
       children: <Widget>[Text(l10n.aboutBody)],
     );

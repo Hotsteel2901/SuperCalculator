@@ -50,6 +50,18 @@ void main() {
     expect(DartComputation.volumeShell('1', 0, 1), closeTo(math.pi, 1e-8));
   });
 
+  test('intersection scanner finds crossing and tangential roots safely', () {
+    final crossing = DartComputation.findIntersections('x', '0', -2, 2);
+    final tangent = DartComputation.findIntersections('x^2', '0', -2, 2);
+    final discontinuity = DartComputation.findIntersections('1/x', '0', -2, 2);
+
+    expect(crossing, hasLength(1));
+    expect(crossing.single, closeTo(0, 1e-8));
+    expect(tangent, hasLength(1));
+    expect(tangent.single, closeTo(0, 1e-8));
+    expect(discontinuity, isEmpty);
+  });
+
   test('area, parametric sampling and two-variable systems work', () {
     expect(
       DartComputation.areaBetweenCurves('x', '0', 0, 1),

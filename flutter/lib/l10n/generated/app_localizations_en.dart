@@ -49,17 +49,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get about => 'About';
 
   @override
-  String get welcomeTitle => 'A clearer way to explore mathematics';
+  String get welcomeTitle => 'One fast workbench for exploring mathematics';
 
   @override
   String get welcomeBody =>
-      'A Material 3 Expressive scientific calculator with a shared native computation core.';
+      'SuperCalculator - Next Era brings function and multi-curve plotting, parameter controls, intersection markers and free coordinate points together with calculus, equations, ODE, data, matrices and finance.';
 
   @override
-  String get openPlotter => 'Open plotter';
+  String get openPlotter => 'Open plotting workbench';
 
   @override
-  String get migrationStatus => 'Flutter migration in progress';
+  String get migrationStatus => 'Next Era v6.0.0';
 
   @override
   String get expression => 'Expression';
@@ -108,11 +108,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get featureComingSoon =>
-      'This feature is included in the migration matrix and is being connected incrementally.';
+      'This capability is part of the Next Era feature set and will keep gaining native and replaceable backend implementations.';
 
   @override
   String get aboutBody =>
-      'SuperCalculator - Next Era replaces the legacy Tkinter and Java UI with one Flutter application while preserving the C computation core.';
+      'SuperCalculator - Next Era uses a Flutter application shell with replaceable native and Dart computation backends, while preserving the shared C core and the legacy platform capability set.';
 
   @override
   String versionLabel(Object version) {
@@ -120,7 +120,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get version => '0.1.0';
+  String get version => '6.0.0';
 
   @override
   String plotPoints(Object count) {

@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">SuperCalculator - Next Era</title>
+  <desc id="desc">A luminous coordinate grid and a broken analytic curve.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07132B"/>
+      <stop offset="0.52" stop-color="#111A46"/>
+      <stop offset="1" stop-color="#25154A"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="52%" cy="48%" r="58%">
+      <stop offset="0" stop-color="#22D3EE" stop-opacity=".30"/>
+      <stop offset=".44" stop-color="#6366F1" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#6366F1" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="curve" x1=".18" y1=".78" x2=".84" y2=".22">
+      <stop offset="0" stop-color="#34D399"/>
+      <stop offset=".42" stop-color="#22D3EE"/>
+      <stop offset=".76" stop-color="#818CF8"/>
+      <stop offset="1" stop-color="#C084FC"/>
+    </linearGradient>
+    <linearGradient id="axis" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#A5F3FC" stop-opacity=".88"/>
+      <stop offset="1" stop-color="#C4B5FD" stop-opacity=".72"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="14" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="38"/>
+    </filter>
+    <clipPath id="round"><rect width="1024" height="1024" rx="220"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#round)">
+    <rect width="1024" height="1024" fill="url(#bg)"/>
+    <rect width="1024" height="1024" fill="url(#halo)"/>
+
+    <g opacity=".14" stroke="#A5B4FC" stroke-width="3">
+      <path d="M128 0V1024M256 0V1024M384 0V1024M512 0V1024M640 0V1024M768 0V1024M896 0V1024"/>
+      <path d="M0 128H1024M0 256H1024M0 384H1024M0 512H1024M0 640H1024M0 768H1024M0 896H1024"/>
+    </g>
+    <g opacity=".16" fill="none" stroke="#67E8F9" stroke-width="3">
+      <circle cx="512" cy="512" r="330"/><circle cx="512" cy="512" r="210"/>
+    </g>
+
+    <ellipse cx="525" cy="535" rx="290" ry="270" fill="#22D3EE" opacity=".12" filter="url(#soft)"/>
+
+    <!-- Coordinate frame -->
+    <g fill="none" stroke="url(#axis)" stroke-linecap="round">
+      <path d="M220 790H826" stroke-width="12"/>
+      <path d="M244 814V204" stroke-width="12"/>
+      <path d="M786 760l40 30-40 30" stroke-width="10"/>
+      <path d="M214 244l30-40 30 40" stroke-width="10"/>
+    </g>
+    <g stroke="#C4B5FD" stroke-width="8" stroke-linecap="round" opacity=".70">
+      <path d="M370 778v24M500 778v24M630 778v24M760 778v24"/>
+      <path d="M232 650h24M232 520h24M232 390h24"/>
+    </g>
+
+    <!-- Broken curve: the gap is deliberate and represents safe handling of poles. -->
+    <path d="M286 716 C350 692 414 634 458 560 C500 490 512 402 548 302"
+          fill="none" stroke="#22D3EE" stroke-opacity=".35" stroke-width="38"
+          stroke-linecap="round" filter="url(#glow)"/>
+    <path d="M286 716 C350 692 414 634 458 560 C500 490 512 402 548 302"
+          fill="none" stroke="url(#curve)" stroke-width="22"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M686 286 C660 394 656 486 700 566 C730 622 770 680 812 716"
+          fill="none" stroke="#818CF8" stroke-opacity=".35" stroke-width="38"
+          stroke-linecap="round" filter="url(#glow)"/>
+    <path d="M686 286 C660 394 656 486 700 566 C730 622 770 680 812 716"
+          fill="none" stroke="url(#curve)" stroke-width="22"
+          stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Asymptote and calculation node -->
+    <path d="M618 244V756" stroke="#C084FC" stroke-width="8" stroke-linecap="round" stroke-dasharray="10 22" opacity=".88"/>
+    <circle cx="618" cy="512" r="28" fill="#0B1534" stroke="#E9D5FF" stroke-width="9" filter="url(#glow)"/>
+    <path d="M604 512h28M618 498v28" stroke="#E9D5FF" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="244" cy="790" r="18" fill="#A5F3FC"/>
+  </g>
+</svg>

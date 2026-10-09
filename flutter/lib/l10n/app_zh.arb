@@ -13,10 +13,10 @@
   "tools": "工具",
   "settings": "设置",
   "about": "关于",
-  "welcomeTitle": "更清晰地探索数学",
-  "welcomeBody": "采用 Material 3 Expressive 的跨平台科学计算器，共享原生计算核心。",
-  "openPlotter": "打开绘图器",
-  "migrationStatus": "Flutter 迁移进行中",
+  "welcomeTitle": "一个工作台，清晰探索数学",
+  "welcomeBody": "SuperCalculator - Next Era 将函数与多曲线绘图、参数控制、交点标记和自由坐标标点，与微积分、方程、ODE、数据、矩阵和金融计算统一起来。",
+  "openPlotter": "打开绘图工作台",
+  "migrationStatus": "Next Era v6.0.0",
   "expression": "表达式",
   "argumentX": "x 值",
   "evaluate": "计算",
@@ -32,13 +32,13 @@
   "computing": "计算中…",
   "invalidExpression": "无法计算此表达式。",
   "noResult": "输入表达式后点击计算。",
-  "featureComingSoon": "此功能已经加入迁移矩阵，将按阶段逐步接入。",
-  "aboutBody": "SuperCalculator - Next Era 使用一个 Flutter 应用替代旧 Tkinter 和 Java UI，同时保留 C 计算核心。",
+  "featureComingSoon": "此能力属于 Next Era 功能集，将持续接入原生与可替换计算后端。",
+  "aboutBody": "SuperCalculator - Next Era 使用 Flutter 应用壳、可替换的原生与 Dart 计算后端，并保留共享 C 核心及旧平台能力。",
   "versionLabel": "版本 {version}",
   "@versionLabel": {
     "description": "关于页面显示的应用版本"
   },
-  "version": "0.1.0",
+  "version": "6.0.0",
   "plotPoints": "已采样 {count} 个点",
   "@plotPoints": {
     "description": "当前绘图预览使用的点数量"

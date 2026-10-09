@@ -20,7 +20,7 @@ on:
         type: boolean
         default: false
       release-tag:
-        description: 'Release tag, e.g. v1.3.0 (required if creating a release)'
+        description: 'Release tag, e.g. v6.0.0 (required if creating a release)'
         type: string
         default: ''
   push:

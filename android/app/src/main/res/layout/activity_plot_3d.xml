@@ -17,7 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="@drawable/ic_back"
-            app:title="3D Surface Plot"
+            app:title="@string/app_name"
             app:titleTextColor="@color/m3_on_surface" />
 
     </com.google.android.material.appbar.AppBarLayout>

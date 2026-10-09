@@ -11,6 +11,7 @@ import android.text.style.ForegroundColorSpan;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
@@ -73,6 +74,10 @@ public class PlotActivity extends AppCompatActivity {
     // Marked points for coordinate marking
     private ArrayList<Entry> markedPoints;
     private LineDataSet markedPointDataSet;
+    /** The replaceable marker dataset keeps a second intersection query from stacking old dots. */
+    private LineDataSet intersectionDataSet;
+    /** Values survive the input box being cleared after a curve is added. */
+    private final Map<String, String> parameterValues = new LinkedHashMap<>();
     
     private static final int[] COLOR_PALETTE = {
         Color.parseColor("#6366F1"),
@@ -227,9 +232,7 @@ public class PlotActivity extends AppCompatActivity {
         NestedScrollView scrollView = findViewById(R.id.scroll_view);
         if (scrollView != null) scrollView.setNestedScrollingEnabled(false);
         
-        lineChart.setTouchEnabled(true);
-        lineChart.setPinchZoom(true);
-        lineChart.setDoubleTapToZoomEnabled(true);
+        configureChartInteraction();
         
         setupChart();
         setupGestureListener();
@@ -965,6 +968,51 @@ public class PlotActivity extends AppCompatActivity {
         toast(getString(R.string.toast_regression_plotted, xs.length));
     }
     
+    /**
+     * Keep MPAndroidChart's native interaction model intact inside the
+     * NestedScrollView: one finger drags the complete coordinate viewport and
+     * two fingers pinch-zoom both axes around the focal point. The parent used
+     * to win vertical MOVE events, which made the grid look static on phones.
+     */
+    private void configureChartInteraction() {
+        lineChart.setTouchEnabled(true);
+        lineChart.setDragEnabled(true);
+        lineChart.setScaleEnabled(true);
+        lineChart.setScaleXEnabled(true);
+        lineChart.setScaleYEnabled(true);
+        lineChart.setAutoScaleMinMaxEnabled(false);
+        lineChart.setPinchZoom(true);
+        lineChart.setDoubleTapToZoomEnabled(true);
+        lineChart.setHighlightPerDragEnabled(false);
+        lineChart.setHighlightPerTapEnabled(true);
+        lineChart.setOnTouchListener((view, event) -> {
+            switch (event.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                case MotionEvent.ACTION_MOVE:
+                case MotionEvent.ACTION_POINTER_DOWN:
+                    requestChartParentsNotToIntercept(true);
+                    break;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    requestChartParentsNotToIntercept(false);
+                    break;
+                default:
+                    break;
+            }
+            // Returning false lets LineChart consume the event and perform its
+            // built-in drag/pinch transform after the parent is disarmed.
+            return false;
+        });
+    }
+
+    private void requestChartParentsNotToIntercept(boolean disallow) {
+        ViewParent parent = lineChart.getParent();
+        while (parent != null) {
+            parent.requestDisallowInterceptTouchEvent(disallow);
+            parent = parent.getParent();
+        }
+    }
+
     private void setupGestureListener() {
         lineChart.setOnChartGestureListener(new OnChartGestureListener() {
             @Override
@@ -1104,26 +1152,77 @@ public class PlotActivity extends AppCompatActivity {
             toast(getString(R.string.toast_enter_expr));
             return;
         }
+        rememberParameterValues();
+        boolean hadVisiblePlot = lineChart.getLineData() != null
+                && lineChart.getLineData().getDataSetCount() > 0;
         // Keep the symbolic expression (with parameters) in the list; values are
-        // substituted when plotting so the sliders stay live.
+        // substituted when plotting so the controls stay live.
         allExpressions.add(expr);
         curveColors.add(getNextColor());
         curveTypes.add("regular");
         // Add empty entries list for the new curve (keep existing ODE/Taylor data)
         allEntries.add(new ArrayList<Entry>());
+        clearIntersectionMarkers();
         toast(getString(R.string.toast_added_curve, expr));
         exprInput.setText("");
+        updateParams();
         refreshCurveList();
+        if (hadVisiblePlot) onPlotAll();
     }
 
-    /** Rebuild the parameter fields for the expression currently being typed. */
+    /**
+     * Rebuild the parameter fields for the expression currently being typed and
+     * for every curve already in the list. This is important after Add Curve:
+     * the input is cleared, but a parameter such as `a` still belongs to the
+     * saved curve and must remain editable.
+     */
     private void updateParams() {
         if (paramRow == null || exprInput == null) return;
+        rememberParameterValues();
+        StringBuilder source = new StringBuilder(exprInput.getText().toString());
+        if (allExpressions != null) {
+            for (int i = 0; i < allExpressions.size(); i++) {
+                String type = i < curveTypes.size() ? curveTypes.get(i) : "regular";
+                if ("regular".equals(type)) {
+                    source.append('\n').append(allExpressions.get(i));
+                } else if ("parametric".equals(type)) {
+                    int index = parameterIndexBefore(i, "parametric");
+                    if (index < parametricXExprs.size()) {
+                        source.append('\n').append(parametricXExprs.get(index));
+                        source.append('\n').append(parametricYExprs.get(index));
+                    }
+                } else if ("polar".equals(type)) {
+                    int index = parameterIndexBefore(i, "polar");
+                    if (index < polarExprs.size()) source.append('\n').append(polarExprs.get(index));
+                }
+            }
+        }
         ParamSupport.rebuild(this, paramRow, paramHint, paramScroll, paramFields,
-                exprInput.getText().toString());
+                source.toString());
+        for (Map.Entry<String, EditText> entry : paramFields.entrySet()) {
+            String saved = parameterValues.get(entry.getKey());
+            if (saved != null && !saved.equals(entry.getValue().getText().toString())) {
+                entry.getValue().setText(saved);
+            }
+        }
+    }
+
+    private void rememberParameterValues() {
+        for (Map.Entry<String, EditText> entry : paramFields.entrySet()) {
+            parameterValues.put(entry.getKey(), entry.getValue().getText().toString().trim());
+        }
+    }
+
+    private int parameterIndexBefore(int curveIndex, String type) {
+        int index = 0;
+        for (int i = 0; i < curveIndex; i++) {
+            if (i < curveTypes.size() && type.equals(curveTypes.get(i))) index++;
+        }
+        return index;
     }
 
     private String withParams(String expr) {
+        rememberParameterValues();
         return ParamSupport.substitute(expr, paramFields);
     }
     
@@ -1133,6 +1232,9 @@ public class PlotActivity extends AppCompatActivity {
             return;
         }
         int idx = allExpressions.size() - 1;
+        boolean hadVisiblePlot = lineChart.getLineData() != null
+                && lineChart.getLineData().getDataSetCount() > 0;
+        String removedExpression = allExpressions.get(idx);
         allExpressions.remove(idx);
         if (idx < curveColors.size()) {
             curveColors.remove(idx);
@@ -1173,8 +1275,18 @@ public class PlotActivity extends AppCompatActivity {
         if (idx < allEntries.size()) {
             allEntries.remove(idx);
         }
-        toast(getString(R.string.toast_removed_curve, idx < allExpressions.size() ? allExpressions.get(idx) : "last"));
+        clearIntersectionMarkers();
+        updateParams();
+        toast(getString(R.string.toast_removed_curve, removedExpression));
         refreshCurveList();
+        if (hadVisiblePlot) {
+            if (allExpressions.isEmpty()) {
+                lineChart.clear();
+                lineChart.invalidate();
+            } else {
+                onPlotAll();
+            }
+        }
     }
 
     /** Colour-coded list of the curves currently on the plot. */
@@ -1198,6 +1310,47 @@ public class PlotActivity extends AppCompatActivity {
             if (i < allExpressions.size() - 1) sb.append("\n");
         }
         curveListView.setText(sb);
+    }
+
+    /** Remove stale intersection dots when the curve set changes or is re-plotted. */
+    private void clearIntersectionMarkers() {
+        intersectionMarkers.clear();
+        LineData data = lineChart == null ? null : lineChart.getLineData();
+        if (data != null && intersectionDataSet != null) {
+            data.removeDataSet(intersectionDataSet);
+            data.notifyDataChanged();
+            lineChart.notifyDataSetChanged();
+            lineChart.invalidate();
+        }
+        intersectionDataSet = null;
+        if (intersectCard != null) intersectCard.setVisibility(View.GONE);
+    }
+
+    /** Draw the current intersection list as a replaceable marker dataset. */
+    private void renderIntersectionMarkers() {
+        LineData data = lineChart == null ? null : lineChart.getLineData();
+        if (data == null) return;
+        if (intersectionDataSet != null) data.removeDataSet(intersectionDataSet);
+        intersectionDataSet = null;
+        if (intersectionMarkers.isEmpty()) {
+            data.notifyDataChanged();
+            lineChart.notifyDataSetChanged();
+            lineChart.invalidate();
+            return;
+        }
+        intersectionDataSet = new LineDataSet(
+                new ArrayList<>(intersectionMarkers), getString(R.string.intersect));
+        intersectionDataSet.setColor(Color.TRANSPARENT);
+        intersectionDataSet.setCircleColor(Color.parseColor("#FBBF24"));
+        intersectionDataSet.setCircleRadius(5f);
+        intersectionDataSet.setDrawCircles(true);
+        intersectionDataSet.setDrawValues(false);
+        intersectionDataSet.setLineWidth(0f);
+        intersectionDataSet.setHighlightEnabled(false);
+        data.addDataSet(intersectionDataSet);
+        data.notifyDataChanged();
+        lineChart.notifyDataSetChanged();
+        lineChart.invalidate();
     }
 
     /**
@@ -1243,8 +1396,7 @@ public class PlotActivity extends AppCompatActivity {
                 withParams(allExpressions.get(first)), withParams(allExpressions.get(second)),
                 xMin, xMax);
         if (points.isEmpty()) {
-            intersectionMarkers.clear();
-            if (intersectCard != null) intersectCard.setVisibility(View.GONE);
+            clearIntersectionMarkers();
             toast(getString(R.string.toast_no_intersections));
             return;
         }
@@ -1267,20 +1419,16 @@ public class PlotActivity extends AppCompatActivity {
         if (intersectCard != null) intersectCard.setVisibility(View.VISIBLE);
 
         // Mark them on the chart: circles only, the connecting line is invisible.
-        LineData data = lineChart.getLineData();
-        if (data != null) {
-            LineDataSet markerSet = new LineDataSet(markers, getString(R.string.intersect));
-            markerSet.setColor(Color.TRANSPARENT);
-            markerSet.setCircleColor(Color.parseColor("#FBBF24"));
-            markerSet.setCircleRadius(5f);
-            markerSet.setDrawCircles(true);
-            markerSet.setDrawValues(false);
-            markerSet.setLineWidth(0f);
-            data.addDataSet(markerSet);
-            lineChart.notifyDataSetChanged();
-            lineChart.invalidate();
-        }
+        // If the user queried before pressing Plot All, build the curves first so
+        // the result is visible rather than only appearing in the report card.
+        if (lineChart.getLineData() == null
+                || lineChart.getLineData().getDataSetCount() == 0) onPlotAll();
+        renderIntersectionMarkers();
         toast(getString(R.string.toast_found_intersections, points.size()));
+    }
+
+    private static boolean isFinite(double value) {
+        return !Double.isNaN(value) && !Double.isInfinite(value);
     }
 
     private List<double[]> findIntersections(String fa, String fb, double xMin, double xMax) {
@@ -1300,7 +1448,7 @@ public class PlotActivity extends AppCompatActivity {
         List<Double> foundY = new ArrayList<>();
 
         for (int i = 0; i < n; i++) {
-            if (Double.isNaN(ya[i]) || Double.isNaN(yb[i])) continue;
+            if (!isFinite(ya[i]) || !isFinite(yb[i])) continue;
             if (Math.abs(ya[i] - yb[i]) < tolZero) {
                 foundX.add(xs[i]);
                 foundY.add((ya[i] + yb[i]) / 2.0);
@@ -1309,15 +1457,15 @@ public class PlotActivity extends AppCompatActivity {
 
         String diff = "(" + fa + ")-(" + fb + ")";
         for (int i = 0; i < n - 1; i++) {
-            if (Double.isNaN(ya[i]) || Double.isNaN(yb[i])
-                    || Double.isNaN(ya[i + 1]) || Double.isNaN(yb[i + 1])) continue;
+            if (!isFinite(ya[i]) || !isFinite(yb[i])
+                    || !isFinite(ya[i + 1]) || !isFinite(yb[i + 1])) continue;
             double d1 = ya[i] - yb[i];
             double d2 = ya[i + 1] - yb[i + 1];
             if (d1 == 0.0 || d2 == 0.0 || d1 * d2 >= 0) continue;
             double root = CalcEngine.solveBisection(diff, xs[i], xs[i + 1]);
             if (Double.isNaN(root)) continue;
             double y = CalcEngine.evaluate(fa, root);
-            if (!Double.isNaN(y)) {
+            if (isFinite(y)) {
                 foundX.add(root);
                 foundY.add(y);
             }
@@ -1397,8 +1545,8 @@ public class PlotActivity extends AppCompatActivity {
                 // Re-evaluate parametric curve
                 double tMin = parametricTMin.get(paramIdx);
                 double tMax = parametricTMax.get(paramIdx);
-                String xExpr = parametricXExprs.get(paramIdx);
-                String yExpr = parametricYExprs.get(paramIdx);
+                String xExpr = withParams(parametricXExprs.get(paramIdx));
+                String yExpr = withParams(parametricYExprs.get(paramIdx));
                 int n = numPoints;
                 double step = (tMax - tMin) / (n - 1);
                 double[] ts = new double[n];
@@ -1425,7 +1573,7 @@ public class PlotActivity extends AppCompatActivity {
                 // Re-evaluate polar curve
                 double thetaMin = polarThetaMin.get(polarIdx);
                 double thetaMax = polarThetaMax.get(polarIdx);
-                String rExpr = polarExprs.get(polarIdx);
+                String rExpr = withParams(polarExprs.get(polarIdx));
                 int n = numPoints;
                 double step = (thetaMax - thetaMin) / (n - 1);
                 double[] thetas = new double[n];
@@ -1534,6 +1682,10 @@ public class PlotActivity extends AppCompatActivity {
         
         LineData lineData = new LineData(dataSets);
         lineChart.setData(lineData);
+        // setData replaces the previous marker datasets; restore intersection
+        // dots from the query model so re-plotting never hides the result.
+        intersectionDataSet = null;
+        if (!intersectionMarkers.isEmpty()) renderIntersectionMarkers();
         
         YAxis yAxisLeft = lineChart.getAxisLeft();
         yAxisLeft.setAxisMinimum((float) yMin);
@@ -1710,6 +1862,12 @@ public class PlotActivity extends AppCompatActivity {
             markerData.append(String.format("%.4g,%.4g", e.getX(), e.getY()));
         }
         intent.putExtra("intersect_points", markerData.toString());
+        StringBuilder markedData = new StringBuilder();
+        for (Entry e : markedPoints) {
+            if (markedData.length() > 0) markedData.append(";");
+            markedData.append(String.format("%.6g,%.6g", e.getX(), e.getY()));
+        }
+        intent.putExtra("marked_points", markedData.toString());
         
         try {
             float xMin = Float.parseFloat(xMinInput.getText().toString().trim());

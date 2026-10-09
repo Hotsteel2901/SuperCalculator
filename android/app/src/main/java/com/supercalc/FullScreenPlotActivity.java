@@ -3,6 +3,7 @@ package com.supercalc;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.MotionEvent;
+import android.view.ViewParent;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -79,9 +80,7 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
         
         btnExit.setOnClickListener(v -> finish());
         
-        lineChart.setTouchEnabled(true);
-        lineChart.setPinchZoom(true);
-        lineChart.setDoubleTapToZoomEnabled(true);
+        configureChartInteraction();
         lineChart.setOnChartValueSelectedListener(this);
         
         setupChart();
@@ -89,6 +88,44 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
         loadPlotData();
     }
     
+    /** Full-screen chart keeps the original one-finger pan/two-finger zoom model. */
+    private void configureChartInteraction() {
+        lineChart.setTouchEnabled(true);
+        lineChart.setDragEnabled(true);
+        lineChart.setScaleEnabled(true);
+        lineChart.setScaleXEnabled(true);
+        lineChart.setScaleYEnabled(true);
+        lineChart.setAutoScaleMinMaxEnabled(false);
+        lineChart.setPinchZoom(true);
+        lineChart.setDoubleTapToZoomEnabled(true);
+        lineChart.setHighlightPerDragEnabled(false);
+        lineChart.setHighlightPerTapEnabled(true);
+        lineChart.setOnTouchListener((view, event) -> {
+            switch (event.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                case MotionEvent.ACTION_MOVE:
+                case MotionEvent.ACTION_POINTER_DOWN:
+                    requestChartParentsNotToIntercept(true);
+                    break;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    requestChartParentsNotToIntercept(false);
+                    break;
+                default:
+                    break;
+            }
+            return false;
+        });
+    }
+
+    private void requestChartParentsNotToIntercept(boolean disallow) {
+        ViewParent parent = lineChart.getParent();
+        while (parent != null) {
+            parent.requestDisallowInterceptTouchEvent(disallow);
+            parent = parent.getParent();
+        }
+    }
+
     private void setupGestureListener() {
         lineChart.setOnChartGestureListener(new OnChartGestureListener() {
             @Override
@@ -245,6 +282,19 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
                 if (coords.length != 2) continue;
                 try {
                     intersectionMarkers.add(new Entry(
+                            Float.parseFloat(coords[0]), Float.parseFloat(coords[1])));
+                } catch (NumberFormatException ignored) {
+                    // skip malformed pair
+                }
+            }
+        }
+        String markedData = getIntent().getStringExtra("marked_points");
+        if (markedData != null && !markedData.isEmpty()) {
+            for (String point : markedData.split(";")) {
+                String[] coords = point.split(",");
+                if (coords.length != 2) continue;
+                try {
+                    markedPoints.add(new Entry(
                             Float.parseFloat(coords[0]), Float.parseFloat(coords[1])));
                 } catch (NumberFormatException ignored) {
                     // skip malformed pair
