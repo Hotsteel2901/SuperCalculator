@@ -168,10 +168,7 @@ class _PlotPageState extends ConsumerState<PlotPage> {
         .toList(growable: false);
   }
 
-  void _syncParameterControllers(
-    CalculatorState state,
-    List<String> names,
-  ) {
+  void _syncParameterControllers(CalculatorState state, List<String> names) {
     final retained = names.toSet();
     final removed = _parameterControllers.keys
         .where((name) => !retained.contains(name))
@@ -518,14 +515,16 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                         Wrap(
                           spacing: tokens.controlGap / 2,
                           runSpacing: tokens.controlGap / 2,
-                          children: _curveExpressions.asMap().entries
+                          children: _curveExpressions
+                              .asMap()
+                              .entries
                               .map(
                                 (entry) => InputChip(
                                   avatar: CircleAvatar(
                                     radius: 7,
-                                    backgroundColor: curvePalette[
-                                      entry.key % curvePalette.length
-                                    ],
+                                    backgroundColor:
+                                        curvePalette[entry.key %
+                                            curvePalette.length],
                                   ),
                                   label: Text(entry.value),
                                   onDeleted: () =>
@@ -548,7 +547,11 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                             ),
                             hintText: 'cos(x)',
                             suffixIcon: IconButton(
-                              tooltip: nextEraText(context, 'Add curve', '添加曲线'),
+                              tooltip: nextEraText(
+                                context,
+                                'Add curve',
+                                '添加曲线',
+                              ),
                               onPressed: () => _addCurve(controller),
                               icon: const Icon(Icons.add),
                             ),
@@ -587,11 +590,7 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                       if (parameterNames.isNotEmpty) ...<Widget>[
                         SizedBox(height: tokens.controlGap),
                         Text(
-                          nextEraText(
-                            context,
-                            'Free parameters',
-                            '自由参数',
-                          ),
+                          nextEraText(context, 'Free parameters', '自由参数'),
                           style: Theme.of(context).textTheme.titleSmall,
                         ),
                         SizedBox(height: tokens.controlGap / 2),
@@ -810,48 +809,48 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                                   state,
                                   controller,
                                 ),
-                          onScaleStart: (details) {
-                            _gestureZoomStart = _plotZoom;
-                            _gesturePanStart = _plotPan;
-                            _gestureFocalStart = details.focalPoint;
-                            _gestureYawStart = _plotYaw;
-                            _gesturePitchStart = _plotPitch;
-                          },
-                          onScaleUpdate: (details) {
-                            final delta =
-                                details.focalPoint - _gestureFocalStart;
-                            setState(() {
-                              _plotZoom = (_gestureZoomStart * details.scale)
-                                  .clamp(.5, 4.0)
-                                  .toDouble();
-                              if (state.mode == 'surface') {
-                                _plotYaw = _gestureYawStart + delta.dx * .01;
-                                _plotPitch =
-                                    (_gesturePitchStart - delta.dy * .01)
-                                        .clamp(-1.35, 1.35)
-                                        .toDouble();
-                              } else {
-                                _plotPan = _gesturePanStart + delta;
-                              }
-                            });
-                          },
-                          child: SizedBox(
-                            height: tokens.plotMinHeight,
-                            child: CustomPaint(
-                              painter: FunctionPlotPainter(
-                                points: state.points,
-                                scheme: scheme,
-                                mode: state.mode,
-                                intersectionPoints: state.intersectionPoints,
-                                markedPoints: state.markedPoints,
-                                zoom: _plotZoom,
-                                pan: _plotPan,
-                                yaw: _plotYaw,
-                                pitch: _plotPitch,
+                            onScaleStart: (details) {
+                              _gestureZoomStart = _plotZoom;
+                              _gesturePanStart = _plotPan;
+                              _gestureFocalStart = details.focalPoint;
+                              _gestureYawStart = _plotYaw;
+                              _gesturePitchStart = _plotPitch;
+                            },
+                            onScaleUpdate: (details) {
+                              final delta =
+                                  details.focalPoint - _gestureFocalStart;
+                              setState(() {
+                                _plotZoom = (_gestureZoomStart * details.scale)
+                                    .clamp(.5, 4.0)
+                                    .toDouble();
+                                if (state.mode == 'surface') {
+                                  _plotYaw = _gestureYawStart + delta.dx * .01;
+                                  _plotPitch =
+                                      (_gesturePitchStart - delta.dy * .01)
+                                          .clamp(-1.35, 1.35)
+                                          .toDouble();
+                                } else {
+                                  _plotPan = _gesturePanStart + delta;
+                                }
+                              });
+                            },
+                            child: SizedBox(
+                              height: tokens.plotMinHeight,
+                              child: CustomPaint(
+                                painter: FunctionPlotPainter(
+                                  points: state.points,
+                                  scheme: scheme,
+                                  mode: state.mode,
+                                  intersectionPoints: state.intersectionPoints,
+                                  markedPoints: state.markedPoints,
+                                  zoom: _plotZoom,
+                                  pan: _plotPan,
+                                  yaw: _plotYaw,
+                                  pitch: _plotPitch,
+                                ),
+                                child: const SizedBox.expand(),
                               ),
-                              child: const SizedBox.expand(),
                             ),
-                          ),
                           ),
                         ),
                       ),
@@ -931,7 +930,9 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                         Wrap(
                           spacing: tokens.controlGap / 2,
                           runSpacing: tokens.controlGap / 2,
-                          children: state.markedPoints.asMap().entries
+                          children: state.markedPoints
+                              .asMap()
+                              .entries
                               .map(
                                 (entry) => Chip(
                                   avatar: Icon(

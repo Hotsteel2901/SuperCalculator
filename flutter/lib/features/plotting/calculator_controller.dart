@@ -125,7 +125,8 @@ class CalculatorController extends Notifier<CalculatorState> {
   }
 
   List<String> parameterNames({String? expression, String? secondary}) {
-    final source = '${expression ?? state.expression} ${secondary ?? state.secondaryExpression}';
+    final source =
+        '${expression ?? state.expression} ${secondary ?? state.secondaryExpression}';
     final known = <String>{
       'x',
       'y',
@@ -358,8 +359,7 @@ class CalculatorController extends Notifier<CalculatorState> {
           final point = PlotPoint(x, y);
           final duplicate = result.any(
             (existing) =>
-                (existing.x - x).abs() < 1e-6 &&
-                (existing.y - y).abs() < 1e-6,
+                (existing.x - x).abs() < 1e-6 && (existing.y - y).abs() < 1e-6,
           );
           if (!duplicate) result.add(point);
         }
@@ -402,7 +402,9 @@ class CalculatorController extends Notifier<CalculatorState> {
           (existing.y - point.y).abs() < 1e-6,
     );
     if (duplicate) return;
-    state = state.copyWith(markedPoints: <PlotPoint>[...state.markedPoints, point]);
+    state = state.copyWith(
+      markedPoints: <PlotPoint>[...state.markedPoints, point],
+    );
   }
 
   void removeNearestMarkedPoint(PlotPoint point, {double tolerance = .5}) {
