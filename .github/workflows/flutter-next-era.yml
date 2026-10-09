@@ -145,7 +145,11 @@ jobs:
           set -euo pipefail
           workflow=.github/workflows/flutter-platform-builds.yml
           test -s "$workflow"
-          grep -q '^  pull_request:' "$workflow"
+          grep -q '^  workflow_dispatch:' "$workflow"
+          if grep -q '^  pull_request:' "$workflow" || grep -q '^  push:' "$workflow"; then
+            echo 'Platform workflow must remain manual-only.' >&2
+            exit 1
+          fi
           for job in web android linux windows macos ios release; do
             grep -q "^  $job:" "$workflow"
           done

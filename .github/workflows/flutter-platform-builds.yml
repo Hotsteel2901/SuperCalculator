@@ -2,16 +2,6 @@ name: Flutter Next Era platform installers
 
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - 'flutter/**'
-      - 'native/calc_core/**'
-      - 'calc_core.c'
-      - 'packaging/**'
-      - '.github/workflows/flutter-platform-builds.yml'
-  push:
-    tags:
-      - 'next-era-v*'
 
 permissions:
   contents: read
