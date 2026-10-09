@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App identity -->
-    <string name="app_name">SuperCalc</string>
-    <string name="app_subtitle">超级计算器</string>
-    <string name="app_version">SuperCalc v1.3.0</string>
+    <string name="app_name">SuperCalculator - Next Era</string>
+    <string name="app_subtitle">科学计算与函数绘图工作台</string>
+    <string name="app_version">SuperCalculator - Next Era v6.0.0</string>
 
     <!-- Main calculator layout -->
     <string name="expr_label">表达式 f(x)</string>
@@ -55,7 +55,7 @@
     <string name="hint_df_ic">初始条件: x0,y0; ...</string>
     <string name="histogram">直方图</string>
     <string name="sort">排序</string>
-    <string name="function_graph">函数图像</string>
+    <string name="function_graph">SuperCalculator - Next Era · 函数图像</string>
     <string name="statistics_calculator">统计计算器</string>
     <string name="curve_fitting">曲线拟合/回归</string>
     <string name="linear">线性</string>
@@ -94,7 +94,8 @@
     <string name="mat_eigen">eig(A)</string>
 
     <!-- Plot activity -->
-    <string name="plot_title">函数图像（双指缩放）</string>
+    <string name="plot_title">函数图像 · 坐标轴可移动缩放</string>
+    <string name="plot_gesture_hint">单指拖动移动整个坐标网格 · 双指缩放 · 单击自由标点 · 长按删除标点</string>
     <string name="plot_controls">绘图控制</string>
     <string name="coordinate_range">坐标范围</string>
     <string name="add_curve">+ 添加曲线</string>
@@ -119,7 +120,7 @@
     <string name="surface_hint">三维曲面（拖动旋转，双指缩放）</string>
 
     <!-- Ready/status -->
-    <string name="ready_msg">就绪。输入表达式并按下运算按钮。</string>
+    <string name="ready_msg">就绪。支持函数、多曲线、交点查询、自由标点、微积分、方程、ODE、数据、矩阵与金融计算。请输入表达式并选择运算。</string>
     <string name="results">结果</string>
 
     <!-- Hint strings for inputs -->

@@ -9,6 +9,7 @@ on:
       - 'tool/**'
       - '.github/workflows/flutter-next-era.yml'
       - '.github/workflows/flutter-platform-builds.yml'
+      - '.github/workflows/deploy-flutter-pages.yml'
       - 'docs/migration/**'
       - 'docs/compatibility.md'
   push:
@@ -20,6 +21,7 @@ on:
       - 'tool/**'
       - '.github/workflows/flutter-next-era.yml'
       - '.github/workflows/flutter-platform-builds.yml'
+      - '.github/workflows/deploy-flutter-pages.yml'
       - 'docs/migration/**'
       - 'docs/compatibility.md'
   workflow_dispatch:
@@ -153,16 +155,19 @@ jobs:
           for job in web android linux windows macos ios release; do
             grep -q "^  $job:" "$workflow"
           done
-          for artifact in \
-            'SuperCalculator-Next-Era-web' \
-            'SuperCalculator-Next-Era-android' \
-            'SuperCalculator-Next-Era-linux' \
-            'SuperCalculator-Next-Era-windows' \
-            'SuperCalculator-Next-Era-macos' \
-            'SuperCalculator-Next-Era-ios'; do
-            grep -q "$artifact" "$workflow"
+          for artifact in '-web' '-android' '-linux' '-windows' '-macos' '-ios'; do
+            grep -q "SuperCalculator-Next-Era-v.*$artifact" "$workflow"
           done
           grep -q 'ios-unsigned' "$workflow"
-          grep -q 'unsigned where Apple signing' "$workflow"
+          grep -q 'Apple signing/notarization' "$workflow"
           grep -q 'FLUTTER_VERSION:' "$workflow"
+          grep -q "APP_VERSION: '6.0.0'" "$workflow"
+          grep -q 'publish-release:' "$workflow"
           test "$(grep -c 'actions/upload-artifact@v4' "$workflow")" -ge 6
+          pages=.github/workflows/deploy-flutter-pages.yml
+          test -s "$pages"
+          grep -q '^  workflow_dispatch:' "$pages"
+          grep -q 'actions/upload-pages-artifact@v3' "$pages"
+          grep -q 'actions/deploy-pages@v4' "$pages"
+          grep -q 'flutter/build/web' "$pages"
+          grep -q '/SuperCalculator/' "$pages"

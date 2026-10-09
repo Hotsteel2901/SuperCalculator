@@ -179,25 +179,25 @@ abstract class AppLocalizations {
   /// No description provided for @welcomeTitle.
   ///
   /// In en, this message translates to:
-  /// **'A clearer way to explore mathematics'**
+  /// **'One fast workbench for exploring mathematics'**
   String get welcomeTitle;
 
   /// No description provided for @welcomeBody.
   ///
   /// In en, this message translates to:
-  /// **'A Material 3 Expressive scientific calculator with a shared native computation core.'**
+  /// **'SuperCalculator - Next Era brings function and multi-curve plotting, parameter controls, intersection markers and free coordinate points together with calculus, equations, ODE, data, matrices and finance.'**
   String get welcomeBody;
 
   /// No description provided for @openPlotter.
   ///
   /// In en, this message translates to:
-  /// **'Open plotter'**
+  /// **'Open plotting workbench'**
   String get openPlotter;
 
   /// No description provided for @migrationStatus.
   ///
   /// In en, this message translates to:
-  /// **'Flutter migration in progress'**
+  /// **'Next Era v6.0.0'**
   String get migrationStatus;
 
   /// No description provided for @expression.
@@ -293,13 +293,13 @@ abstract class AppLocalizations {
   /// No description provided for @featureComingSoon.
   ///
   /// In en, this message translates to:
-  /// **'This feature is included in the migration matrix and is being connected incrementally.'**
+  /// **'This capability is part of the Next Era feature set and will keep gaining native and replaceable backend implementations.'**
   String get featureComingSoon;
 
   /// No description provided for @aboutBody.
   ///
   /// In en, this message translates to:
-  /// **'SuperCalculator - Next Era replaces the legacy Tkinter and Java UI with one Flutter application while preserving the C computation core.'**
+  /// **'SuperCalculator - Next Era uses a Flutter application shell with replaceable native and Dart computation backends, while preserving the shared C core and the legacy platform capability set.'**
   String get aboutBody;
 
   /// The application version shown on the About page
@@ -311,7 +311,7 @@ abstract class AppLocalizations {
   /// No description provided for @version.
   ///
   /// In en, this message translates to:
-  /// **'0.1.0'**
+  /// **'6.0.0'**
   String get version;
 
   /// Number of points currently rendered in the plot preview

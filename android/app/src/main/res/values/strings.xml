@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App identity -->
-    <string name="app_name">SuperCalc</string>
-    <string name="app_subtitle">Super Calculator</string>
-    <string name="app_version">SuperCalc v1.3.0</string>
+    <string name="app_name">SuperCalculator - Next Era</string>
+    <string name="app_subtitle">Scientific computing &amp; plotting workbench</string>
+    <string name="app_version">SuperCalculator - Next Era v6.0.0</string>
 
     <!-- Main calculator layout -->
     <string name="expr_label">Expression f(x)</string>
@@ -55,7 +55,7 @@
     <string name="hint_df_ic">IC: x0,y0; ...</string>
     <string name="histogram">Histogram</string>
     <string name="sort">Sort</string>
-    <string name="function_graph">Function Graph</string>
+    <string name="function_graph">SuperCalculator - Next Era · Function Graph</string>
     <string name="statistics_calculator">Statistics Calculator</string>
     <string name="curve_fitting">Curve Fitting / Regression</string>
     <string name="linear">Linear</string>
@@ -94,7 +94,8 @@
     <string name="mat_eigen">eig(A)</string>
 
     <!-- Plot activity -->
-    <string name="plot_title">Function Graph (pinch to zoom)</string>
+    <string name="plot_title">Function Graph · pan and zoom</string>
+    <string name="plot_gesture_hint">Drag with one finger to move both axes · pinch with two fingers to zoom</string>
     <string name="plot_controls">Plot Controls</string>
     <string name="coordinate_range">Coordinate Range</string>
     <string name="add_curve">+ Add Curve</string>
@@ -119,7 +120,7 @@
     <string name="surface_hint">3D Surface (drag to rotate, pinch to zoom)</string>
 
     <!-- Ready/status -->
-    <string name="ready_msg">Ready. Enter expression and press an operation.</string>
+    <string name="ready_msg">Ready for functions, multi-curve plots, intersections, free coordinate markers, calculus, equations, ODE, data, matrices and finance. Enter an expression and choose an operation.</string>
     <string name="results">Results</string>
 
     <!-- Hint strings for inputs -->

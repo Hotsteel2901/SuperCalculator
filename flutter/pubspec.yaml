@@ -1,7 +1,7 @@
 name: supercalculator_next_era
 description: SuperCalculator - Next Era, a cross-platform scientific calculator.
 publish_to: "none"
-version: 0.1.0+1
+version: 6.0.0+60000
 
 environment:
   sdk: ">=3.13.5 <4.0.0"

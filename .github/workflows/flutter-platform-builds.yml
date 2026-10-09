@@ -2,12 +2,19 @@ name: Flutter Next Era platform installers
 
 on:
   workflow_dispatch:
+    inputs:
+      publish-release:
+        description: Publish a GitHub Release after all platform artifacts pass
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
 
 env:
   FLUTTER_VERSION: '3.47.6'
+  APP_VERSION: '6.0.0'
   PROJECT_NAME: supercalculator_next_era
   PROJECT_ORG: com.supercalc
 
@@ -29,11 +36,11 @@ jobs:
       - run: flutter gen-l10n
       - run: flutter build web --release
       - name: Archive Web application
-        run: tar -czf ../SuperCalculator-Next-Era-web.tar.gz -C build/web .
+        run: tar -czf "../SuperCalculator-Next-Era-v${APP_VERSION}-web.tar.gz" -C build/web .
       - uses: actions/upload-artifact@v4
         with:
-          name: SuperCalculator-Next-Era-web
-          path: SuperCalculator-Next-Era-web.tar.gz
+          name: SuperCalculator-Next-Era-v${{ env.APP_VERSION }}-web
+          path: SuperCalculator-Next-Era-v${{ env.APP_VERSION }}-web.tar.gz
           if-no-files-found: error
 
   android:
@@ -50,6 +57,20 @@ jobs:
           channel: stable
           cache: true
       - run: flutter create --no-pub --platforms=android --org "$PROJECT_ORG" --project-name "$PROJECT_NAME" .
+      - name: Apply SuperCalculator Android icon
+        shell: bash
+        run: |
+          set -euo pipefail
+          for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            mkdir -p "android/app/src/main/res/mipmap-$density"
+            cp "../android/app/src/main/res/mipmap-$density/ic_launcher.png" \
+              "android/app/src/main/res/mipmap-$density/ic_launcher.png"
+          done
+          mkdir -p android/app/src/main/res/drawable android/app/src/main/res/mipmap-anydpi-v26
+          cp ../android/app/src/main/res/drawable/ic_launcher_background.xml android/app/src/main/res/drawable/
+          cp ../android/app/src/main/res/drawable/ic_launcher_foreground.xml android/app/src/main/res/drawable/
+          cp ../android/app/src/main/res/drawable/ic_launcher_monochrome.xml android/app/src/main/res/drawable/
+          cp ../android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml android/app/src/main/res/mipmap-anydpi-v26/
       - run: flutter pub get
       - run: flutter gen-l10n
       - name: Build Android arm64 native ABI library
@@ -70,7 +91,7 @@ jobs:
         run: flutter build appbundle --release
       - uses: actions/upload-artifact@v4
         with:
-          name: SuperCalculator-Next-Era-android
+          name: SuperCalculator-Next-Era-v${{ env.APP_VERSION }}-android
           path: |
             flutter/build/app/outputs/flutter-apk/*.apk
             flutter/build/app/outputs/bundle/release/*.aab
@@ -111,14 +132,20 @@ jobs:
         run: |
           set -euo pipefail
           bundle="flutter/build/linux/x64/release/bundle"
-          tar -czf SuperCalculator-Next-Era-linux-x64.tar.gz -C "$bundle" .
+          tarball="SuperCalculator-Next-Era-v${APP_VERSION}-linux-x64.tar.gz"
+          deb="SuperCalculator-Next-Era-v${APP_VERSION}-linux-x64.deb"
+          cp flutter/assets/branding/supercalculator-icon-512.png "$bundle/supercalculator-next-era.png"
+          tar -czf "$tarball" -C "$bundle" .
           pkg="/tmp/supercalculator-next-era"
           rm -rf "$pkg"
-          mkdir -p "$pkg/DEBIAN" "$pkg/opt/supercalculator-next-era" "$pkg/usr/share/applications" "$pkg/usr/bin"
+          mkdir -p "$pkg/DEBIAN" "$pkg/opt/supercalculator-next-era" \
+            "$pkg/usr/share/applications" "$pkg/usr/share/icons/hicolor/512x512/apps" "$pkg/usr/bin"
           cp -a "$bundle"/. "$pkg/opt/supercalculator-next-era/"
-          cat > "$pkg/DEBIAN/control" <<'EOF'
+          cp flutter/assets/branding/supercalculator-icon-512.png \
+            "$pkg/usr/share/icons/hicolor/512x512/apps/supercalculator-next-era.png"
+          cat > "$pkg/DEBIAN/control" <<EOF
           Package: supercalculator-next-era
-          Version: 0.1.0
+          Version: ${APP_VERSION}
           Section: math
           Priority: optional
           Architecture: amd64
@@ -130,7 +157,7 @@ jobs:
           Name=SuperCalculator - Next Era
           Comment=Scientific calculator and plotting workbench
           Exec=/opt/supercalculator-next-era/supercalculator_next_era
-          Icon=utilities-terminal
+          Icon=supercalculator-next-era
           Terminal=false
           Type=Application
           Categories=Science;Education;Utility;
@@ -140,13 +167,13 @@ jobs:
           exec /opt/supercalculator-next-era/supercalculator_next_era "$@"
           EOF
           chmod +x "$pkg/usr/bin/supercalculator-next-era"
-          dpkg-deb --build "$pkg" SuperCalculator-Next-Era-linux-x64.deb
+          dpkg-deb --build "$pkg" "$deb"
       - uses: actions/upload-artifact@v4
         with:
-          name: SuperCalculator-Next-Era-linux
+          name: SuperCalculator-Next-Era-v${{ env.APP_VERSION }}-linux
           path: |
-            SuperCalculator-Next-Era-linux-x64.tar.gz
-            SuperCalculator-Next-Era-linux-x64.deb
+            SuperCalculator-Next-Era-v${{ env.APP_VERSION }}-linux-x64.tar.gz
+            SuperCalculator-Next-Era-v${{ env.APP_VERSION }}-linux-x64.deb
           if-no-files-found: error
 
   windows:
@@ -163,6 +190,9 @@ jobs:
           channel: stable
           cache: true
       - run: flutter create --no-pub --platforms=windows --org "$env:PROJECT_ORG" --project-name "$env:PROJECT_NAME" .
+      - name: Apply SuperCalculator Windows icon
+        shell: pwsh
+        run: Copy-Item ../SuperCalculator.ico windows/runner/resources/app_icon.ico -Force
       - run: flutter pub get
       - run: flutter gen-l10n
       - run: flutter build windows --release
@@ -172,7 +202,7 @@ jobs:
         run: |
           $bundle = "flutter/build/windows/x64/runner/Release"
           gcc -std=c11 -shared -O2 -DSUPERCALC_CORE_BUILD -Inative/calc_core/include calc_core.c native/calc_core/src/supercalc_core.c -lm -o "$bundle/supercalc_core.dll"
-          Compress-Archive -Path "$bundle/*" -DestinationPath "SuperCalculator-Next-Era-windows-x64.zip" -Force
+          Compress-Archive -Path "$bundle/*" -DestinationPath "SuperCalculator-Next-Era-v$env:APP_VERSION-windows-x64.zip" -Force
       - name: Build Windows installer
         shell: pwsh
         working-directory: ${{ github.workspace }}
@@ -182,10 +212,10 @@ jobs:
           & "C:/Program Files (x86)/Inno Setup 6/ISCC.exe" "/DBuildDir=$bundle" "packaging/windows/SuperCalculator.iss"
       - uses: actions/upload-artifact@v4
         with:
-          name: SuperCalculator-Next-Era-windows
+          name: SuperCalculator-Next-Era-v${{ env.APP_VERSION }}-windows
           path: |
-            SuperCalculator-Next-Era-windows-x64.zip
-            packaging/windows/Output/SuperCalculator-Next-Era-windows-x64-setup.exe
+            SuperCalculator-Next-Era-v${{ env.APP_VERSION }}-windows-x64.zip
+            packaging/windows/Output/SuperCalculator-Next-Era-v${{ env.APP_VERSION }}-windows-x64-setup.exe
           if-no-files-found: error
 
   macos:
@@ -202,6 +232,8 @@ jobs:
           channel: stable
           cache: true
       - run: flutter create --no-pub --platforms=macos --org "$PROJECT_ORG" --project-name "$PROJECT_NAME" .
+      - name: Apply SuperCalculator macOS icon
+        run: cp -R ../assets/branding/macos/AppIcon.appiconset/. macos/Runner/Assets.xcassets/AppIcon.appiconset/
       - run: flutter pub get
       - run: flutter gen-l10n
       - run: flutter build macos --release
@@ -218,15 +250,15 @@ jobs:
             -o "$app/Contents/Frameworks/libsupercalc_core.dylib"
           # The hosted runner builds one native architecture. Do not label this
           # artifact universal unless a separate multi-arch build is performed.
-          ditto -c -k --sequesterRsrc --keepParent "$app" SuperCalculator-Next-Era-macos-host-arch.zip
+          ditto -c -k --sequesterRsrc --keepParent "$app" "SuperCalculator-Next-Era-v${APP_VERSION}-macos-host-arch.zip"
           hdiutil create -volname 'SuperCalculator - Next Era' -srcfolder "$app" \
-            -ov -format UDZO SuperCalculator-Next-Era-macos-host-arch.dmg
+            -ov -format UDZO "SuperCalculator-Next-Era-v${APP_VERSION}-macos-host-arch.dmg"
       - uses: actions/upload-artifact@v4
         with:
-          name: SuperCalculator-Next-Era-macos
+          name: SuperCalculator-Next-Era-v${{ env.APP_VERSION }}-macos
           path: |
-            SuperCalculator-Next-Era-macos-host-arch.zip
-            SuperCalculator-Next-Era-macos-host-arch.dmg
+            SuperCalculator-Next-Era-v${{ env.APP_VERSION }}-macos-host-arch.zip
+            SuperCalculator-Next-Era-v${{ env.APP_VERSION }}-macos-host-arch.dmg
           if-no-files-found: error
 
   ios:
@@ -243,6 +275,8 @@ jobs:
           channel: stable
           cache: true
       - run: flutter create --no-pub --platforms=ios --org "$PROJECT_ORG" --project-name "$PROJECT_NAME" .
+      - name: Apply SuperCalculator iOS icon
+        run: cp -R ../assets/branding/ios/AppIcon.appiconset/. ios/Runner/Assets.xcassets/AppIcon.appiconset/
       - run: flutter pub get
       - run: flutter gen-l10n
       - run: flutter build ios --release --no-codesign
@@ -254,16 +288,16 @@ jobs:
           app="$(find flutter/build/ios/iphoneos -maxdepth 1 -name '*.app' -print -quit)"
           test -n "$app"
           cp -R "$app" ios-payload/Payload/
-          (cd ios-payload && zip -qry ../SuperCalculator-Next-Era-ios-unsigned.ipa Payload)
+          (cd ios-payload && zip -qry "../SuperCalculator-Next-Era-v${APP_VERSION}-ios-unsigned.ipa" Payload)
       - uses: actions/upload-artifact@v4
         with:
-          name: SuperCalculator-Next-Era-ios
-          path: SuperCalculator-Next-Era-ios-unsigned.ipa
+          name: SuperCalculator-Next-Era-v${{ env.APP_VERSION }}-ios
+          path: SuperCalculator-Next-Era-v${{ env.APP_VERSION }}-ios-unsigned.ipa
           if-no-files-found: error
 
   release:
-    name: Publish tagged release
-    if: startsWith(github.ref, 'refs/tags/next-era-v')
+    name: Publish optional GitHub Release
+    if: inputs.publish-release == true && startsWith(github.ref, 'refs/tags/next-era-v')
     needs: [web, android, linux, windows, macos, ios]
     runs-on: ubuntu-latest
     permissions:
@@ -292,7 +326,27 @@ jobs:
           set -euo pipefail
           mapfile -d '' assets < <(find release-assets -type f -print0 | sort -z)
           test "${#assets[@]}" -gt 0
+          notes="$(cat <<'EOF'
+          ## SuperCalculator - Next Era v6.0.0
+
+          A cross-platform scientific calculator and plotting workbench built around the new Flutter shell, replaceable computation backends, and the versioned native C ABI.
+
+          ### Included in this release
+          - Flutter Web, Android APK/AAB, Linux packages, Windows installer, macOS host-architecture app, and an unsigned iOS IPA payload.
+          - Expression evaluation, calculus, equations, ODE methods, plotting, statistics, data analysis, matrices, probability, finance, and history/preset workflows.
+          - Native arm64 calculation support where the platform artifact provides it, with a Dart fallback where native packaging is not supplied.
+          - SHA256SUMS covering every published artifact.
+
+          ### Release notes
+          - The 3D surface view is an interactive lightweight projection preview, not a full GPU mesh renderer.
+          - Apple signing/notarization and repository keystore signing are intentionally explicit release gates; unsigned artifacts are labeled accordingly.
+          - macOS artifacts are for the hosted runner architecture and are not presented as universal binaries.
+          - The GitHub Pages deployment is maintained separately from this installer bundle.
+
+          Use the checksum file before installation and consult the compatibility report for platform-specific signing and installation notes.
+          EOF
+          )"
           gh release create "$GITHUB_REF_NAME" "${assets[@]}" \
             --title "SuperCalculator - Next Era $GITHUB_REF_NAME" \
             --generate-notes \
-            --notes "Platform packages are unsigned where Apple signing or repository keystore secrets are required. See SHA256SUMS and the compatibility report for installation and signing notes."
+            --notes "$notes"

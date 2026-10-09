@@ -16,7 +16,7 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            app:title="Function Graph"
+            app:title="@string/app_name"
             app:titleTextColor="@color/m3_on_surface" />
 
     </com.google.android.material.appbar.AppBarLayout>

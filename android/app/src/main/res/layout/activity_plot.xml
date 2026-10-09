@@ -17,7 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="@drawable/ic_back"
-            app:title="Function Plot"
+            app:title="@string/app_name"
             app:titleTextColor="@color/m3_on_surface" />
 
     </com.google.android.material.appbar.AppBarLayout>
@@ -322,8 +322,10 @@
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.SuperCalc.Card"
                 android:layout_width="match_parent"
-                android:layout_height="400dp"
-                android:layout_marginBottom="12dp">
+                android:layout_height="460dp"
+                android:layout_marginBottom="12dp"
+                android:clipChildren="true"
+                android:clipToPadding="true">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -337,7 +339,16 @@
                         android:textColor="@color/m3_on_surface_variant"
                         android:fontFamily="@font/outfit_regular"
                         android:letterSpacing="0.06"
-                        android:layout_marginBottom="8dp"
+                        android:layout_marginBottom="4dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                    <TextView
+                        android:text="@string/plot_gesture_hint"
+                        android:textSize="11sp"
+                        android:textColor="@color/m3_outline"
+                        android:fontFamily="@font/outfit_regular"
+                        android:layout_marginBottom="6dp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
 
@@ -363,7 +374,11 @@
                     <com.github.mikephil.charting.charts.LineChart
                         android:id="@+id/full_line_chart"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent" />
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:minHeight="280dp"
+                        android:clipChildren="true"
+                        android:clipToPadding="true" />
 
                 </LinearLayout>
 

@@ -49,16 +49,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get about => '关于';
 
   @override
-  String get welcomeTitle => '更清晰地探索数学';
+  String get welcomeTitle => '一个工作台，清晰探索数学';
 
   @override
-  String get welcomeBody => '采用 Material 3 Expressive 的跨平台科学计算器，共享原生计算核心。';
+  String get welcomeBody =>
+      'SuperCalculator - Next Era 将函数与多曲线绘图、参数控制、交点标记和自由坐标标点，与微积分、方程、ODE、数据、矩阵和金融计算统一起来。';
 
   @override
-  String get openPlotter => '打开绘图器';
+  String get openPlotter => '打开绘图工作台';
 
   @override
-  String get migrationStatus => 'Flutter 迁移进行中';
+  String get migrationStatus => 'Next Era v6.0.0';
 
   @override
   String get expression => '表达式';
@@ -106,11 +107,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noResult => '输入表达式后点击计算。';
 
   @override
-  String get featureComingSoon => '此功能已经加入迁移矩阵，将按阶段逐步接入。';
+  String get featureComingSoon => '此能力属于 Next Era 功能集，将持续接入原生与可替换计算后端。';
 
   @override
   String get aboutBody =>
-      'SuperCalculator - Next Era 使用一个 Flutter 应用替代旧 Tkinter 和 Java UI，同时保留 C 计算核心。';
+      'SuperCalculator - Next Era 使用 Flutter 应用壳、可替换的原生与 Dart 计算后端，并保留共享 C 核心及旧平台能力。';
 
   @override
   String versionLabel(Object version) {
@@ -118,7 +119,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get version => '0.1.0';
+  String get version => '6.0.0';
 
   @override
   String plotPoints(Object count) {

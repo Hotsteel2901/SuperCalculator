@@ -25,6 +25,9 @@ class CalculatorState {
     this.error,
     this.isCalculating = false,
     this.points = const <PlotPoint>[],
+    this.intersectionPoints = const <PlotPoint>[],
+    this.markedPoints = const <PlotPoint>[],
+    this.parameters = const <String, double>{},
   });
 
   const CalculatorState.initial()
@@ -38,7 +41,10 @@ class CalculatorState {
       value = null,
       error = null,
       isCalculating = false,
-      points = const <PlotPoint>[];
+      points = const <PlotPoint>[],
+      intersectionPoints = const <PlotPoint>[],
+      markedPoints = const <PlotPoint>[],
+      parameters = const <String, double>{};
 
   final String expression;
   final String secondaryExpression;
@@ -51,6 +57,9 @@ class CalculatorState {
   final String? error;
   final bool isCalculating;
   final List<PlotPoint> points;
+  final List<PlotPoint> intersectionPoints;
+  final List<PlotPoint> markedPoints;
+  final Map<String, double> parameters;
 
   CalculatorState copyWith({
     String? expression,
@@ -66,6 +75,9 @@ class CalculatorState {
     bool clearError = false,
     bool? isCalculating,
     List<PlotPoint>? points,
+    List<PlotPoint>? intersectionPoints,
+    List<PlotPoint>? markedPoints,
+    Map<String, double>? parameters,
   }) {
     return CalculatorState(
       expression: expression ?? this.expression,
@@ -79,6 +91,9 @@ class CalculatorState {
       error: clearError ? null : error ?? this.error,
       isCalculating: isCalculating ?? this.isCalculating,
       points: points ?? this.points,
+      intersectionPoints: intersectionPoints ?? this.intersectionPoints,
+      markedPoints: markedPoints ?? this.markedPoints,
+      parameters: parameters ?? this.parameters,
     );
   }
 }
@@ -88,11 +103,85 @@ class CalculatorController extends Notifier<CalculatorState> {
   CalculatorState build() => const CalculatorState.initial();
 
   void setExpression(String value) {
-    state = state.copyWith(expression: value, clearError: true);
+    state = state.copyWith(
+      expression: value,
+      clearError: true,
+      intersectionPoints: const <PlotPoint>[],
+    );
   }
 
   void setSecondaryExpression(String value) {
-    state = state.copyWith(secondaryExpression: value, clearError: true);
+    state = state.copyWith(
+      secondaryExpression: value,
+      clearError: true,
+      intersectionPoints: const <PlotPoint>[],
+    );
+  }
+
+  void setParameter(String name, double value) {
+    if (name.isEmpty || !value.isFinite) return;
+    final parameters = <String, double>{...state.parameters, name: value};
+    state = state.copyWith(parameters: parameters, clearError: true);
+  }
+
+  List<String> parameterNames({String? expression, String? secondary}) {
+    final source = '${expression ?? state.expression} ${secondary ?? state.secondaryExpression}';
+    final known = <String>{
+      'x',
+      'y',
+      't',
+      'theta',
+      'pi',
+      'e',
+      'sin',
+      'cos',
+      'tan',
+      'asin',
+      'acos',
+      'atan',
+      'sinh',
+      'cosh',
+      'tanh',
+      'sqrt',
+      'cbrt',
+      'abs',
+      'exp',
+      'ln',
+      'log',
+      'log10',
+      'floor',
+      'ceil',
+      'round',
+      'sign',
+      'min',
+      'max',
+      'mod',
+    };
+    final names = <String>{};
+    for (final match in RegExp(r'[A-Za-z_][A-Za-z0-9_]*').allMatches(source)) {
+      final name = match.group(0)!;
+      if (!known.contains(name.toLowerCase())) names.add(name);
+    }
+    final result = names.toList()..sort();
+    return result;
+  }
+
+  String _withParameters(String expression) {
+    var result = expression;
+    final names = parameterNames(expression: expression, secondary: '');
+    for (final name in names) {
+      final value = state.parameters[name] ?? 1.0;
+      if (!value.isFinite) continue;
+      result = result.replaceAll(
+        RegExp(r'\b' + RegExp.escape(name) + r'\b'),
+        '(${value.toStringAsPrecision(15)})',
+      );
+    }
+    return result;
+  }
+
+  String _withPlotVariable(String expression) {
+    return expression.replaceAll(RegExp(r'\b(?:t|theta)\b'), 'x');
   }
 
   void setX(String value) {
@@ -118,22 +207,33 @@ class CalculatorController extends Notifier<CalculatorState> {
       mode: value,
       clearError: true,
       points: const <PlotPoint>[],
+      intersectionPoints: const <PlotPoint>[],
     );
   }
 
   Future<void> evaluate() async {
     final backend = ref.read(calcBackendProvider);
+    final mode = state.mode;
+    final rawExpression = state.expression.trim();
+    final rawSecondary = state.secondaryExpression.trim();
+    final parameterizedExpression = _withParameters(rawExpression);
+    final parameterizedSecondary = _withParameters(rawSecondary);
+    final expression = mode == 'parametric' || mode == 'polar'
+        ? _withPlotVariable(parameterizedExpression)
+        : parameterizedExpression;
+    final secondary = mode == 'parametric'
+        ? _withPlotVariable(parameterizedSecondary)
+        : parameterizedSecondary;
     final parsedX = double.tryParse(state.xText.trim());
     final x = parsedX ?? 0;
-    final expression = state.expression.trim();
-    if (expression.isEmpty) {
+    if (rawExpression.isEmpty) {
       state = state.copyWith(
         error: 'Expression cannot be empty.',
         clearValue: true,
       );
       return;
     }
-    if (state.mode == 'function' && (parsedX == null || !parsedX.isFinite)) {
+    if (mode == 'function' && (parsedX == null || !parsedX.isFinite)) {
       state = state.copyWith(
         error: 'The x argument must be a finite number.',
         clearValue: true,
@@ -147,10 +247,11 @@ class CalculatorController extends Notifier<CalculatorState> {
       clearError: true,
       clearValue: true,
       points: const <PlotPoint>[],
+      intersectionPoints: const <PlotPoint>[],
     );
 
     try {
-      if (state.mode == 'function') {
+      if (mode == 'function') {
         final result = await backend.evaluate(expression, x);
         final xs = List<double>.generate(
           481,
@@ -170,7 +271,7 @@ class CalculatorController extends Notifier<CalculatorState> {
           ref
               .read(calculationHistoryProvider.notifier)
               .add(
-                expression: expression,
+                expression: rawExpression,
                 result: result.value!.toStringAsPrecision(12),
                 backend: result.backend,
               );
@@ -180,23 +281,33 @@ class CalculatorController extends Notifier<CalculatorState> {
 
       final points = await _sampleSpecialMode(
         backend,
-        state.mode,
+        mode,
         expression,
-        state.secondaryExpression,
+        secondary,
         parameterStart: state.parameterStart,
         parameterEnd: state.parameterEnd,
       );
+      var intersectionPoints = const <PlotPoint>[];
+      if (mode == 'multi') {
+        try {
+          intersectionPoints = await _intersectionPoints(backend, expression);
+        } on FormatException {
+          // Keep valid curves visible even when one invalid curve cannot
+          // participate in the intersection query.
+        }
+      }
       state = state.copyWith(
         backend: backend.name,
         isCalculating: false,
         points: points,
+        intersectionPoints: intersectionPoints,
         error: points.isEmpty ? 'The plot could not be evaluated.' : null,
       );
       if (points.isNotEmpty) {
         ref
             .read(calculationHistoryProvider.notifier)
             .add(
-              expression: '${state.mode}: ${state.expression}',
+              expression: '$mode: $rawExpression',
               result: '${points.length} plotted points',
               backend: backend.name,
             );
@@ -214,6 +325,103 @@ class CalculatorController extends Notifier<CalculatorState> {
         clearValue: true,
       );
     }
+  }
+
+  Future<List<PlotPoint>> _intersectionPoints(
+    CalcBackend backend,
+    String expression,
+  ) async {
+    final expressions = expression
+        .split(RegExp(r'[;\n]+'))
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toList(growable: false);
+    if (expressions.length < 2) return const <PlotPoint>[];
+
+    final result = <PlotPoint>[];
+    for (var left = 0; left < expressions.length - 1; left++) {
+      for (var right = left + 1; right < expressions.length; right++) {
+        final roots = await backend.intersections(
+          expressions[left],
+          expressions[right],
+          -10,
+          10,
+          samples: 512,
+          tolerance: 1e-7,
+        );
+        if (roots.isEmpty) continue;
+        final ys = await backend.evaluateArray(expressions[left], roots);
+        for (var index = 0; index < roots.length; index++) {
+          final x = roots[index];
+          final y = index < ys.length ? ys[index] : null;
+          if (!x.isFinite || y == null || !y.isFinite) continue;
+          final point = PlotPoint(x, y);
+          final duplicate = result.any(
+            (existing) =>
+                (existing.x - x).abs() < 1e-6 &&
+                (existing.y - y).abs() < 1e-6,
+          );
+          if (!duplicate) result.add(point);
+        }
+      }
+    }
+    result.sort((a, b) => a.x.compareTo(b.x));
+    return result;
+  }
+
+  Future<void> findIntersections() async {
+    final backend = ref.read(calcBackendProvider);
+    final expression = _withParameters(state.expression.trim());
+    if (state.mode != 'multi') {
+      state = state.copyWith(
+        error: 'Choose multi-curve mode to query intersections.',
+      );
+      return;
+    }
+    state = state.copyWith(isCalculating: true, clearError: true);
+    try {
+      final points = await _intersectionPoints(backend, expression);
+      state = state.copyWith(
+        isCalculating: false,
+        intersectionPoints: points,
+        error: points.isEmpty ? 'No finite intersections were found.' : null,
+      );
+    } catch (_) {
+      state = state.copyWith(
+        isCalculating: false,
+        error: 'The intersections could not be evaluated.',
+      );
+    }
+  }
+
+  void addMarkedPoint(PlotPoint point) {
+    if (!point.isFinite) return;
+    final duplicate = state.markedPoints.any(
+      (existing) =>
+          (existing.x - point.x).abs() < 1e-6 &&
+          (existing.y - point.y).abs() < 1e-6,
+    );
+    if (duplicate) return;
+    state = state.copyWith(markedPoints: <PlotPoint>[...state.markedPoints, point]);
+  }
+
+  void removeNearestMarkedPoint(PlotPoint point, {double tolerance = .5}) {
+    if (state.markedPoints.isEmpty) return;
+    var nearest = -1;
+    var distance = double.infinity;
+    for (var index = 0; index < state.markedPoints.length; index++) {
+      final current = state.markedPoints[index];
+      final dx = current.x - point.x;
+      final dy = current.y - point.y;
+      final candidate = math.sqrt(dx * dx + dy * dy);
+      if (candidate < distance) {
+        distance = candidate;
+        nearest = index;
+      }
+    }
+    if (nearest < 0 || distance > tolerance) return;
+    final points = [...state.markedPoints]..removeAt(nearest);
+    state = state.copyWith(markedPoints: points);
   }
 
   Future<List<PlotPoint>> _sampleSpecialMode(
@@ -239,8 +447,10 @@ class CalculatorController extends Notifier<CalculatorState> {
       final points = <PlotPoint>[];
       for (final item in expressions) {
         final values = await backend.evaluateArray(item, xs);
+        final curve = _pointsFromArrays(xs, values);
+        if (!curve.any((point) => point.isFinite)) continue;
         points
-          ..addAll(_pointsFromArrays(xs, values))
+          ..addAll(curve)
           ..add(const PlotPoint(double.nan, double.nan));
       }
       return points;

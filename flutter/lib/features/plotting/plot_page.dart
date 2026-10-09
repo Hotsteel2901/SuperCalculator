@@ -1,8 +1,11 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/theme/design_tokens.dart';
 import '../../core/plot/function_plot_painter.dart';
+import '../../core/plot/plot_point.dart';
 import '../../core/presets/preset_catalog.dart';
 import '../../core/ui/feature_widgets.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -142,6 +145,9 @@ class _PlotPageState extends ConsumerState<PlotPage> {
   late final TextEditingController _xController;
   late final TextEditingController _parameterStartController;
   late final TextEditingController _parameterEndController;
+  final Map<String, TextEditingController> _parameterControllers =
+      <String, TextEditingController>{};
+  List<String> _curveExpressions = <String>[];
   String? _selectedPreset;
   Map<String, List<_PlotPreset>> _availablePresets = _plotPresets;
   double _plotZoom = 1;
@@ -154,12 +160,138 @@ class _PlotPageState extends ConsumerState<PlotPage> {
   double _gestureYawStart = -.65;
   double _gesturePitchStart = .55;
 
+  List<String> _splitCurves(String expression) {
+    return expression
+        .split(RegExp(r'[;\n]+'))
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  void _syncParameterControllers(
+    CalculatorState state,
+    List<String> names,
+  ) {
+    final retained = names.toSet();
+    final removed = _parameterControllers.keys
+        .where((name) => !retained.contains(name))
+        .toList(growable: false);
+    for (final name in removed) {
+      _parameterControllers.remove(name)?.dispose();
+    }
+    for (final name in names) {
+      _parameterControllers.putIfAbsent(
+        name,
+        () => TextEditingController(
+          text: (state.parameters[name] ?? 1).toString(),
+        ),
+      );
+    }
+  }
+
+  void _addCurve(CalculatorController controller) {
+    final expression = _expressionController.text.trim();
+    if (expression.isEmpty) return;
+    final curves = <String>[..._curveExpressions];
+    if (!curves.contains(expression)) curves.add(expression);
+    setState(() {
+      _curveExpressions = curves;
+      _expressionController.clear();
+    });
+    controller.setExpression(curves.join(';'));
+    controller.evaluate();
+  }
+
+  void _removeCurve(String expression, CalculatorController controller) {
+    final curves = <String>[..._curveExpressions]..remove(expression);
+    setState(() => _curveExpressions = curves);
+    controller.setExpression(curves.join(';'));
+    controller.evaluate();
+  }
+
+  PlotPoint? _plotPointFromLocal(
+    Offset local,
+    Size size,
+    CalculatorState state,
+  ) {
+    if (size.width <= 1 || size.height <= 1) return null;
+    final finite = state.points
+        .where((point) => point.x.isFinite && point.y.isFinite)
+        .toList(growable: false);
+    var yMin = -5.0;
+    var yMax = 5.0;
+    if (finite.isNotEmpty) {
+      yMin = finite
+          .map((point) => point.y)
+          .reduce((a, b) => math.min(a, b).toDouble());
+      yMax = finite
+          .map((point) => point.y)
+          .reduce((a, b) => math.max(a, b).toDouble());
+      if ((yMax - yMin).abs() < 1e-9) {
+        yMin -= 1;
+        yMax += 1;
+      } else {
+        final padding = (yMax - yMin) * .12;
+        yMin -= padding;
+        yMax += padding;
+      }
+    }
+    final center = Offset(size.width / 2, size.height / 2);
+    final base = center + (local - _plotPan - center) / _plotZoom;
+    return PlotPoint(
+      -10 + base.dx / size.width * 20,
+      yMax - base.dy / size.height * (yMax - yMin),
+    );
+  }
+
+  void _markPlotPoint(
+    BuildContext plotContext,
+    Offset local,
+    CalculatorState state,
+    CalculatorController controller,
+  ) {
+    if (state.mode == 'surface') return;
+    final renderObject = plotContext.findRenderObject();
+    if (renderObject is! RenderBox) return;
+    final point = _plotPointFromLocal(local, renderObject.size, state);
+    if (point != null) controller.addMarkedPoint(point);
+  }
+
+  void _removeMarkedPlotPoint(
+    BuildContext plotContext,
+    Offset local,
+    CalculatorState state,
+    CalculatorController controller,
+  ) {
+    if (state.mode == 'surface') return;
+    final renderObject = plotContext.findRenderObject();
+    if (renderObject is! RenderBox) return;
+    final point = _plotPointFromLocal(local, renderObject.size, state);
+    if (point != null) controller.removeNearestMarkedPoint(point);
+  }
+
   void _updateParameterRange(CalculatorController controller) {
     final start = double.tryParse(_parameterStartController.text.trim());
     final end = double.tryParse(_parameterEndController.text.trim());
     if (start != null && end != null) {
       controller.setParameterRange(start, end);
     }
+  }
+
+  void _clearForm(CalculatorController controller) {
+    controller.clear();
+    for (final parameterController in _parameterControllers.values) {
+      parameterController.dispose();
+    }
+    setState(() {
+      _curveExpressions = <String>[];
+      _expressionController.text = 'sin(x)';
+      _secondaryController.text = 'cos(x)';
+      _xController.text = '0';
+      _parameterStartController.text = '0.0';
+      _parameterEndController.text = (2 * math.pi).toString();
+      _parameterControllers.clear();
+    });
   }
 
   void _resetPlotView() {
@@ -224,6 +356,9 @@ class _PlotPageState extends ConsumerState<PlotPage> {
     _xController.dispose();
     _parameterStartController.dispose();
     _parameterEndController.dispose();
+    for (final controller in _parameterControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -234,7 +369,21 @@ class _PlotPageState extends ConsumerState<PlotPage> {
     final state = ref.watch(calculatorControllerProvider);
     final controller = ref.read(calculatorControllerProvider.notifier);
     final scheme = Theme.of(context).colorScheme;
+    final curvePalette = <Color>[
+      scheme.primary,
+      scheme.tertiary,
+      scheme.secondary,
+      scheme.error,
+      scheme.inversePrimary,
+    ];
     final presets = _availablePresets[state.mode] ?? const <_PlotPreset>[];
+    final parameterNames = controller.parameterNames(
+      expression: state.expression,
+      secondary: state.mode == 'parametric' || state.mode == 'vector'
+          ? state.secondaryExpression
+          : '',
+    );
+    _syncParameterControllers(state, parameterNames);
     final modes = <String, String>{
       'function': nextEraText(context, 'Function y=f(x)', '函数 y=f(x)'),
       'multi': nextEraText(context, 'Multi-curve overlay', '多曲线叠加'),
@@ -278,10 +427,29 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                             )
                             .toList(growable: false),
                         onChanged: (value) {
-                          if (value != null) {
-                            setState(() => _selectedPreset = null);
-                            controller.setMode(value);
-                          }
+                          if (value == null) return;
+                          final curves = value == 'multi'
+                              ? (_splitCurves(state.expression).isEmpty
+                                    ? <String>[state.expression.trim()]
+                                    : _splitCurves(state.expression))
+                              : _curveExpressions;
+                          final expressionForMode = value == 'multi'
+                              ? curves.join(';')
+                              : state.mode == 'multi' && curves.isNotEmpty
+                              ? curves.first
+                              : state.expression;
+                          setState(() {
+                            _selectedPreset = null;
+                            if (value == 'multi') {
+                              _curveExpressions = curves;
+                              _expressionController.clear();
+                            } else {
+                              _curveExpressions = <String>[];
+                              _expressionController.text = expressionForMode;
+                            }
+                          });
+                          controller.setMode(value);
+                          controller.setExpression(expressionForMode);
                         },
                       ),
                       if (presets.isNotEmpty) ...<Widget>[
@@ -346,21 +514,63 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       SizedBox(height: tokens.controlGap),
-                      TextField(
-                        controller: _expressionController,
-                        onChanged: controller.setExpression,
-                        onSubmitted: (_) => controller.evaluate(),
-                        keyboardType: TextInputType.text,
-                        textInputAction: TextInputAction.go,
-                        decoration: InputDecoration(
-                          hintText: state.mode == 'parametric'
-                              ? 'cos(x)'
-                              : state.mode == 'polar'
-                              ? '1 + cos(x)'
-                              : 'sin(x)',
+                      if (state.mode == 'multi') ...<Widget>[
+                        Wrap(
+                          spacing: tokens.controlGap / 2,
+                          runSpacing: tokens.controlGap / 2,
+                          children: _curveExpressions.asMap().entries
+                              .map(
+                                (entry) => InputChip(
+                                  avatar: CircleAvatar(
+                                    radius: 7,
+                                    backgroundColor: curvePalette[
+                                      entry.key % curvePalette.length
+                                    ],
+                                  ),
+                                  label: Text(entry.value),
+                                  onDeleted: () =>
+                                      _removeCurve(entry.value, controller),
+                                ),
+                              )
+                              .toList(growable: false),
                         ),
-                        style: const TextStyle(fontFamily: 'monospace'),
-                      ),
+                        SizedBox(height: tokens.controlGap),
+                        TextField(
+                          controller: _expressionController,
+                          keyboardType: TextInputType.text,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _addCurve(controller),
+                          decoration: InputDecoration(
+                            labelText: nextEraText(
+                              context,
+                              'Add curve expression',
+                              '添加曲线表达式',
+                            ),
+                            hintText: 'cos(x)',
+                            suffixIcon: IconButton(
+                              tooltip: nextEraText(context, 'Add curve', '添加曲线'),
+                              onPressed: () => _addCurve(controller),
+                              icon: const Icon(Icons.add),
+                            ),
+                          ),
+                          style: const TextStyle(fontFamily: 'monospace'),
+                        ),
+                      ] else
+                        TextField(
+                          controller: _expressionController,
+                          onChanged: controller.setExpression,
+                          onSubmitted: (_) => controller.evaluate(),
+                          keyboardType: TextInputType.text,
+                          textInputAction: TextInputAction.go,
+                          decoration: InputDecoration(
+                            hintText: state.mode == 'parametric'
+                                ? 'cos(x)'
+                                : state.mode == 'polar'
+                                ? '1 + cos(x)'
+                                : 'sin(x)',
+                          ),
+                          style: const TextStyle(fontFamily: 'monospace'),
+                        ),
                       if (state.mode == 'parametric' ||
                           state.mode == 'vector') ...<Widget>[
                         SizedBox(height: tokens.controlGap),
@@ -372,6 +582,46 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                             hintText: 'sin(x)',
                           ),
                           style: const TextStyle(fontFamily: 'monospace'),
+                        ),
+                      ],
+                      if (parameterNames.isNotEmpty) ...<Widget>[
+                        SizedBox(height: tokens.controlGap),
+                        Text(
+                          nextEraText(
+                            context,
+                            'Free parameters',
+                            '自由参数',
+                          ),
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        SizedBox(height: tokens.controlGap / 2),
+                        Wrap(
+                          spacing: tokens.controlGap,
+                          runSpacing: tokens.controlGap,
+                          children: parameterNames
+                              .map(
+                                (name) => SizedBox(
+                                  width: 150,
+                                  child: TextField(
+                                    controller: _parameterControllers[name],
+                                    onChanged: (value) {
+                                      final parsed = double.tryParse(value);
+                                      if (parsed != null && parsed.isFinite) {
+                                        controller.setParameter(name, parsed);
+                                      }
+                                    },
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                          signed: true,
+                                        ),
+                                    decoration: InputDecoration(
+                                      labelText: name,
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(growable: false),
                         ),
                       ],
                       if (state.mode == 'parametric' ||
@@ -445,7 +695,7 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                           SizedBox(width: tokens.controlGap),
                           IconButton(
                             tooltip: l10n.clear,
-                            onPressed: controller.clear,
+                            onPressed: () => _clearForm(controller),
                             icon: const Icon(Icons.clear),
                           ),
                         ],
@@ -543,9 +793,23 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                           state.points.length,
                           state.expression,
                         ),
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onDoubleTap: _resetPlotView,
+                        child: Builder(
+                          builder: (plotContext) => GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onDoubleTap: _resetPlotView,
+                            onTapUp: (details) => _markPlotPoint(
+                              plotContext,
+                              details.localPosition,
+                              state,
+                              controller,
+                            ),
+                            onLongPressStart: (details) =>
+                                _removeMarkedPlotPoint(
+                                  plotContext,
+                                  details.localPosition,
+                                  state,
+                                  controller,
+                                ),
                           onScaleStart: (details) {
                             _gestureZoomStart = _plotZoom;
                             _gesturePanStart = _plotPan;
@@ -578,6 +842,8 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                                 points: state.points,
                                 scheme: scheme,
                                 mode: state.mode,
+                                intersectionPoints: state.intersectionPoints,
+                                markedPoints: state.markedPoints,
                                 zoom: _plotZoom,
                                 pan: _plotPan,
                                 yaw: _plotYaw,
@@ -586,14 +852,40 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                               child: const SizedBox.expand(),
                             ),
                           ),
+                          ),
                         ),
                       ),
                       SizedBox(height: tokens.controlGap),
-                      Row(
+                      Wrap(
+                        spacing: tokens.controlGap / 2,
+                        runSpacing: tokens.controlGap / 2,
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: <Widget>[
-                          Expanded(
-                            child: Text(l10n.plotPoints(state.points.length)),
+                          SizedBox(
+                            width: 220,
+                            child: Text(
+                              '${l10n.plotPoints(state.points.length)} · '
+                              '${nextEraText(context, 'Intersections', '交点')}: '
+                              '${state.intersectionPoints.length} · '
+                              '${nextEraText(context, 'Markers', '标记')}: '
+                              '${state.markedPoints.length}',
+                            ),
                           ),
+                          if (state.mode == 'multi')
+                            TextButton.icon(
+                              onPressed: state.isCalculating
+                                  ? null
+                                  : controller.findIntersections,
+                              icon: const Icon(Icons.radar_outlined),
+                              label: Text(
+                                nextEraText(
+                                  context,
+                                  'Find intersections',
+                                  '查找交点',
+                                ),
+                              ),
+                            ),
                           TextButton.icon(
                             onPressed: _resetPlotView,
                             icon: const Icon(Icons.center_focus_strong),
@@ -603,6 +895,60 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                           ),
                         ],
                       ),
+                      SizedBox(height: tokens.controlGap / 2),
+                      Text(
+                        nextEraText(
+                          context,
+                          'Tap to add a marker; long press to remove the nearest marker. Pinch to zoom and drag to pan.',
+                          '点击添加标记；长按删除最近标记。双指缩放并拖动画布。',
+                        ),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      if (state.intersectionPoints.isNotEmpty) ...<Widget>[
+                        SizedBox(height: tokens.controlGap / 2),
+                        Wrap(
+                          spacing: tokens.controlGap / 2,
+                          runSpacing: tokens.controlGap / 2,
+                          children: state.intersectionPoints
+                              .map(
+                                (point) => Chip(
+                                  avatar: Icon(
+                                    Icons.radar_outlined,
+                                    size: 16,
+                                    color: scheme.onSecondaryContainer,
+                                  ),
+                                  label: Text(
+                                    '(${point.x.toStringAsPrecision(6)}, '
+                                    '${point.y.toStringAsPrecision(6)})',
+                                  ),
+                                ),
+                              )
+                              .toList(growable: false),
+                        ),
+                      ],
+                      if (state.markedPoints.isNotEmpty) ...<Widget>[
+                        SizedBox(height: tokens.controlGap / 2),
+                        Wrap(
+                          spacing: tokens.controlGap / 2,
+                          runSpacing: tokens.controlGap / 2,
+                          children: state.markedPoints.asMap().entries
+                              .map(
+                                (entry) => Chip(
+                                  avatar: Icon(
+                                    Icons.place_outlined,
+                                    size: 16,
+                                    color: scheme.onErrorContainer,
+                                  ),
+                                  label: Text(
+                                    'M${entry.key + 1}: '
+                                    '(${entry.value.x.toStringAsPrecision(6)}, '
+                                    '${entry.value.y.toStringAsPrecision(6)})',
+                                  ),
+                                ),
+                              )
+                              .toList(growable: false),
+                        ),
+                      ],
                     ],
                   ),
                 ),

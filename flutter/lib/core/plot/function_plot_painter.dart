@@ -9,6 +9,8 @@ class FunctionPlotPainter extends CustomPainter {
     required this.points,
     required this.scheme,
     this.mode = 'function',
+    this.intersectionPoints = const <PlotPoint>[],
+    this.markedPoints = const <PlotPoint>[],
     this.zoom = 1,
     this.pan = Offset.zero,
     this.yaw = -.65,
@@ -18,6 +20,8 @@ class FunctionPlotPainter extends CustomPainter {
   final List<PlotPoint> points;
   final ColorScheme scheme;
   final String mode;
+  final List<PlotPoint> intersectionPoints;
+  final List<PlotPoint> markedPoints;
   final double zoom;
   final Offset pan;
   final double yaw;
@@ -82,20 +86,48 @@ class FunctionPlotPainter extends CustomPainter {
           pointPaint,
         );
       }
+      _drawMarkers(canvas, size, xMin, xMax, yMin, yMax);
       return;
     }
 
     final curvePaint = Paint()
-      ..color = scheme.primary
       ..strokeWidth = mode == 'direction' || mode == 'vector' ? 1.4 : 2.4
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
+    final palette = <Color>[
+      scheme.primary,
+      scheme.tertiary,
+      scheme.secondary,
+      scheme.error,
+      scheme.inversePrimary,
+    ];
     final path = Path();
+    var curveIndex = 0;
     PlotPoint? previous;
-    for (final point in points) {
+    void flushPath() {
+      if (path.computeMetrics().isNotEmpty) {
+        curvePaint.color = palette[curveIndex % palette.length];
+        canvas.drawPath(path, curvePaint);
+      }
+    }
+
+    for (var pointIndex = 0; pointIndex < points.length; pointIndex++) {
+      final point = points[pointIndex];
       if (!point.x.isFinite || !point.y.isFinite) {
+        flushPath();
+        path.reset();
         previous = null;
+        final nextIndex = pointIndex + 1;
+        if (mode == 'multi' && nextIndex < points.length) {
+          final next = points[nextIndex];
+          // A curve boundary is the separator followed by the next curve's
+          // first sample. Internal NaN samples preserve discontinuities but
+          // must not change that curve's color.
+          if (next.x.isFinite && (next.x + 10).abs() < 1e-9) {
+            curveIndex++;
+          }
+        }
         continue;
       }
       final mapped = _map2d(point, size, xMin, xMax, yMin, yMax);
@@ -107,7 +139,42 @@ class FunctionPlotPainter extends CustomPainter {
       }
       previous = point;
     }
-    canvas.drawPath(path, curvePaint);
+    flushPath();
+    _drawMarkers(canvas, size, xMin, xMax, yMin, yMax);
+  }
+
+  void _drawMarkers(
+    Canvas canvas,
+    Size size,
+    double xMin,
+    double xMax,
+    double yMin,
+    double yMax,
+  ) {
+    final scale = math.sqrt(zoom.clamp(.5, 4));
+    final intersectionOuter = Paint()
+      ..color = scheme.tertiary
+      ..style = PaintingStyle.fill;
+    final intersectionInner = Paint()
+      ..color = scheme.onTertiary
+      ..style = PaintingStyle.fill;
+    for (final point in intersectionPoints.where((point) => point.isFinite)) {
+      final mapped = _map2d(point, size, xMin, xMax, yMin, yMax);
+      canvas.drawCircle(mapped, 7 * scale, intersectionOuter);
+      canvas.drawCircle(mapped, 3 * scale, intersectionInner);
+    }
+
+    final markedOuter = Paint()
+      ..color = scheme.error
+      ..style = PaintingStyle.fill;
+    final markedInner = Paint()
+      ..color = scheme.onError
+      ..style = PaintingStyle.fill;
+    for (final point in markedPoints.where((point) => point.isFinite)) {
+      final mapped = _map2d(point, size, xMin, xMax, yMin, yMax);
+      canvas.drawCircle(mapped, 6 * scale, markedOuter);
+      canvas.drawCircle(mapped, 2.5 * scale, markedInner);
+    }
   }
 
   void _drawSurface(Canvas canvas, Size size) {
@@ -295,6 +362,8 @@ class FunctionPlotPainter extends CustomPainter {
     return oldDelegate.points != points ||
         oldDelegate.scheme != scheme ||
         oldDelegate.mode != mode ||
+        oldDelegate.intersectionPoints != intersectionPoints ||
+        oldDelegate.markedPoints != markedPoints ||
         oldDelegate.zoom != zoom ||
         oldDelegate.pan != pan ||
         oldDelegate.yaw != yaw ||
