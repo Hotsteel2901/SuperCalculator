@@ -1,0 +1,298 @@
+name: Flutter Next Era platform installers
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: '3.47.6'
+  PROJECT_NAME: supercalculator_next_era
+  PROJECT_ORG: com.supercalc
+
+jobs:
+  web:
+    name: Web release package
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - run: flutter build web --release
+      - name: Archive Web application
+        run: tar -czf ../SuperCalculator-Next-Era-web.tar.gz -C build/web .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SuperCalculator-Next-Era-web
+          path: SuperCalculator-Next-Era-web.tar.gz
+          if-no-files-found: error
+
+  android:
+    name: Android APK release
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter create --no-pub --platforms=android --org "$PROJECT_ORG" --project-name "$PROJECT_NAME" .
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - name: Build Android arm64 native ABI library
+        shell: bash
+        run: |
+          set -euo pipefail
+          clang_path="$(find "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/ndk" -type f -name 'aarch64-linux-android*-clang' -print -quit)"
+          test -n "$clang_path"
+          mkdir -p android/app/src/main/jniLibs/arm64-v8a
+          "$clang_path" -std=c11 -shared -O2 -fPIC -DSUPERCALC_CORE_BUILD \
+            -I ../native/calc_core/include ../calc_core.c \
+            ../native/calc_core/src/supercalc_core.c -lm \
+            -o android/app/src/main/jniLibs/arm64-v8a/libsupercalc_core.so
+      - run: flutter build apk --release --split-per-abi
+      - name: Build Android universal release APK
+        run: flutter build apk --release
+      - name: Build Android release app bundle
+        run: flutter build appbundle --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SuperCalculator-Next-Era-android
+          path: |
+            flutter/build/app/outputs/flutter-apk/*.apk
+            flutter/build/app/outputs/bundle/release/*.aab
+          if-no-files-found: error
+
+  linux:
+    name: Linux packages
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter create --no-pub --platforms=linux --org "$PROJECT_ORG" --project-name "$PROJECT_NAME" .
+      - name: Install Linux desktop build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libstdc++-12-dev
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - run: flutter build linux --release
+      - name: Add native C ABI to Linux bundle
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          bundle="flutter/build/linux/x64/release/bundle"
+          gcc -std=c11 -shared -O2 -fPIC -DSUPERCALC_CORE_BUILD \
+            -I native/calc_core/include calc_core.c \
+            native/calc_core/src/supercalc_core.c -lm \
+            -o "$bundle/libsupercalc_core.so"
+      - name: Create Linux tarball and deb package
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          bundle="flutter/build/linux/x64/release/bundle"
+          tar -czf SuperCalculator-Next-Era-linux-x64.tar.gz -C "$bundle" .
+          pkg="/tmp/supercalculator-next-era"
+          rm -rf "$pkg"
+          mkdir -p "$pkg/DEBIAN" "$pkg/opt/supercalculator-next-era" "$pkg/usr/share/applications" "$pkg/usr/bin"
+          cp -a "$bundle"/. "$pkg/opt/supercalculator-next-era/"
+          cat > "$pkg/DEBIAN/control" <<'EOF'
+          Package: supercalculator-next-era
+          Version: 0.1.0
+          Section: math
+          Priority: optional
+          Architecture: amd64
+          Maintainer: SuperCalculator maintainers
+          Description: SuperCalculator - Next Era scientific calculator
+          EOF
+          cat > "$pkg/usr/share/applications/supercalculator-next-era.desktop" <<'EOF'
+          [Desktop Entry]
+          Name=SuperCalculator - Next Era
+          Comment=Scientific calculator and plotting workbench
+          Exec=/opt/supercalculator-next-era/supercalculator_next_era
+          Icon=utilities-terminal
+          Terminal=false
+          Type=Application
+          Categories=Science;Education;Utility;
+          EOF
+          cat > "$pkg/usr/bin/supercalculator-next-era" <<'EOF'
+          #!/bin/sh
+          exec /opt/supercalculator-next-era/supercalculator_next_era "$@"
+          EOF
+          chmod +x "$pkg/usr/bin/supercalculator-next-era"
+          dpkg-deb --build "$pkg" SuperCalculator-Next-Era-linux-x64.deb
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SuperCalculator-Next-Era-linux
+          path: |
+            SuperCalculator-Next-Era-linux-x64.tar.gz
+            SuperCalculator-Next-Era-linux-x64.deb
+          if-no-files-found: error
+
+  windows:
+    name: Windows installer
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter create --no-pub --platforms=windows --org "$env:PROJECT_ORG" --project-name "$env:PROJECT_NAME" .
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - run: flutter build windows --release
+      - name: Add native C ABI and create portable ZIP
+        shell: pwsh
+        working-directory: ${{ github.workspace }}
+        run: |
+          $bundle = "flutter/build/windows/x64/runner/Release"
+          gcc -std=c11 -shared -O2 -DSUPERCALC_CORE_BUILD -Inative/calc_core/include calc_core.c native/calc_core/src/supercalc_core.c -lm -o "$bundle/supercalc_core.dll"
+          Compress-Archive -Path "$bundle/*" -DestinationPath "SuperCalculator-Next-Era-windows-x64.zip" -Force
+      - name: Build Windows installer
+        shell: pwsh
+        working-directory: ${{ github.workspace }}
+        run: |
+          choco install innosetup --no-progress --yes
+          $bundle = (Resolve-Path "flutter/build/windows/x64/runner/Release").Path
+          & "C:/Program Files (x86)/Inno Setup 6/ISCC.exe" "/DBuildDir=$bundle" "packaging/windows/SuperCalculator.iss"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SuperCalculator-Next-Era-windows
+          path: |
+            SuperCalculator-Next-Era-windows-x64.zip
+            packaging/windows/Output/SuperCalculator-Next-Era-windows-x64-setup.exe
+          if-no-files-found: error
+
+  macos:
+    name: macOS application
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter create --no-pub --platforms=macos --org "$PROJECT_ORG" --project-name "$PROJECT_NAME" .
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - run: flutter build macos --release
+      - name: Add native C ABI and create DMG
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          app="$(find flutter/build/macos/Build/Products/Release -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$app"
+          mkdir -p "$app/Contents/Frameworks"
+          clang -std=c11 -shared -O2 -fPIC -DSUPERCALC_CORE_BUILD \
+            -I native/calc_core/include calc_core.c \
+            native/calc_core/src/supercalc_core.c -lm \
+            -o "$app/Contents/Frameworks/libsupercalc_core.dylib"
+          # The hosted runner builds one native architecture. Do not label this
+          # artifact universal unless a separate multi-arch build is performed.
+          ditto -c -k --sequesterRsrc --keepParent "$app" SuperCalculator-Next-Era-macos-host-arch.zip
+          hdiutil create -volname 'SuperCalculator - Next Era' -srcfolder "$app" \
+            -ov -format UDZO SuperCalculator-Next-Era-macos-host-arch.dmg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SuperCalculator-Next-Era-macos
+          path: |
+            SuperCalculator-Next-Era-macos-host-arch.zip
+            SuperCalculator-Next-Era-macos-host-arch.dmg
+          if-no-files-found: error
+
+  ios:
+    name: iOS unsigned app package
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter create --no-pub --platforms=ios --org "$PROJECT_ORG" --project-name "$PROJECT_NAME" .
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - run: flutter build ios --release --no-codesign
+      - name: Package unsigned iOS app
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          mkdir -p ios-payload/Payload
+          app="$(find flutter/build/ios/iphoneos -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$app"
+          cp -R "$app" ios-payload/Payload/
+          (cd ios-payload && zip -qry ../SuperCalculator-Next-Era-ios-unsigned.ipa Payload)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SuperCalculator-Next-Era-ios
+          path: SuperCalculator-Next-Era-ios-unsigned.ipa
+          if-no-files-found: error
+
+  release:
+    name: Publish tagged release
+    if: startsWith(github.ref, 'refs/tags/next-era-v')
+    needs: [web, android, linux, windows, macos, ios]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+      - name: Generate checksums
+        working-directory: release-assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -d '' assets < <(
+            find . -type f ! -name SHA256SUMS -print0 | sort -z
+          )
+          test "${#assets[@]}" -gt 0
+          sha256sum "${assets[@]}" > SHA256SUMS
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -d '' assets < <(find release-assets -type f -print0 | sort -z)
+          test "${#assets[@]}" -gt 0
+          gh release create "$GITHUB_REF_NAME" "${assets[@]}" \
+            --title "SuperCalculator - Next Era $GITHUB_REF_NAME" \
+            --generate-notes \
+            --notes "Platform packages are unsigned where Apple signing or repository keystore secrets are required. See SHA256SUMS and the compatibility report for installation and signing notes."
