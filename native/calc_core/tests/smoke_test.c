@@ -12,13 +12,22 @@ int main(void) {
     double result = 0.0;
     assert(sc_evaluate(context, "x^2 + 1", 3.0, 0.0, &result) == SC_OK);
     assert(fabs(result - 10.0) < 1e-12);
+    assert(sc_evaluate(context, "2x + 2(x + 1)", 3.0, 0.0, &result) == SC_OK);
+    assert(fabs(result - 14.0) < 1e-12);
     assert(sc_evaluate(context, "x + y", 2.0, 3.0, &result) == SC_OK);
     assert(fabs(result - 5.0) < 1e-12);
+    assert(sc_evaluate(context, "Sin(PI / 2)", 0.0, 0.0, &result) == SC_OK);
+    assert(fabs(result - 1.0) < 1e-12);
+    assert(sc_evaluate(context, "cbrt(-8)", 0.0, 0.0, &result) == SC_OK);
+    assert(fabs(result + 2.0) < 1e-12);
+    assert(sc_evaluate(context, "1 / 1e-20", 0.0, 0.0, &result) == SC_OK);
+    assert(fabs(result - 1e20) / 1e20 < 1e-12);
 
     double xs[] = {0.0, 1.0, 2.0};
     double values[] = {0.0, 0.0, 0.0};
     assert(sc_evaluate_array(context, "x^2", xs, 3, values) == SC_OK);
     assert(fabs(values[2] - 4.0) < 1e-12);
+    assert(sc_evaluate_array(context, "unknown(x)", xs, 3, values) == SC_CALCULATION_ERROR);
 
     double discontinuity_xs[] = {-1.0, 0.0, 1.0};
     double discontinuity_values[] = {0.0, 0.0, 0.0};
@@ -29,6 +38,8 @@ int main(void) {
 
     assert(sc_evaluate(context, "1/0", 0.0, 0.0, &result) != SC_OK);
     assert(sc_last_error(context) != NULL);
+    assert(sc_evaluate(context, "x", NAN, 0.0, &result) == SC_INVALID_ARGUMENT);
+    assert(sc_derivative(context, "x^2", 3.0, NAN, &result) == SC_INVALID_ARGUMENT);
 
     assert(sc_derivative(context, "x^2", 3.0, 1e-6, &result) == SC_OK);
     assert(fabs(result - 6.0) < 1e-5);

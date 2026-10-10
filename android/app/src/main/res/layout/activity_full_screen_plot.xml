@@ -5,6 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/sc_void"
+    android:clipChildren="true"
+    android:clipToPadding="true"
     android:fitsSystemWindows="true">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -24,18 +26,24 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:clipChildren="true"
+        android:clipToPadding="true"
         android:orientation="vertical"
         android:paddingTop="56dp">
 
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1">
+            android:layout_weight="1"
+            android:clipChildren="true"
+            android:clipToPadding="true">
 
-            <com.github.mikephil.charting.charts.LineChart
+            <com.supercalc.InteractiveLineChart
                 android:id="@+id/full_screen_chart"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent"
+                android:clipChildren="true"
+                android:clipToPadding="true" />
 
             <TextView
                 android:id="@+id/coordinate_display"

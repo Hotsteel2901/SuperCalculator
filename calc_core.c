@@ -29,7 +29,9 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
+#include <float.h>
 #include <limits.h>
+#include <stdint.h>
 
 #if defined(__GNUC__) || defined(__clang__)
 #define SC_MAYBE_UNUSED __attribute__((unused))
@@ -102,8 +104,8 @@ typedef enum {
 } TokenKind;
 
 typedef enum {
-    F_SIN, F_COS, F_TAN, F_LOG, F_LN, F_SQRT, F_EXP, F_ABS,
-    F_FLOOR, F_CEIL
+    F_SIN, F_COS, F_TAN, F_LOG, F_LN, F_LOG10, F_SQRT, F_CBRT, F_EXP, F_ABS,
+    F_FLOOR, F_CEIL, F_ASIN, F_ACOS, F_ATAN, F_SINH, F_COSH, F_TANH
 } FuncId;
 
 typedef struct {
@@ -135,85 +137,190 @@ typedef struct {
 
 static CustomFunc g_custom_funcs[MAX_CUSTOM_FUNCS];
 static int g_custom_func_count = 0;
+/* Incremented whenever a custom function changes so compiled expressions that
+ * contain custom-function indices can never outlive the registry entry. */
+static uint64_t g_custom_generation = 1;
+
+static void custom_registry_changed(void) {
+    g_custom_generation++;
+    if (g_custom_generation == 0) g_custom_generation = 1;
+}
+
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#define SC_THREAD_LOCAL _Thread_local
+#elif defined(__GNUC__) || defined(__clang__)
+#define SC_THREAD_LOCAL __thread
+#elif defined(_MSC_VER)
+#define SC_THREAD_LOCAL __declspec(thread)
+#else
+#define SC_THREAD_LOCAL
+#endif
+
+#define SC_COMPILE_CACHE_SIZE 4
+#define SC_CACHE_EXPR_MAX 2048
+
+typedef struct {
+    int valid;
+    int count;
+    uint64_t generation;
+    uint64_t last_used;
+    char expression[SC_CACHE_EXPR_MAX];
+    RPN rpn[MAX_RPN];
+} CompileCacheEntry;
+
+static SC_THREAD_LOCAL CompileCacheEntry g_compile_cache[SC_COMPILE_CACHE_SIZE];
+static SC_THREAD_LOCAL RPN g_compile_scratch[MAX_RPN];
+static SC_THREAD_LOCAL uint64_t g_compile_clock;
+
+static int sc_name_equal(const char* left, const char* right) {
+    if (!left || !right) return 0;
+    while (*left && *right) {
+        if (tolower((unsigned char)*left) != tolower((unsigned char)*right)) return 0;
+        left++;
+        right++;
+    }
+    return *left == '\0' && *right == '\0';
+}
+
 static CustomFunc* custom_func_find(const char* name);
 static int parse_and_eval(const char* expr, double x, double y, double* result);
 
+static int sc_identifier_start(int c) {
+    return isalpha((unsigned char)c) || c == '_';
+}
+
+static int sc_identifier_part(int c) {
+    return isalnum((unsigned char)c) || c == '_';
+}
+
+static int token_ends_value(const Token* token) {
+    return token->kind == T_NUMBER || token->kind == T_VARIABLE_X ||
+           token->kind == T_VARIABLE_Y || token->kind == T_RPAREN ||
+           (token->kind == T_OP && token->op == '!');
+}
+
+static int token_starts_value(const Token* token) {
+    return token->kind == T_NUMBER || token->kind == T_VARIABLE_X ||
+           token->kind == T_VARIABLE_Y || token->kind == T_FUNC ||
+           token->kind == T_CUSTOM_FUNC || token->kind == T_LPAREN;
+}
+
+static int append_token(Token* toks, int* count, int max_toks, Token token) {
+    if (*count > 0 && token_starts_value(&token) &&
+        token_ends_value(&toks[*count - 1])) {
+        if (*count >= max_toks - 1) {
+            set_error("Expression has too many tokens");
+            return -1;
+        }
+        Token implicit_multiply = {0};
+        implicit_multiply.kind = T_OP;
+        implicit_multiply.op = '*';
+        toks[(*count)++] = implicit_multiply;
+    }
+    if (*count >= max_toks - 1) {
+        set_error("Expression has too many tokens");
+        return -1;
+    }
+    toks[(*count)++] = token;
+    return 0;
+}
+
 static int tokenize(const char* s, Token* toks, int max_toks) {
     int n = 0;
-    while (*s && n < max_toks - 1) {
-        if (isspace(*s)) { s++; continue; }
-        if (isdigit(*s) || (*s == '.' && isdigit(*(s+1)))) {
+    while (*s) {
+        Token token = {0};
+        if (isspace((unsigned char)*s)) { s++; continue; }
+        if (isdigit((unsigned char)*s) ||
+            (*s == '.' && isdigit((unsigned char)*(s + 1)))) {
             char* end;
-            toks[n].kind = T_NUMBER;
-            toks[n].val  = strtod(s, &end);
-            s = end; n++; continue;
-        }
-        if (*s == 'x' || *s == 'X') {
-            toks[n++].kind = T_VARIABLE_X; s++; continue;
-        }
-        if (*s == 'y' || *s == 'Y') {
-            toks[n++].kind = T_VARIABLE_Y; s++; continue;
+            token.kind = T_NUMBER;
+            token.val = strtod(s, &end);
+            if (end == s) {
+                set_error("Invalid number");
+                return -1;
+            }
+            s = end;
+            goto append;
         }
         if (*s == '!') {
-            toks[n].kind = T_OP; toks[n].op = '!'; s++; n++; continue;
+            token.kind = T_OP;
+            token.op = '!';
+            s++;
+            goto append;
         }
-        if (*s == 'p' && *(s+1) == 'i' && !isalpha(*(s+2))) {
-            toks[n].kind = T_NUMBER;
-            toks[n].val  = M_PI;
-            s += 2; n++; continue;
-        }
-        if (*s == 'e' && !isalpha(*(s+1))) {
-            toks[n].kind = T_NUMBER;
-            toks[n].val  = M_E;
-            s++; n++; continue;
-        }
-        if (isalpha(*s)) {
-            char name[8] = {0};
-            int  i = 0;
-            while (isalpha(*s) && i < 7) name[i++] = *s++;
-            if      (!strcmp(name, "sin"))  { toks[n].kind=T_FUNC; toks[n].func=F_SIN;  n++; continue; }
-            else if (!strcmp(name, "cos"))  { toks[n].kind=T_FUNC; toks[n].func=F_COS;  n++; continue; }
-            else if (!strcmp(name, "tan"))  { toks[n].kind=T_FUNC; toks[n].func=F_TAN;  n++; continue; }
-            else if (!strcmp(name, "log"))  { toks[n].kind=T_FUNC; toks[n].func=F_LOG;  n++; continue; }
-            else if (!strcmp(name, "ln"))   { toks[n].kind=T_FUNC; toks[n].func=F_LN;   n++; continue; }
-            else if (!strcmp(name, "sqrt")) { toks[n].kind=T_FUNC; toks[n].func=F_SQRT; n++; continue; }
-            else if (!strcmp(name, "exp"))  { toks[n].kind=T_FUNC; toks[n].func=F_EXP;  n++; continue; }
-            else if (!strcmp(name, "abs"))   { toks[n].kind=T_FUNC; toks[n].func=F_ABS;   n++; continue; }
-            else if (!strcmp(name, "floor")) { toks[n].kind=T_FUNC; toks[n].func=F_FLOOR; n++; continue; }
-            else if (!strcmp(name, "ceil"))  { toks[n].kind=T_FUNC; toks[n].func=F_CEIL;  n++; continue; }
-            else if (!strcmp(name, "mod"))   { toks[n].kind=T_OP;   toks[n].op='%';        n++; continue; }
-            else {
-                /* Check custom function registry (allow names up to 31 chars) */
-                char full_name[32] = {0};
-                int fi = i;
-                memcpy(full_name, name, (size_t)i);
-                while (isalpha(*s) && fi < 31) full_name[fi++] = *s++;
-                full_name[fi] = '\0';
-                CustomFunc* cf = custom_func_find(full_name);
-                if (cf) {
-                    toks[n].kind = T_CUSTOM_FUNC;
-                    toks[n].custom_idx = (int)(cf - g_custom_funcs);
-                    n++;
-                    continue;
-                } else {
-                    set_error("Unknown function");
+        if (sc_identifier_start((unsigned char)*s)) {
+            char name[MAX_FUNC_NAME];
+            size_t length = 0;
+            while (sc_identifier_part((unsigned char)*s)) {
+                if (length + 1 >= sizeof(name)) {
+                    set_error("Identifier is too long");
                     return -1;
                 }
+                name[length++] = (char)tolower((unsigned char)*s++);
             }
+            name[length] = '\0';
+
+            if (!strcmp(name, "x")) token.kind = T_VARIABLE_X;
+            else if (!strcmp(name, "y")) token.kind = T_VARIABLE_Y;
+            else if (!strcmp(name, "pi")) {
+                token.kind = T_NUMBER;
+                token.val = M_PI;
+            } else if (!strcmp(name, "e")) {
+                token.kind = T_NUMBER;
+                token.val = M_E;
+            } else if (!strcmp(name, "sin")) { token.kind = T_FUNC; token.func = F_SIN; }
+            else if (!strcmp(name, "cos")) { token.kind = T_FUNC; token.func = F_COS; }
+            else if (!strcmp(name, "tan")) { token.kind = T_FUNC; token.func = F_TAN; }
+            else if (!strcmp(name, "log")) { token.kind = T_FUNC; token.func = F_LOG; }
+            else if (!strcmp(name, "ln")) { token.kind = T_FUNC; token.func = F_LN; }
+            else if (!strcmp(name, "log10")) { token.kind = T_FUNC; token.func = F_LOG10; }
+            else if (!strcmp(name, "sqrt")) { token.kind = T_FUNC; token.func = F_SQRT; }
+            else if (!strcmp(name, "cbrt")) { token.kind = T_FUNC; token.func = F_CBRT; }
+            else if (!strcmp(name, "exp")) { token.kind = T_FUNC; token.func = F_EXP; }
+            else if (!strcmp(name, "abs")) { token.kind = T_FUNC; token.func = F_ABS; }
+            else if (!strcmp(name, "floor")) { token.kind = T_FUNC; token.func = F_FLOOR; }
+            else if (!strcmp(name, "ceil")) { token.kind = T_FUNC; token.func = F_CEIL; }
+            else if (!strcmp(name, "asin")) { token.kind = T_FUNC; token.func = F_ASIN; }
+            else if (!strcmp(name, "acos")) { token.kind = T_FUNC; token.func = F_ACOS; }
+            else if (!strcmp(name, "atan")) { token.kind = T_FUNC; token.func = F_ATAN; }
+            else if (!strcmp(name, "sinh")) { token.kind = T_FUNC; token.func = F_SINH; }
+            else if (!strcmp(name, "cosh")) { token.kind = T_FUNC; token.func = F_COSH; }
+            else if (!strcmp(name, "tanh")) { token.kind = T_FUNC; token.func = F_TANH; }
+            else if (!strcmp(name, "mod")) { token.kind = T_OP; token.op = '%'; }
+            else {
+                CustomFunc* cf = custom_func_find(name);
+                if (!cf) {
+                    set_error("Unknown function or identifier");
+                    return -1;
+                }
+                token.kind = T_CUSTOM_FUNC;
+                token.custom_idx = (int)(cf - g_custom_funcs);
+            }
+            goto append;
         }
+
         switch (*s) {
             case '+': case '-': case '*': case '/': case '^': case '%':
-                toks[n].kind = T_OP; toks[n].op = *s; s++; n++; break;
-            case '(': toks[n++].kind = T_LPAREN; s++; break;
-            case ')': toks[n++].kind = T_RPAREN; s++; break;
-            case ',': toks[n++].kind = T_COMMA;  s++; break;
-            default:  set_error("Unexpected character"); return -1;
+                token.kind = T_OP;
+                token.op = *s++;
+                break;
+            case '(': token.kind = T_LPAREN; s++; break;
+            case ')': token.kind = T_RPAREN; s++; break;
+            case ',': token.kind = T_COMMA; s++; break;
+            default:
+                set_error("Unexpected character");
+                return -1;
         }
+append:
+        if (append_token(toks, &n, max_toks, token) != 0) return -1;
+    }
+    if (n >= max_toks) {
+        set_error("Expression has too many tokens");
+        return -1;
     }
     toks[n].kind = T_END;
     return n;
 }
-
 static int precedence(char op) {
     if (op == '!' ) return 5;
     if (op == '~' ) return 2;
@@ -387,6 +494,7 @@ static double apply_func(FuncId f, double v) {
         case F_COS:  return cos(v);
         case F_TAN:  return tan(v);
         case F_LOG:
+        case F_LOG10:
             if (v <= 0.0) { set_error("log() domain error: argument must be > 0"); return NAN; }
             return log10(v);
         case F_LN:
@@ -395,17 +503,36 @@ static double apply_func(FuncId f, double v) {
         case F_SQRT:
             if (v < 0.0) { set_error("sqrt() domain error: argument must be >= 0"); return NAN; }
             return sqrt(v);
+        case F_CBRT:
+            return copysign(pow(fabs(v), 1.0 / 3.0), v);
         case F_EXP:  return exp(v);
         case F_ABS:  return fabs(v);
         case F_FLOOR: return floor(v);
         case F_CEIL:  return ceil(v);
+        case F_ASIN:
+            if (v < -1.0 || v > 1.0) {
+                set_error("asin() domain error: argument must be in [-1, 1]");
+                return NAN;
+            }
+            return asin(v);
+        case F_ACOS:
+            if (v < -1.0 || v > 1.0) {
+                set_error("acos() domain error: argument must be in [-1, 1]");
+                return NAN;
+            }
+            return acos(v);
+        case F_ATAN: return atan(v);
+        case F_SINH: return sinh(v);
+        case F_COSH: return cosh(v);
+        case F_TANH: return tanh(v);
         default:     return NAN;
     }
 }
 
 static int eval_rpn(const RPN* rpn, int nrpn, double x, double y, double* result) {
-    double stack[256]; int sp = 0;
-    const int MAX_STACK = 256;
+    double stack[MAX_RPN];
+    int sp = 0;
+    const int MAX_STACK = MAX_RPN;
     
     for (int i = 0; i < nrpn; i++) {
         RPN t = rpn[i];
@@ -444,8 +571,8 @@ static int eval_rpn(const RPN* rpn, int nrpn, double x, double y, double* result
                     case '+': stack[sp++] = a+b; break;
                     case '-': stack[sp++] = a-b; break;
                     case '*': stack[sp++] = a*b; break;
-                    case '/': stack[sp++] = fabs(b) > 1e-15 ? a/b : (set_error("Division by zero"),NAN); break;
-                    case '%': stack[sp++] = fabs(b) > 1e-15 ? fmod(a,b) : (set_error("Modulo by zero"),NAN); break;
+                    case '/': stack[sp++] = b != 0.0 ? a / b : (set_error("Division by zero"), NAN); break;
+                    case '%': stack[sp++] = b != 0.0 ? fmod(a, b) : (set_error("Modulo by zero"), NAN); break;
                     case '^':
                         if (a == 0.0 && b < 0.0) {
                             set_error("Division by zero (0^negative)");
@@ -468,10 +595,9 @@ static int eval_rpn(const RPN* rpn, int nrpn, double x, double y, double* result
             if (sp < 1) { set_error("Invalid expression"); return -1; }
             double arg_val = stack[--sp];
             CustomFunc* cf = &g_custom_funcs[t.custom_idx];
-            /* Build expression: substitute x with (arg_val) in body */
-            char eval_expr[MAX_FUNC_BODY + 64];
-            snprintf(eval_expr, sizeof(eval_expr), "(%s)", cf->body);
-            /* Simple approach: re-evaluate the body with x = arg_val */
+            /* Re-evaluate the body with x = arg_val. The compiled outer
+             * program stays intact while the recursive call uses its own
+             * cache entry or stack frame. */
             double body_result;
             if (parse_and_eval(cf->body, arg_val, 0.0, &body_result) != 0) {
                 stack[sp++] = NAN;
@@ -499,12 +625,112 @@ static int compile_expression(const char* expr, RPN* rpn, int* count) {
     return 0;
 }
 
+static int rpn_contains_custom_function(const RPN* rpn, int count) {
+    for (int i = 0; i < count; i++) {
+        if (rpn[i].tag == 5) return 1;
+    }
+    return 0;
+}
+
+/* Scalar calls are common in limits, extrema, ODEs and JNI clients. Keep a
+ * small per-thread LRU of compiled programs so those hot paths do not pay the
+ * tokenizer/shunting-yard cost on every sample. It is deliberately bounded,
+ * allocation-free and invalidated whenever the custom-function registry changes. */
+static int compile_expression_cached(
+    const char* expr,
+    const RPN** out_rpn,
+    int* out_count) {
+    if (!expr || !out_rpn || !out_count) {
+        set_error("Invalid expression cache argument");
+        return -1;
+    }
+
+    const size_t length = strlen(expr);
+    if (length < SC_CACHE_EXPR_MAX) {
+        for (int i = 0; i < SC_COMPILE_CACHE_SIZE; i++) {
+            CompileCacheEntry* entry = &g_compile_cache[i];
+            if (entry->valid && entry->generation == g_custom_generation &&
+                !strcmp(entry->expression, expr)) {
+                entry->last_used = ++g_compile_clock;
+                *out_rpn = entry->rpn;
+                *out_count = entry->count;
+                return 0;
+            }
+        }
+
+        int victim = 0;
+        for (int i = 1; i < SC_COMPILE_CACHE_SIZE; i++) {
+            if (!g_compile_cache[victim].valid ||
+                (g_compile_cache[i].valid &&
+                 g_compile_cache[i].last_used < g_compile_cache[victim].last_used)) {
+                victim = i;
+            }
+        }
+        CompileCacheEntry* entry = &g_compile_cache[victim];
+        int count = 0;
+        if (compile_expression(expr, entry->rpn, &count) != 0) {
+            entry->valid = 0;
+            return -1;
+        }
+        memcpy(entry->expression, expr, length + 1);
+        entry->count = count;
+        entry->generation = g_custom_generation;
+        entry->last_used = ++g_compile_clock;
+        entry->valid = 1;
+        *out_rpn = entry->rpn;
+        *out_count = count;
+        return 0;
+    }
+
+    /* Keep long expressions correct without retaining unbounded input. */
+    if (compile_expression(expr, g_compile_scratch, out_count) != 0) return -1;
+    *out_rpn = g_compile_scratch;
+    return 0;
+}
+
+EXPORT int validate_expression(const char* expr) {
+    const RPN* rpn = NULL;
+    int count = 0;
+    clear_error();
+    if (compile_expression_cached(expr, &rpn, &count) != 0) return 0;
+    return count > 0 ? 1 : 0;
+}
+
+static int get_compiled_expression(
+    const char* expr,
+    RPN* local_rpn,
+    const RPN** out_rpn,
+    int* out_count) {
+    const RPN* cached_rpn = NULL;
+    if (compile_expression_cached(expr, &cached_rpn, out_count) != 0) return -1;
+    if (rpn_contains_custom_function(cached_rpn, *out_count)) {
+        if (!local_rpn) {
+            set_error("Internal compiled-expression buffer is missing");
+            return -1;
+        }
+        memcpy(local_rpn, cached_rpn, (size_t)*out_count * sizeof(*local_rpn));
+        *out_rpn = local_rpn;
+    } else {
+        *out_rpn = cached_rpn;
+    }
+    return 0;
+}
+
 static int parse_and_eval(const char* expr, double x, double y, double* result) {
     clear_error();
-    RPN rpn[MAX_RPN];
+    const RPN* cached_rpn = NULL;
     int count = 0;
-    if (compile_expression(expr, rpn, &count) != 0) return -1;
-    return eval_rpn(rpn, count, x, y, result);
+    if (compile_expression_cached(expr, &cached_rpn, &count) != 0) return -1;
+
+    /* A custom function recursively calls parse_and_eval. Copy the parent
+     * program out of the cache first so nested compilation cannot evict or
+     * overwrite the program currently being evaluated. */
+    if (rpn_contains_custom_function(cached_rpn, count)) {
+        RPN local_rpn[MAX_RPN];
+        memcpy(local_rpn, cached_rpn, (size_t)count * sizeof(*local_rpn));
+        return eval_rpn(local_rpn, count, x, y, result);
+    }
+    return eval_rpn(cached_rpn, count, x, y, result);
 }
 
 EXPORT double evaluate(const char* expr, double x) {
@@ -526,9 +752,10 @@ EXPORT double evaluate_xy(const char* expr, double x, double y) {
 EXPORT void evaluate_array(const char* expr, const double* xs, double* out, int n) {
     if (!expr || !xs || !out || n <= 0) return;
     clear_error();
-    RPN rpn[MAX_RPN];
+    RPN local_rpn[MAX_RPN];
+    const RPN* rpn = NULL;
     int nr = 0;
-    if (compile_expression(expr, rpn, &nr) != 0) {
+    if (get_compiled_expression(expr, local_rpn, &rpn, &nr) != 0) {
         for (int i = 0; i < n; i++) out[i] = NAN;
         return;
     }
@@ -544,9 +771,10 @@ EXPORT void evaluate_array(const char* expr, const double* xs, double* out, int 
 EXPORT void evaluate_xy_array(const char* expr, const double* xs, const double* ys, double* out, int n) {
     if (!expr || !xs || !ys || !out || n <= 0) return;
     clear_error();
-    RPN rpn[MAX_RPN];
+    RPN local_rpn[MAX_RPN];
+    const RPN* rpn = NULL;
     int nr = 0;
-    if (compile_expression(expr, rpn, &nr) != 0) {
+    if (get_compiled_expression(expr, local_rpn, &rpn, &nr) != 0) {
         for (int i = 0; i < n; i++) out[i] = NAN;
         return;
     }
@@ -563,7 +791,10 @@ EXPORT double derivative(const char* expr, double x, double h) {
     double fp, fm;
     clear_error();
     if (!expr) { set_error("NULL expression"); return NAN; }
-    if (h == 0.0) { set_error("Step size h cannot be zero"); return NAN; }
+    if (!isfinite(x) || !isfinite(h) || h == 0.0) {
+        set_error("x and step size h must be finite, and h cannot be zero");
+        return NAN;
+    }
     RPN rpn[MAX_RPN];
     int count = 0;
     if (compile_expression(expr, rpn, &count) != 0) return NAN;
@@ -576,7 +807,10 @@ EXPORT double derivative2(const char* expr, double x, double h) {
     double fc, fp, fm;
     clear_error();
     if (!expr) { set_error("NULL expression"); return NAN; }
-    if (h == 0.0) { set_error("Step size h cannot be zero"); return NAN; }
+    if (!isfinite(x) || !isfinite(h) || h == 0.0) {
+        set_error("x and step size h must be finite, and h cannot be zero");
+        return NAN;
+    }
     RPN rpn[MAX_RPN];
     int count = 0;
     if (compile_expression(expr, rpn, &count) != 0) return NAN;
@@ -588,6 +822,7 @@ EXPORT double derivative2(const char* expr, double x, double h) {
 
 EXPORT double integrate(const char* expr, double a, double b, int n) {
     if (!expr) { set_error("NULL expression"); return NAN; }
+    if (!isfinite(a) || !isfinite(b)) { set_error("Integration bounds must be finite"); return NAN; }
     if (n < 2 || n % 2 != 0) { set_error("n must be even and >= 2"); return NAN; }
     if (n > 1000000) { set_error("n too large (max 1000000)"); return NAN; }
     if (a > b) { set_error("Invalid interval: a must be <= b"); return NAN; }
@@ -601,18 +836,28 @@ EXPORT double integrate(const char* expr, double a, double b, int n) {
     if (eval_rpn(rpn, count, a, 0.0, &fa) != 0) return NAN;
     if (eval_rpn(rpn, count, b, 0.0, &fb) != 0) return NAN;
     double sum = fa + fb;
+    double compensation = 0.0;
     for (int i = 1; i < n; i++) {
         double xi = a + i * h, fi;
         if (eval_rpn(rpn, count, xi, 0.0, &fi) != 0) return NAN;
-        sum += (i % 2 == 0 ? 2.0 : 4.0) * fi;
+        const double term = (i % 2 == 0 ? 2.0 : 4.0) * fi;
+        const double corrected = term - compensation;
+        const double next_sum = sum + corrected;
+        compensation = (next_sum - sum) - corrected;
+        sum = next_sum;
     }
-    return (h/3.0) * sum;
+    return (h / 3.0) * sum;
 }
 
 EXPORT double solve_equation(const char* expr, double guess,
                               double xmin, double xmax,
                               double tol, int max_iter) {
     if (!expr) { set_error("NULL expression"); return NAN; }
+    if (!isfinite(guess) || !isfinite(xmin) || !isfinite(xmax) ||
+        !isfinite(tol) || tol <= 0.0) {
+        set_error("Solver inputs must be finite and tolerance must be > 0");
+        return NAN;
+    }
     if (xmin >= xmax) { set_error("Invalid interval: xmin must be < xmax"); return NAN; }
     if (max_iter <= 0) max_iter = 100;
     clear_error();
@@ -626,32 +871,32 @@ EXPORT double solve_equation(const char* expr, double guess,
     for (int iter = 0; iter < max_iter; iter++) {
         double f, fp, fm, df;
         if (eval_rpn(rpn, count, x, 0.0, &f) != 0) return NAN;
-        if (isnan(f)) { set_error("Function returned NaN at current point"); return NAN; }
+        if (!isfinite(f)) { set_error("Function returned a non-finite value at current point"); return NAN; }
         if (fabs(f) < tol) return x;
         double h = 1e-6 * (fabs(x) + 1.0);
         if (eval_rpn(rpn, count, x+h, 0.0, &fp) != 0) return NAN;
-        if (isnan(fp)) { set_error("Function returned NaN during derivative evaluation"); return NAN; }
+        if (!isfinite(fp)) { set_error("Function returned a non-finite value during derivative evaluation"); return NAN; }
         if (eval_rpn(rpn, count, x-h, 0.0, &fm) != 0) return NAN;
-        if (isnan(fm)) { set_error("Function returned NaN during derivative evaluation"); return NAN; }
+        if (!isfinite(fm)) { set_error("Function returned a non-finite value during derivative evaluation"); return NAN; }
         df = (fp - fm) / (2.0*h);
         if (fabs(df) < 1e-15) {
             double fa; if (eval_rpn(rpn, count, xmin, 0.0, &fa) != 0) return NAN;
-            if (isnan(fa)) { set_error("Function returned NaN at interval endpoint"); return NAN; }
+            if (!isfinite(fa)) { set_error("Function returned a non-finite value at interval endpoint"); return NAN; }
             double mid = (xmin + xmax)/2.0, fmid;
             if (eval_rpn(rpn, count, mid, 0.0, &fmid) != 0) return NAN;
-            if (isnan(fmid)) { set_error("Function returned NaN during bisection"); return NAN; }
+            if (!isfinite(fmid)) { set_error("Function returned a non-finite value during bisection"); return NAN; }
             if (fa*fmid <= 0) xmax = mid;
             else xmin = mid;
             x = mid;
         } else {
             double nx = x - f/df;
-            if (isnan(nx) || isinf(nx)) { set_error("Newton step produced NaN/Inf"); return NAN; }
+            if (!isfinite(nx)) { set_error("Newton step produced NaN/Inf"); return NAN; }
             if (nx < xmin || nx > xmax) {
                 double fa; if (eval_rpn(rpn, count, xmin, 0.0, &fa) != 0) return NAN;
-                if (isnan(fa)) { set_error("Function returned NaN at interval endpoint"); return NAN; }
+                if (!isfinite(fa)) { set_error("Function returned NaN at interval endpoint"); return NAN; }
                 double mid = (xmin+xmax)/2.0, fmid;
                 if (eval_rpn(rpn, count, mid, 0.0, &fmid) != 0) return NAN;
-                if (isnan(fmid)) { set_error("Function returned NaN during bisection"); return NAN; }
+                if (!isfinite(fmid)) { set_error("Function returned NaN during bisection"); return NAN; }
                 if (fa*fmid <= 0) xmax = mid; else xmin = mid;
                 x = mid;
             } else x = nx;
@@ -664,6 +909,10 @@ EXPORT double solve_equation(const char* expr, double guess,
 EXPORT double solve_bisection(const char* expr, double a, double b,
                                double tol, int max_iter) {
     if (!expr) { set_error("NULL expression"); return NAN; }
+    if (!isfinite(a) || !isfinite(b) || !isfinite(tol) || tol <= 0.0) {
+        set_error("Solver inputs must be finite and tolerance must be > 0");
+        return NAN;
+    }
     if (a >= b) { set_error("Invalid interval: a must be < b"); return NAN; }
     if (max_iter <= 0) max_iter = 100;
     clear_error();
@@ -672,16 +921,16 @@ EXPORT double solve_bisection(const char* expr, double a, double b,
     if (compile_expression(expr, rpn, &count) != 0) return NAN;
     double fa, fb, fc, c;
     if (eval_rpn(rpn, count, a, 0.0, &fa) != 0) return NAN;
-    if (isnan(fa)) { set_error("Function returned NaN at interval endpoint"); return NAN; }
+    if (!isfinite(fa)) { set_error("Function returned NaN at interval endpoint"); return NAN; }
     if (eval_rpn(rpn, count, b, 0.0, &fb) != 0) return NAN;
-    if (isnan(fb)) { set_error("Function returned NaN at interval endpoint"); return NAN; }
+    if (!isfinite(fb)) { set_error("Function returned NaN at interval endpoint"); return NAN; }
     if (fabs(fa) < tol) return a;
     if (fabs(fb) < tol) return b;
     if (signbit(fa) == signbit(fb)) { set_error("f(a) and f(b) must have opposite signs"); return NAN; }
     for (int i = 0; i < max_iter; i++) {
         c = (a+b)/2.0;
         if (eval_rpn(rpn, count, c, 0.0, &fc) != 0) return NAN;
-        if (isnan(fc)) { set_error("Function returned NaN during bisection"); return NAN; }
+        if (!isfinite(fc)) { set_error("Function returned NaN during bisection"); return NAN; }
         if (fabs(fc) < tol || (b-a)/2.0 < tol) return c;
         if (signbit(fa) != signbit(fc)) { b = c; fb = fc; }
         else { a = c; fa = fc; }
@@ -701,13 +950,18 @@ static int simpson_rpn(const RPN* rpn, int count, double a, double b,
         return -1;
     }
     double sum = fa + fb;
+    double compensation = 0.0;
     for (int i = 1; i < n; i++) {
         double value;
         if (eval_rpn(rpn, count, a + i * h, 0.0, &value) != 0 ||
             !isfinite(value)) {
             return -1;
         }
-        sum += (i % 2 == 0 ? 2.0 : 4.0) * value;
+        const double term = (i % 2 == 0 ? 2.0 : 4.0) * value;
+        const double corrected = term - compensation;
+        const double next_sum = sum + corrected;
+        compensation = (next_sum - sum) - corrected;
+        sum = next_sum;
     }
     *out = h * sum / 3.0;
     return isfinite(*out) ? 0 : -1;
@@ -765,6 +1019,10 @@ EXPORT double integrate_adaptive(const char* expr, double a, double b, double to
 EXPORT int ode_solve_rk4(const char* expr, double x0, double y0, double x_end,
                           int n_steps, double* out_x, double* out_y, int max_out) {
     if (!expr || !out_x || !out_y) { set_error("NULL pointer argument"); return -1; }
+    if (!isfinite(x0) || !isfinite(y0) || !isfinite(x_end)) {
+        set_error("ODE initial conditions and endpoint must be finite");
+        return -1;
+    }
     if (n_steps < 1) { set_error("n_steps must be >= 1"); return -1; }
     if (n_steps > 10000000) { set_error("n_steps too large (max 10000000)"); return -1; }
     if (max_out < n_steps + 1) { set_error("Output buffer too small"); return -1; }
@@ -785,19 +1043,19 @@ EXPORT int ode_solve_rk4(const char* expr, double x0, double y0, double x_end,
 
         /* k1 = f(x, y) */
         if (eval_rpn(rpn, count, x, y, &k1_val) != 0) return -1;
-        if (isnan(k1_val)) { set_error("f(x,y) returned NaN at RK4 k1"); return -1; }
+        if (!isfinite(k1_val)) { set_error("f(x,y) returned NaN at RK4 k1"); return -1; }
 
         /* k2 = f(x + h/2, y + h*k1/2) */
         if (eval_rpn(rpn, count, x + 0.5 * h, y + 0.5 * h * k1_val, &k2_val) != 0) return -1;
-        if (isnan(k2_val)) { set_error("f(x,y) returned NaN at RK4 k2"); return -1; }
+        if (!isfinite(k2_val)) { set_error("f(x,y) returned NaN at RK4 k2"); return -1; }
 
         /* k3 = f(x + h/2, y + h*k2/2) */
         if (eval_rpn(rpn, count, x + 0.5 * h, y + 0.5 * h * k2_val, &k3_val) != 0) return -1;
-        if (isnan(k3_val)) { set_error("f(x,y) returned NaN at RK4 k3"); return -1; }
+        if (!isfinite(k3_val)) { set_error("f(x,y) returned NaN at RK4 k3"); return -1; }
 
         /* k4 = f(x + h, y + h*k3) */
         if (eval_rpn(rpn, count, x + h, y + h * k3_val, &k4_val) != 0) return -1;
-        if (isnan(k4_val)) { set_error("f(x,y) returned NaN at RK4 k4"); return -1; }
+        if (!isfinite(k4_val)) { set_error("f(x,y) returned NaN at RK4 k4"); return -1; }
 
         /* y_{n+1} = y_n + h*(k1 + 2*k2 + 2*k3 + k4)/6 */
         y = y + h * (k1_val + 2.0 * k2_val + 2.0 * k3_val + k4_val) / 6.0;
@@ -825,7 +1083,7 @@ static double richardson_limit(const char* expr, double a, double dir, int max_l
         double h = h0 * pow(0.5, i);
         double fv;
         if (parse_and_eval(expr, a + dir * h, 0.0, &fv) != 0) return NAN;
-        if (isnan(fv)) return NAN;
+        if (!isfinite(fv)) return NAN;
         table[i][0] = fv;
     }
 
@@ -842,6 +1100,7 @@ static double richardson_limit(const char* expr, double a, double dir, int max_l
 
 EXPORT double limit_left(const char* expr, double a, int max_level) {
     if (!expr) { set_error("NULL expression"); return NAN; }
+    if (!isfinite(a)) { set_error("Limit point must be finite"); return NAN; }
     if (max_level <= 0) max_level = 10;
     clear_error();
     return richardson_limit(expr, a, -1.0, max_level);
@@ -849,6 +1108,7 @@ EXPORT double limit_left(const char* expr, double a, int max_level) {
 
 EXPORT double limit_right(const char* expr, double a, int max_level) {
     if (!expr) { set_error("NULL expression"); return NAN; }
+    if (!isfinite(a)) { set_error("Limit point must be finite"); return NAN; }
     if (max_level <= 0) max_level = 10;
     clear_error();
     return richardson_limit(expr, a, 1.0, max_level);
@@ -856,16 +1116,19 @@ EXPORT double limit_right(const char* expr, double a, int max_level) {
 
 EXPORT double limit(const char* expr, double a, double tol, int max_level) {
     if (!expr) { set_error("NULL expression"); return NAN; }
+    if (!isfinite(a) || !isfinite(tol) || tol <= 0.0) {
+        set_error("Limit point and tolerance must be finite, with tolerance > 0");
+        return NAN;
+    }
     if (max_level <= 0) max_level = 10;
-    if (tol <= 0.0) tol = 1e-8;
     clear_error();
 
     double left  = richardson_limit(expr, a, -1.0, max_level);
     double right = richardson_limit(expr, a,  1.0, max_level);
 
-    if (isnan(left) && isnan(right)) return NAN;
-    if (isnan(left))  return right;
-    if (isnan(right)) return left;
+    if (!isfinite(left) && !isfinite(right)) return NAN;
+    if (!isfinite(left))  return right;
+    if (!isfinite(right)) return left;
 
     if (fabs(left - right) < tol) {
         return (left + right) / 2.0;
@@ -900,7 +1163,7 @@ static double _central_diff_nth(const char* expr, double x, int n, double h) {
 
     for (int k = 0; k <= n; k++) {
         fvals[k] = _eval_or_nan(expr, x + (2.0 * k - n) * h);
-        if (isnan(fvals[k])) { free(fvals); return NAN; }
+        if (!isfinite(fvals[k])) { free(fvals); return NAN; }
     }
 
     /* Compute binomial coefficients C(n, k) iteratively */
@@ -967,7 +1230,7 @@ EXPORT int taylor_coefficients(const char* expr, double a, int order, double* ou
             else factorial = INFINITY;
         }
         double dk = nth_derivative(expr, a, k, h);
-        if (isnan(dk)) return -1;
+        if (!isfinite(dk)) return -1;
         out_coeffs[k] = (isinf(factorial) || factorial == 0.0) ? 0.0 : dk / factorial;
     }
     return order + 1;
@@ -975,6 +1238,10 @@ EXPORT int taylor_coefficients(const char* expr, double a, int order, double* ou
 
 EXPORT double find_maximum(const char* expr, double a, double b, double tol, int max_iter) {
     if (!expr) { set_error("NULL expression"); return NAN; }
+    if (!isfinite(a) || !isfinite(b) || !isfinite(tol) || tol <= 0.0) {
+        set_error("Extremum inputs must be finite and tolerance must be > 0");
+        return NAN;
+    }
     if (a >= b) { set_error("Invalid interval: a must be < b"); return NAN; }
     if (max_iter <= 0) max_iter = 100;
     clear_error();
@@ -984,9 +1251,9 @@ EXPORT double find_maximum(const char* expr, double a, double b, double tol, int
     double fc, fd;
 
     if (parse_and_eval(expr, c, 0.0, &fc) != 0) return NAN;
-    if (isnan(fc)) { set_error("Function returned NaN during extremum search"); return NAN; }
+    if (!isfinite(fc)) { set_error("Function returned NaN during extremum search"); return NAN; }
     if (parse_and_eval(expr, d, 0.0, &fd) != 0) return NAN;
-    if (isnan(fd)) { set_error("Function returned NaN during extremum search"); return NAN; }
+    if (!isfinite(fd)) { set_error("Function returned NaN during extremum search"); return NAN; }
     fc = -fc; fd = -fd;
 
     for (int i = 0; i < max_iter && fabs(b - a) > tol; i++) {
@@ -994,13 +1261,13 @@ EXPORT double find_maximum(const char* expr, double a, double b, double tol, int
             b = d; d = c; fd = fc;
             c = a + resphi * (b - a);
             if (parse_and_eval(expr, c, 0.0, &fc) != 0) return NAN;
-            if (isnan(fc)) { set_error("Function returned NaN during extremum search"); return NAN; }
+            if (!isfinite(fc)) { set_error("Function returned NaN during extremum search"); return NAN; }
             fc = -fc;
         } else {
             a = c; c = d; fc = fd;
             d = b - resphi * (b - a);
             if (parse_and_eval(expr, d, 0.0, &fd) != 0) return NAN;
-            if (isnan(fd)) { set_error("Function returned NaN during extremum search"); return NAN; }
+            if (!isfinite(fd)) { set_error("Function returned NaN during extremum search"); return NAN; }
             fd = -fd;
         }
     }
@@ -1009,6 +1276,10 @@ EXPORT double find_maximum(const char* expr, double a, double b, double tol, int
 
 EXPORT double find_minimum(const char* expr, double a, double b, double tol, int max_iter) {
     if (!expr) { set_error("NULL expression"); return NAN; }
+    if (!isfinite(a) || !isfinite(b) || !isfinite(tol) || tol <= 0.0) {
+        set_error("Extremum inputs must be finite and tolerance must be > 0");
+        return NAN;
+    }
     if (a >= b) { set_error("Invalid interval: a must be < b"); return NAN; }
     if (max_iter <= 0) max_iter = 100;
     clear_error();
@@ -1018,21 +1289,21 @@ EXPORT double find_minimum(const char* expr, double a, double b, double tol, int
     double fc, fd;
 
     if (parse_and_eval(expr, c, 0.0, &fc) != 0) return NAN;
-    if (isnan(fc)) { set_error("Function returned NaN during extremum search"); return NAN; }
+    if (!isfinite(fc)) { set_error("Function returned NaN during extremum search"); return NAN; }
     if (parse_and_eval(expr, d, 0.0, &fd) != 0) return NAN;
-    if (isnan(fd)) { set_error("Function returned NaN during extremum search"); return NAN; }
+    if (!isfinite(fd)) { set_error("Function returned NaN during extremum search"); return NAN; }
 
     for (int i = 0; i < max_iter && fabs(b - a) > tol; i++) {
         if (fc < fd) {
             b = d; d = c; fd = fc;
             c = a + resphi * (b - a);
             if (parse_and_eval(expr, c, 0.0, &fc) != 0) return NAN;
-            if (isnan(fc)) { set_error("Function returned NaN during extremum search"); return NAN; }
+            if (!isfinite(fc)) { set_error("Function returned NaN during extremum search"); return NAN; }
         } else {
             a = c; c = d; fc = fd;
             d = b - resphi * (b - a);
             if (parse_and_eval(expr, d, 0.0, &fd) != 0) return NAN;
-            if (isnan(fd)) { set_error("Function returned NaN during extremum search"); return NAN; }
+            if (!isfinite(fd)) { set_error("Function returned NaN during extremum search"); return NAN; }
         }
     }
     return (b + a) / 2.0;
@@ -1070,13 +1341,25 @@ static Complex complex_mul(Complex a, Complex b) {
 }
 
 static Complex complex_div(Complex a, Complex b) {
-    double denom = b.re * b.re + b.im * b.im;
-    if (denom < 1e-30) {
+    if (b.re == 0.0 && b.im == 0.0) {
         set_error("Complex division by zero");
         return complex_make(NAN, NAN);
     }
-    return complex_make((a.re * b.re + a.im * b.im) / denom,
-                        (a.im * b.re - a.re * b.im) / denom);
+
+    /* Scaled division avoids squaring an enormous denominator and preserves
+       subnormal, but non-zero, divisors instead of treating them as zero. */
+    if (fabs(b.re) >= fabs(b.im)) {
+        const double ratio = b.im / b.re;
+        const double denom = b.re + b.im * ratio;
+        return complex_make(
+            (a.re + a.im * ratio) / denom,
+            (a.im - a.re * ratio) / denom);
+    }
+    const double ratio = b.re / b.im;
+    const double denom = b.im + b.re * ratio;
+    return complex_make(
+        (a.re * ratio + a.im) / denom,
+        (a.im * ratio - a.re) / denom);
 }
 
 static SC_MAYBE_UNUSED Complex complex_neg(Complex a) {
@@ -1088,7 +1371,7 @@ static Complex complex_conj(Complex a) {
 }
 
 static double complex_abs(Complex a) {
-    return sqrt(a.re * a.re + a.im * a.im);
+    return hypot(a.re, a.im);
 }
 
 static Complex complex_sqrt(Complex a) {
@@ -1339,12 +1622,12 @@ static double _simpson_abs_diff(const char* expr_f, const char* expr_g,
     double h = (b - a) / n;
     double fa = _abs_diff_integrand(expr_f, expr_g, a);
     double fb = _abs_diff_integrand(expr_f, expr_g, b);
-    if (isnan(fa) || isnan(fb)) return NAN;
+    if (!isfinite(fa) || !isfinite(fb)) return NAN;
     double sum = fa + fb;
     for (int i = 1; i < n; i++) {
         double xi = a + i * h;
         double fi = _abs_diff_integrand(expr_f, expr_g, xi);
-        if (isnan(fi)) return NAN;
+        if (!isfinite(fi)) return NAN;
         sum += (i % 2 == 0 ? 2.0 : 4.0) * fi;
     }
     return (h / 3.0) * sum;
@@ -1361,12 +1644,12 @@ EXPORT double area_between_curves(const char* expr_f, const char* expr_g,
     int n = 64;
     double prev, cur;
     cur = _simpson_abs_diff(expr_f, expr_g, a, b, n);
-    if (isnan(cur)) return NAN;
+    if (!isfinite(cur)) return NAN;
     for (int k = 0; k < 12; k++) {
         n *= 2;
         prev = cur;
         cur = _simpson_abs_diff(expr_f, expr_g, a, b, n);
-        if (isnan(cur)) return NAN;
+        if (!isfinite(cur)) return NAN;
         if (fabs(cur - prev) < tol) return cur;
     }
     set_error("Adaptive area computation did not converge");
@@ -1426,8 +1709,8 @@ EXPORT int solve_system_2d(const char* f_expr, const char* g_expr,
         if (parse_and_eval(g_expr, x, y + h, &G_yph) != 0) { set_error("Jacobian evaluation failed"); return 0; }
         if (parse_and_eval(g_expr, x, y - h, &G_ymh) != 0) { set_error("Jacobian evaluation failed"); return 0; }
 
-        if (isnan(F_xph) || isnan(F_xmh) || isnan(F_yph) || isnan(F_ymh) ||
-            isnan(G_xph) || isnan(G_xmh) || isnan(G_yph) || isnan(G_ymh)) {
+        if (!isfinite(F_xph) || !isfinite(F_xmh) || !isfinite(F_yph) || !isfinite(F_ymh) ||
+            !isfinite(G_xph) || !isfinite(G_xmh) || !isfinite(G_yph) || !isfinite(G_ymh)) {
             set_error("Jacobian evaluation returned NaN"); return 0;
         }
 
@@ -1476,16 +1759,30 @@ EXPORT int custom_func_define(const char* name, const char* body) {
 
     size_t nlen = strlen(name);
     if (nlen == 0 || nlen >= MAX_FUNC_NAME) { set_error("Function name too long (max 31)"); return 0; }
-    if (!isalpha(name[0])) { set_error("Function name must start with a letter"); return 0; }
+    if (!sc_identifier_start((unsigned char)name[0])) {
+        set_error("Function name must start with a letter or underscore");
+        return 0;
+    }
     for (size_t i = 0; i < nlen; i++) {
-        if (!isalnum(name[i])) { set_error("Function name must be alphanumeric"); return 0; }
+        if (!sc_identifier_part((unsigned char)name[i])) {
+            set_error("Function name must be alphanumeric or underscore");
+            return 0;
+        }
     }
     if (strlen(body) >= MAX_FUNC_BODY) { set_error("Function body too long (max 511)"); return 0; }
 
-    /* Check if function already exists — update it */
+    char normalized_name[MAX_FUNC_NAME];
+    for (size_t i = 0; i < nlen; i++) {
+        normalized_name[i] = (char)tolower((unsigned char)name[i]);
+    }
+    normalized_name[nlen] = '\0';
+
+    /* Names are case-insensitive, just like built-in functions. */
     for (int i = 0; i < g_custom_func_count; i++) {
-        if (g_custom_funcs[i].defined && !strcmp(g_custom_funcs[i].name, name)) {
+        if (g_custom_funcs[i].defined &&
+            !strcmp(g_custom_funcs[i].name, normalized_name)) {
             strcpy(g_custom_funcs[i].body, body);
+            custom_registry_changed();
             return 1;
         }
     }
@@ -1497,10 +1794,11 @@ EXPORT int custom_func_define(const char* name, const char* body) {
     }
 
     CustomFunc* f = &g_custom_funcs[g_custom_func_count];
-    strcpy(f->name, name);
+    strcpy(f->name, normalized_name);
     strcpy(f->body, body);
     f->defined = 1;
     g_custom_func_count++;
+    custom_registry_changed();
     return 1;
 }
 
@@ -1511,6 +1809,7 @@ EXPORT void custom_func_clear(void) {
         g_custom_funcs[i].body[0] = '\0';
     }
     g_custom_func_count = 0;
+    custom_registry_changed();
     clear_error();
 }
 
@@ -1518,8 +1817,9 @@ EXPORT int custom_func_delete(const char* name) {
     if (!name) return 0;
     clear_error();
     for (int i = 0; i < g_custom_func_count; i++) {
-        if (g_custom_funcs[i].defined && !strcmp(g_custom_funcs[i].name, name)) {
+        if (g_custom_funcs[i].defined && sc_name_equal(g_custom_funcs[i].name, name)) {
             g_custom_funcs[i].defined = 0;
+            custom_registry_changed();
             return 1;
         }
     }
@@ -1529,7 +1829,7 @@ EXPORT int custom_func_delete(const char* name) {
 
 static CustomFunc* custom_func_find(const char* name) {
     for (int i = 0; i < g_custom_func_count; i++) {
-        if (g_custom_funcs[i].defined && !strcmp(g_custom_funcs[i].name, name)) {
+        if (g_custom_funcs[i].defined && sc_name_equal(g_custom_funcs[i].name, name)) {
             return &g_custom_funcs[i];
         }
     }
@@ -1727,7 +2027,7 @@ static double _simpson_volume(const char* expr_f, const char* expr_g,
         fa_val = _shell_integrand(expr_f, a);
         fb_val = _shell_integrand(expr_f, b);
     }
-    if (isnan(fa_val) || isnan(fb_val)) return NAN;
+    if (!isfinite(fa_val) || !isfinite(fb_val)) return NAN;
 
     double sum = fa_val + fb_val;
     for (int i = 1; i < n; i++) {
@@ -1740,7 +2040,7 @@ static double _simpson_volume(const char* expr_f, const char* expr_g,
         } else {
             fi = _shell_integrand(expr_f, xi);
         }
-        if (isnan(fi)) return NAN;
+        if (!isfinite(fi)) return NAN;
         sum += (i % 2 == 0 ? 2.0 : 4.0) * fi;
     }
 
@@ -1762,12 +2062,12 @@ EXPORT double volume_disk(const char* expr, double a, double b, double tol) {
     int n = 64;
     double prev, cur;
     cur = _simpson_volume(expr, NULL, a, b, n, 0);
-    if (isnan(cur)) return NAN;
+    if (!isfinite(cur)) return NAN;
     for (int k = 0; k < 12; k++) {
         n *= 2;
         prev = cur;
         cur = _simpson_volume(expr, NULL, a, b, n, 0);
-        if (isnan(cur)) return NAN;
+        if (!isfinite(cur)) return NAN;
         if (fabs(cur - prev) < tol) return cur;
     }
     set_error("Adaptive volume computation did not converge");
@@ -1785,12 +2085,12 @@ EXPORT double volume_washer(const char* expr_f, const char* expr_g,
     int n = 64;
     double prev, cur;
     cur = _simpson_volume(expr_f, expr_g, a, b, n, 1);
-    if (isnan(cur)) return NAN;
+    if (!isfinite(cur)) return NAN;
     for (int k = 0; k < 12; k++) {
         n *= 2;
         prev = cur;
         cur = _simpson_volume(expr_f, expr_g, a, b, n, 1);
-        if (isnan(cur)) return NAN;
+        if (!isfinite(cur)) return NAN;
         if (fabs(cur - prev) < tol) return cur;
     }
     set_error("Adaptive volume computation did not converge");
@@ -1807,12 +2107,12 @@ EXPORT double volume_shell(const char* expr, double a, double b, double tol) {
     int n = 64;
     double prev, cur;
     cur = _simpson_volume(expr, NULL, a, b, n, 2);
-    if (isnan(cur)) return NAN;
+    if (!isfinite(cur)) return NAN;
     for (int k = 0; k < 12; k++) {
         n *= 2;
         prev = cur;
         cur = _simpson_volume(expr, NULL, a, b, n, 2);
-        if (isnan(cur)) return NAN;
+        if (!isfinite(cur)) return NAN;
         if (fabs(cur - prev) < tol) return cur;
     }
     set_error("Adaptive volume computation did not converge");
@@ -1866,7 +2166,7 @@ EXPORT int ode_solve_euler(const char* expr, double x0, double y0, double x_end,
     for (int i = 0; i < n_steps; i++) {
         double f_val;
         if (parse_and_eval(expr, x, y, &f_val) != 0) return -1;
-        if (isnan(f_val)) { set_error("f(x,y) returned NaN at Euler"); return -1; }
+        if (!isfinite(f_val)) { set_error("f(x,y) returned NaN at Euler"); return -1; }
 
         y = y + h * f_val;
         x = x0 + (i + 1) * h;
@@ -1906,11 +2206,11 @@ EXPORT int ode_solve_improved_euler(const char* expr, double x0, double y0, doub
 
         /* k1 = f(x, y) */
         if (parse_and_eval(expr, x, y, &k1_val) != 0) return -1;
-        if (isnan(k1_val)) { set_error("f(x,y) returned NaN at Improved Euler k1"); return -1; }
+        if (!isfinite(k1_val)) { set_error("f(x,y) returned NaN at Improved Euler k1"); return -1; }
 
         /* k2 = f(x + h, y + h*k1) */
         if (parse_and_eval(expr, x + h, y + h * k1_val, &k2_val) != 0) return -1;
-        if (isnan(k2_val)) { set_error("f(x,y) returned NaN at Improved Euler k2"); return -1; }
+        if (!isfinite(k2_val)) { set_error("f(x,y) returned NaN at Improved Euler k2"); return -1; }
 
         /* y_{n+1} = y_n + h*(k1 + k2)/2 */
         y = y + h * (k1_val + k2_val) / 2.0;
@@ -1951,11 +2251,11 @@ EXPORT int ode_solve_midpoint(const char* expr, double x0, double y0, double x_e
 
         /* k1 = f(x, y) */
         if (parse_and_eval(expr, x, y, &k1_val) != 0) return -1;
-        if (isnan(k1_val)) { set_error("f(x,y) returned NaN at Midpoint k1"); return -1; }
+        if (!isfinite(k1_val)) { set_error("f(x,y) returned NaN at Midpoint k1"); return -1; }
 
         /* k2 = f(x + h/2, y + h*k1/2) */
         if (parse_and_eval(expr, x + 0.5 * h, y + 0.5 * h * k1_val, &k2_val) != 0) return -1;
-        if (isnan(k2_val)) { set_error("f(x,y) returned NaN at Midpoint k2"); return -1; }
+        if (!isfinite(k2_val)) { set_error("f(x,y) returned NaN at Midpoint k2"); return -1; }
 
         /* y_{n+1} = y_n + h*k2 */
         y = y + h * k2_val;
@@ -2260,7 +2560,7 @@ EXPORT int history_get_all(char* output, int max_out) {
         int physical = (g_history_head - g_history_count + i + HISTORY_MAX) % HISTORY_MAX;
         HistoryEntry* e = &g_history[physical];
         int written;
-        if (isnan(e->result)) {
+        if (!isfinite(e->result)) {
             written = snprintf(output + pos, max_out - pos, "%s = NaN%s",
                 e->expr, (i < g_history_count - 1) ? ";" : "");
         } else {

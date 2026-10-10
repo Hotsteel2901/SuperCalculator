@@ -3,7 +3,6 @@ package com.supercalc;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.MotionEvent;
-import android.view.ViewParent;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -100,30 +99,8 @@ public class FullScreenPlotActivity extends AppCompatActivity implements OnChart
         lineChart.setDoubleTapToZoomEnabled(true);
         lineChart.setHighlightPerDragEnabled(false);
         lineChart.setHighlightPerTapEnabled(true);
-        lineChart.setOnTouchListener((view, event) -> {
-            switch (event.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                case MotionEvent.ACTION_MOVE:
-                case MotionEvent.ACTION_POINTER_DOWN:
-                    requestChartParentsNotToIntercept(true);
-                    break;
-                case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_CANCEL:
-                    requestChartParentsNotToIntercept(false);
-                    break;
-                default:
-                    break;
-            }
-            return false;
-        });
-    }
-
-    private void requestChartParentsNotToIntercept(boolean disallow) {
-        ViewParent parent = lineChart.getParent();
-        while (parent != null) {
-            parent.requestDisallowInterceptTouchEvent(disallow);
-            parent = parent.getParent();
-        }
+        // InteractiveLineChart owns dispatch and locks every ancestor for the
+        // complete stream, including both pointers in a pinch gesture.
     }
 
     private void setupGestureListener() {

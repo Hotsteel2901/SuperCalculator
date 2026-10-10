@@ -11,7 +11,6 @@ import android.text.style.ForegroundColorSpan;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewParent;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
@@ -229,8 +228,10 @@ public class PlotActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
         btnZoom.setOnClickListener(v -> openFullScreen());
         
+        // Keep normal page/nested scrolling enabled. PlotNestedScrollView
+        // suppresses interception only for streams that begin inside the chart.
         NestedScrollView scrollView = findViewById(R.id.scroll_view);
-        if (scrollView != null) scrollView.setNestedScrollingEnabled(false);
+        if (scrollView != null) scrollView.setNestedScrollingEnabled(true);
         
         configureChartInteraction();
         
@@ -985,32 +986,9 @@ public class PlotActivity extends AppCompatActivity {
         lineChart.setDoubleTapToZoomEnabled(true);
         lineChart.setHighlightPerDragEnabled(false);
         lineChart.setHighlightPerTapEnabled(true);
-        lineChart.setOnTouchListener((view, event) -> {
-            switch (event.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                case MotionEvent.ACTION_MOVE:
-                case MotionEvent.ACTION_POINTER_DOWN:
-                    requestChartParentsNotToIntercept(true);
-                    break;
-                case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_CANCEL:
-                    requestChartParentsNotToIntercept(false);
-                    break;
-                default:
-                    break;
-            }
-            // Returning false lets LineChart consume the event and perform its
-            // built-in drag/pinch transform after the parent is disarmed.
-            return false;
-        });
-    }
-
-    private void requestChartParentsNotToIntercept(boolean disallow) {
-        ViewParent parent = lineChart.getParent();
-        while (parent != null) {
-            parent.requestDisallowInterceptTouchEvent(disallow);
-            parent = parent.getParent();
-        }
+        // InteractiveLineChart owns dispatch and locks every ancestor for the
+        // whole stream; no ordinary OnTouchListener is used as a race-prone
+        // substitute for parent interception control.
     }
 
     private void setupGestureListener() {
