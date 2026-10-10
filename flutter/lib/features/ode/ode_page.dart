@@ -149,8 +149,9 @@ class _OdePageState extends ConsumerState<OdePage> {
             FeatureCard(
               title: nextEraText(context, 'Solution curve', '解曲线'),
               icon: Icons.show_chart,
-              child: Semantics(
-                label: _compareMethods
+              child: ExpandableChart(
+                title: nextEraText(context, 'Solution curve', '解曲线'),
+                semanticsLabel: _compareMethods
                     ? nextEraText(
                         context,
                         'ODE comparison with ${_series.length} methods and ${_points.length} samples.',
@@ -161,17 +162,11 @@ class _OdePageState extends ConsumerState<OdePage> {
                         'ODE solution curve with ${_points.length} samples.',
                         '包含 ${_points.length} 个采样点的 ODE 解曲线。',
                       ),
-                child: SizedBox(
-                  height: 360,
-                  child: CustomPaint(
-                    painter: LineSeriesPainter(
-                      series: _series.isEmpty
-                          ? <List<PlotPoint>>[_points]
-                          : _series,
-                      scheme: Theme.of(context).colorScheme,
-                    ),
-                    child: const SizedBox.expand(),
-                  ),
+                painter: LineSeriesPainter(
+                  series: _series.isEmpty
+                      ? <List<PlotPoint>>[_points]
+                      : _series,
+                  scheme: Theme.of(context).colorScheme,
                 ),
               ),
             ),
