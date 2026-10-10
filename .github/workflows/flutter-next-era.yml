@@ -164,6 +164,12 @@ jobs:
           grep -q "APP_VERSION: '6.0.0'" "$workflow"
           grep -q 'publish-release:' "$workflow"
           test "$(grep -c 'actions/upload-artifact@v4' "$workflow")" -ge 6
+          # Apple jobs must pull the redrawn Next Era icon sets from the Flutter
+          # asset tree. A stale repository-root path silently broke iOS/macOS.
+          for appicon in macos ios; do
+            grep -q "flutter/assets/branding/$appicon/AppIcon.appiconset" "$workflow"
+            test -d "flutter/assets/branding/$appicon/AppIcon.appiconset"
+          done
           pages=.github/workflows/deploy-flutter-pages.yml
           test -s "$pages"
           grep -q '^  workflow_dispatch:' "$pages"
