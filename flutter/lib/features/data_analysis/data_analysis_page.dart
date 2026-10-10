@@ -208,14 +208,20 @@ class _DataAnalysisPageState extends ConsumerState<DataAnalysisPage> {
                 '观测值与拟合值',
               ),
               icon: Icons.scatter_plot,
-              child: SizedBox(
-                height: 360,
-                child: CustomPaint(
-                  painter: LineSeriesPainter(
-                    series: <List<PlotPoint>>[_points, _fit],
-                    scheme: Theme.of(context).colorScheme,
-                  ),
-                  child: const SizedBox.expand(),
+              child: ExpandableChart(
+                title: nextEraText(
+                  context,
+                  'Observed and fitted data',
+                  '观测值与拟合值',
+                ),
+                semanticsLabel: nextEraText(
+                  context,
+                  'Observed and fitted data preview.',
+                  '观测值与拟合值预览。',
+                ),
+                painter: LineSeriesPainter(
+                  series: <List<PlotPoint>>[_points, _fit],
+                  scheme: Theme.of(context).colorScheme,
                 ),
               ),
             ),

@@ -157,21 +157,16 @@ class _SignalsPageState extends ConsumerState<SignalsPage> {
             FeatureCard(
               title: nextEraText(context, 'Amplitude spectrum', '幅度频谱'),
               icon: Icons.show_chart,
-              child: SizedBox(
-                height: 360,
-                child: Semantics(
-                  label: nextEraText(
-                    context,
-                    'Amplitude spectrum with ${_spectrum.length} frequency bins.',
-                    '包含 ${_spectrum.length} 个频率 bin 的幅度频谱。',
-                  ),
-                  child: CustomPaint(
-                    painter: LineSeriesPainter(
-                      series: <List<PlotPoint>>[_spectrum],
-                      scheme: Theme.of(context).colorScheme,
-                    ),
-                    child: const SizedBox.expand(),
-                  ),
+              child: ExpandableChart(
+                title: nextEraText(context, 'Amplitude spectrum', '幅度频谱'),
+                semanticsLabel: nextEraText(
+                  context,
+                  'Amplitude spectrum with ${_spectrum.length} frequency bins.',
+                  '包含 ${_spectrum.length} 个频率 bin 的幅度频谱。',
+                ),
+                painter: LineSeriesPainter(
+                  series: <List<PlotPoint>>[_spectrum],
+                  scheme: Theme.of(context).colorScheme,
                 ),
               ),
             ),

@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/theme/design_tokens.dart';
-import '../../core/plot/function_plot_painter.dart';
-import '../../core/plot/plot_point.dart';
+import '../../core/plot/interactive_plot_view.dart';
 import '../../core/presets/preset_catalog.dart';
 import '../../core/ui/feature_widgets.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'calculator_controller.dart';
+import 'plot_fullscreen_page.dart';
 
 class _PlotPreset {
   const _PlotPreset(
@@ -150,15 +150,8 @@ class _PlotPageState extends ConsumerState<PlotPage> {
   List<String> _curveExpressions = <String>[];
   String? _selectedPreset;
   Map<String, List<_PlotPreset>> _availablePresets = _plotPresets;
-  double _plotZoom = 1;
-  Offset _plotPan = Offset.zero;
-  double _plotYaw = -.65;
-  double _plotPitch = .55;
-  double _gestureZoomStart = 1;
-  Offset _gesturePanStart = Offset.zero;
-  Offset _gestureFocalStart = Offset.zero;
-  double _gestureYawStart = -.65;
-  double _gesturePitchStart = .55;
+  final GlobalKey<InteractivePlotViewState> _plotViewKey =
+      GlobalKey<InteractivePlotViewState>();
 
   List<String> _splitCurves(String expression) {
     return expression
@@ -206,67 +199,6 @@ class _PlotPageState extends ConsumerState<PlotPage> {
     controller.evaluate();
   }
 
-  PlotPoint? _plotPointFromLocal(
-    Offset local,
-    Size size,
-    CalculatorState state,
-  ) {
-    if (size.width <= 1 || size.height <= 1) return null;
-    final finite = state.points
-        .where((point) => point.x.isFinite && point.y.isFinite)
-        .toList(growable: false);
-    var yMin = -5.0;
-    var yMax = 5.0;
-    if (finite.isNotEmpty) {
-      yMin = finite
-          .map((point) => point.y)
-          .reduce((a, b) => math.min(a, b).toDouble());
-      yMax = finite
-          .map((point) => point.y)
-          .reduce((a, b) => math.max(a, b).toDouble());
-      if ((yMax - yMin).abs() < 1e-9) {
-        yMin -= 1;
-        yMax += 1;
-      } else {
-        final padding = (yMax - yMin) * .12;
-        yMin -= padding;
-        yMax += padding;
-      }
-    }
-    final center = Offset(size.width / 2, size.height / 2);
-    final base = center + (local - _plotPan - center) / _plotZoom;
-    return PlotPoint(
-      -10 + base.dx / size.width * 20,
-      yMax - base.dy / size.height * (yMax - yMin),
-    );
-  }
-
-  void _markPlotPoint(
-    BuildContext plotContext,
-    Offset local,
-    CalculatorState state,
-    CalculatorController controller,
-  ) {
-    if (state.mode == 'surface') return;
-    final renderObject = plotContext.findRenderObject();
-    if (renderObject is! RenderBox) return;
-    final point = _plotPointFromLocal(local, renderObject.size, state);
-    if (point != null) controller.addMarkedPoint(point);
-  }
-
-  void _removeMarkedPlotPoint(
-    BuildContext plotContext,
-    Offset local,
-    CalculatorState state,
-    CalculatorController controller,
-  ) {
-    if (state.mode == 'surface') return;
-    final renderObject = plotContext.findRenderObject();
-    if (renderObject is! RenderBox) return;
-    final point = _plotPointFromLocal(local, renderObject.size, state);
-    if (point != null) controller.removeNearestMarkedPoint(point);
-  }
-
   void _updateParameterRange(CalculatorController controller) {
     final start = double.tryParse(_parameterStartController.text.trim());
     final end = double.tryParse(_parameterEndController.text.trim());
@@ -292,12 +224,22 @@ class _PlotPageState extends ConsumerState<PlotPage> {
   }
 
   void _resetPlotView() {
-    setState(() {
-      _plotZoom = 1;
-      _plotPan = Offset.zero;
-      _plotYaw = -.65;
-      _plotPitch = .55;
-    });
+    _plotViewKey.currentState?.resetView();
+  }
+
+  void _openFullscreenPlot() {
+    final view = _plotViewKey.currentState;
+    Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => PlotFullscreenPage(
+          initialZoom: view?.zoom ?? 1,
+          initialPan: view?.pan ?? Offset.zero,
+          initialYaw: view?.yaw ?? -.65,
+          initialPitch: view?.pitch ?? .55,
+        ),
+      ),
+    );
   }
 
   @override
@@ -782,9 +724,24 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      Text(
-                        l10n.plotPreview,
-                        style: Theme.of(context).textTheme.titleMedium,
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: Text(
+                              l10n.plotPreview,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: nextEraText(
+                              context,
+                              'Full screen',
+                              '全屏',
+                            ),
+                            onPressed: _openFullscreenPlot,
+                            icon: const Icon(Icons.fullscreen),
+                          ),
+                        ],
                       ),
                       SizedBox(height: tokens.controlGap),
                       Semantics(
@@ -792,64 +749,20 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                           state.points.length,
                           state.expression,
                         ),
-                        child: Builder(
-                          builder: (plotContext) => GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onDoubleTap: _resetPlotView,
-                            onTapUp: (details) => _markPlotPoint(
-                              plotContext,
-                              details.localPosition,
-                              state,
-                              controller,
-                            ),
-                            onLongPressStart: (details) =>
-                                _removeMarkedPlotPoint(
-                                  plotContext,
-                                  details.localPosition,
-                                  state,
-                                  controller,
-                                ),
-                            onScaleStart: (details) {
-                              _gestureZoomStart = _plotZoom;
-                              _gesturePanStart = _plotPan;
-                              _gestureFocalStart = details.focalPoint;
-                              _gestureYawStart = _plotYaw;
-                              _gesturePitchStart = _plotPitch;
-                            },
-                            onScaleUpdate: (details) {
-                              final delta =
-                                  details.focalPoint - _gestureFocalStart;
-                              setState(() {
-                                _plotZoom = (_gestureZoomStart * details.scale)
-                                    .clamp(.5, 4.0)
-                                    .toDouble();
-                                if (state.mode == 'surface') {
-                                  _plotYaw = _gestureYawStart + delta.dx * .01;
-                                  _plotPitch =
-                                      (_gesturePitchStart - delta.dy * .01)
-                                          .clamp(-1.35, 1.35)
-                                          .toDouble();
-                                } else {
-                                  _plotPan = _gesturePanStart + delta;
-                                }
-                              });
-                            },
-                            child: SizedBox(
-                              height: tokens.plotMinHeight,
-                              child: CustomPaint(
-                                painter: FunctionPlotPainter(
-                                  points: state.points,
-                                  scheme: scheme,
-                                  mode: state.mode,
-                                  intersectionPoints: state.intersectionPoints,
-                                  markedPoints: state.markedPoints,
-                                  zoom: _plotZoom,
-                                  pan: _plotPan,
-                                  yaw: _plotYaw,
-                                  pitch: _plotPitch,
-                                ),
-                                child: const SizedBox.expand(),
-                              ),
+                        child: SizedBox(
+                          height: tokens.plotMinHeight,
+                          child: InteractivePlotView(
+                            key: _plotViewKey,
+                            points: state.points,
+                            mode: state.mode,
+                            scheme: scheme,
+                            intersectionPoints: state.intersectionPoints,
+                            markedPoints: state.markedPoints,
+                            onMarkPoint: controller.addMarkedPoint,
+                            onRemoveMarkPoint: (point) =>
+                                controller.removeNearestMarkedPoint(point),
+                            borderRadius: BorderRadius.circular(
+                              tokens.cornerMedium,
                             ),
                           ),
                         ),
@@ -886,6 +799,13 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                               ),
                             ),
                           TextButton.icon(
+                            onPressed: _openFullscreenPlot,
+                            icon: const Icon(Icons.fullscreen),
+                            label: Text(
+                              nextEraText(context, 'Full screen', '全屏'),
+                            ),
+                          ),
+                          TextButton.icon(
                             onPressed: _resetPlotView,
                             icon: const Icon(Icons.center_focus_strong),
                             label: Text(
@@ -898,8 +818,8 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                       Text(
                         nextEraText(
                           context,
-                          'Tap to add a marker; long press to remove the nearest marker. Pinch to zoom and drag to pan.',
-                          '点击添加标记；长按删除最近标记。双指缩放并拖动画布。',
+                          'Tap to add a marker; long press to remove the nearest marker. Pinch to zoom and drag to pan. Open Full screen to enlarge the plot.',
+                          '点击添加标记；长按删除最近标记。双指缩放并拖动画布。点击全屏可放大绘图。',
                         ),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),

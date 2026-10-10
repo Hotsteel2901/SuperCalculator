@@ -201,6 +201,110 @@ class FormRow extends StatelessWidget {
   }
 }
 
+/// Full-screen host for a static [CustomPainter] chart.
+///
+/// It is the Flutter counterpart of the native "Full Screen" plot activity:
+/// the inline preview stays inside the scrollable form and this page is opened
+/// explicitly to enlarge the chart without the surrounding controls.
+class ChartFullscreenPage extends StatelessWidget {
+  const ChartFullscreenPage({
+    required this.painter,
+    required this.title,
+    super.key,
+  });
+
+  final CustomPainter painter;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(title: Text(title)),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: CustomPaint(
+              painter: painter,
+              child: const SizedBox.expand(),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A clipped chart preview with a corner button that opens [ChartFullscreenPage].
+///
+/// Clipping keeps the painter from overpainting neighbouring widgets, and the
+/// explicit full-screen entry point gives the enlarged secondary view the issue
+/// asks for without making the inline preview pan or zoom the whole page.
+class ExpandableChart extends StatelessWidget {
+  const ExpandableChart({
+    required this.title,
+    required this.painter,
+    this.height = 360,
+    this.semanticsLabel,
+    super.key,
+  });
+
+  final String title;
+  final CustomPainter painter;
+  final double height;
+  final String? semanticsLabel;
+
+  void _openFullScreen(BuildContext context) {
+    Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => ChartFullscreenPage(painter: painter, title: title),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    Widget chart = CustomPaint(
+      painter: painter,
+      child: const SizedBox.expand(),
+    );
+    if (semanticsLabel != null) {
+      chart = Semantics(label: semanticsLabel, child: chart);
+    }
+    return SizedBox(
+      height: height,
+      child: Stack(
+        children: <Widget>[
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: chart,
+            ),
+          ),
+          Positioned(
+            top: 4,
+            right: 4,
+            child: Material(
+              color: scheme.surfaceContainerHighest.withValues(alpha: .82),
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: IconButton(
+                tooltip: nextEraText(context, 'Full screen', '全屏'),
+                onPressed: () => _openFullScreen(context),
+                icon: const Icon(Icons.fullscreen),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class LineSeriesPainter extends CustomPainter {
   const LineSeriesPainter({required this.series, required this.scheme});
 
