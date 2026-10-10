@@ -733,11 +733,7 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                             ),
                           ),
                           IconButton(
-                            tooltip: nextEraText(
-                              context,
-                              'Full screen',
-                              '全屏',
-                            ),
+                            tooltip: nextEraText(context, 'Full screen', '全屏'),
                             onPressed: _openFullscreenPlot,
                             icon: const Icon(Icons.fullscreen),
                           ),
