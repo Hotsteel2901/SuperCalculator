@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/plot/interactive_plot_view.dart';
+import '../../core/plot/plot_viewport.dart';
 import '../../core/ui/feature_widgets.dart';
 import 'calculator_controller.dart';
 
@@ -13,12 +14,14 @@ import 'calculator_controller.dart';
 class PlotFullscreenPage extends ConsumerStatefulWidget {
   const PlotFullscreenPage({
     super.key,
+    this.initialViewport,
     this.initialZoom = 1,
     this.initialPan = Offset.zero,
     this.initialYaw = -.65,
     this.initialPitch = .55,
   });
 
+  final PlotViewport? initialViewport;
   final double initialZoom;
   final Offset initialPan;
   final double initialYaw;
@@ -43,6 +46,16 @@ class _PlotFullscreenPageState extends ConsumerState<PlotFullscreenPage> {
         title: Text(nextEraText(context, 'Full-screen plot', '全屏绘图')),
         actions: <Widget>[
           IconButton(
+            tooltip: nextEraText(context, 'Zoom out', '缩小'),
+            onPressed: () => _viewKey.currentState?.zoomBy(1 / 1.25),
+            icon: const Icon(Icons.remove),
+          ),
+          IconButton(
+            tooltip: nextEraText(context, 'Zoom in', '放大'),
+            onPressed: () => _viewKey.currentState?.zoomBy(1.25),
+            icon: const Icon(Icons.add),
+          ),
+          IconButton(
             tooltip: nextEraText(context, 'Reset view', '重置视图'),
             onPressed: () => _viewKey.currentState?.resetView(),
             icon: const Icon(Icons.center_focus_strong),
@@ -63,6 +76,7 @@ class _PlotFullscreenPageState extends ConsumerState<PlotFullscreenPage> {
             onRemoveMarkPoint: (point) =>
                 controller.removeNearestMarkedPoint(point),
             borderRadius: BorderRadius.circular(16),
+            initialViewport: widget.initialViewport,
             initialZoom: widget.initialZoom,
             initialPan: widget.initialPan,
             initialYaw: widget.initialYaw,

@@ -233,6 +233,7 @@ class _PlotPageState extends ConsumerState<PlotPage> {
       MaterialPageRoute<void>(
         fullscreenDialog: true,
         builder: (_) => PlotFullscreenPage(
+          initialViewport: view?.viewport,
           initialZoom: view?.zoom ?? 1,
           initialPan: view?.pan ?? Offset.zero,
           initialYaw: view?.yaw ?? -.65,
@@ -794,6 +795,19 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                                 ),
                               ),
                             ),
+                          IconButton(
+                            tooltip: nextEraText(context, 'Zoom out', '缩小'),
+                            onPressed: () => _plotViewKey.currentState?.zoomBy(
+                              1 / 1.25,
+                            ),
+                            icon: const Icon(Icons.remove),
+                          ),
+                          IconButton(
+                            tooltip: nextEraText(context, 'Zoom in', '放大'),
+                            onPressed: () =>
+                                _plotViewKey.currentState?.zoomBy(1.25),
+                            icon: const Icon(Icons.add),
+                          ),
                           TextButton.icon(
                             onPressed: _openFullscreenPlot,
                             icon: const Icon(Icons.fullscreen),
@@ -814,8 +828,8 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                       Text(
                         nextEraText(
                           context,
-                          'Tap to add a marker; long press to remove the nearest marker. Pinch to zoom and drag to pan. Open Full screen to enlarge the plot.',
-                          '点击添加标记；长按删除最近标记。双指缩放并拖动画布。点击全屏可放大绘图。',
+                          'Tap to add a marker; long press to remove the nearest marker. Drag to move the axes, pinch or use the mouse wheel to zoom. Double-tap to zoom; use Reset view to restore the axes. Open Full screen to enlarge the plot.',
+                          '点击添加标记；长按删除最近标记。拖动画布可移动坐标轴，双指缩放或滚动鼠标滚轮可缩放。双击放大；点击“重置视图”恢复坐标范围。点击全屏可放大绘图。',
                         ),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
