@@ -108,6 +108,9 @@ void main() {
     final bounds = tester.getTopLeft(find.byType(InteractivePlotView));
     final plotArea = PlotLayout.plotRectFor(const Size(300, 200));
     await tester.tapAt(bounds + plotArea.center);
+    // The single-tap callback resolves after the double-tap recognizer's
+    // timeout, because the plot also supports double-tap zoom.
+    await tester.pump(const Duration(milliseconds: 500));
 
     expect(marked, hasLength(1));
     expect(marked.single.x, closeTo(0, 1e-6));
