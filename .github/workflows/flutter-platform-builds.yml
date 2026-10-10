@@ -233,7 +233,7 @@ jobs:
           cache: true
       - run: flutter create --no-pub --platforms=macos --org "$PROJECT_ORG" --project-name "$PROJECT_NAME" .
       - name: Apply SuperCalculator macOS icon
-        run: cp -R ../assets/branding/macos/AppIcon.appiconset/. macos/Runner/Assets.xcassets/AppIcon.appiconset/
+        run: cp -R "$GITHUB_WORKSPACE/flutter/assets/branding/macos/AppIcon.appiconset/." macos/Runner/Assets.xcassets/AppIcon.appiconset/
       - run: flutter pub get
       - run: flutter gen-l10n
       - run: flutter build macos --release
@@ -276,7 +276,7 @@ jobs:
           cache: true
       - run: flutter create --no-pub --platforms=ios --org "$PROJECT_ORG" --project-name "$PROJECT_NAME" .
       - name: Apply SuperCalculator iOS icon
-        run: cp -R ../assets/branding/ios/AppIcon.appiconset/. ios/Runner/Assets.xcassets/AppIcon.appiconset/
+        run: cp -R "$GITHUB_WORKSPACE/flutter/assets/branding/ios/AppIcon.appiconset/." ios/Runner/Assets.xcassets/AppIcon.appiconset/
       - run: flutter pub get
       - run: flutter gen-l10n
       - run: flutter build ios --release --no-codesign
