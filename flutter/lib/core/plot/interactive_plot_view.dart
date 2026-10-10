@@ -148,7 +148,8 @@ class InteractivePlotViewState extends State<InteractivePlotView> {
   }
 
   void _handlePointerSignal(PointerSignalEvent event) {
-    if (event is! PointerScrollEvent || !_plotRect.contains(event.localPosition)) {
+    if (event is! PointerScrollEvent ||
+        !_plotRect.contains(event.localPosition)) {
       return;
     }
 
@@ -166,10 +167,7 @@ class InteractivePlotViewState extends State<InteractivePlotView> {
         zoomBy(factor, focalPoint: resolved.localPosition);
       } else {
         setState(() {
-          _viewport = _viewport.panByPixels(
-            Offset(-delta.dx, 0),
-            _plotRect,
-          );
+          _viewport = _viewport.panByPixels(Offset(-delta.dx, 0), _plotRect);
         });
       }
     });

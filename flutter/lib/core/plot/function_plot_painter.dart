@@ -174,7 +174,11 @@ class FunctionPlotPainter extends CustomPainter {
     var drawn = 0;
     while (xValue <= visible.xMax && drawn < 120) {
       final x = visible.dataToScreen(PlotPoint(xValue, 0), plotRect).dx;
-      canvas.drawLine(Offset(x, plotRect.top), Offset(x, plotRect.bottom), grid);
+      canvas.drawLine(
+        Offset(x, plotRect.top),
+        Offset(x, plotRect.bottom),
+        grid,
+      );
       final label = _tickLabel(xValue, xStep, labelStyle);
       final labelX = (x - label.width / 2)
           .clamp(0.0, math.max(0.0, size.width - label.width).toDouble())
@@ -190,7 +194,11 @@ class FunctionPlotPainter extends CustomPainter {
     drawn = 0;
     while (yValue <= visible.yMax && drawn < 120) {
       final y = visible.dataToScreen(PlotPoint(0, yValue), plotRect).dy;
-      canvas.drawLine(Offset(plotRect.left, y), Offset(plotRect.right, y), grid);
+      canvas.drawLine(
+        Offset(plotRect.left, y),
+        Offset(plotRect.right, y),
+        grid,
+      );
       final label = _tickLabel(yValue, yStep, labelStyle);
       final labelX = math.max(0.0, plotRect.left - label.width - 4).toDouble();
       final labelY = (y - label.height / 2)
@@ -206,11 +214,19 @@ class FunctionPlotPainter extends CustomPainter {
     // Keep the origin axes visible only when their coordinate is in view.
     if (visible.xMin <= 0 && visible.xMax >= 0) {
       final x = visible.dataToScreen(const PlotPoint(0, 0), plotRect).dx;
-      canvas.drawLine(Offset(x, plotRect.top), Offset(x, plotRect.bottom), axis);
+      canvas.drawLine(
+        Offset(x, plotRect.top),
+        Offset(x, plotRect.bottom),
+        axis,
+      );
     }
     if (visible.yMin <= 0 && visible.yMax >= 0) {
       final y = visible.dataToScreen(const PlotPoint(0, 0), plotRect).dy;
-      canvas.drawLine(Offset(plotRect.left, y), Offset(plotRect.right, y), axis);
+      canvas.drawLine(
+        Offset(plotRect.left, y),
+        Offset(plotRect.right, y),
+        axis,
+      );
     }
   }
 
@@ -247,7 +263,9 @@ class FunctionPlotPainter extends CustomPainter {
       }
       text = value.toStringAsFixed(decimals);
       if (text.contains('.')) {
-        text = text.replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
+        text = text
+            .replaceFirst(RegExp(r'0+$'), '')
+            .replaceFirst(RegExp(r'\.$'), '');
       }
       if (text == '-0') text = '0';
     }

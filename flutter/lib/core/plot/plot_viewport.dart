@@ -165,7 +165,9 @@ class PlotViewport {
     // At very large coordinates, a sub-pixel span can be smaller than one
     // representable double-precision increment. Preserve a usable ordered
     // range instead of allowing zoom/pan math to collapse both endpoints.
-    final precisionFloor = math.max(minimumSpan, center.abs() * 1e-15).toDouble();
+    final precisionFloor = math
+        .max(minimumSpan, center.abs() * 1e-15)
+        .toDouble();
     return _boundedSpan(math.max(requested, precisionFloor).toDouble());
   }
 

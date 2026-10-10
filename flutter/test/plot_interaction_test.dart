@@ -142,12 +142,7 @@ void main() {
   testWidgets('plot full-screen page hosts and preserves the plot viewport', (
     tester,
   ) async {
-    const viewport = PlotViewport(
-      xMin: -20,
-      xMax: 20,
-      yMin: -5,
-      yMax: 5,
-    );
+    const viewport = PlotViewport(xMin: -20, xMax: 20, yMin: -5, yMax: 5);
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(

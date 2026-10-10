@@ -797,9 +797,8 @@ class _PlotPageState extends ConsumerState<PlotPage> {
                             ),
                           IconButton(
                             tooltip: nextEraText(context, 'Zoom out', '缩小'),
-                            onPressed: () => _plotViewKey.currentState?.zoomBy(
-                              1 / 1.25,
-                            ),
+                            onPressed: () =>
+                                _plotViewKey.currentState?.zoomBy(1 / 1.25),
                             icon: const Icon(Icons.remove),
                           ),
                           IconButton(

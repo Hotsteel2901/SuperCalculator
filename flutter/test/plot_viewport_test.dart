@@ -7,12 +7,7 @@ void main() {
   const plotRect = Rect.fromLTWH(0, 0, 200, 100);
 
   test('screen and data coordinates round-trip in the visible axes', () {
-    const viewport = PlotViewport(
-      xMin: -4,
-      xMax: 6,
-      yMin: -3,
-      yMax: 7,
-    );
+    const viewport = PlotViewport(xMin: -4, xMax: 6, yMin: -3, yMax: 7);
     const point = PlotPoint(1.5, -1.25);
 
     final screen = viewport.dataToScreen(point, plotRect);
@@ -69,7 +64,11 @@ void main() {
   });
 
   test('zoom and pan remain bounded even after extreme input', () {
-    final zoomed = PlotViewport.initial.zoomAt(1e100, plotRect.center, plotRect);
+    final zoomed = PlotViewport.initial.zoomAt(
+      1e100,
+      plotRect.center,
+      plotRect,
+    );
     final moved = zoomed.panByPixels(const Offset(1e100, -1e100), plotRect);
 
     expect(zoomed.isValid, isTrue);
