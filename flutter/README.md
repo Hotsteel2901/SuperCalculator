@@ -20,9 +20,10 @@ until the Wasm adapter is packaged.
 
 ## Feature slices
 
-The app currently exposes plotting (including multi-curve and field previews),
-calculus, equations, ODE method selection, signals, data analysis, statistics with a
-histogram, dense and sparse linear algebra, base/unit tools, advanced complex/
+The app currently exposes plotting (including multi-curve and field previews,
+data-space axis panning, focal-point zoom, adaptive grid/tick labels and a full-screen
+view), calculus, equations, ODE method selection, signals, data analysis, statistics
+with a histogram, dense and sparse linear algebra, base/unit tools, advanced complex/
 distribution/probability/calendar/finance/number-theory tools, custom functions,
 function tables and session history. The manifest in
 `../docs/migration/feature-manifest.json` distinguishes implemented and partial

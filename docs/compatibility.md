@@ -13,6 +13,16 @@ when dispatching it if the final GitHub Release publication job should run.
 | Linux | x64 tarball and amd64 `.deb` | `libsupercalc_core.so` is colocated with the bundle | Install with `dpkg -i` or extract the tarball |
 | macOS | hosted-runner-architecture app ZIP and DMG | `libsupercalc_core.dylib` is placed in the app Frameworks directory | The artifacts are not universal, signed, or notarized; use Gatekeeper approval or a protected signing workflow |
 
+## Flutter plotting interaction parity
+
+The 2D Flutter plot preview and full-screen plot share the same data-space
+viewport on Android, iOS, desktop and Web. Dragging pans the coordinate ranges,
+pinch/trackpad scaling zooms around the gesture focal point, and a mouse wheel
+zooms around its pointer. Grid lines and numeric ticks are regenerated from the
+visible ranges on every update rather than translating a finite grid bitmap, so
+panning never leaves a partial grid behind. The fullscreen action carries the
+current axis ranges forward; reset returns to the standard `[-10, 10]` axes.
+
 ## Workflow behavior
 
 1. Every job generates only its own Flutter platform folder with the pinned stable

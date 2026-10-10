@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'plot_point.dart';
+import 'plot_viewport.dart';
 
 class FunctionPlotPainter extends CustomPainter {
   const FunctionPlotPainter({
@@ -11,6 +12,7 @@ class FunctionPlotPainter extends CustomPainter {
     this.mode = 'function',
     this.intersectionPoints = const <PlotPoint>[],
     this.markedPoints = const <PlotPoint>[],
+    this.viewport = PlotViewport.initial,
     this.zoom = 1,
     this.pan = Offset.zero,
     this.yaw = -.65,
@@ -22,6 +24,9 @@ class FunctionPlotPainter extends CustomPainter {
   final String mode;
   final List<PlotPoint> intersectionPoints;
   final List<PlotPoint> markedPoints;
+  final PlotViewport viewport;
+
+  /// Camera scale and translation are used only by the 3D surface projection.
   final double zoom;
   final Offset pan;
   final double yaw;
@@ -41,52 +46,27 @@ class FunctionPlotPainter extends CustomPainter {
   }
 
   void _draw2d(Canvas canvas, Size size) {
+    final plotRect = PlotLayout.plotRectFor(size);
+    final visible = viewport.isValid ? viewport : PlotViewport.initial;
+    _drawGrid(canvas, size, plotRect, visible);
+
     final finite = points
         .where((point) => point.x.isFinite && point.y.isFinite)
         .toList(growable: false);
-    if (finite.isEmpty) {
-      _drawGrid(canvas, size, -10, 10, -5, 5);
-      return;
-    }
+    if (finite.isEmpty) return;
 
-    var xMin = -10.0;
-    var xMax = 10.0;
-    // Data-analysis and spectrum cards use this painter without a mode. Keep
-    // the stable function range there; specialized plot modes use the same
-    // coordinate contract as the calculator.
-    if (mode == 'implicit' || mode == 'contour') {
-      xMin = -10;
-      xMax = 10;
-    }
-    var yMin = finite
-        .map((point) => point.y)
-        .reduce((a, b) => math.min(a, b).toDouble());
-    var yMax = finite
-        .map((point) => point.y)
-        .reduce((a, b) => math.max(a, b).toDouble());
-    if ((yMax - yMin).abs() < 1e-9) {
-      yMin -= 1;
-      yMax += 1;
-    } else {
-      final padding = (yMax - yMin) * .12;
-      yMin -= padding;
-      yMax += padding;
-    }
-
-    _drawGrid(canvas, size, xMin, xMax, yMin, yMax);
+    canvas.save();
+    canvas.clipRect(plotRect);
     if (mode == 'implicit' || mode == 'contour') {
       final pointPaint = Paint()
         ..color = scheme.primary
         ..style = PaintingStyle.fill;
       for (final point in finite) {
-        final mapped = _map2d(point, size, xMin, xMax, yMin, yMax);
-        canvas.drawCircle(
-          mapped,
-          1.7 * math.sqrt(zoom.clamp(.5, 4)),
-          pointPaint,
-        );
+        final mapped = visible.dataToScreen(point, plotRect);
+        canvas.drawCircle(mapped, 1.7, pointPaint);
       }
-      _drawMarkers(canvas, size, xMin, xMax, yMin, yMax);
+      _drawMarkers(canvas, plotRect, visible);
+      canvas.restore();
       return;
     }
 
@@ -130,9 +110,9 @@ class FunctionPlotPainter extends CustomPainter {
         }
         continue;
       }
-      final mapped = _map2d(point, size, xMin, xMax, yMin, yMax);
+      final mapped = visible.dataToScreen(point, plotRect);
       if (previous == null ||
-          (point.y - previous.y).abs() > (yMax - yMin) * 1.5) {
+          (point.y - previous.y).abs() > visible.ySpan * 1.5) {
         path.moveTo(mapped.dx, mapped.dy);
       } else {
         path.lineTo(mapped.dx, mapped.dy);
@@ -140,18 +120,11 @@ class FunctionPlotPainter extends CustomPainter {
       previous = point;
     }
     flushPath();
-    _drawMarkers(canvas, size, xMin, xMax, yMin, yMax);
+    _drawMarkers(canvas, plotRect, visible);
+    canvas.restore();
   }
 
-  void _drawMarkers(
-    Canvas canvas,
-    Size size,
-    double xMin,
-    double xMax,
-    double yMin,
-    double yMax,
-  ) {
-    final scale = math.sqrt(zoom.clamp(.5, 4));
+  void _drawMarkers(Canvas canvas, Rect plotRect, PlotViewport visible) {
     final intersectionOuter = Paint()
       ..color = scheme.tertiary
       ..style = PaintingStyle.fill;
@@ -159,9 +132,9 @@ class FunctionPlotPainter extends CustomPainter {
       ..color = scheme.onTertiary
       ..style = PaintingStyle.fill;
     for (final point in intersectionPoints.where((point) => point.isFinite)) {
-      final mapped = _map2d(point, size, xMin, xMax, yMin, yMax);
-      canvas.drawCircle(mapped, 7 * scale, intersectionOuter);
-      canvas.drawCircle(mapped, 3 * scale, intersectionInner);
+      final mapped = visible.dataToScreen(point, plotRect);
+      canvas.drawCircle(mapped, 7, intersectionOuter);
+      canvas.drawCircle(mapped, 3, intersectionInner);
     }
 
     final markedOuter = Paint()
@@ -171,10 +144,137 @@ class FunctionPlotPainter extends CustomPainter {
       ..color = scheme.onError
       ..style = PaintingStyle.fill;
     for (final point in markedPoints.where((point) => point.isFinite)) {
-      final mapped = _map2d(point, size, xMin, xMax, yMin, yMax);
-      canvas.drawCircle(mapped, 6 * scale, markedOuter);
-      canvas.drawCircle(mapped, 2.5 * scale, markedInner);
+      final mapped = visible.dataToScreen(point, plotRect);
+      canvas.drawCircle(mapped, 6, markedOuter);
+      canvas.drawCircle(mapped, 2.5, markedInner);
     }
+  }
+
+  void _drawGrid(
+    Canvas canvas,
+    Size size,
+    Rect plotRect,
+    PlotViewport visible,
+  ) {
+    final grid = Paint()
+      ..color = scheme.outlineVariant.withValues(alpha: .42)
+      ..strokeWidth = 1;
+    final axis = Paint()
+      ..color = scheme.outline
+      ..strokeWidth = 1.4;
+    final labelStyle = TextStyle(
+      color: scheme.onSurfaceVariant.withValues(alpha: .86),
+      fontSize: 10,
+      height: 1,
+    );
+    final xStep = _niceStep(visible.xSpan, plotRect.width / 76);
+    final yStep = _niceStep(visible.ySpan, plotRect.height / 54);
+
+    var xValue = (visible.xMin / xStep).ceilToDouble() * xStep;
+    var drawn = 0;
+    while (xValue <= visible.xMax && drawn < 120) {
+      final x = visible.dataToScreen(PlotPoint(xValue, 0), plotRect).dx;
+      canvas.drawLine(
+        Offset(x, plotRect.top),
+        Offset(x, plotRect.bottom),
+        grid,
+      );
+      final label = _tickLabel(xValue, xStep, labelStyle);
+      final labelX = (x - label.width / 2)
+          .clamp(0.0, math.max(0.0, size.width - label.width).toDouble())
+          .toDouble();
+      label.paint(canvas, Offset(labelX, plotRect.bottom + 4));
+      drawn++;
+      final nextValue = xValue + xStep;
+      if (!nextValue.isFinite || nextValue <= xValue) break;
+      xValue = nextValue;
+    }
+
+    var yValue = (visible.yMin / yStep).ceilToDouble() * yStep;
+    drawn = 0;
+    while (yValue <= visible.yMax && drawn < 120) {
+      final y = visible.dataToScreen(PlotPoint(0, yValue), plotRect).dy;
+      canvas.drawLine(
+        Offset(plotRect.left, y),
+        Offset(plotRect.right, y),
+        grid,
+      );
+      final label = _tickLabel(yValue, yStep, labelStyle);
+      final labelX = math.max(0.0, plotRect.left - label.width - 4).toDouble();
+      final labelY = (y - label.height / 2)
+          .clamp(0.0, math.max(0.0, size.height - label.height).toDouble())
+          .toDouble();
+      label.paint(canvas, Offset(labelX, labelY));
+      drawn++;
+      final nextValue = yValue + yStep;
+      if (!nextValue.isFinite || nextValue <= yValue) break;
+      yValue = nextValue;
+    }
+
+    // Keep the origin axes visible only when their coordinate is in view.
+    if (visible.xMin <= 0 && visible.xMax >= 0) {
+      final x = visible.dataToScreen(const PlotPoint(0, 0), plotRect).dx;
+      canvas.drawLine(
+        Offset(x, plotRect.top),
+        Offset(x, plotRect.bottom),
+        axis,
+      );
+    }
+    if (visible.yMin <= 0 && visible.yMax >= 0) {
+      final y = visible.dataToScreen(const PlotPoint(0, 0), plotRect).dy;
+      canvas.drawLine(
+        Offset(plotRect.left, y),
+        Offset(plotRect.right, y),
+        axis,
+      );
+    }
+  }
+
+  double _niceStep(double span, double targetTickCount) {
+    if (!span.isFinite || span <= 0) return 1;
+    final count = targetTickCount.clamp(2.0, 14.0).toDouble();
+    final raw = span / count;
+    final exponent = (math.log(raw) / math.ln10).floor();
+    final magnitude = math.pow(10, exponent).toDouble();
+    final normalized = raw / magnitude;
+    final multiplier = normalized < 1.5
+        ? 1.0
+        : normalized < 3.5
+        ? 2.0
+        : normalized < 7.5
+        ? 5.0
+        : 10.0;
+    return multiplier * magnitude;
+  }
+
+  TextPainter _tickLabel(double value, double step, TextStyle style) {
+    String text;
+    final magnitude = value.abs();
+    if (magnitude >= 1e5 || (magnitude > 0 && magnitude < 1e-3)) {
+      text = value.toStringAsPrecision(2);
+    } else {
+      var decimals = 0;
+      while (decimals < 8 &&
+          ((step * math.pow(10, decimals)) -
+                      (step * math.pow(10, decimals)).round())
+                  .abs() >
+              1e-7) {
+        decimals++;
+      }
+      text = value.toStringAsFixed(decimals);
+      if (text.contains('.')) {
+        text = text
+            .replaceFirst(RegExp(r'0+$'), '')
+            .replaceFirst(RegExp(r'\.$'), '');
+      }
+      if (text == '-0') text = '0';
+    }
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout(maxWidth: 160);
+    return painter;
   }
 
   void _drawSurface(Canvas canvas, Size size) {
@@ -188,7 +288,12 @@ class FunctionPlotPainter extends CustomPainter {
         )
         .toList(growable: false);
     if (finite.isEmpty) {
-      _drawGrid(canvas, size, -10, 10, -10, 10);
+      _drawGrid(
+        canvas,
+        size,
+        PlotLayout.plotRectFor(size),
+        PlotViewport.initial,
+      );
       return;
     }
     final zMin = finite
@@ -286,77 +391,6 @@ class FunctionPlotPainter extends CustomPainter {
 
   String _coordinateKey(double value) => value.toStringAsFixed(7);
 
-  void _drawGrid(
-    Canvas canvas,
-    Size size,
-    double xMin,
-    double xMax,
-    double yMin,
-    double yMax,
-  ) {
-    final grid = Paint()
-      ..color = scheme.outlineVariant.withValues(alpha: .45)
-      ..strokeWidth = 1;
-    final axis = Paint()
-      ..color = scheme.outline
-      ..strokeWidth = 1.4;
-    for (var value = -10.0; value <= 10.0; value += 2) {
-      final start = _map2d(
-        PlotPoint(value, yMin),
-        size,
-        xMin,
-        xMax,
-        yMin,
-        yMax,
-      );
-      final end = _map2d(PlotPoint(value, yMax), size, xMin, xMax, yMin, yMax);
-      canvas.drawLine(start, end, grid);
-    }
-    for (var index = 0; index <= 10; index++) {
-      final value = yMin + (yMax - yMin) * index / 10;
-      final start = _map2d(
-        PlotPoint(xMin, value),
-        size,
-        xMin,
-        xMax,
-        yMin,
-        yMax,
-      );
-      final end = _map2d(PlotPoint(xMax, value), size, xMin, xMax, yMin, yMax);
-      canvas.drawLine(start, end, grid);
-    }
-    if (xMin <= 0 && xMax >= 0) {
-      canvas.drawLine(
-        _map2d(PlotPoint(0, yMin), size, xMin, xMax, yMin, yMax),
-        _map2d(PlotPoint(0, yMax), size, xMin, xMax, yMin, yMax),
-        axis,
-      );
-    }
-    if (yMin <= 0 && yMax >= 0) {
-      canvas.drawLine(
-        _map2d(PlotPoint(xMin, 0), size, xMin, xMax, yMin, yMax),
-        _map2d(PlotPoint(xMax, 0), size, xMin, xMax, yMin, yMax),
-        axis,
-      );
-    }
-  }
-
-  Offset _map2d(
-    PlotPoint point,
-    Size size,
-    double xMin,
-    double xMax,
-    double yMin,
-    double yMax,
-  ) {
-    final base = Offset(
-      (point.x - xMin) / (xMax - xMin) * size.width,
-      (yMax - point.y) / (yMax - yMin) * size.height,
-    );
-    final center = Offset(size.width / 2, size.height / 2);
-    return center + (base - center) * zoom + pan;
-  }
-
   @override
   bool shouldRepaint(covariant FunctionPlotPainter oldDelegate) {
     return oldDelegate.points != points ||
@@ -364,6 +398,7 @@ class FunctionPlotPainter extends CustomPainter {
         oldDelegate.mode != mode ||
         oldDelegate.intersectionPoints != intersectionPoints ||
         oldDelegate.markedPoints != markedPoints ||
+        oldDelegate.viewport != viewport ||
         oldDelegate.zoom != zoom ||
         oldDelegate.pan != pan ||
         oldDelegate.yaw != yaw ||
